@@ -45,8 +45,8 @@ def test_signal():
 
 if __name__ == '__main__':
     t = time.time()
-    #test_save_quote()
-    test_select()
+    test_save_quote()
+    #test_select()
     #test_trend_recognition()
     #test_signal()
 
