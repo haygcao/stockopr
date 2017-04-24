@@ -111,6 +111,11 @@ def check_format(row):
         return False
     return True
 
+def get_stock_list(_xls=None):
+    if not _xls:
+        _xls = download_quote_xls()
+    return get_stock_list_from_quote_xls(_xls)
+
 def get_quote(xlsfile, dt=None):
 
     #打开excel

@@ -74,6 +74,7 @@ def _get_quote(page, count):
     df = pd.read_json(json.dumps(quote), dtype=False)
     df.drop('NO', 1, inplace=True)
     df.rename(columns={'PRICE':'CLOSE', 'SYMBOL':'CODE'}, inplace=True)
+    #df['trade_date'] = '2017-04-21 00:00:00'
     df['trade_date'] = str(datetime.date.today())
 
     return df
