@@ -1,3 +1,6 @@
+#! /bin/bash
+
+mysql -uroot -p <<EOF
 grant all on *.* to kylin@localhost identified by 'xxxxxx' with grant option;
 
 -- 如下脚本创建数据库yourdbname，并制定默认的字符集是utf8。
@@ -15,7 +18,8 @@ use stock;
 create table if not exists basic_info(
     code varchar(8),
     name varchar(16),
-    type varchar(8) default 'A');
+    type varchar(8) default 'A股'
+    );
 
 CREATE TABLE future_variety (
     code varchar(8),
@@ -134,3 +138,4 @@ create unique index quote_code_trade_date on quote(code,trade_date);
 
 
 -- current_date() CURRENT_timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, all is ok
+EOF
