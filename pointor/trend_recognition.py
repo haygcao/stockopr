@@ -1,7 +1,7 @@
 #-*- encoding: utf-8 -*-
 
 import pointor.stage_handler as stage_handler
-from config.config import debug
+from config.config import emulate
 from config import config
 
 '''
@@ -24,7 +24,7 @@ indicator = {
 def notice_signal_transfer(stock_info):
     return
     # 查询数据库, 是否建仓
-    if debug or stock_info['bought'] == 1:
+    if emulate or stock_info['bought'] == 1:
         pass
         #engine.say(stock_info['name'] + '注意, 逆转信号')
         #engine.runAndWait()
@@ -61,6 +61,68 @@ class TrendRecognizer:
         self.ind    = -1
         self.flag   = -1 # 1, update
 
+    def _init_tr(self, close):
+        if self.close < 0:
+            self.close = close
+            return
+        else:
+            self.last = self.close
+            self.close = close
+            cur_stage = '3' if close > self.last else '4'
+            # init
+            self.stagehandler.set_cur_stage(cur_stage)
+            self.stagehandler.set_stage_info(cur_stage, min(self.close, self.last), max(self.close, self.last))
+            self.stagehandler.update_stage_info(cur_stage, start=self.quote.index[0], end=self.quote.index[1])
+            #print(self.stagehandler.stage_info)
+            return cur_stage
+
+    def _trend_recognition(self, dt, close):
+        cur_stage = self.stagehandler.get_cur_stage()
+        if not cur_stage:
+            cur_stage = self._init_tr(close)
+            if not cur_stage:
+                return
+        else:
+            self.last  = self.close
+            self.close = close
+            self.dt    = dt
+
+        if self.stagehandler.get_pre_stage() != cur_stage:
+            self.stagehandler.set_pre_stage(cur_stage)
+            #self.stagehandler.update_info()
+
+        self.stage_dict.get(cur_stage)()
+
+    def trend_recognition_quote(self):
+        #保存数据库比较好
+        '''
+        hset stock_info cur_stage
+        hset stage_info_stock_info stage val #stage: 3, 35...; val:max, min
+        '''
+
+        '''
+        "次级回升", "自然回升", "上升趋势", "下降趋势", "自然回辙", "次级回辙"
+        #记录关键值和当前值
+        '''
+
+        #for close in self.quote.close.values:
+        for ind, close in enumerate(self.quote.close):
+            #print(ind, self.quote.index[ind], close)
+            self.ind += 1 #indicator
+            dt = self.quote.index[ind]
+            self._trend_recognition(dt, close)
+
+    def trend_recognition(self, dt, close):
+        if self.quote:
+            self.trend_recognition_quote()
+            self.quote = None
+        self._trend_recognition(dt, close)
+
+    def trend_recognition(self):
+        self.trend_recognition_quote()
+
+    def print_result(self):
+        self.stagehandler.print_stage_info()
         self.stage_dict = {
                 '3'      : self._3,
                 '35'     : self._35,
@@ -264,66 +326,3 @@ class TrendRecognizer:
 
     def _425163(self):
         pass
-
-    def _init_tr(self, close):
-        if self.close < 0:
-            self.close = close
-            return
-        else:
-            self.last = self.close
-            self.close = close
-            cur_stage = '3' if close > self.last else '4'
-            # init
-            self.stagehandler.set_cur_stage(cur_stage)
-            self.stagehandler.set_stage_info(cur_stage, min(self.close, self.last), max(self.close, self.last))
-            self.stagehandler.update_stage_info(cur_stage, start=self.quote.index[0], end=self.quote.index[1])
-            #print(self.stagehandler.stage_info)
-            return cur_stage
-
-    def _trend_recognition(self, dt, close):
-        cur_stage = self.stagehandler.get_cur_stage()
-        if not cur_stage:
-            cur_stage = self._init_tr(close)
-            if not cur_stage:
-                return
-        else:
-            self.last  = self.close
-            self.close = close
-            self.dt    = dt
-
-        if self.stagehandler.get_pre_stage() != cur_stage:
-            self.stagehandler.set_pre_stage(cur_stage)
-            #self.stagehandler.update_info()
-
-        self.stage_dict.get(cur_stage)()
-
-    def trend_recognition_quote(self):
-        #保存数据库比较好
-        '''
-        hset stock_info cur_stage
-        hset stage_info_stock_info stage val #stage: 3, 35...; val:max, min
-        '''
-
-        '''
-        "次级回升", "自然回升", "上升趋势", "下降趋势", "自然回辙", "次级回辙"
-        #记录关键值和当前值
-        '''
-
-        #for close in self.quote.close.values:
-        for ind, close in enumerate(self.quote.close):
-            #print(ind, self.quote.index[ind], close)
-            self.ind += 1 #indicator
-            dt = self.quote.index[ind]
-            self._trend_recognition(dt, close)
-
-    def trend_recognition(self, dt, close):
-        if self.quote:
-            trend_recognition_quote()
-            self.quote = None
-        self._trend_recognition(dt, close)
-
-    def trend_recognition(self):
-        self.trend_recognition_quote()
-
-    def print_result(self):
-        self.stagehandler.print_stage_info()

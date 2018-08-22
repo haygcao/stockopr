@@ -5,36 +5,31 @@ import time
 # conn = redis.StrictRedis(tr='192.168.1.227', port=6379, db=0, password='server')
 #conn = redis.StrictRedis(tr=dbip, port=dbport, db=0)
 
-def exec_cmd(*args, **options):
-    r = conn.execute_command(*args, **options)
-    return r
+today = None
+
 
 def set_day(day):
-    exec_cmd('set', 'today', day)
+    global today
+    today = day
 
 def same_day():
-    r = exec_cmd('get', 'today')
+    global today
     _tm = time.localtime()
-    if r and int(r) == _tm.tm_yday:
+    if today and today == _tm.tm_yday:
         return True
     set_day(_tm.tm_yday)
 
     return False
 
 def save_to_db(stock_info):
-    for key in stock_info:
-        exec_cmd('hset', stock_info['name'], key, stock_info[key])
-    #exec_cmd('save')
+    with open(stock_info['name'], 'wb') as f:
+        import pickle
+        pickle.dump(stock_info, f)
 
 def load_data_from_db(stock_info):
-    r = exec_cmd('hgetall', stock_info['name'])
-    _stock_info = {}
-    for i in range(0, len(r) - 1, 2):
-        key = r[i].decode()
-        val = r[i + 1].decode()
-        if key == 'last_min':
-            val = float(val)
-        _stock_info.setdefault(key, val)
+    with open(stock_info['name'], 'rb') as f:
+        import pickle
+        _stock_info = pickle.load(f)
     return _stock_info
 
 #
@@ -130,7 +125,7 @@ class Stage:
     def save_cur_stage(self, stock_info):
         #same day
         if not same_day():
-            del_stage(stock_info)
+            self.del_stage(stock_info)
 
         # 历史数据
         # 3 -> 3 or 3 -> 4 or 4 -> 3 or 4 -> 4 过程中发生过的状态, 持续时间, 价格变化幅度...

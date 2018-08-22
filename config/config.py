@@ -18,11 +18,11 @@ check_per_sec = charg.check_per_sec
 
 ###
 
-debug = True
-debug = False
+emulate = True
+emulate = False
 monitoring = False
 monitoring = True
-if debug:
+if emulate:
     monitoring = True
 
 #data_config_trade
@@ -74,12 +74,12 @@ start_time_pm = 0
 # 转向 逆转 突破 异动
 indicator_h = {'zx_up':4, 'lz_up':2, 'tp_up':1, 'zx_down':-4, 'lz_down':-2, 'tp_down':-1, 'yd_up':1, 'yd_down':-1}
 indicator_l = {'zx_up':2, 'lz_up':1, 'tp_up':0.5, 'zx_down':-2, 'lz_down':-1, 'tp_down':-0.5, 'yd_up':1, 'yd_down':-1}
-if debug:
+if emulate:
     indicator = indicator_h
 else:
     indicator = indicator_l
 
-if debug:
+if emulate:
     wait_time_ll = 0.1
     wait_time_l = 0.1
     wait_time_m = 0.1
