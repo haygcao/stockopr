@@ -8,8 +8,13 @@ import json
 
 import socket
 
+from sqlalchemy import create_engine
+
+sys.path.append(".")
+
 import config.config as config
 import util.mysqlcli as mysqlcli
+import util.dt as dt
 import acquisition.basic as basic
 import acquisition.tx as tx
 import acquisition.wy as wy
@@ -47,8 +52,6 @@ def save_quote_tx():
         if today.day == 1:
             update_stock_basic_info(_xls)
 
-from sqlalchemy import create_engine
-
 # 网易行情接口
 def save_quote_wy():
     df_quote = wy.get_quote()
@@ -74,7 +77,7 @@ def save_quote_wy():
             c.execute('truncate table temp_quote')
 
             # MySql connection in sqlAlchemy
-            engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8'.format(config.db_user, config.db_passwd))
+            engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
             connection = engine.connect()
 
             # Do not insert the row number (index=False)
@@ -106,7 +109,7 @@ def save_quote():
 
 
 if __name__ == '__main__':
-    if not basic.istradeday():
+    if not dt.istradeday():
         pass
         #exit(0)
     save_quote()

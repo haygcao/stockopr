@@ -1,4 +1,5 @@
-grant all on *.* to kylin@localhost identified by 'xxxxxx' with grant option;
+create user stockopr@localhost identified by '111111';
+grant all privileges on *.* to 'stockopr'@localhost;
 
 -- 如下脚本创建数据库yourdbname，并制定默认的字符集是utf8。
 -- CREATE DATABASE IF NOT EXISTS yourdbname DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
@@ -49,6 +50,25 @@ create table if not exists quote (
     five_minute float
     );
 
+create table if not exists temp_quote (
+    code varchar(8),
+    trade_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    close float,
+    high float,
+    low float,
+    open float,
+    yestclose float,
+    updown float,
+    percent float,
+    hs float,
+    volume bigint,
+    turnover bigint,
+    lb float,
+    wb float,
+    zf float,
+    five_minute float
+    );
+
 create table if not exists financial_data (
     code varchar(8),
     trade_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -65,14 +85,14 @@ create table selected(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     class varchar(8),
-    rank int
+    `rank` int
     );
 
 create table selected_history(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     class varchar(8),
-    rank int
+    `rank` int
     );
 
 -- 交易记录
@@ -111,7 +131,7 @@ create table cleared (
 create table account_detail (
     code varchar(16),
     trade_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    op varchar(8), 
+    op varchar(8),
     price float,
     count int
     );
@@ -120,7 +140,7 @@ create table account_detail (
 -- 索引
 create unique index basic_info_code on basic_info(code);
 
-create index quote_code on quote(code);
+-- create index quote_code on quote(code);
 create index quote_trade_date on quote(trade_date);
 create unique index quote_code_trade_date on quote(code,trade_date);
 

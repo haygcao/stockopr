@@ -42,7 +42,7 @@ def add_selected(code, cls='HP', rank=9):
             if (datetime.date.today() - r['added_date']).days <= 5:
                 return
             remove_selected_keep_history(code)
-        sql = 'insert into {0} (code, added_date, class, rank) values("{1}", current_date(), "{2}", {3})'.format(config.sql_tab_selected, code, cls, rank)
+        sql = 'insert into {0} (code, added_date, class, `rank`) values("{1}", current_date(), "{2}", {3})'.format(config.sql_tab_selected, code, cls, rank)
         # code varchar(8), added_date date, class varchar(8), rank integer
         c.execute(sql)
 

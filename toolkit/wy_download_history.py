@@ -10,7 +10,7 @@ sys.path.append(".")
 sys.path.append("monitor")
 
 #import stock.monitor.mysqlcli
-import util.basic as basic
+import acquisition.basic as basic
 
 
 # timeout in seconds

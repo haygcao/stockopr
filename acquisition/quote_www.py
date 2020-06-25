@@ -3,12 +3,6 @@
 import urllib.request
 import re
 import time
-import datetime
-import config
-
-import util.mysqlcli as mysqlcli
-
-import pandas as pd
 import json
 
 def get_price_urllib(stock_code):
