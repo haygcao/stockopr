@@ -26,4 +26,4 @@ def show(code, n=250):
     plt.show()
 
 if __name__ == '__main__':
-    show('600570')
+    show('300502')

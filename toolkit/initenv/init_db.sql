@@ -1,5 +1,6 @@
 create user stockopr@localhost identified by '111111';
 grant all privileges on *.* to 'stockopr'@localhost;
+ALTER USER 'stockopr'@'localhost' IDENTIFIED WITH mysql_native_password BY '111111';
 
 -- 如下脚本创建数据库yourdbname，并制定默认的字符集是utf8。
 -- CREATE DATABASE IF NOT EXISTS yourdbname DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
@@ -136,7 +137,6 @@ create table account_detail (
     count int
     );
 
-
 -- 索引
 create unique index basic_info_code on basic_info(code);
 
@@ -154,3 +154,19 @@ create unique index quote_code_trade_date on quote(code,trade_date);
 
 
 -- current_date() CURRENT_timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, all is ok
+
+create table fund_basic (code varchar(8), name varchar(32), scale decimal(10, 2));
+create unique index fund_basic_code on fund_basic(code);
+
+create table fund_stock (
+    fund_code varchar(8),
+    fund_date date,
+    code varchar(8),
+    percent decimal(10, 2),
+    price decimal(10, 2),
+    num decimal(20, 2),
+    market_value decimal(20, 2),
+    fund_url varchar(256),
+    crawl_date date);
+
+create unique index fund_stock_fund_code_date_code on fund_stock(fund_code, fund_date, code);
