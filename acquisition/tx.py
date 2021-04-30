@@ -20,7 +20,7 @@ def _download_quote_xls():
 
     if os.path.exists(_xls):
         print('existed')
-        return
+        return _xls
 
     try_ = 5
     while try_ > 0:
@@ -192,4 +192,4 @@ def get_quote(xlsfile, dt=None):
 
 
 if __name__ == '__main__':
-    download_xls()
+    _download_quote_xls()

@@ -82,18 +82,34 @@ df = psql.read_sql(('select "Timestamp","Value" from "MyTable" '
                    db,params={"dstart":datetime(2014,6,24,16,0),"dfinish":datetime(2014,6,24,17,0)},
                    index_col=['Timestamp'])
 '''
-def get_price_info_df_db(code, trade_date = 0, end_date = None, period_type = 'D', conn=None):
+
+
+def get_price_info_df_db(code, days=0, end_date=None, period_type='D', conn=None, from_file=None):
+    if days == 0:
+        days = 1 if period_type == 'D' else 500
+
+    if from_file:
+        df = get_price_info_df_file_day(code, days, end_date, from_file)
+    else:
+        df = get_price_info_df_db_day(code, days, end_date, conn)
     if period_type == 'D':
-        if trade_date == 0:
-            trade_date = 1
-        df = get_price_info_df_db_day(code, trade_date, end_date, conn)
-    elif period_type == 'W':
-        if trade_date == 0:
-            trade_date = 500
-        df = get_price_info_df_db_week(code, trade_date, end_date, conn)
+        return df
+
+    return get_price_info_df_db_week(df)
+
+
+def get_price_info_df_file_day(code, days, end_date, path):
+    labels = ['close', 'high', 'low', 'open', 'volume', 'turnover']
+    # df = pd.read_csv(path, nrows=days, index_col='日期', usecols=['开盘价', '最高价', '最低价', '收盘价', '成交量', '成交金额'],
+    #                  names=None)
+    # df = pd.read_csv(path, nrows=days, index_col='日期', usecols=['开盘价', '最高价', '最低价', '收盘价', '成交量', '成交金额'])
+    df = pd.read_csv(path, nrows=days, index_col=0, usecols=[0, 6, 3, 4, 5, 11, 12], encoding='gbk')
+    df.columns = labels
+
     return df
 
-def get_price_info_df_db_day(code, trade_date = 1, end_date = None, conn = None):
+
+def get_price_info_df_db_day(code, days=1, end_date=None, conn=None):
     end_date = end_date if end_date and len(end_date) > 0 else datetime.date.today()
 
     if conn == None:
@@ -110,7 +126,7 @@ def get_price_info_df_db_day(code, trade_date = 1, end_date = None, conn = None)
     key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover', 'lb', 'wb', 'zf']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     on = '{0}.code = basic_info.code'.format(table[1])
-    where = '{3}.code = "{0}" and trade_date <= "{1}" order by trade_date desc limit {2}'.format(_code, end_date, trade_date, table[1])
+    where = '{3}.code = "{0}" and trade_date <= "{1}" order by trade_date desc limit {2}'.format(_code, end_date, days, table[1])
     sql = 'SELECT {0} FROM {1} WHERE {5}'.format(', '.join(key_list), table[1], on, 'name', table[0], where)
 
     df = pd.read_sql(sql, con=_conn, index_col=['trade_date'])
@@ -135,22 +151,22 @@ def get_price_info_df_db_day(code, trade_date = 1, end_date = None, conn = None)
 
     return df
 
-def get_price_info_df_db_week(code, trade_date = 250, end_date = None, conn = None):
-    p = get_price_info_df_db_day(code, trade_date, end_date, conn)
-    p.index = pd.to_datetime(p.index)
+
+def get_price_info_df_db_week(df):
+    df.index = pd.to_datetime(df.index)
     #print(p.columns)
 
     # W M Q 12D 30min
     period_type = 'W'
     #p.set_index('trade_date', inplace=True)
-    period_data = p.resample(period_type).last()
+    period_data = df.resample(period_type).last()
     #period_data['change'] = p['change'].resample(period_type, how=lambda x:(x+1.0).prod() - 1.0, axis=0);
-    period_data['open'] = p['open'].resample(period_type).first();
-    period_data['high'] = p['high'].resample(period_type).max();
-    period_data['low'] = p['low'].resample(period_type).min();
-    period_data['close'] = p['close'].resample(period_type).last();
-    period_data['volume'] = p['volume'].resample(period_type).sum();
-    period_data['turnover'] = p['turnover'].resample(period_type).sum();
+    period_data['open'] = df['open'].resample(period_type).first();
+    period_data['high'] = df['high'].resample(period_type).max();
+    period_data['low'] = df['low'].resample(period_type).min();
+    period_data['close'] = df['close'].resample(period_type).last();
+    period_data['volume'] = df['volume'].resample(period_type).sum();
+    period_data['turnover'] = df['turnover'].resample(period_type).sum();
 
     #period_data.set_index('trade_date', inplace=True)
     period_data = period_data[period_data['code'].notnull()]

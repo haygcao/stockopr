@@ -1,5 +1,5 @@
 #-*- encoding:utf-8 -*-
-
+import datetime
 import sys
 import time
 import os
@@ -57,6 +57,8 @@ def gen_stock_code(symbol):
 
 def save(csv_queue):
     ok = False
+    start_date = datetime.datetime(2010, 1, 1)
+
     while True:
         with mysqlcli.get_cursor() as c:
             try:
@@ -106,9 +108,15 @@ def save(csv_queue):
                         val_list = [code]
                         #for k,v in row.items():
                         row = row.split(',')
+
                         volume = row[11]
                         if int(volume) <= 0:
                             continue
+
+                        trade_date = datetime.datetime.strptime(row[0], '%Y-%m-%d')
+                        if trade_date < start_date:
+                            continue
+
                         for idx in indice:
                             #key_list.append(k)
                             val_list.append(row[idx] if row[idx] != 'None' else 0)
