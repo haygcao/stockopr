@@ -15,16 +15,21 @@ def test_save_quote():
 def test_select():
     import selector.selector as selector
     from acquisition import quote_db
-    df = quote_db.get_price_info_df_db('300502', 500, from_file='data/300502.csv')
+    # df = quote_db.get_price_info_df_db('300502', 500, from_file='data/300502.csv')
+
+    import config.config as config
+    import util.mysqlcli as mysqlcli
+    _conn = mysqlcli.get_connection()
+    df = quote_db.get_price_info_df_db('601600', 250, '', config.T, _conn)
     df = df.sort_index()
-    ret = selector.is_match(df, 'niushibeili')
+    ret = selector.is_match(df, 'nsbl')
     print(ret)
 
 
 def test_select_mp():
     import selector.selector as selector
     import acquisition.basic as basic
-    code_list = selector.select('hp')
+    code_list = selector.select('nsbl')
     for code in code_list:
         print(code, basic.get_stock_name(code))
     print('+++ {0} +++'.format(len(code_list)))
@@ -60,7 +65,8 @@ def test_signal():
 if __name__ == '__main__':
     t = time.time()
     # test_save_quote()
-    test_select()
+    test_select_mp()
+    # test_select()
     # test_trend_recognition()
     # test_signal()
 

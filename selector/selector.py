@@ -40,7 +40,7 @@ selector = {
     'dd': d.dd,
     'zf': zf.zf,
     'qd': qd.qd,
-    'niushibeili': niushibeili.niushibeili
+    'nsbl': niushibeili.niushibeili
 }
 
 from queue import Empty
@@ -64,16 +64,20 @@ def _select(q, rq, strategy_name):
     while True:
         try:
             code = q.get(True, 0.1)
-            df = quote_db.get_price_info_df_db(code, 500, '', config.T, _conn)
-            if is_match(df, selector.get(strategy_name)):
-                selected.add_selected(code)
+            df = quote_db.get_price_info_df_db(code, 250, '', config.T, _conn)
+            if is_match(df, strategy_name):
+                selected.add_selected(code, strategy_name)
+                print('{}'.format(code))
                 rq.put(code)
         except Empty:
             #print('{0} [{1}]: finished'.format(datetime.datetime.now(), os.getpid()))
             break
         except Exception as e:
-            print(e, q)
+            import traceback
+            traceback.print_exc()
+
     _conn.close()
+
 
 def select(strategy_name):
     r = []
@@ -86,7 +90,7 @@ def select(strategy_name):
     for code in code_list:
         code_queue.put(code)
 
-    nproc = 10
+    nproc = 16
     p_list = [Process(target=_select, args=(code_queue, rq, strategy_name,)) for i in range(nproc)]
     [p.start() for p in p_list]
     [p.join() for p in p_list]

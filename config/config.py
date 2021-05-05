@@ -142,7 +142,7 @@ key_list = ['code', 'name', 'trading_date', 'open', 'high', 'low', 'close', 'vol
 selector
 '''
 T = 'W'
-T = 'D'
+# T = 'D'
 
 DAY_MIN = 250
 WEEK_MIN = 52
