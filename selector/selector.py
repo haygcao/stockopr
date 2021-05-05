@@ -21,6 +21,7 @@ import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
 import selector.plugin.niushibeili as niushibeili
+import selector.plugin.dynamical_system as dynamical_system
 
 import selector.selected as selected
 
@@ -40,7 +41,10 @@ selector = {
     'dd': d.dd,
     'zf': zf.zf,
     'qd': qd.qd,
-    'nsbl': niushibeili.niushibeili
+    'nsbl': niushibeili.niushibeili,
+    'dlxt_green': dynamical_system.dynamical_system_green,
+    'dlxt_red': dynamical_system.dynamical_system_red,
+    'dlxt_blue': dynamical_system.dynamical_system_blue
 }
 
 from queue import Empty

@@ -67,30 +67,52 @@ def niushibeili(quote):
         if histogram[index] * histogram[index-1] <= 0:
             pos_zero[pos_zero_index] = index
             if pos_zero_index == 0:
-                return match(histogram, pos_zero)
+                break
             pos_zero_index -= 1
 
-    return match(histogram, pos_zero) if pos_zero_index < 1 else False
+    if pos_zero_index >= 1:
+        return False
+
+    min_index = match_macd(histogram, pos_zero)
+    if not min_index:
+        return False
+
+    return match_close(quote['close'], min_index)
 
 
-def match(histogram, pos_zero):
+def match_macd(histogram, pos_zero):
     first_min = min(histogram[pos_zero[0]:pos_zero[1] + 1])
     second_min = min(histogram[pos_zero[2]:])
 
+    print(histogram)
+    print(pos_zero)
     if pos_zero[2] - pos_zero[1] < 3:
-        return False
+        return
 
     np_arr = histogram[pos_zero[2]:]
     second_min_index = numpy.where(np_arr == second_min)[-1][0]
     second_less_zero_count = numpy.ma.sum(np_arr < 0)
     if second_less_zero_count < 3:
-        return False
+        return
 
     if second_min_index == second_less_zero_count - 1:
-        return False
+        return
 
     if first_min < second_min:
         if second_min / first_min > 0.7:
-            return False
+            return
+        np_arr = histogram[pos_zero[0]:pos_zero[1]]
+        first_min_index = numpy.where(np_arr == first_min)[-1][0]
+        return first_min_index + pos_zero[0], second_min_index + pos_zero[2]
+    return
+
+
+def match_close(close, min_index):
+    print(min_index)
+
+    first_min_close = close[min_index[0]]
+    second_min_close = close[min_index[1]]
+    print(first_min_close, second_min_close)
+    if second_min_close < first_min_close:
         return True
     return False

@@ -66,12 +66,21 @@ def adjust_none(val):
         return val
     return ''
 
+
 def ma(prices, n=5):
     #df = pd.DataFrame(prices.loc[:,'close'])
     df = pd.DataFrame()
     df['ma'] = MA(prices, timeperiod=n)
 
     return df
+
+
+def ema(prices, n=13):
+    df = pd.DataFrame()
+    df['ema'] = EMA(prices, timeperiod=n)
+
+    return df
+
 
 # Moving Average Convergence/Divergence Oscillator
 '''
