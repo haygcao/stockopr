@@ -22,6 +22,7 @@ import selector.plugin.qd as qd
 
 import selector.plugin.niushibeili as niushibeili
 import selector.plugin.dynamical_system as dynamical_system
+import selector.plugin.force_index as force_index
 
 import selector.selected as selected
 
@@ -44,7 +45,9 @@ selector = {
     'nsbl': niushibeili.niushibeili,
     'dlxt_green': dynamical_system.dynamical_system_green,
     'dlxt_red': dynamical_system.dynamical_system_red,
-    'dlxt_blue': dynamical_system.dynamical_system_blue
+    'dlxt_blue': dynamical_system.dynamical_system_blue,
+    'qlzs_p': force_index.force_index_positive,
+    'qlzs_m': force_index.force_index_minus
 }
 
 from queue import Empty

@@ -3,7 +3,7 @@ import numpy.ma
 
 from util.macd import macd
 
-# 牛市背离
+# 牛市背离 bull market deviation
 histogram = [-1, -2, -3, -2, -1,
              0, 1,
              0, -1, -2, -1,

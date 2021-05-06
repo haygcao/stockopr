@@ -23,7 +23,8 @@ def test_select():
     df = quote_db.get_price_info_df_db('000999', 250, '', config.T, _conn)
     df = df.sort_index()
     # ret = selector.is_match(df, 'nsbl')
-    ret = selector.is_match(df, 'dlxt_blue')
+    # ret = selector.is_match(df, 'dlxt_blue')
+    ret = selector.is_match(df, 'qlzs_p')
     print(ret)
 
 
