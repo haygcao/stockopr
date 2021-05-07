@@ -4,7 +4,7 @@ import math
 from util.macd import ema
 
 
-def strength_index(quote, n=2):
+def force_index(quote, n=2):
     close = quote['close']
     close_shift = close.shift(periods=1)
     si_close = close - close_shift
@@ -16,16 +16,16 @@ def strength_index(quote, n=2):
     si = si_close * volume_adjust
     si_ema = ema(si, n)
 
-    quote['strength_index'] = si_ema.values
+    quote['force_index'] = si_ema.values
 
 
 def force_index_positive(quote):
-    strength_index(quote)
+    force_index(quote)
 
-    return True if quote['strength_index'][-1] > 0 else False
+    return True if quote['force_index'][-1] > 0 else False
 
 
 def force_index_minus(quote):
-    strength_index(quote)
+    force_index(quote)
 
-    return True if quote['strength_index'][-1] < 0 else False
+    return True if quote['force_index'][-1] < 0 else False
