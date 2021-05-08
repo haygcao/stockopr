@@ -134,13 +134,15 @@ class DataFinanceDraw(object):
         """
 
         dynamical_system.dynamical_system(data)
-        self.edge_color = ['g' if v > 0 else 'r' if v < 0 else '#ADD8E6' for v in data["dlxt"]]
+        # LightGreen #90EE90   DarkOliveGreen3 #A2CD5A   LightCoral #F08080   IndianRed1 #FF6A6A   LightBlue #ADD8E6
+        self.edge_color = ['#A2CD5A' if v > 0 else '#F08080' if v < 0 else '#ADD8E6' for v in data["dlxt"]]
         self.set_plot_style()
         dlxt = data["dlxt"]
         dlxt.values[:] = 1
 
         force_index.force_index(data)
-        force_index_color = ['g' if v >= 0 else 'r' for v in data["force_index"]]
+        # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
+        force_index_color = ['#8FBC8F' if v >= 0 else '#CD5C5C' for v in data["force_index"]]
 
         self.add_plot = [
             mpf.make_addplot(data['force_index'], type='bar', width=1, panel=panel_qlzs, color=force_index_color),
