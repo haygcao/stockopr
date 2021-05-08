@@ -5,13 +5,46 @@ import time
 import datetime
 import urllib.request
 
+import requests
 import xlrd
 
 url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
+url_min = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{m},,{count}'
 
 def init():
     if not os.path.exists('data/xls'):
         os.makedirs('data/xls')
+
+
+def get_min_data(code, m, count=250):
+    url = url_min.format(code='{}{}'.format('sh' if code.startswith('6') else 'sz', code), m='m{}'.format(m), count=count)
+    ret = requests.get(url)
+    import json
+    d = json.loads(ret.content)
+
+    if m == 5:
+        m30 = d['data']['sh600000']['m5']
+    else:
+        m30 = d['data']['sh600000']['m30']
+    d_3m3 = {}
+
+    columns = ['open', 'close', 'high', 'low', 'volume']
+    data = []
+    index_list = []
+    for row in m30:
+        import datetime as dt
+        index_list.append(dt.datetime.strptime(row[0], '%Y%m%d%H%M').strftime("%Y-%m-%d %H:%M"))
+        data.append([float(row[1]), float(row[2]), float(row[3]), float(row[4]), float(row[5])])
+
+    d_3m3['index'] = index_list
+    d_3m3['columns'] = columns
+    d_3m3['data'] = data
+
+    import pandas
+
+    df = pandas.read_json(json.dumps(d_3m3), orient='split')
+    return df
+
 
 def _download_quote_xls():
     _dataUrl = url

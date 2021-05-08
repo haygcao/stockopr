@@ -87,12 +87,12 @@ class DataFinanceDraw(object):
         # volume:成交量直方图的颜色
         # inherit:是否继承，选填
         mc = mpf.make_marketcolors(
-            up='green',
-            down='red',
-            edge='i',
-            wick='i',
+            up='white', #'dimgray',
+            down='grey',
+            edge='black',
+            wick='black',
             volume='in',
-            inherit=True)
+            inherit=False)
 
         # 设置图形风格
         # gridaxis:设置网格线位置
@@ -134,7 +134,7 @@ class DataFinanceDraw(object):
         """
 
         dynamical_system.dynamical_system(data)
-        self.edge_color = ['g' if v > 0 else 'r' if v < 0 else 'blue' for v in data["dlxt"]]
+        self.edge_color = ['g' if v > 0 else 'r' if v < 0 else '#ADD8E6' for v in data["dlxt"]]
         self.set_plot_style()
         dlxt = data["dlxt"]
         dlxt.values[:] = 1
@@ -142,38 +142,38 @@ class DataFinanceDraw(object):
         force_index.force_index(data)
         force_index_color = ['g' if v >= 0 else 'r' for v in data["force_index"]]
 
-        # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
-        exp12 = data['close'].ewm(span=12, adjust=False).mean()
-        exp26 = data['close'].ewm(span=26, adjust=False).mean()
-        macd = exp12 - exp26
-        signal = macd.ewm(span=9, adjust=False).mean()
-
-        # 添加macd子图
-        histogram = macd - signal
-        # histogram[histogram < 0] = None
-        # histogram_positive = histogram
-        # histogram = macd - signal
-        # histogram[histogram >= 0] = None
-        # histogram_negative = histogram
-
-        # macd panel
-        colors = ['g' if v >= 0 else 'r' for v in histogram]
-
         self.add_plot = [
             mpf.make_addplot(data['force_index'], type='bar', width=1, panel=panel_qlzs, color=force_index_color),
             mpf.make_addplot(data['force_index'], type='line', width=1, panel=panel_qlzs, color='black'),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=panel_dlxt, color=self.edge_color),
-            mpf.make_addplot(exp12, type='line', color='y'),
-            mpf.make_addplot(exp26, type='line', color='r'),
             # mplfinance.make_addplot(data['PercentB'], panel=1, color='g', secondary_y='auto'),
         ]
         if show_macd:
+            # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
+            exp12 = data['close'].ewm(span=12, adjust=False).mean()
+            exp26 = data['close'].ewm(span=26, adjust=False).mean()
+            macd = exp12 - exp26
+            signal = macd.ewm(span=9, adjust=False).mean()
+
+            # 添加macd子图
+            histogram = macd - signal
+            # histogram[histogram < 0] = None
+            # histogram_positive = histogram
+            # histogram = macd - signal
+            # histogram[histogram >= 0] = None
+            # histogram_negative = histogram
+
+            # macd panel
+            colors = ['g' if v >= 0 else 'r' for v in histogram]
             self.add_plot.extend(
-                [mpf.make_addplot(histogram, type='bar', panel=panel_macd, color=colors),  # color='dimgray'
-                 # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
-                 # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
-                 mpf.make_addplot(macd, panel=panel_macd, color='fuchsia', secondary_y=True),
-                 mpf.make_addplot(signal, panel=panel_macd, color='b', secondary_y=True), ])
+                [
+                    mpf.make_addplot(exp12, type='line', color='y'),
+                    mpf.make_addplot(exp26, type='line', color='r'),
+                    mpf.make_addplot(histogram, type='bar', panel=panel_macd, color=colors),  # color='dimgray'
+                    # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
+                    # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
+                    mpf.make_addplot(macd, panel=panel_macd, color='fuchsia', secondary_y=True),
+                    mpf.make_addplot(signal, panel=panel_macd, color='b', secondary_y=True), ])
 
         # fig = mpf.figure(figsize=(10, 7), style=self.style)  # pass in the self defined style to the whole canvas
         # ax = fig.add_subplot(2, 1, 1)  # main candle stick chart subplot, you can also pass in the self defined style here only for this subplot
@@ -199,7 +199,7 @@ class DataFinanceDraw(object):
         # axlist[-1].xaxis.set_major_formatter(xmajorFormatter)
 
         # cursor = Cursor(self.fig, useblit=True, color='red', linewidth=2)
-        # cursor = Cursor(axlist[0], useblit=True, color='grey', linewidth=1)
+        cursor = Cursor(axlist[0], useblit=True, color='grey', linewidth=1)
 
         plt.show()
         # plt.show(block=False)  # 显示
