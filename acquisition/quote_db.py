@@ -152,12 +152,11 @@ def get_price_info_df_db_day(code, days=1, end_date=None, conn=None):
     return df
 
 
-def get_price_info_df_db_week(df):
+def get_price_info_df_db_week(df, period_type='W'):
+    # W M Q 12D 30min
     df.index = pd.to_datetime(df.index)
     #print(p.columns)
 
-    # W M Q 12D 30min
-    period_type = 'W'
     #p.set_index('trade_date', inplace=True)
     period_data = df.resample(period_type).last()
     #period_data['change'] = p['change'].resample(period_type, how=lambda x:(x+1.0).prod() - 1.0, axis=0);

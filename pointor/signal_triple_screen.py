@@ -34,17 +34,29 @@ def function_exit(high, dlxt_long_period, dlxt, dlxt_long_period_shift, dlxt_shi
     return numpy.nan
 
 
-def compute_index(quote):
+def compute_index(quote, quote_long_period=None):
     # 长中周期动力系统中，均不为红色，且至少一个为绿色，强力指数为负
-
+    # pandas.infer_freq(candle.data_origin.index)   # If not continuous pandas.infer_freq will return None.
+    freq = quote.index.to_series().diff().min()
+    minutes = freq.value / 10 ** 9 / 60
+    if minutes == 1:
+        period_type = '5min'
+        period_type_reverse = '1min'
+    elif minutes == 5:
+        period_type = '30min'
+        period_type_reverse = '5min'
+    elif minutes == 1440:
+        period_type = 'W'
+        period_type_reverse = 'D'
     # 长周期动力系统
-    quote_week = quote_db.get_price_info_df_db_week(quote)
+    period = quote
+    quote_week = quote_long_period if quote_long_period else quote_db.get_price_info_df_db_week(quote, period_type)
     quote_week = dynamical_system.dynamical_system(quote_week)
     # quote_week.rename(columns={'dlxt': 'dlxt_long_period'}, inplace=True)
     # quote_week.drop(['open', 'close'], axis=1, inplace=True)
     # quote_week = quote_week[['dlxt']]
-    dlxt_long_period = quote_week.resample('D').last()
-    dlxt_long_period['dlxt'] = quote_week['dlxt'].resample('D').pad()
+    dlxt_long_period = quote_week.resample(period_type_reverse).last()
+    dlxt_long_period['dlxt'] = quote_week['dlxt'].resample(period_type_reverse).pad()
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'dlxt_long_period'] = dlxt_long_period['dlxt']
@@ -65,8 +77,8 @@ def compute_index(quote):
     return quote_copy
 
 
-def signal_enter(quote):
-    quote = compute_index(quote)
+def signal_enter(quote, quote_long_period=None):
+    quote = compute_index(quote, quote_long_period)
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'triple_screen_signal_enter'] = quote_copy.apply(
@@ -77,9 +89,9 @@ def signal_enter(quote):
     return quote_copy
 
 
-def signal_exit(quote):
+def signal_exit(quote, quote_long_period=None):
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
-    quote = compute_index(quote)
+    quote = compute_index(quote, quote_long_period)
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'triple_screen_signal_exit'] = quote.apply(

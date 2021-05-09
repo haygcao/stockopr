@@ -2,11 +2,13 @@
 import threading
 import time
 
-import sys
+import sys; sys.path.append(".")
+
+from acquisition import tx
 
 import numpy
 
-sys.path.append(".")
+from indicator.atr import compute_atr
 
 import mplfinance as mpf
 import matplotlib as mpl  # 用于设置曲线参数
@@ -36,9 +38,9 @@ panel_ratios = {
 }
 
 
-def import_csv(stock_code):
+def import_csv(path):
     # 导入股票数据
-    df = pandas.read_csv('data/' + stock_code + '.csv', encoding='gbk')
+    df = pandas.read_csv(path, encoding='gbk')
     # 格式化列名，用于之后的绘制
     df.rename(
         columns={
@@ -66,14 +68,17 @@ class DataFinanceDraw(object):
     获取数据，并按照 mplfinanace 需求的格式格式化，然后绘图
     """
 
-    def __init__(self):
+    def __init__(self, code):
+        self.data_long_period_origin = pandas.DataFrame()
         self.data_origin = pandas.DataFrame()
         self.data = None
         self.need_update = False
         self.style = None
+        self.code = code
+        self.freq = 'Day'
 
         # 设置基本参数
-        # type:绘制图形的类型，有candle, renko, ohlc, line等
+        # type:绘制图形的类型, 有candle, renko, ohlc, line等
         # 此处选择candle,即K线图
         # mav(moving average):均线类型,此处设置7,30,60日线
         # volume:布尔类型，设置是否显示成交量，默认False
@@ -86,7 +91,7 @@ class DataFinanceDraw(object):
             type='candle',  # 'ohlc',
             # mav=13, #(7, 30, 60),
             volume=show_volume,
-            title='\nA_stock candle_line',
+            title='{} {}'.format(self.code, self.freq),
             ylabel='OHLC Candles',
             ylabel_lower='Shares\nTraded Volume',
             # axisoff=True,
@@ -135,7 +140,12 @@ class DataFinanceDraw(object):
         mpl.rcParams['lines.linewidth'] = .5
         mpl.rcParams['toolbar'] = 'None'
 
-    def my_data(self, file_name='2020.csv'):
+    def fetch_data(self, code, m, count=250):
+        self.freq = '{}Min'.format(m)
+        self.data_origin = tx.get_min_data(code, m, count)
+        self.data_long_period_origin = tx.get_min_data(code, m, count)
+
+    def load_data(self, file_name='2020.csv'):
         """
         获取数据,把数据格式化成mplfinance的标准格式
         :return:
@@ -143,14 +153,18 @@ class DataFinanceDraw(object):
         data = import_csv(file_name)
         self.data_origin = data
 
-        return data
-
     def more_panel_draw(self):
         data = self.data_origin.iloc[-200:]
         self.data = data
         """
         make_addplot 绘制多个图，这里添加macd指标为例
         """
+        exp12 = data['close'].ewm(span=12, adjust=False).mean()
+        exp26 = data['close'].ewm(span=26, adjust=False).mean()
+        macd = exp12 - exp26
+        signal = macd.ewm(span=9, adjust=False).mean()
+        # 添加macd子图
+        histogram = macd - signal
 
         data = dynamical_system.dynamical_system(data)
         # triple_screen signal
@@ -173,9 +187,22 @@ class DataFinanceDraw(object):
         dlxt_long_period = data["dlxt_long_period"]
         dlxt_long_period.values[:] = 1
 
-        force_index.force_index(data)
+        data = force_index.force_index(data)
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
         force_index_color = [dark_sea_green if v >= 0 else indian_red for v in data["force_index"]]
+
+        # 以交易为生中，采用的是 exp21
+        exp21 = data['close'].ewm(span=21, adjust=False).mean()
+        data = compute_atr(data)
+        self.add_plot.extend([
+            mpf.make_addplot(data['atr'] + exp21, type='line', width=1, panel=0, color='black', linestyle='dotted'),
+            mpf.make_addplot(data['atr']*2 + exp21, type='line', width=1, panel=0, color='black', linestyle='dashdot'),
+            mpf.make_addplot(data['atr']*3 + exp21, type='line', width=1, panel=0, color='black'),
+            mpf.make_addplot(-data['atr'] + exp21, type='line', width=1, panel=0, color='black', linestyle='dotted'),
+            mpf.make_addplot(-data['atr'] * 2 + exp21, type='line', width=1, panel=0, color='black', linestyle='dashdot'),
+            mpf.make_addplot(-data['atr'] * 3 + exp21, type='line', width=1, panel=0, color='black'),
+        ])
+
 
         self.add_plot.extend([
             mpf.make_addplot(data['force_index'], type='bar', width=1, panel=panel_qlzs, color=force_index_color),
@@ -194,13 +221,7 @@ class DataFinanceDraw(object):
             global n_panels
             n_panels += 1
             # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
-            exp12 = data['close'].ewm(span=12, adjust=False).mean()
-            exp26 = data['close'].ewm(span=26, adjust=False).mean()
-            macd = exp12 - exp26
-            signal = macd.ewm(span=9, adjust=False).mean()
 
-            # 添加macd子图
-            histogram = macd - signal
             # histogram[histogram < 0] = None
             # histogram_positive = histogram
             # histogram = macd - signal
@@ -244,17 +265,16 @@ class DataFinanceDraw(object):
         # axlist[-1].xaxis.set_major_formatter(xmajorFormatter)
 
         # cursor = Cursor(self.fig, useblit=True, color='red', linewidth=2)
-        cursor = Cursor(axlist[0], useblit=True, color='grey', linewidth=1)
+        cursor = Cursor(axlist[1], useblit=True, color='grey', linewidth=1)
 
         plt.show()
         # plt.show(block=False)  # 显示
         # plt.close()  # 关闭plt，释放内存
 
 
-def update(candle, csv):
+def update(candle):
     # if candle.fig:
     #     plt.close(candle.fig)
-    candle.my_data(csv)
     candle.more_panel_draw()
     candle.need_update = True
 
@@ -264,12 +284,17 @@ def show(candle):
 
 
 if __name__ == "__main__":
-    candle = DataFinanceDraw()
+    code = '300502'
+    code = '000001'
+    candle = DataFinanceDraw(code)
     # candle.my_data('300502')
     # t = threading.Thread(target=update, args=(candle,))
     # t.start()
-    # update(candle, '300502')
-    update(candle, '000001')
+
+    candle.load_data('data/' + code + '.csv')
+    # candle.fetch_data(code, 5)
+
+    update(candle)
     show(candle)
 
     # signal_triple_screen.signal_exit(candle.my_data('300502'))
