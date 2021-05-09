@@ -39,41 +39,55 @@ def compute_index(quote):
 
     # 长周期动力系统
     quote_week = quote_db.get_price_info_df_db_week(quote)
-    dynamical_system.dynamical_system(quote_week)
+    quote_week = dynamical_system.dynamical_system(quote_week)
     # quote_week.rename(columns={'dlxt': 'dlxt_long_period'}, inplace=True)
     # quote_week.drop(['open', 'close'], axis=1, inplace=True)
     # quote_week = quote_week[['dlxt']]
     dlxt_long_period = quote_week.resample('D').last()
     dlxt_long_period['dlxt'] = quote_week['dlxt'].resample('D').pad()
-    quote['dlxt_long_period'] = dlxt_long_period['dlxt']
+
+    quote_copy = quote.copy()
+    quote_copy.loc[:, 'dlxt_long_period'] = dlxt_long_period['dlxt']
 
     # 中周期动力系统
-    dynamical_system.dynamical_system(quote)
+    quote = dynamical_system.dynamical_system(quote)
 
-    quote['dlxt_long_period_shift'] = quote['dlxt_long_period'].shift(periods=1)
-    quote['dlxt_shift'] = quote['dlxt'].shift(periods=1)
+    quote_copy.loc[:, 'dlxt_long_period_shift'] = dlxt_long_period['dlxt'].shift(periods=1)   # quote['dlxt_long_period'].shift(periods=1)
+    quote_copy.loc[:, 'dlxt_shift'] = quote['dlxt'].shift(periods=1)
 
     # print(quote_week['dlxt'])
     # print(quote['dlxt_long_period'])
     # print(quote['dlxt'])
 
     # 强力指数
-    force_index.force_index(quote)
+    quote_copy = force_index.force_index(quote_copy)
+
+    return quote_copy
 
 
 def signal_enter(quote):
-    compute_index(quote)
+    quote = compute_index(quote)
 
-    quote['triple_screen_signal_enter'] = quote.apply(
+    quote_copy = quote.copy()
+    quote_copy.loc[:, 'triple_screen_signal_enter'] = quote_copy.apply(
         lambda x: function_enter(x.low * 0.99, x.dlxt_long_period, x.dlxt, x.dlxt_long_period_shift, x.dlxt_shift,
                                  x.force_index),
         axis=1)
 
+    return quote_copy
+
 
 def signal_exit(quote):
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
-    compute_index(quote)
+    quote = compute_index(quote)
 
-    quote['triple_screen_signal_exit'] = quote.apply(
+    quote_copy = quote.copy()
+    quote_copy.loc[:, 'triple_screen_signal_exit'] = quote.apply(
         lambda x: function_exit(x.high * 1.01, x.dlxt_long_period, x.dlxt, x.dlxt_long_period_shift, x.dlxt_shift),
         axis=1)
+
+    return quote_copy
+
+
+if __name__ == '__main__':
+    signal_exit()

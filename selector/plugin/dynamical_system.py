@@ -27,15 +27,20 @@ def dynamical_system(quote, n=13):
 
     ema13_shift = ema13.shift(periods=1)
     dlxt_ema = ema13 > ema13_shift
-    quote['dlxt_ema13'] = dlxt_ema.values
 
-    quote['macd'] = histogram
+    quote_copy = quote.copy()
+    quote_copy.loc[:, 'dlxt_ema13'] = dlxt_ema.values
+
+    quote_copy.loc[:, 'macd'] = histogram
     histogram_shift = histogram.shift(periods=1)
     dlxt_macd = histogram > histogram_shift
-    quote['dlxt_macd'] = dlxt_macd.values
+    quote_copy.loc[:, 'dlxt_macd'] = dlxt_macd.values
 
     # df.city.apply(lambda x: 1 if 'ing' in x else 0)
-    quote['dlxt'] = quote.apply(lambda x: function(x.dlxt_ema13, x.dlxt_macd), axis=1)
+    # quote_copy_copy = quote_copy.copy()
+    quote_copy.loc[:, 'dlxt'] = quote_copy.apply(lambda x: function(x.dlxt_ema13, x.dlxt_macd), axis=1)
+
+    return quote_copy
 
     # ema_ = ema13.iloc[-1] > ema13.iloc[-2]
     # macd_ = histogram[-1] > histogram[-2]
@@ -49,18 +54,18 @@ def dynamical_system(quote, n=13):
 
 
 def dynamical_system_green(quote):
-    dynamical_system(quote)
+    quote = dynamical_system(quote)
 
     return True if quote['dlxt'][-1] == 1 else False
 
 
 def dynamical_system_red(quote):
-    dynamical_system(quote)
+    quote = dynamical_system(quote)
 
     return True if quote['dlxt'][-1] == -1 else False
 
 
 def dynamical_system_blue(quote):
-    dynamical_system(quote)
+    quote = dynamical_system(quote)
 
     return True if quote['dlxt'][-1] == 0 else False

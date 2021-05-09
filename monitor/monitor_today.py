@@ -19,7 +19,7 @@ def get_min_data(code, m=5, count=250):
 
 
 def update_status(code, data, m):
-    dynamical_system.dynamical_system(data)
+    data = dynamical_system.dynamical_system(data)
     if not status_map[code][str(m)] or data['dlxt'][-1] != status_map[code][str(m)][-1]:
         status_map[code][str(m)].append((datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), data['dlxt'][-1]))
         return True

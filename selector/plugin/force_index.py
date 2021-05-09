@@ -16,16 +16,19 @@ def force_index(quote, n=2):
     si = si_close * volume_adjust
     si_ema = ema(si, n)
 
-    quote['force_index'] = si_ema.values
+    quote_copy = quote.copy()
+    quote_copy.loc[:, 'force_index'] = si_ema.values
+
+    return quote_copy
 
 
 def force_index_positive(quote):
-    force_index(quote)
+    quote = force_index(quote)
 
     return True if quote['force_index'][-1] > 0 else False
 
 
 def force_index_minus(quote):
-    force_index(quote)
+    quote = force_index(quote)
 
     return True if quote['force_index'][-1] < 0 else False

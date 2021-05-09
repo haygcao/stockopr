@@ -152,14 +152,21 @@ class DataFinanceDraw(object):
         make_addplot 绘制多个图，这里添加macd指标为例
         """
 
-        dynamical_system.dynamical_system(data)
+        data = dynamical_system.dynamical_system(data)
         # triple_screen signal
-        signal_triple_screen.signal_enter(data)
-        signal_triple_screen.signal_exit(data)
-        self.dlxt_long_period_color = ['#A2CD5A' if v > 0 else '#F08080' if v < 0 else '#ADD8E6' for v in data["dlxt_long_period"]]
+        data = signal_triple_screen.signal_enter(data)
+        data = signal_triple_screen.signal_exit(data)
 
         # LightGreen #90EE90   DarkOliveGreen3 #A2CD5A   LightCoral #F08080   IndianRed1 #FF6A6A   LightBlue #ADD8E6
-        self.edge_color = ['#A2CD5A' if v > 0 else '#F08080' if v < 0 else '#ADD8E6' for v in data["dlxt"]]
+        dark_olive_green3 = '#A2CD5A'
+        light_coral = '#F08080'
+        light_blue = '#ADD8E6'
+        indian_red = '#CD5C5C'
+        dark_sea_green = '#8FBC8F'
+
+        self.dlxt_long_period_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in data["dlxt_long_period"]]
+
+        self.edge_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in data["dlxt"]]
         self.set_plot_style()
         dlxt = data["dlxt"]
         dlxt.values[:] = 1
@@ -168,11 +175,11 @@ class DataFinanceDraw(object):
 
         force_index.force_index(data)
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
-        force_index_color = ['#8FBC8F' if v >= 0 else '#CD5C5C' for v in data["force_index"]]
+        force_index_color = [dark_sea_green if v >= 0 else indian_red for v in data["force_index"]]
 
         self.add_plot.extend([
             mpf.make_addplot(data['force_index'], type='bar', width=1, panel=panel_qlzs, color=force_index_color),
-            mpf.make_addplot(data['force_index'], type='line', width=1, panel=panel_qlzs, color='black'),
+            mpf.make_addplot(data['force_index'], type='line', width=1, panel=panel_qlzs, color='dimgrey'),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=panel_dlxt, color=self.edge_color),
             mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=self.dlxt_long_period_color, alpha=0.1)  # , secondary_y=False),
         ])
@@ -201,16 +208,16 @@ class DataFinanceDraw(object):
             # histogram_negative = histogram
 
             # macd panel
-            colors = ['g' if v >= 0 else 'r' for v in histogram]
+            colors = [dark_sea_green if v >= 0 else indian_red for v in histogram]
             self.add_plot.extend(
                 [
-                    mpf.make_addplot(exp12, type='line', color='y'),
-                    mpf.make_addplot(exp26, type='line', color='r'),
+                    mpf.make_addplot(exp12, type='line', color='lightgrey'),
+                    mpf.make_addplot(exp26, type='line', color='dimgrey'),
                     mpf.make_addplot(histogram, type='bar', panel=panel_macd, color=colors),  # color='dimgray'
                     # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
                     # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
-                    mpf.make_addplot(macd, panel=panel_macd, color='fuchsia', secondary_y=True),
-                    mpf.make_addplot(signal, panel=panel_macd, color='b', secondary_y=True), ])
+                    mpf.make_addplot(macd, panel=panel_macd, color='lightgrey', secondary_y=True),
+                    mpf.make_addplot(signal, panel=panel_macd, color='dimgrey', secondary_y=True), ])
 
         # fig = mpf.figure(figsize=(10, 7), style=self.style)  # pass in the self defined style to the whole canvas
         # ax = fig.add_subplot(2, 1, 1)  # main candle stick chart subplot, you can also pass in the self defined style here only for this subplot
@@ -261,8 +268,10 @@ if __name__ == "__main__":
     # candle.my_data('300502')
     # t = threading.Thread(target=update, args=(candle,))
     # t.start()
-    update(candle, '300502')
-    # update(candle, '000001')
+    # update(candle, '300502')
+    update(candle, '000001')
     show(candle)
+
+    # signal_triple_screen.signal_exit(candle.my_data('300502'))
 
     # t.join()
