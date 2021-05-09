@@ -4,6 +4,10 @@ import time
 
 import sys
 
+import numpy
+
+sys.path.append(".")
+
 import mplfinance as mpf
 import matplotlib as mpl  # 用于设置曲线参数
 from cycler import cycler  # 用于定制线条颜色
@@ -12,16 +16,25 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from matplotlib.widgets import Cursor
 
-sys.path.append(".")
+from pointor import signal_triple_screen
 from selector.plugin import dynamical_system, force_index
 
+# http://www.cjzzc.com/web_color.html
 
 show_volume = False
-show_macd = False
+show_macd = True
 panel_volume = 1 if show_volume else 0
+n_panels = 4 if show_volume else 3
 panel_dlxt = panel_volume + 1
 panel_qlzs = panel_dlxt + 1
 panel_macd = panel_qlzs + 1
+
+panel_ratios = {
+    3: (8, 0.2, 1.8),
+    4: [7, 0.2, 1.4, 1.4],
+    5: [8, 0.2, 0.6, 0.6, 0.6]
+}
+
 
 def import_csv(stock_code):
     # 导入股票数据
@@ -29,9 +42,15 @@ def import_csv(stock_code):
     # 格式化列名，用于之后的绘制
     df.rename(
         columns={
-            '日期': 'date', '开盘价': 'open',
-            '最高价': 'high', '最低价': 'low',
-            '收盘价': 'close', '成交量': 'volume'},
+            '股票代码': 'code',
+            '日期': 'date',
+            '开盘价': 'open',
+            '最高价': 'high',
+            '最低价': 'low',
+            '收盘价': 'close',
+            '成交量': 'volume',
+            '成交金额': 'turnover'
+        },
         inplace=True)
     # 转换为日期格式
     df['date'] = pandas.to_datetime(df['date'], format='%Y-%m-%d')
@@ -127,30 +146,46 @@ class DataFinanceDraw(object):
         return data
 
     def more_panel_draw(self):
-        data = self.data_origin.iloc[-100:]
+        data = self.data_origin.iloc[-200:]
         self.data = data
         """
         make_addplot 绘制多个图，这里添加macd指标为例
         """
 
         dynamical_system.dynamical_system(data)
+        # triple_screen signal
+        signal_triple_screen.signal_enter(data)
+        signal_triple_screen.signal_exit(data)
+        self.dlxt_long_period_color = ['#A2CD5A' if v > 0 else '#F08080' if v < 0 else '#ADD8E6' for v in data["dlxt_long_period"]]
+
         # LightGreen #90EE90   DarkOliveGreen3 #A2CD5A   LightCoral #F08080   IndianRed1 #FF6A6A   LightBlue #ADD8E6
         self.edge_color = ['#A2CD5A' if v > 0 else '#F08080' if v < 0 else '#ADD8E6' for v in data["dlxt"]]
         self.set_plot_style()
         dlxt = data["dlxt"]
         dlxt.values[:] = 1
+        dlxt_long_period = data["dlxt_long_period"]
+        dlxt_long_period.values[:] = 1
 
         force_index.force_index(data)
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
         force_index_color = ['#8FBC8F' if v >= 0 else '#CD5C5C' for v in data["force_index"]]
 
-        self.add_plot = [
+        self.add_plot.extend([
             mpf.make_addplot(data['force_index'], type='bar', width=1, panel=panel_qlzs, color=force_index_color),
             mpf.make_addplot(data['force_index'], type='line', width=1, panel=panel_qlzs, color='black'),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=panel_dlxt, color=self.edge_color),
-            # mplfinance.make_addplot(data['PercentB'], panel=1, color='g', secondary_y='auto'),
-        ]
+            mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=self.dlxt_long_period_color, alpha=0.1)  # , secondary_y=False),
+        ])
+
+        if data['triple_screen_signal_enter'].any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(data['triple_screen_signal_enter'], type='scatter', width=1, panel=0, color='g',
+                             markersize=50, marker='^'))
+        if data['triple_screen_signal_exit'].any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(data['triple_screen_signal_exit'], type='scatter', width=1, panel=0, color='r',
+                             markersize=50, marker='v'))
         if show_macd:
+            global n_panels
+            n_panels += 1
             # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
             exp12 = data['close'].ewm(span=12, adjust=False).mean()
             exp26 = data['close'].ewm(span=26, adjust=False).mean()
@@ -190,7 +225,8 @@ class DataFinanceDraw(object):
                                     main_panel=0,
                                     volume_panel=panel_volume,
                                     returnfig=True,
-                                    panel_ratios=(8, 0.2, 1.8)
+                                    #panel_ratios=(8, 0.2, 1.8),
+                                    panel_ratios=panel_ratios[n_panels]
                                     )
 
         # import matplotlib.dates as mdates
@@ -226,7 +262,7 @@ if __name__ == "__main__":
     # t = threading.Thread(target=update, args=(candle,))
     # t.start()
     update(candle, '300502')
+    # update(candle, '000001')
     show(candle)
 
     # t.join()
-

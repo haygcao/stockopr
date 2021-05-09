@@ -1,21 +1,79 @@
 # -*- coding: utf-8 -*-
+import numpy
+
+from acquisition import quote_db
+from selector.plugin import dynamical_system, force_index
 
 
-def function(ema_, macd_):
-    if ema_ and macd_:
-        return 1
+def function_enter(low, dlxt_long_period, dlxt, dlxt_long_period_shift, dlxt_shift, force_index):
+    if dlxt_long_period < 0 or dlxt < 0:
+        return numpy.nan
 
-    if not ema_ and not macd_:
-        return -1
+    if dlxt_long_period_shift < dlxt_long_period and dlxt_long_period > 0:
+        return low
 
-    return 0
+    if dlxt_shift < dlxt:
+        return low
+
+    # if dlxt_long_period > 0 and dlxt > 0:
+    #     return low
+
+    if dlxt > 0 and force_index < 0:
+        return low
+
+    return numpy.nan
+
+
+def function_exit(high, dlxt_long_period, dlxt, dlxt_long_period_shift, dlxt_shift):
+    if dlxt_long_period_shift > dlxt_long_period:
+        return high
+
+    if dlxt_shift > dlxt:
+        return high
+
+    return numpy.nan
+
+
+def compute_index(quote):
+    # 长中周期动力系统中，均不为红色，且至少一个为绿色，强力指数为负
+
+    # 长周期动力系统
+    quote_week = quote_db.get_price_info_df_db_week(quote)
+    dynamical_system.dynamical_system(quote_week)
+    # quote_week.rename(columns={'dlxt': 'dlxt_long_period'}, inplace=True)
+    # quote_week.drop(['open', 'close'], axis=1, inplace=True)
+    # quote_week = quote_week[['dlxt']]
+    dlxt_long_period = quote_week.resample('D').last()
+    dlxt_long_period['dlxt'] = quote_week['dlxt'].resample('D').pad()
+    quote['dlxt_long_period'] = dlxt_long_period['dlxt']
+
+    # 中周期动力系统
+    dynamical_system.dynamical_system(quote)
+
+    quote['dlxt_long_period_shift'] = quote['dlxt_long_period'].shift(periods=1)
+    quote['dlxt_shift'] = quote['dlxt'].shift(periods=1)
+
+    # print(quote_week['dlxt'])
+    # print(quote['dlxt_long_period'])
+    # print(quote['dlxt'])
+
+    # 强力指数
+    force_index.force_index(quote)
 
 
 def signal_enter(quote):
-    # 长中周期动力系统中，均不为红色，且至少一个为绿色，强力指数为负
-    quote['dlxt'] = quote.apply(lambda x: function(x.dlxt_ema13, x.dlxt_macd), axis=1)
+    compute_index(quote)
+
+    quote['triple_screen_signal_enter'] = quote.apply(
+        lambda x: function_enter(x.low * 0.99, x.dlxt_long_period, x.dlxt, x.dlxt_long_period_shift, x.dlxt_shift,
+                                 x.force_index),
+        axis=1)
 
 
 def signal_exit(quote):
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
-    pass
+    compute_index(quote)
+
+    quote['triple_screen_signal_exit'] = quote.apply(
+        lambda x: function_exit(x.high * 1.01, x.dlxt_long_period, x.dlxt, x.dlxt_long_period_shift, x.dlxt_shift),
+        axis=1)
