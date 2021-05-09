@@ -77,27 +77,6 @@ class DataFinanceDraw(object):
         self.code = code
         self.freq = 'Day'
 
-        # 设置基本参数
-        # type:绘制图形的类型, 有candle, renko, ohlc, line等
-        # 此处选择candle,即K线图
-        # mav(moving average):均线类型,此处设置7,30,60日线
-        # volume:布尔类型，设置是否显示成交量，默认False
-        # title:设置标题
-        # y_label:设置纵轴主标题
-        # y_label_lower:设置成交量图一栏的标题
-        # figratio:设置图形纵横比
-        # figscale:设置图形尺寸(数值越大图像质量越高)
-        self.kwargs = dict(
-            type='candle',  # 'ohlc',
-            # mav=13, #(7, 30, 60),
-            volume=show_volume,
-            title='{} {}'.format(self.code, self.freq),
-            ylabel='OHLC Candles',
-            ylabel_lower='Shares\nTraded Volume',
-            # axisoff=True,
-            figratio=(16, 9),
-            figscale=1)
-
         self.add_plot = []
         self.fig = None
         self.edge_color = []
@@ -192,15 +171,16 @@ class DataFinanceDraw(object):
         force_index_color = [dark_sea_green if v >= 0 else indian_red for v in data["force_index"]]
 
         # 以交易为生中，采用的是 exp21
-        exp21 = data['close'].ewm(span=21, adjust=False).mean()
+        # exp = data['close'].ewm(span=21, adjust=False).mean()
+        exp = exp26
         data = compute_atr(data)
         self.add_plot.extend([
-            mpf.make_addplot(data['atr'] + exp21, type='line', width=1, panel=0, color='black', linestyle='dotted'),
-            mpf.make_addplot(data['atr']*2 + exp21, type='line', width=1, panel=0, color='black', linestyle='dashdot'),
-            mpf.make_addplot(data['atr']*3 + exp21, type='line', width=1, panel=0, color='black'),
-            mpf.make_addplot(-data['atr'] + exp21, type='line', width=1, panel=0, color='black', linestyle='dotted'),
-            mpf.make_addplot(-data['atr'] * 2 + exp21, type='line', width=1, panel=0, color='black', linestyle='dashdot'),
-            mpf.make_addplot(-data['atr'] * 3 + exp21, type='line', width=1, panel=0, color='black'),
+            mpf.make_addplot(data['atr'] + exp, type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
+            mpf.make_addplot(data['atr']*2 + exp, type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
+            mpf.make_addplot(data['atr']*3 + exp, type='line', width=1, panel=0, color='dimgrey'),
+            mpf.make_addplot(-data['atr'] + exp, type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
+            mpf.make_addplot(-data['atr'] * 2 + exp, type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
+            mpf.make_addplot(-data['atr'] * 3 + exp, type='line', width=1, panel=0, color='dimgrey'),
         ])
 
 
@@ -233,7 +213,7 @@ class DataFinanceDraw(object):
             self.add_plot.extend(
                 [
                     mpf.make_addplot(exp12, type='line', color='lightgrey'),
-                    mpf.make_addplot(exp26, type='line', color='dimgrey'),
+                    mpf.make_addplot(exp26, type='line', color='black'),
                     mpf.make_addplot(histogram, type='bar', panel=panel_macd, color=colors),  # color='dimgray'
                     # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
                     # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
@@ -246,6 +226,27 @@ class DataFinanceDraw(object):
         # mpf.plot(self.data, type='candle', ax=ax, volume=av)
 
     def show(self):
+        # 设置基本参数
+        # type:绘制图形的类型, 有candle, renko, ohlc, line等
+        # 此处选择candle,即K线图
+        # mav(moving average):均线类型,此处设置7,30,60日线
+        # volume:布尔类型，设置是否显示成交量，默认False
+        # title:设置标题
+        # y_label:设置纵轴主标题
+        # y_label_lower:设置成交量图一栏的标题
+        # figratio:设置图形纵横比
+        # figscale:设置图形尺寸(数值越大图像质量越高)
+        self.kwargs = dict(
+            type='candle',  # 'ohlc',
+            # mav=13, #(7, 30, 60),
+            volume=show_volume,
+            title='{} {}'.format(self.code, self.freq),
+            ylabel='OHLC Candles',
+            ylabel_lower='Shares\nTraded Volume',
+            # axisoff=True,
+            figratio=(16, 9),
+            figscale=1)
+
         self.fig, axlist = mpf.plot(self.data, **self.kwargs,
                                     style=self.style,
                                     show_nontrading=False,
@@ -291,8 +292,8 @@ if __name__ == "__main__":
     # t = threading.Thread(target=update, args=(candle,))
     # t.start()
 
-    candle.load_data('data/' + code + '.csv')
-    # candle.fetch_data(code, 5)
+    # candle.load_data('data/' + code + '.csv')
+    candle.fetch_data(code, 5)
 
     update(candle)
     show(candle)

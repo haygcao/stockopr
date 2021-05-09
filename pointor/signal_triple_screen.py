@@ -49,7 +49,6 @@ def compute_index(quote, quote_long_period=None):
         period_type = 'W'
         period_type_reverse = 'D'
     # 长周期动力系统
-    period = quote
     quote_week = quote_long_period if quote_long_period else quote_db.get_price_info_df_db_week(quote, period_type)
     quote_week = dynamical_system.dynamical_system(quote_week)
     # quote_week.rename(columns={'dlxt': 'dlxt_long_period'}, inplace=True)
@@ -82,7 +81,7 @@ def signal_enter(quote, quote_long_period=None):
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'triple_screen_signal_enter'] = quote_copy.apply(
-        lambda x: function_enter(x.low * 0.99, x.dlxt_long_period, x.dlxt, x.dlxt_long_period_shift, x.dlxt_shift,
+        lambda x: function_enter(x.low, x.dlxt_long_period, x.dlxt, x.dlxt_long_period_shift, x.dlxt_shift,
                                  x.force_index),
         axis=1)
 
@@ -95,7 +94,7 @@ def signal_exit(quote, quote_long_period=None):
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'triple_screen_signal_exit'] = quote.apply(
-        lambda x: function_exit(x.high * 1.01, x.dlxt_long_period, x.dlxt, x.dlxt_long_period_shift, x.dlxt_shift),
+        lambda x: function_exit(x.high, x.dlxt_long_period, x.dlxt, x.dlxt_long_period_shift, x.dlxt_shift),
         axis=1)
 
     return quote_copy
