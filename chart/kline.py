@@ -23,14 +23,6 @@ from selector.plugin import dynamical_system, force_index
 
 # http://www.cjzzc.com/web_color.html
 
-show_volume = False
-show_macd = True
-panel_volume = 1 if show_volume else 0
-n_panels = 4 if show_volume else 3
-panel_dlxt = panel_volume + 1
-panel_qlzs = panel_dlxt + 1
-panel_macd = panel_qlzs + 1
-
 panel_ratios = {
     3: (8, 0.2, 1.8),
     4: [7, 0.2, 1.4, 1.4],
@@ -69,6 +61,14 @@ class DataFinanceDraw(object):
     """
 
     def __init__(self, code):
+        self.show_volume = False
+        self.show_macd = True
+        self.panel_volume = 1 if self.show_volume else 0
+        self.n_panels = 4 if self.show_volume else 3
+        self.panel_dlxt = self.panel_volume + 1
+        self.panel_qlzs = self.panel_dlxt + 1
+        self.panel_macd = self.panel_qlzs + 1
+
         self.data_long_period_origin = pandas.DataFrame()
         self.data = pandas.DataFrame()
         self.need_update = False
@@ -117,6 +117,8 @@ class DataFinanceDraw(object):
         # 设置线宽
         mpl.rcParams['lines.linewidth'] = .5
         mpl.rcParams['toolbar'] = 'None'
+        # mpl.rcParams['interactive'] = True
+        mpl.rcParams['axes.titlesize'] = 1
 
     def fetch_data(self, code, period, count=250):
         self.period = period
@@ -183,9 +185,9 @@ class DataFinanceDraw(object):
 
 
         self.add_plot.extend([
-            mpf.make_addplot(data['force_index'], type='bar', width=1, panel=panel_qlzs, color=force_index_color),
-            mpf.make_addplot(data['force_index'], type='line', width=1, panel=panel_qlzs, color='dimgrey'),
-            mpf.make_addplot(dlxt, type='bar', width=1, panel=panel_dlxt, color=self.edge_color),
+            mpf.make_addplot(data['force_index'], type='bar', width=1, panel=self.panel_qlzs, color=force_index_color),
+            mpf.make_addplot(data['force_index'], type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
+            mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=self.edge_color),
             mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=self.dlxt_long_period_color, alpha=0.1)  # , secondary_y=False),
         ])
 
@@ -195,9 +197,9 @@ class DataFinanceDraw(object):
         if data['triple_screen_signal_exit'].any(skipna=True):
             self.add_plot.append(mpf.make_addplot(data['triple_screen_signal_exit'], type='scatter', width=1, panel=0, color='r',
                              markersize=50, marker='v'))
-        if show_macd:
-            global n_panels
-            n_panels += 1
+
+        if self.show_macd:
+            self.n_panels += 1
             # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
 
             # histogram[histogram < 0] = None
@@ -212,11 +214,11 @@ class DataFinanceDraw(object):
                 [
                     mpf.make_addplot(exp12, type='line', color='lightgrey'),
                     mpf.make_addplot(exp26, type='line', color='black'),
-                    mpf.make_addplot(histogram, type='bar', panel=panel_macd, color=colors),  # color='dimgray'
+                    mpf.make_addplot(histogram, type='bar', panel=self.panel_macd, color=colors),  # color='dimgray'
                     # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
                     # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
-                    mpf.make_addplot(macd, panel=panel_macd, color='lightgrey', secondary_y=True),
-                    mpf.make_addplot(signal, panel=panel_macd, color='dimgrey', secondary_y=True), ])
+                    mpf.make_addplot(macd, panel=self.panel_macd, color='lightgrey', secondary_y=True),
+                    mpf.make_addplot(signal, panel=self.panel_macd, color='dimgrey', secondary_y=True), ])
 
         # fig = mpf.figure(figsize=(10, 7), style=self.style)  # pass in the self defined style to the whole canvas
         # ax = fig.add_subplot(2, 1, 1)  # main candle stick chart subplot, you can also pass in the self defined style here only for this subplot
@@ -237,12 +239,12 @@ class DataFinanceDraw(object):
         self.kwargs = dict(
             type='candle',  # 'ohlc',
             # mav=13, #(7, 30, 60),
-            volume=show_volume,
+            volume=self.show_volume,
             title='{} {}'.format(self.code, self.period),
             ylabel='OHLC Candles',
             ylabel_lower='Shares\nTraded Volume',
             # axisoff=True,
-            figratio=(16, 9),
+            figratio=(2, 1),
             figscale=1)
 
         self.fig, axlist = mpf.plot(self.data, **self.kwargs,
@@ -250,21 +252,24 @@ class DataFinanceDraw(object):
                                     show_nontrading=False,
                                     addplot=self.add_plot,
                                     main_panel=0,
-                                    volume_panel=panel_volume,
+                                    volume_panel=self.panel_volume,
                                     returnfig=True,
                                     #panel_ratios=(8, 0.2, 1.8),
-                                    panel_ratios=panel_ratios[n_panels]
+                                    panel_ratios=panel_ratios[self.n_panels]
                                     )
 
         # import matplotlib.dates as mdates
         # xmajorLocator = mdates.DayLocator(1)
         # xmajorFormatter = mdates.DateFormatter('%Y-%m-%d')
         # xminorLocator = mdates.DayLocator()
-        # axlist[-1].xaxis.set_major_locator(xmajorLocator)
-        # axlist[-1].xaxis.set_major_formatter(xmajorFormatter)
+        # axlist[1].xaxis.set_major_locator(xmajorLocator)
+        # axlist[1].xaxis.set_major_formatter(xmajorFormatter)
 
         # cursor = Cursor(self.fig, useblit=True, color='red', linewidth=2)
         cursor = Cursor(axlist[1], useblit=True, color='grey', linewidth=1)
+
+        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+        plt.margins(0, 0)
 
         plt.show()
         # plt.show(block=False)  # 显示
@@ -295,7 +300,7 @@ def open_graph(code, peroid, path=None):
 
 if __name__ == "__main__":
     code = '300502'
-    period = 'day'   # m5 m30 day week
+    period = 'm1'   # m5 m30 day week
     open_graph(code, period)
 
     # code = '000001'
