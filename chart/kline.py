@@ -119,14 +119,14 @@ class DataFinanceDraw(object):
         mpl.rcParams['lines.linewidth'] = .5
         mpl.rcParams['toolbar'] = 'None'
 
-    def fetch_data(self, code, m, count=250):
-        self.freq = '{}Min'.format(m)
-        self.data_origin = tx.get_min_data(code, m, count)
-        self.data_long_period_origin = tx.get_min_data(code, m, count)
+    def fetch_data(self, code, period, count=250):
+        self.freq = period
+        self.data_origin = tx.get_kline_data(code, period, count)
+        # self.data_long_period_origin = tx.get_min_data(code, period, count)
 
     def load_data(self, file_name='2020.csv'):
         """
-        获取数据,把数据格式化成mplfinance的标准格式
+        获取数据, 把数据格式化成 mplfinance 的标准格式
         :return:
         """
         data = import_csv(file_name)
@@ -286,14 +286,14 @@ def show(candle):
 
 if __name__ == "__main__":
     code = '300502'
-    code = '000001'
+    # code = '000001'
     candle = DataFinanceDraw(code)
     # candle.my_data('300502')
     # t = threading.Thread(target=update, args=(candle,))
     # t.start()
 
     # candle.load_data('data/' + code + '.csv')
-    candle.fetch_data(code, 5)
+    candle.fetch_data(code, 'day')
 
     update(candle)
     show(candle)

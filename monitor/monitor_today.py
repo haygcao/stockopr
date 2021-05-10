@@ -6,7 +6,6 @@ import sys
 sys.path.append('.')
 
 from selector.plugin import dynamical_system
-
 from acquisition import tx
 
 
@@ -14,7 +13,12 @@ status_map = {}
 
 
 def get_min_data(code, m=5, count=250):
-    data = tx.get_min_data(code, m, count)
+    data = tx.get_kline_data(code, 'm{}'.format(m), count)
+    return data
+
+
+def get_day_data(code, period='day', count=250):
+    data = tx.get_kline_data(code, period, count)
     return data
 
 

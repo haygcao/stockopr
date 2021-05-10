@@ -9,33 +9,41 @@ import requests
 import xlrd
 
 url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
-url_min = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{m},,{count}'
+url_min = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
+url_day = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{period},,,{count},qfq'   # 2020-7-16,2021-5-7,
 
 def init():
     if not os.path.exists('data/xls'):
         os.makedirs('data/xls')
 
 
-def get_min_data(code, m, count=250):
+def get_kline_data(code, period='day', count=250):
     symbol = '{}{}'.format('sh' if code.startswith('6') else 'sz', code)
-    url = url_min.format(code=symbol, m='m{}'.format(m), count=count)
+    is_minute_data = period.startswith('m')
+    if is_minute_data:
+        url = url_min.format(code=symbol, period=period, count=count)
+    else:
+        url = url_day.format(code=symbol, period=period, count=count)
     ret = requests.get(url)
     import json
     d = json.loads(ret.content)
 
-    if m == 5:
-        m30 = d['data'][symbol]['m5']
-    else:
-        m30 = d['data'][symbol]['m30']
+    quote = d['data'][symbol][period if is_minute_data else 'qfq{}'.format(period)]
+
     d_3m3 = {}
 
     columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'turnover']
     data = []
     index_list = []
-    for row in m30:
+    for row in quote:
         import datetime as dt
-        index_list.append(dt.datetime.strptime(row[0], '%Y%m%d%H%M').strftime("%Y-%m-%d %H:%M"))
-        data.append([code, float(row[1]), float(row[2]), float(row[3]), float(row[4]), float(row[5]), float(row[7])])
+        if is_minute_data:
+            index_list.append(dt.datetime.strptime(row[0], '%Y%m%d%H%M').strftime('%Y-%m-%d %H:%M'))
+            data.append([code, float(row[1]), float(row[2]), float(row[3]), float(row[4]), float(row[5]), float(row[7])])
+        else:
+            index_list.append(row[0])
+            data.append(
+                [code, float(row[1]), float(row[2]), float(row[3]), float(row[4]), float(row[5]), 0])
 
     d_3m3['index'] = index_list
     d_3m3['columns'] = columns
