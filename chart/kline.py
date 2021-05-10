@@ -70,8 +70,7 @@ class DataFinanceDraw(object):
 
     def __init__(self, code):
         self.data_long_period_origin = pandas.DataFrame()
-        self.data_origin = pandas.DataFrame()
-        self.data = None
+        self.data = pandas.DataFrame()
         self.need_update = False
         self.style = None
         self.code = code
@@ -121,20 +120,19 @@ class DataFinanceDraw(object):
 
     def fetch_data(self, code, period, count=250):
         self.freq = period
-        self.data_origin = tx.get_kline_data(code, period, count)
+        self.data = tx.get_kline_data(code, period, count)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
 
-    def load_data(self, file_name='2020.csv'):
+    def load_data(self, file_name='2020.csv', count=250):
         """
         获取数据, 把数据格式化成 mplfinance 的标准格式
         :return:
         """
         data = import_csv(file_name)
-        self.data_origin = data
+        self.data = data.iloc[-count:]
 
     def more_panel_draw(self):
-        data = self.data_origin.iloc[-200:]
-        self.data = data
+        data = self.data
         """
         make_addplot 绘制多个图，这里添加macd指标为例
         """
@@ -292,8 +290,8 @@ if __name__ == "__main__":
     # t = threading.Thread(target=update, args=(candle,))
     # t.start()
 
-    # candle.load_data('data/' + code + '.csv')
-    candle.fetch_data(code, 'day')
+    candle.load_data('data/' + code + '.csv')
+    candle.fetch_data(code, 'week')   # m5 m30 day week
 
     update(candle)
     show(candle)

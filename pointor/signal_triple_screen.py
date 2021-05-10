@@ -45,9 +45,15 @@ def compute_index(quote, quote_long_period=None):
     elif minutes == 5:
         period_type = '30min'
         period_type_reverse = '5min'
+    elif minutes == 30:
+        period_type = 'D'
+        period_type_reverse = '30min'
     elif minutes == 1440:
         period_type = 'W'
         period_type_reverse = 'D'
+    elif minutes > 1440:
+        period_type = 'M'
+        period_type_reverse = 'W'
     # 长周期动力系统
     quote_week = quote_long_period if quote_long_period else quote_db.get_price_info_df_db_week(quote, period_type)
     quote_week = dynamical_system.dynamical_system(quote_week)

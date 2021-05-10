@@ -10,7 +10,7 @@ import xlrd
 
 url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
 url_min = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
-url_day = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{period},,,{count},qfq'   # 2020-7-16,2021-5-7,
+url_day = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{period},{start_date},,{count},qfq'   # 2020-7-16,2021-5-7,
 
 def init():
     if not os.path.exists('data/xls'):
@@ -23,7 +23,9 @@ def get_kline_data(code, period='day', count=250):
     if is_minute_data:
         url = url_min.format(code=symbol, period=period, count=count)
     else:
-        url = url_day.format(code=symbol, period=period, count=count)
+        # week 无法复权
+        start_date = datetime.date.today() - datetime.timedelta(count if period == 'day' else count * 7)
+        url = url_day.format(code=symbol, period=period, start_date=start_date.strftime('%Y-%m-%d'), count=count)
     ret = requests.get(url)
     import json
     d = json.loads(ret.content)
