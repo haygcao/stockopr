@@ -74,7 +74,7 @@ class DataFinanceDraw(object):
         self.need_update = False
         self.style = None
         self.code = code
-        self.freq = 'Day'
+        self.period = 'day'
 
         self.add_plot = []
         self.fig = None
@@ -90,9 +90,9 @@ class DataFinanceDraw(object):
         # inherit:是否继承，选填
         mc = mpf.make_marketcolors(
             up='white', #'dimgray',
-            down='grey',
-            edge='black',
-            wick='black',
+            down='lightgrey',
+            edge='grey',
+            wick='grey',
             volume='in',
             inherit=False)
 
@@ -119,7 +119,7 @@ class DataFinanceDraw(object):
         mpl.rcParams['toolbar'] = 'None'
 
     def fetch_data(self, code, period, count=250):
-        self.freq = period
+        self.period = period
         self.data = tx.get_kline_data(code, period, count)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
 
@@ -143,10 +143,10 @@ class DataFinanceDraw(object):
         # 添加macd子图
         histogram = macd - signal
 
-        data = dynamical_system.dynamical_system(data)
+        # data = dynamical_system.dynamical_system(data)
         # triple_screen signal
-        data = signal_triple_screen.signal_enter(data)
-        data = signal_triple_screen.signal_exit(data)
+        data = signal_triple_screen.signal_enter(data, period=self.period)
+        data = signal_triple_screen.signal_exit(data, period=self.period)
 
         # LightGreen #90EE90   DarkOliveGreen3 #A2CD5A   LightCoral #F08080   IndianRed1 #FF6A6A   LightBlue #ADD8E6
         dark_olive_green3 = '#A2CD5A'
@@ -238,7 +238,7 @@ class DataFinanceDraw(object):
             type='candle',  # 'ohlc',
             # mav=13, #(7, 30, 60),
             volume=show_volume,
-            title='{} {}'.format(self.code, self.freq),
+            title='{} {}'.format(self.code, self.period),
             ylabel='OHLC Candles',
             ylabel_lower='Shares\nTraded Volume',
             # axisoff=True,
@@ -282,20 +282,26 @@ def show(candle):
     candle.show()
 
 
-if __name__ == "__main__":
-    code = '300502'
-    # code = '000001'
+def open_graph(code, peroid, path=None):
     candle = DataFinanceDraw(code)
-    # candle.my_data('300502')
-    # t = threading.Thread(target=update, args=(candle,))
-    # t.start()
-
-    candle.load_data('data/' + code + '.csv')
-    candle.fetch_data(code, 'week')   # m5 m30 day week
+    if path:
+        candle.load_data('data/' + code + '.csv')
+    else:
+        candle.fetch_data(code, peroid)
 
     update(candle)
     show(candle)
 
-    # signal_triple_screen.signal_exit(candle.my_data('300502'))
 
+if __name__ == "__main__":
+    code = '300502'
+    period = 'day'   # m5 m30 day week
+    open_graph(code, period)
+
+    # code = '000001'
+    # candle = DataFinanceDraw(code)
+    # candle.load_data('data/' + code + '.csv')
+    # t = threading.Thread(target=update, args=(candle,))
+    # t.start()
+    # show()
     # t.join()

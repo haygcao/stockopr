@@ -225,3 +225,12 @@ TR_LZ = 3
 B = 'B'
 S = 'S'
 N = ''
+
+
+period_map = {
+        'm1': {'period': '1min', 'long_period': '5min', 'kline_long_period': 'm5'},
+        'm5': {'period': '5min', 'long_period': '30min', 'kline_long_period': 'm30'},
+        'm30': {'period': '30min', 'long_period': 'D', 'kline_long_period': 'day'},
+        'day': {'period': 'D', 'long_period': 'W', 'kline_long_period': 'week'},
+        'week': {'period': 'W', 'long_period': 'M', 'kline_long_period': 'month'},
+    }
