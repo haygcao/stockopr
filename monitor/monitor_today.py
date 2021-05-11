@@ -96,6 +96,13 @@ def notify(code, direct, type):
 
 def monitor(codes, period):
     while True:
+        now = datetime.datetime.now()
+        if now.hour == 15:
+            return
+        if now.hour == 12 or (now.hour == 11 and now.minute > 30):
+            time.sleep(60)
+            continue
+
         for code in codes:
             period_signal = check(code, period)
             if period_signal:
