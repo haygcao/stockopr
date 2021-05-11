@@ -70,7 +70,8 @@ class DataFinanceDraw(object):
         self.panel_macd = self.panel_qlzs + 1
 
         self.data_long_period_origin = pandas.DataFrame()
-        self.data = pandas.DataFrame()
+        self.data_origin = pandas.DataFrame()
+        self.data = None
         self.need_update = False
         self.style = None
         self.code = code
@@ -78,7 +79,8 @@ class DataFinanceDraw(object):
 
         self.add_plot = []
         self.fig = None
-        self.edge_color = []
+
+        self.set_plot_style()
 
     def set_plot_style(self):
         # 设置marketcolors
@@ -122,7 +124,7 @@ class DataFinanceDraw(object):
 
     def fetch_data(self, code, period, count=250):
         self.period = period
-        self.data = tx.get_kline_data(code, period, count)
+        self.data_origin = tx.get_kline_data(code, period, count)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
 
     def load_data(self, file_name='2020.csv', count=250):
@@ -131,10 +133,11 @@ class DataFinanceDraw(object):
         :return:
         """
         data = import_csv(file_name)
-        self.data = data.iloc[-count:]
+        self.data_origin = data.iloc[-count:]
 
     def more_panel_draw(self):
-        data = self.data
+        data = self.data_origin   # .iloc[-100:]
+        self.data = data
         """
         make_addplot 绘制多个图，这里添加macd指标为例
         """
@@ -153,6 +156,9 @@ class DataFinanceDraw(object):
         data = signal_channel.signal_enter(data)
         data = signal_channel.signal_exit(data)
 
+        dlxt = data["dlxt"]
+        dlxt_long_period = data["dlxt_long_period"]
+
         # LightGreen #90EE90   DarkOliveGreen3 #A2CD5A   LightCoral #F08080   IndianRed1 #FF6A6A   LightBlue #ADD8E6
         dark_olive_green3 = '#A2CD5A'
         light_coral = '#F08080'
@@ -160,57 +166,67 @@ class DataFinanceDraw(object):
         indian_red = '#CD5C5C'
         dark_sea_green = '#8FBC8F'
 
-        self.dlxt_long_period_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in data["dlxt_long_period"]]
-
-        self.edge_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in data["dlxt"]]
-        self.set_plot_style()
-        dlxt = data["dlxt"]
-        dlxt.values[:] = 1
-        dlxt_long_period = data["dlxt_long_period"]
-        dlxt_long_period.values[:] = data['low']
-
         data = force_index.force_index(data)
+        data_force_index = data['force_index']
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
-        force_index_color = [dark_sea_green if v >= 0 else indian_red for v in data["force_index"]]
 
         # 以交易为生中，采用的是 exp21
         # exp = data['close'].ewm(span=21, adjust=False).mean()
         exp = exp26
         data = compute_atr(data)
+
+        # data = data.iloc[-100:]
+
+        dlxt_long_period_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
+                                  dlxt_long_period]
+        dlxt_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in dlxt]
+
+        force_index_color = [dark_sea_green if v >= 0 else indian_red for v in data["force_index"]]
+
+        data_atr = data['atr']
         self.add_plot.extend([
-            mpf.make_addplot(data['atr'] + exp, type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
-            mpf.make_addplot(data['atr']*2 + exp, type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
-            mpf.make_addplot(data['atr']*3 + exp, type='line', width=1, panel=0, color='dimgrey'),
-            mpf.make_addplot(-data['atr'] + exp, type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
-            mpf.make_addplot(-data['atr'] * 2 + exp, type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
-            mpf.make_addplot(-data['atr'] * 3 + exp, type='line', width=1, panel=0, color='dimgrey'),
+            mpf.make_addplot(data_atr + exp, type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
+            mpf.make_addplot(data_atr * 2 + exp, type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
+            mpf.make_addplot(data_atr * 3 + exp, type='line', width=1, panel=0, color='dimgrey'),
+            mpf.make_addplot(-data_atr + exp, type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
+            mpf.make_addplot(-data_atr * 2 + exp, type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
+            mpf.make_addplot(-data_atr * 3 + exp, type='line', width=1, panel=0, color='dimgrey'),
         ])
 
-
+        dlxt.values[:] = 1
+        dlxt_long_period.values[:] = data['low']
         self.add_plot.extend([
-            mpf.make_addplot(data['force_index'], type='bar', width=1, panel=self.panel_qlzs, color=force_index_color),
-            mpf.make_addplot(data['force_index'], type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
-            mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=self.edge_color),
-            mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=self.dlxt_long_period_color, alpha=0.1)  # , secondary_y=False),
+            mpf.make_addplot(exp12, type='line', color='lightgrey'),
+            mpf.make_addplot(exp26, type='line', color='black'),
+            mpf.make_addplot(data_force_index, type='bar', width=1, panel=self.panel_qlzs, color=force_index_color),
+            mpf.make_addplot(data_force_index, type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
+            mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
+            mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color,
+                             alpha=0.1)  # , secondary_y=False),
         ])
 
         if data['channel_signal_enter'].any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(data['channel_signal_enter'], type='scatter', width=1, panel=0, color='lightgrey',
-                             markersize=50, marker='^'))
+            self.add_plot.append(
+                mpf.make_addplot(data['channel_signal_enter'], type='scatter', width=1, panel=0, color='lightgrey',
+                                 markersize=50, marker='^'))
         if data['channel_signal_exit'].any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(data['channel_signal_exit'], type='scatter', width=1, panel=0, color='dimgrey',
-                             markersize=50, marker='v'))
+            self.add_plot.append(
+                mpf.make_addplot(data['channel_signal_exit'], type='scatter', width=1, panel=0, color='dimgrey',
+                                 markersize=50, marker='v'))
 
         if data['triple_screen_signal_enter'].any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(data['triple_screen_signal_enter'], type='scatter', width=1, panel=0, color='g',
-                             markersize=50, marker='^'))
+            self.add_plot.append(
+                mpf.make_addplot(data['triple_screen_signal_enter'], type='scatter', width=1, panel=0, color='g',
+                                 markersize=50, marker='^'))
         if data['triple_screen_signal_exit'].any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(data['triple_screen_signal_exit'], type='scatter', width=1, panel=0, color='r',
-                             markersize=50, marker='v'))
+            self.add_plot.append(
+                mpf.make_addplot(data['triple_screen_signal_exit'], type='scatter', width=1, panel=0, color='r',
+                                 markersize=50, marker='v'))
 
         if self.show_macd:
             self.n_panels += 1
-            # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
+            # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
+            # 如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
 
             # histogram[histogram < 0] = None
             # histogram_positive = histogram
@@ -222,8 +238,6 @@ class DataFinanceDraw(object):
             colors = [dark_sea_green if v >= 0 else indian_red for v in histogram]
             self.add_plot.extend(
                 [
-                    mpf.make_addplot(exp12, type='line', color='lightgrey'),
-                    mpf.make_addplot(exp26, type='line', color='black'),
                     mpf.make_addplot(histogram, type='bar', panel=self.panel_macd, color=colors),  # color='dimgray'
                     # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
                     # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
@@ -309,11 +323,12 @@ class DataFinanceDraw(object):
         # axlist[0].yaxis.tick_right()
         axlist[0].tick_params(axis='y', which='both', labelleft=False, labelright=True)
         axlist[1].tick_params(axis='y', which='both', labelleft=True, labelright=False)
-        self.fig.tight_layout()
+
+        # self.fig.tight_layout()
         # print(len(axlist))   # 8
 
-        ylim_min = self.data['low'].min()
-        ylim_max = self.data['high'].max()
+        ylim_min = self.data_origin['low'].min()
+        ylim_max = self.data_origin['high'].max()
         diff = (ylim_max - ylim_min) * 0.1
         axlist[0].set_ylim(ymin=ylim_min - diff, ymax=ylim_max + diff)
         # # 没有效果

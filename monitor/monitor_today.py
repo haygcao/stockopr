@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
+import multiprocessing
 import time
 
 import sys
+
+import numpy
 
 from chart.kline import open_graph
 from config.config import period_map
@@ -25,35 +28,45 @@ def get_day_data(code, period='day', count=250):
 
 
 def update_status(code, data, period):
+    data_index_ = data.index[-1]
+    period_status = status_map[code][str(period)]
+    if period_status:
+        if period.startswith('m') and (data_index_ - period_status[-1]['date']).seconds < int(period[1:])*60:
+            print('{} - no new data'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            return False
+
     # triple_screen signal
     data = signal_triple_screen.signal_enter(data, period=period)
     data = signal_triple_screen.signal_exit(data, period=period)
 
-    if not data['triple_screen_signal_enter'][-1]:
-        status_map[code][str(period)].append({'date': data.index[-1], 'command': 'B', 'type': 'triple screen', 'last': True})
+    if data['triple_screen_signal_enter'][-1] > 0:
+    # if not numpy.isnan(data['triple_screen_signal_enter'][-1]):
+        print(data['triple_screen_signal_enter'][-1])
+        period_status.append({'date': data_index_, 'command': 'B', 'type': 'triple screen', 'last': True})
         return True
 
-    if not data['triple_screen_signal_exit'][-1]:
-        status_map[code][str(period)].append({'date': data.index[-1], 'command': 'S', 'type': 'triple screen', 'last': True})
+    if not numpy.isnan(data['triple_screen_signal_exit'][-1]):
+        period_status.append({'date': data_index_, 'command': 'S', 'type': 'triple screen', 'last': True})
         return True
 
     data = signal_channel.signal_enter(data)
     data = signal_channel.signal_exit(data)
 
-    if not data['channel_signal_enter'][-1]:
-        status_map[code][str(period)].append({'date': data.index[-1], 'command': 'B', 'type': 'channel', 'last': True})
+    if not numpy.isnan(data['channel_signal_enter'][-1]):
+        print(data['channel_signal_enter'][-1])
+        period_status.append({'date': data_index_, 'command': 'B', 'type': 'channel', 'last': True})
         return True
 
-    if not data['channel_signal_exit'][-1]:
-        status_map[code][str(period)].append({'date': data.index[-1], 'command': 'S', 'type': 'channel', 'last': True})
+    if not numpy.isnan(data['channel_signal_exit'][-1]):
+        period_status.append({'date': data_index_, 'command': 'S', 'type': 'channel', 'last': True})
         return True
 
     # if not status_map[code][str(m)] or data['dlxt'][-1] != status_map[code][str(m)][-1]:
     #     status_map[code][str(m)].append((datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), data['dlxt'][-1]))
     #     return True
 
-    if status_map[code][str(period)]:
-        status_map[code][str(period)][-1]['last'] = False
+    if period_status:
+        period_status[-1]['last'] = False
 
     return False
 
@@ -61,36 +74,45 @@ def update_status(code, data, period):
 def check(code, period):
     long_period = period_map[period]['kline_long_period']
     data30 = get_min_data(code, long_period)
-    print('now check {} status'.format(long_period))
-    update_status(code, data30, long_period)
+    print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), long_period))
+    if update_status(code, data30, long_period):
+        return long_period
 
     data5 = get_min_data(code, period)
-    print('now check {} status'.format(period))
-    if not update_status(code, data5, period):
-        return False
-    return True
+    print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), period))
+    if update_status(code, data5, period):
+        return period
 
 
-def notify(code, direct):
+def notify(code, direct, type):
     # log
     command = '买入' if direct == 'B' else '卖出'
     # tts
     from toolkit import tts
-    tts.say('注意交易信号{} {} {} {}'.format(code, command, command, command))
+    txt = '注意, {1}信号, {2}, {0}'.format(' '.join(code), command, type)
+    print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), txt))
+    tts.say(txt)
 
 
 def monitor(codes, period):
     while True:
         for code in codes:
-            if check(code, period):
-                notify(code, status_map[code][period][-1]['command'])
-                open_graph(code, period)
-            print(status_map)
+            period_signal = check(code, period)
+            if period_signal:
+                print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), status_map))
+
+                p = multiprocessing.Process(target=open_graph, args=(code, period,))
+                p.start()
+
+                singal_info = status_map[code][period_signal][-1]
+                notify(code, singal_info['command'], singal_info['type'])
+
+                p.join(timeout=1)
         time.sleep(60)
 
 
 if __name__ == '__main__':
-    period = 'm5'
+    period = 'm1'
     code = '300502'
     codes = [code]
     for code in codes:
@@ -99,5 +121,5 @@ if __name__ == '__main__':
         status_map[code]['m5'] = []
         status_map[code]['m30'] = []
 
-    print(status_map)
+    print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), status_map))
     monitor(codes, period)
