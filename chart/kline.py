@@ -167,7 +167,7 @@ class DataFinanceDraw(object):
         dlxt = data["dlxt"]
         dlxt.values[:] = 1
         dlxt_long_period = data["dlxt_long_period"]
-        dlxt_long_period.values[:] = 1
+        dlxt_long_period.values[:] = data['low']
 
         data = force_index.force_index(data)
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
@@ -251,8 +251,8 @@ class DataFinanceDraw(object):
             # mav=13, #(7, 30, 60),
             volume=self.show_volume,
             title='{} {}'.format(self.code, self.period),
-            ylabel='OHLC Candles',
-            ylabel_lower='Shares\nTraded Volume',
+            # ylabel='OHLC Candles',
+            # ylabel_lower='Shares\nTraded Volume',
             # axisoff=True,
             figratio=(2, 1),
             figscale=1)
@@ -304,7 +304,7 @@ class DataFinanceDraw(object):
             ax.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
 
         # cursor = Cursor(self.fig, useblit=True, color='red', linewidth=2)
-        cursor = Cursor(axlist[1], useblit=True, color='grey', linewidth=1)
+        cursor = Cursor(axlist[0], useblit=True, color='grey', linewidth=1)
         # axlist[0].yaxis.set_label_position("right")
         # axlist[0].yaxis.tick_right()
         axlist[0].tick_params(axis='y', which='both', labelleft=False, labelright=True)
@@ -312,6 +312,10 @@ class DataFinanceDraw(object):
         self.fig.tight_layout()
         # print(len(axlist))   # 8
 
+        ylim_min = self.data['low'].min()
+        ylim_max = self.data['high'].max()
+        diff = (ylim_max - ylim_min) * 0.1
+        axlist[0].set_ylim(ymin=ylim_min - diff, ymax=ylim_max + diff)
         # # 没有效果
         # plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
         # plt.margins(0, 0)
