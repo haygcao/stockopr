@@ -15,7 +15,7 @@ import matplotlib as mpl  # 用于设置曲线参数
 from cycler import cycler  # 用于定制线条颜色
 import pandas
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter, Locator
 from matplotlib.widgets import Cursor
 
 from pointor import signal_triple_screen, signal_channel
@@ -116,7 +116,7 @@ class DataFinanceDraw(object):
 
         # 设置线宽
         mpl.rcParams['lines.linewidth'] = .5
-        mpl.rcParams['toolbar'] = 'None'
+        # mpl.rcParams['toolbar'] = 'None'
         # mpl.rcParams['interactive'] = True
         mpl.rcParams['axes.titlesize'] = 1
 
@@ -272,14 +272,49 @@ class DataFinanceDraw(object):
         # xmajorLocator = mdates.DayLocator(1)
         # xmajorFormatter = mdates.DateFormatter('%Y-%m-%d')
         # xminorLocator = mdates.DayLocator()
-        # axlist[1].xaxis.set_major_locator(xmajorLocator)
-        # axlist[1].xaxis.set_major_formatter(xmajorFormatter)
+        # axlist[7].xaxis.set_major_locator(xmajorLocator)
+        # axlist[7].xaxis.set_major_formatter(xmajorFormatter)
+
+        if self.period.startswith('m'):
+            # 修改主刻度
+            xmajorLocator = MultipleLocator(10)  # 将x主刻度标签设置为20的倍数
+            xmajorFormatter = FormatStrFormatter('%5.1f')  # 设置x轴标签文本的格式
+            ymajorLocator = MultipleLocator(0.5)  # 将y轴主刻度标签设置为0.5的倍数
+            ymajorFormatter = FormatStrFormatter('%1.1f')  # 设置y轴标签文本的格式
+            # 设置主刻度标签的位置,标签文本的格式
+            ax = axlist[0]
+            ax.xaxis.set_major_locator(xmajorLocator)
+            ax.xaxis.set_major_formatter(xmajorFormatter)
+            ax.yaxis.set_major_locator(ymajorLocator)
+            ax.yaxis.set_major_formatter(ymajorFormatter)
+
+            # high = self.data['high'].max()
+            # low = self.data['low'].min()
+            # yminor_unit = round((high - low) / (Locator.MAXTICKS) * 2, 2)
+
+            # 修改次刻度
+            xminorLocator = MultipleLocator(5)  # 将x轴次刻度标签设置为5的倍数
+            yminorLocator = MultipleLocator(0.1)  # 将此y轴次刻度标签设置为0.1的倍数
+            # 设置次刻度标签的位置,没有标签文本格式
+            ax.xaxis.set_minor_locator(xminorLocator)
+            ax.yaxis.set_minor_locator(yminorLocator)
+
+            # 打开网格
+            ax.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+            ax.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
 
         # cursor = Cursor(self.fig, useblit=True, color='red', linewidth=2)
         cursor = Cursor(axlist[1], useblit=True, color='grey', linewidth=1)
+        # axlist[0].yaxis.set_label_position("right")
+        # axlist[0].yaxis.tick_right()
+        axlist[0].tick_params(axis='y', which='both', labelleft=False, labelright=True)
+        axlist[1].tick_params(axis='y', which='both', labelleft=True, labelright=False)
+        self.fig.tight_layout()
+        # print(len(axlist))   # 8
 
-        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
-        plt.margins(0, 0)
+        # # 没有效果
+        # plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+        # plt.margins(0, 0)
 
         plt.show()
         # plt.show(block=False)  # 显示
@@ -300,7 +335,7 @@ def show(candle):
 def open_graph(code, peroid, path=None):
     candle = DataFinanceDraw(code)
     if path:
-        candle.load_data('data/' + code + '.csv')
+        candle.load_data(path)
     else:
         candle.fetch_data(code, peroid)
 
@@ -311,7 +346,7 @@ def open_graph(code, peroid, path=None):
 if __name__ == "__main__":
     code = '300502'
     period = 'm5'   # m5 m30 day week
-    open_graph(code, period)
+    open_graph(code, period, 'data/' + code + '.csv')
 
     # code = '000001'
     # candle = DataFinanceDraw(code)
