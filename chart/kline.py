@@ -26,7 +26,7 @@ from selector.plugin import dynamical_system, force_index
 panel_ratios = {
     3: (8, 0.2, 1.8),
     4: [7, 0.2, 1.4, 1.4],
-    5: [8, 0.2, 0.6, 0.6, 0.6]
+    5: [7, 0.1, 0.1, 1.4, 1.4]
 }
 
 
@@ -64,8 +64,9 @@ class DataFinanceDraw(object):
         self.show_volume = False
         self.show_macd = True
         self.panel_volume = 1 if self.show_volume else 0
-        self.n_panels = 4 if self.show_volume else 3
-        self.panel_dlxt = self.panel_volume + 1
+        self.n_panels = 5 if self.show_volume else 4
+        self.panel_dlxt_long_period = self.panel_volume + 1
+        self.panel_dlxt = self.panel_dlxt_long_period + 1
         self.panel_qlzs = self.panel_dlxt + 1
         self.panel_macd = self.panel_qlzs + 1
 
@@ -153,8 +154,8 @@ class DataFinanceDraw(object):
         data = signal_triple_screen.signal_enter(data, period=self.period)
         data = signal_triple_screen.signal_exit(data, period=self.period)
 
-        data = signal_channel.signal_enter(data)
-        data = signal_channel.signal_exit(data)
+        data = signal_channel.signal_enter(data, period=self.period)
+        data = signal_channel.signal_exit(data, period=self.period)
 
         dlxt = data["dlxt"]
         dlxt_long_period = data["dlxt_long_period"]
@@ -194,20 +195,21 @@ class DataFinanceDraw(object):
         ])
 
         dlxt.values[:] = 1
-        dlxt_long_period.values[:] = data['low']
+        dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
         self.add_plot.extend([
-            mpf.make_addplot(exp12, type='line', color='lightgrey'),
+            mpf.make_addplot(exp12, type='line', color='dimgrey'),
             mpf.make_addplot(exp26, type='line', color='black'),
             mpf.make_addplot(data_force_index, type='bar', width=1, panel=self.panel_qlzs, color=force_index_color),
             mpf.make_addplot(data_force_index, type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
+            mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt_long_period, color=dlxt_long_period_color),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
             mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color,
-                             alpha=0.1)  # , secondary_y=False),
+                             alpha=0.2)  # , secondary_y=False),
         ])
 
         if data['channel_signal_enter'].any(skipna=True):
             self.add_plot.append(
-                mpf.make_addplot(data['channel_signal_enter'], type='scatter', width=1, panel=0, color='lightgrey',
+                mpf.make_addplot(data['channel_signal_enter'], type='scatter', width=1, panel=0, color='grey',
                                  markersize=50, marker='^'))
         if data['channel_signal_exit'].any(skipna=True):
             self.add_plot.append(

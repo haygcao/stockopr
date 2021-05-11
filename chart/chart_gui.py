@@ -21,6 +21,9 @@ class Example(QWidget):
 
         comboCode = QComboBox(self)
         comboCode.addItem("300502")
+        comboCode.addItem("000999")
+        comboCode.addItem("000625")
+        comboCode.addItem("000725")
 
         comboCode.activated[str].connect(self.onActivatedCode)
 

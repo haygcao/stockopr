@@ -49,8 +49,8 @@ def update_status(code, data, period):
         period_status.append({'date': data_index_, 'command': 'S', 'type': 'triple screen', 'last': True})
         return True
 
-    data = signal_channel.signal_enter(data)
-    data = signal_channel.signal_exit(data)
+    data = signal_channel.signal_enter(data, period=period)
+    data = signal_channel.signal_exit(data, period=period)
 
     if not numpy.isnan(data['channel_signal_enter'][-1]):
         print(data['channel_signal_enter'][-1])

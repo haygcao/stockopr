@@ -2,6 +2,8 @@
 
 import pandas as pd
 
+from acquisition import quote_db
+from config.config import period_map
 from util.macd import macd
 from util.macd import ema
 
@@ -17,6 +19,10 @@ def function(ema_, macd_):
 
 
 def dynamical_system(quote, n=13):
+    if 'dlxt' in quote.columns:
+        print('dynamical_system - dlxt already')
+        return quote
+
     ema13 = ema(quote['close'], n)['ema']
     # ema26 = ema(quote['close'], 26)
 
@@ -51,6 +57,58 @@ def dynamical_system(quote, n=13):
     #     return -1
     #
     # return 0
+
+
+def compute_period(quote):
+    freq = quote.index.to_series().diff().min()
+    minutes = freq.value / 10 ** 9 / 60
+    if minutes == 5:
+        period = 'm5'
+    elif minutes == 30:
+        period = 'm30'
+    elif minutes == 1440:
+        period = 'day'
+    elif minutes > 1440:
+        period = 'week'
+    else:
+        period = 'm5'
+
+    return period
+
+
+def dynamical_system_dual_period(quote, n=13, period=None):
+    if 'dlxt' in quote.columns:
+        print('dynamical_system_dual_period - dlxt already')
+        return quote
+
+    # 长中周期动力系统中，均不为红色，且至少一个为绿色，强力指数为负
+    # pandas.infer_freq(candle.data_origin.index)   # If not continuous pandas.infer_freq will return None.
+    if not period:
+        period = compute_period(quote)
+    period_type = period_map[period]['long_period']
+    period_type_reverse = period_map[period]['period']
+
+    # 长周期动力系统
+    quote_week = quote_db.get_price_info_df_db_week(quote, period_type)
+    quote_week = dynamical_system(quote_week)
+    # quote_week.rename(columns={'dlxt': 'dlxt_long_period'}, inplace=True)
+    # quote_week.drop(['open', 'close'], axis=1, inplace=True)
+    # quote_week = quote_week[['dlxt']]
+    dlxt_long_period = quote_week.resample(period_type_reverse).last()
+    dlxt_long_period['dlxt'] = quote_week['dlxt'].resample(period_type_reverse).pad()
+    dlxt_long_period = dlxt_long_period[dlxt_long_period.index.isin(quote.index)]
+
+    # 中周期动力系统
+    quote = dynamical_system(quote)
+
+    dlxt_long_period_copy = dlxt_long_period.copy()
+    quote_copy = quote.copy()
+    quote_copy.loc[:, 'dlxt_long_period'] = dlxt_long_period_copy['dlxt']
+    quote_copy.loc[:, 'dlxt_long_period_shift'] = dlxt_long_period_copy['dlxt'].shift(periods=1)
+    quote_copy.loc[:, 'dlxt'] = quote['dlxt']
+    quote_copy.loc[:, 'dlxt_shift'] = quote['dlxt'].shift(periods=1)
+
+    return quote_copy
 
 
 def dynamical_system_green(quote):
