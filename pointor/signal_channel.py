@@ -10,7 +10,8 @@ def function_enter(low, dlxt, ema, atr):
     if dlxt == -1:
         if low <= ema - 3*atr:
             return low
-    elif dlxt == 0:
+
+    if dlxt == 0:
         if low <= ema - 2*atr:
             return low
 

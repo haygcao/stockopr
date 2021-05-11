@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from matplotlib.widgets import Cursor
 
-from pointor import signal_triple_screen
+from pointor import signal_triple_screen, signal_channel
 from selector.plugin import dynamical_system, force_index
 
 # http://www.cjzzc.com/web_color.html
@@ -150,6 +150,9 @@ class DataFinanceDraw(object):
         data = signal_triple_screen.signal_enter(data, period=self.period)
         data = signal_triple_screen.signal_exit(data, period=self.period)
 
+        data = signal_channel.signal_enter(data)
+        data = signal_channel.signal_exit(data)
+
         # LightGreen #90EE90   DarkOliveGreen3 #A2CD5A   LightCoral #F08080   IndianRed1 #FF6A6A   LightBlue #ADD8E6
         dark_olive_green3 = '#A2CD5A'
         light_coral = '#F08080'
@@ -190,6 +193,13 @@ class DataFinanceDraw(object):
             mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=self.edge_color),
             mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=self.dlxt_long_period_color, alpha=0.1)  # , secondary_y=False),
         ])
+
+        if data['channel_signal_enter'].any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(data['channel_signal_enter'], type='scatter', width=1, panel=0, color='lightgrey',
+                             markersize=50, marker='^'))
+        if data['channel_signal_exit'].any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(data['channel_signal_exit'], type='scatter', width=1, panel=0, color='dimgrey',
+                             markersize=50, marker='v'))
 
         if data['triple_screen_signal_enter'].any(skipna=True):
             self.add_plot.append(mpf.make_addplot(data['triple_screen_signal_enter'], type='scatter', width=1, panel=0, color='g',
@@ -300,7 +310,7 @@ def open_graph(code, peroid, path=None):
 
 if __name__ == "__main__":
     code = '300502'
-    period = 'm1'   # m5 m30 day week
+    period = 'm5'   # m5 m30 day week
     open_graph(code, period)
 
     # code = '000001'
