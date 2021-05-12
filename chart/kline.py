@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import functools
 import threading
 import time
 
@@ -291,33 +292,37 @@ class DataFinanceDraw(object):
         # axlist[7].xaxis.set_major_locator(xmajorLocator)
         # axlist[7].xaxis.set_major_formatter(xmajorFormatter)
 
-        if self.period.startswith('m'):
-            # 修改主刻度
-            xmajorLocator = MultipleLocator(10)  # 将x主刻度标签设置为20的倍数
-            xmajorFormatter = FormatStrFormatter('%5.1f')  # 设置x轴标签文本的格式
-            ymajorLocator = MultipleLocator(0.5)  # 将y轴主刻度标签设置为0.5的倍数
-            ymajorFormatter = FormatStrFormatter('%1.1f')  # 设置y轴标签文本的格式
-            # 设置主刻度标签的位置,标签文本的格式
-            ax = axlist[0]
-            ax.xaxis.set_major_locator(xmajorLocator)
-            ax.xaxis.set_major_formatter(xmajorFormatter)
-            ax.yaxis.set_major_locator(ymajorLocator)
-            ax.yaxis.set_major_formatter(ymajorFormatter)
+        standard_unit = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500]
+        high = self.data['high'].max()
+        low = self.data['low'].min()
+        yminor_unit_origin = round((high - low) / 12, 2)
+        yminor_unit_origin = max(yminor_unit_origin, 0.01)
 
-            # high = self.data['high'].max()
-            # low = self.data['low'].min()
-            # yminor_unit = round((high - low) / (Locator.MAXTICKS) * 2, 2)
+        yminor_unit = functools.reduce(min, map(lambda x: abs(x - yminor_unit_origin), filter(lambda x: x > (yminor_unit_origin-yminor_unit_origin/4), standard_unit)))
+        yminor_unit = yminor_unit_origin + yminor_unit if yminor_unit_origin + yminor_unit in standard_unit else yminor_unit_origin - yminor_unit
 
-            # 修改次刻度
-            xminorLocator = MultipleLocator(5)  # 将x轴次刻度标签设置为5的倍数
-            yminorLocator = MultipleLocator(0.1)  # 将此y轴次刻度标签设置为0.1的倍数
-            # 设置次刻度标签的位置,没有标签文本格式
-            ax.xaxis.set_minor_locator(xminorLocator)
-            ax.yaxis.set_minor_locator(yminorLocator)
+        # 修改主刻度
+        # xmajorLocator = MultipleLocator(10)  # 将x主刻度标签设置为20的倍数
+        # xmajorFormatter = FormatStrFormatter('%5.1f')  # 设置x轴标签文本的格式
+        ymajorLocator = MultipleLocator(yminor_unit * 5)  # 将y轴主刻度标签设置为0.5的倍数
+        ymajorFormatter = FormatStrFormatter('%1.1f')  # 设置y轴标签文本的格式
+        # 设置主刻度标签的位置,标签文本的格式
+        ax = axlist[0]
+        # ax.xaxis.set_major_locator(xmajorLocator)
+        # ax.xaxis.set_major_formatter(xmajorFormatter)
+        ax.yaxis.set_major_locator(ymajorLocator)
+        ax.yaxis.set_major_formatter(ymajorFormatter)
 
-            # 打开网格
-            ax.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
-            ax.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
+        # 修改次刻度
+        # xminorLocator = MultipleLocator(5)  # 将x轴次刻度标签设置为5的倍数
+        yminorLocator = MultipleLocator(yminor_unit)  # 将此y轴次刻度标签设置为0.1的倍数
+        # 设置次刻度标签的位置,没有标签文本格式
+        # ax.xaxis.set_minor_locator(xminorLocator)
+        ax.yaxis.set_minor_locator(yminorLocator)
+
+        # 打开网格
+        ax.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+        ax.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
 
         # cursor = Cursor(self.fig, useblit=True, color='red', linewidth=2)
         cursor = Cursor(axlist[0], useblit=True, color='grey', linewidth=1)
@@ -365,9 +370,11 @@ def open_graph(code, peroid, path=None):
 
 
 if __name__ == "__main__":
-    code = '300502'
-    period = 'm5'   # m5 m30 day week
-    open_graph(code, period, 'data/' + code + '.csv')
+    code = '000001'
+    # code = '300502'
+    period = 'm30'   # m5 m30 day week
+    # open_graph(code, period, 'data/' + code + '.csv')
+    open_graph(code, period)
 
     # code = '000001'
     # candle = DataFinanceDraw(code)

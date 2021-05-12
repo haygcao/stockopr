@@ -20,7 +20,7 @@ def function(ema_, macd_):
 
 def dynamical_system(quote, n=13):
     if 'dlxt' in quote.columns:
-        print('dynamical_system - dlxt already')
+        # print('dynamical_system - dlxt already')
         return quote
 
     ema13 = ema(quote['close'], n)['ema']
@@ -78,7 +78,7 @@ def compute_period(quote):
 
 def dynamical_system_dual_period(quote, n=13, period=None):
     if 'dlxt' in quote.columns:
-        print('dynamical_system_dual_period - dlxt already')
+        # print('dynamical_system_dual_period - dlxt already')
         return quote
 
     # 长中周期动力系统中，均不为红色，且至少一个为绿色，强力指数为负
@@ -96,6 +96,15 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     # quote_week = quote_week[['dlxt']]
     dlxt_long_period = quote_week.resample(period_type_reverse).last()
     dlxt_long_period['dlxt'] = quote_week['dlxt'].resample(period_type_reverse).pad()
+
+    # 补齐最后一天的数据
+    if period == 'm30':
+        last_row_index = dlxt_long_period.index[-1]
+        pd_loss = quote[last_row_index:]
+        dlxt_long_period = dlxt_long_period.append(pd_loss)
+        last_dlxt = dlxt_long_period.loc[last_row_index]['dlxt']
+        dlxt_long_period.loc[last_row_index:, 'dlxt'] = last_dlxt
+
     dlxt_long_period = dlxt_long_period[dlxt_long_period.index.isin(quote.index)]
 
     # 中周期动力系统
@@ -103,10 +112,13 @@ def dynamical_system_dual_period(quote, n=13, period=None):
 
     dlxt_long_period_copy = dlxt_long_period.copy()
     quote_copy = quote.copy()
-    quote_copy.loc[:, 'dlxt_long_period'] = dlxt_long_period_copy['dlxt']
-    quote_copy.loc[:, 'dlxt_long_period_shift'] = dlxt_long_period_copy['dlxt'].shift(periods=1)
+    quote_copy.loc[:, 'dlxt_long_period'] = dlxt_long_period_copy['dlxt'].loc[:]
+    quote_copy.loc[:, 'dlxt_long_period_shift'] = dlxt_long_period_copy['dlxt'].loc[:].shift(periods=1)
     quote_copy.loc[:, 'dlxt'] = quote['dlxt']
     quote_copy.loc[:, 'dlxt_shift'] = quote['dlxt'].shift(periods=1)
+
+    # for debug
+    # print(quote_copy.iloc[-50:])
 
     return quote_copy
 
