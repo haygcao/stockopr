@@ -94,7 +94,7 @@ class DataFinanceDraw(object):
         # inherit:是否继承，选填
         mc = mpf.make_marketcolors(
             up='white', #'dimgray',
-            down='lightgrey',
+            down='grey',
             edge='grey',
             wick='grey',
             volume='in',
@@ -169,8 +169,19 @@ class DataFinanceDraw(object):
 
         data = force_index.force_index(data)
         data_force_index = data['force_index']
-        force_index_avg = data_force_index.mean()
-        print(force_index_avg)
+        force_index_abs_avg = data_force_index.abs().mean()
+        # force_index_positive_avg = data_force_index[data_force_index > 0].mean()
+
+        data_force_index = data_force_index.mask(data_force_index > force_index_abs_avg * 5, force_index_abs_avg * 5)
+        data_force_index = data_force_index.mask(data_force_index < -force_index_abs_avg * 5, -force_index_abs_avg * 5)
+
+        # A value is trying to be set on a copy of a slice from a DataFrame
+        # mask1 = data_force_index.loc[data_force_index > force_index_abs_avg * 5] = force_index_abs_avg * 5
+        # mask1 = data_force_index.loc[:] > force_index_abs_avg * 5
+        # data_force_index[mask1] = force_index_abs_avg * 5
+        # mask2 = data_force_index.loc[:] < -force_index_abs_avg * 5
+        # data_force_index[mask2] = -force_index_abs_avg * 5
+
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
 
         # 以交易为生中，采用的是 exp21
@@ -214,7 +225,7 @@ class DataFinanceDraw(object):
 
         if data['channel_signal_enter'].any(skipna=True):
             self.add_plot.append(
-                mpf.make_addplot(data['channel_signal_enter'], type='scatter', width=1, panel=0, color='grey',
+                mpf.make_addplot(data['channel_signal_enter'], type='scatter', width=1, panel=0, color='lightgrey',
                                  markersize=50, marker='^'))
         if data['channel_signal_exit'].any(skipna=True):
             self.add_plot.append(
