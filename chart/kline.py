@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, Locator
 from matplotlib.widgets import Cursor
 
-from pointor import signal_triple_screen, signal_channel
+from pointor import signal_triple_screen, signal_channel, signal_bull_market_deviation
 from selector.plugin import dynamical_system, force_index
 
 # http://www.cjzzc.com/web_color.html
@@ -182,6 +182,8 @@ class DataFinanceDraw(object):
         # mask2 = data_force_index.loc[:] < -force_index_abs_avg * 5
         # data_force_index[mask2] = -force_index_abs_avg * 5
 
+        data = signal_bull_market_deviation.signal_enter(data, self.period)
+
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
 
         # 以交易为生中，采用的是 exp21
@@ -210,17 +212,25 @@ class DataFinanceDraw(object):
             mpf.make_addplot(-data_atr * 3 + exp, type='line', width=1, panel=0, color='dimgrey'),
         ])
 
+        data_support = self.data[:]['low'].copy()
+        data_stress = self.data[:]['high'].copy()
+        # data_stress = data_stress.mask(data_stress > 0, data_stress.max())
+        data_stress[:] = self.data[-60:]['high'].max()
+        data_support[:] = self.data[-60:]['low'].min()
+
         dlxt.values[:] = 1
-        dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
+        # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
+        dlxt_long_period.values[:] = self.data_origin['low']
         self.add_plot.extend([
+            mpf.make_addplot(data_stress, type='line', color='r'),
+            mpf.make_addplot(data_support, type='line', color='g'),
             mpf.make_addplot(exp12, type='line', color='dimgrey'),
             mpf.make_addplot(exp26, type='line', color='black'),
             mpf.make_addplot(data_force_index, type='bar', width=1, panel=self.panel_qlzs, color=force_index_color),
             mpf.make_addplot(data_force_index, type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt_long_period, color=dlxt_long_period_color),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
-            mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color,
-                             alpha=0.2)  # , secondary_y=False),
+            mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color, alpha=0.2),
         ])
 
         if data['channel_signal_enter'].any(skipna=True):
@@ -240,7 +250,10 @@ class DataFinanceDraw(object):
             self.add_plot.append(
                 mpf.make_addplot(data['triple_screen_signal_exit'], type='scatter', width=1, panel=0, color='r',
                                  markersize=50, marker='v'))
-
+        if data['macd_bull_market_deviation'].any(skipna=True):
+            self.add_plot.append(
+                mpf.make_addplot(data['macd_bull_market_deviation'], type='scatter', width=1, panel=0, color='g',
+                                 markersize=50, marker='D'))
         if self.show_macd:
             self.n_panels += 1
             # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
@@ -260,7 +273,8 @@ class DataFinanceDraw(object):
                     # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
                     # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
                     mpf.make_addplot(macd, panel=self.panel_macd, color='lightgrey', secondary_y=True),
-                    mpf.make_addplot(signal, panel=self.panel_macd, color='dimgrey', secondary_y=True), ])
+                    mpf.make_addplot(signal, panel=self.panel_macd, color='dimgrey', secondary_y=True),
+                ])
 
         # fig = mpf.figure(figsize=(10, 7), style=self.style)  # pass in the self defined style to the whole canvas
         # ax = fig.add_subplot(2, 1, 1)  # main candle stick chart subplot, you can also pass in the self defined style here only for this subplot
@@ -389,9 +403,10 @@ def open_graph(code, peroid, path=None):
 if __name__ == "__main__":
     code = '000001'
     # code = '300502'
-    period = 'm30'   # m5 m30 day week
-    # open_graph(code, period, 'data/' + code + '.csv')
-    open_graph(code, period)
+    code = '000999'
+    period = 'day'   # m5 m30 day week
+    open_graph(code, period, 'data/' + code + '.csv')
+    # open_graph(code, period)
 
     # code = '000001'
     # candle = DataFinanceDraw(code)

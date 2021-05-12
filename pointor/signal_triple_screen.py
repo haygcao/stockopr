@@ -6,11 +6,11 @@ from config.config import period_map
 from selector.plugin import dynamical_system, force_index
 
 
-def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, force_index, force_index_shift,
+def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, force_index, force_index_shift,
                    period):
     # 长中周期动量系统中任一为红色, 均禁止买入
-    # if dlxt_long_period < 0 or dlxt < 0:
-    #     return numpy.nan
+    if dlxt_long_period < 0 or dlxt < 0:
+        return numpy.nan
 
     # 长周期动量系统变为 红->蓝/绿, 蓝->绿
     if dlxt_long_period_shift < dlxt_long_period:  # and dlxt_long_period > 0:
@@ -22,8 +22,13 @@ def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
     # if dlxt_long_period > 0 and dlxt > 0:
     #     return low
 
-    if dlxt > 0 and 0 > force_index > force_index_shift:
+    # ema13 向上, 强力指数下穿 0
+    if dlxt_ema13 and force_index_shift >= 0 and force_index < 0:   # and dlxt > 0:
         return low
+
+    # ema13 向上, 强力指数为负, 且开始变大
+    # if dlxt_ema13 and force_index_shift < 0 and force_index > force_index_shift:   # and dlxt > 0:
+    #     return low
 
     return numpy.nan
 
@@ -37,11 +42,11 @@ def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
     if dlxt_long_period < 0:
         return numpy.nan
 
-    if period in ['week', 'day', 'm30'] and dlxt_shift > dlxt:
+    if period in ['week', 'day', 'm30'] and dlxt_shift > dlxt and dlxt < 0:
         return high
 
-    if dlxt == 0 and 0 < force_index < force_index_shift:
-        return high
+    # if dlxt == 0 and 0 < force_index < force_index_shift:
+    #     return high
 
     return numpy.nan
 
@@ -64,8 +69,7 @@ def signal_enter(quote, period=None):
     quote_copy = quote.copy()
     quote_copy.loc[:, 'triple_screen_signal_enter'] = quote_copy.apply(
         lambda x: function_enter(x.low, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift,
-                                 x.force_index, x.force_index_shift, period),
-        axis=1)
+                                 x.dlxt_ema13, x.force_index, x.force_index_shift, period), axis=1)
 
     return quote_copy
 
