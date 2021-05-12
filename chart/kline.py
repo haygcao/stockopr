@@ -139,7 +139,6 @@ class DataFinanceDraw(object):
 
     def more_panel_draw(self):
         data = self.data_origin   # .iloc[-100:]
-        self.data = data
         """
         make_addplot 绘制多个图，这里添加macd指标为例
         """
@@ -170,12 +169,17 @@ class DataFinanceDraw(object):
 
         data = force_index.force_index(data)
         data_force_index = data['force_index']
+        force_index_avg = data_force_index.mean()
+        print(force_index_avg)
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
 
         # 以交易为生中，采用的是 exp21
         # exp = data['close'].ewm(span=21, adjust=False).mean()
         exp = exp26
         data = compute_atr(data)
+
+        #
+        self.data = data
 
         # data = data.iloc[-100:]
 
@@ -341,6 +345,8 @@ class DataFinanceDraw(object):
         # # 没有效果
         # plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
         # plt.margins(0, 0)
+
+        # axlist[3].fill_between(self.data.index, self.data['force_index'])
 
         plt.show()
         # plt.show(block=False)  # 显示

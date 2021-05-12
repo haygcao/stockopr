@@ -98,10 +98,18 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     dlxt_long_period['dlxt'] = quote_week['dlxt'].resample(period_type_reverse).pad()
 
     # 补齐最后一天的数据
-    if period == 'm30':
+    if period in ['m30', 'm5']:
         last_row_index = dlxt_long_period.index[-1]
         pd_loss = quote[last_row_index:]
-        dlxt_long_period = dlxt_long_period.append(pd_loss)
+        dlxt_long_period = dlxt_long_period.append(pd_loss, )
+
+        # dlxt_long_period = dlxt_long_period.unique()
+        # indexs = dlxt_long_period.index.drop_duplicates()
+        # dlxt_long_period = dlxt_long_period[dlxt_long_period.index.isin(indexs)]
+        # https://stackoverflow.com/questions/22918212/fastest-way-to-drop-duplicated-index-in-a-pandas-dataframe
+        # dlxt_long_period = dlxt_long_period.groupby(dlxt_long_period.index).first()
+        dlxt_long_period = dlxt_long_period[~dlxt_long_period.index.duplicated(keep='first')]
+
         last_dlxt = dlxt_long_period.loc[last_row_index]['dlxt']
         dlxt_long_period.loc[last_row_index:, 'dlxt'] = last_dlxt
 
