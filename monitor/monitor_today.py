@@ -13,6 +13,7 @@ from pointor import signal_triple_screen
 from pointor import signal_channel
 
 from acquisition import tx
+from toolkit import tradeapi
 
 status_map = {}
 
@@ -84,7 +85,18 @@ def check(code, period):
         return period
 
 
+def order(code, direct, type):
+    count = 1500
+    print('{} {} {}'.format(direct, code, count))
+    try:
+        tradeapi.order(direct, code, count, auto=False)
+    except Exception:
+        import traceback
+        print(traceback.print_exc())
+
+
 def notify(code, direct, type):
+
     # log
     command = '买入' if direct == 'B' else '卖出'
     # tts
@@ -107,11 +119,11 @@ def monitor(codes, period):
             period_signal = check(code, period)
             if period_signal:
                 print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), status_map))
-
                 p = multiprocessing.Process(target=open_graph, args=(code, period,))
                 p.start()
 
                 singal_info = status_map[code][period_signal][-1]
+                order(code, singal_info['command'], singal_info['type'])
                 notify(code, singal_info['command'], singal_info['type'])
 
                 p.join(timeout=1)

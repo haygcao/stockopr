@@ -12,7 +12,7 @@ def get_pid_by_exec(exec_path):
     return proc_list[0].pid if proc_list else -1
 
 
-def order(type, code, count, price=0, auto=False):
+def order(direct, code, count, price=0, auto=False):
     pid = get_pid_by_exec('C:\\同花顺软件\\同花顺\\xiadan.exe')
 
     if pid < 0:
@@ -21,7 +21,7 @@ def order(type, code, count, price=0, auto=False):
         app = pywinauto.Application(backend="win32").connect(process=pid)
 
     main_window = app.window(title='网上股票交易系统5.0')
-    if type == 'B':
+    if direct == 'B':
         main_window.type_keys('{F2}')
         main_window.type_keys('{F1}')
     else:
