@@ -9,7 +9,7 @@ import numpy
 
 from chart.kline import open_graph
 from config.config import period_map
-from pointor import signal_triple_screen
+from pointor import signal_triple_screen, signal_bull_market_deviation
 from pointor import signal_channel
 
 from acquisition import tx
@@ -19,8 +19,10 @@ status_map = {}
 
 
 def get_min_data(code, m='m5', count=250):
-    data = tx.get_kline_data(code, m, count)
-    return data
+    try:
+        return tx.get_kline_data(code, m, count)
+    except Exception as e:
+        print('get data error:', e)
 
 
 def get_day_data(code, period='day', count=250):
@@ -36,13 +38,21 @@ def update_status(code, data, period):
             print('{} - no new data'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             return False
 
+    # deviation signal
+    data = signal_bull_market_deviation.signal_enter(data, period)
+    data_sub = data['macd_bull_market_deviation'][-5:]
+    if data_sub.any(skipna=True):
+        data_index_ = data_sub[data_sub.notnull()].index[0]
+        if data_index_ != period_status[-1]['date'] or period_status[-1]['type'] != 'bull deviation':
+            period_status.append({'date': data_index_, 'command': 'B', 'type': 'bull deviation', 'last': True})
+            return True
+
     # triple_screen signal
     data = signal_triple_screen.signal_enter(data, period=period)
     data = signal_triple_screen.signal_exit(data, period=period)
 
-    if data['triple_screen_signal_enter'][-1] > 0:
     # if not numpy.isnan(data['triple_screen_signal_enter'][-1]):
-        print(data['triple_screen_signal_enter'][-1])
+    if data['triple_screen_signal_enter'][-1] > 0:
         period_status.append({'date': data_index_, 'command': 'B', 'type': 'triple screen', 'last': True})
         return True
 
@@ -54,7 +64,6 @@ def update_status(code, data, period):
     data = signal_channel.signal_exit(data, period=period)
 
     if not numpy.isnan(data['channel_signal_enter'][-1]):
-        print(data['channel_signal_enter'][-1])
         period_status.append({'date': data_index_, 'command': 'B', 'type': 'channel', 'last': True})
         return True
 
@@ -90,9 +99,10 @@ def order(code, direct, type):
     print('{} {} {}'.format(direct, code, count))
     try:
         tradeapi.order(direct, code, count, auto=False)
-    except Exception:
-        import traceback
-        print(traceback.print_exc())
+    except Exception as e:
+        print('call tradeapi error:', e)
+        # import traceback
+        # print(traceback.print_exc())
 
 
 def notify(code, direct, type):
