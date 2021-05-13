@@ -39,12 +39,19 @@ def update_status(code, data, period):
             return False
 
     # deviation signal
-    data = signal_market_deviation.signal_enter(data, period)
+    data = signal_market_deviation.signal(data, period)
     data_sub = data['macd_bull_market_deviation'][-5:]
     if data_sub.any(skipna=True):
         data_index_ = data_sub[data_sub.notnull()].index[0]
         if data_index_ != period_status[-1]['date'] or period_status[-1]['type'] != 'bull deviation':
             period_status.append({'date': data_index_, 'command': 'B', 'type': 'bull deviation', 'last': True})
+            return True
+
+    data_sub = data['macd_bear_market_deviation'][-5:]
+    if data_sub.any(skipna=True):
+        data_index_ = data_sub[data_sub.notnull()].index[0]
+        if data_index_ != period_status[-1]['date'] or period_status[-1]['type'] != 'bear deviation':
+            period_status.append({'date': data_index_, 'command': 'B', 'type': 'bear deviation', 'last': True})
             return True
 
     # triple_screen signal

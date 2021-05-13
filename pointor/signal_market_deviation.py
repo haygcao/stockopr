@@ -1,28 +1,25 @@
 # -*- coding: utf-8 -*-
 import numpy
 
-from selector.plugin import bull_deviation
+from selector.plugin import market_deviation
 
 
 def compute_index(quote):
-    back_days = 125
+    back_days = 150  # 125
     for back_day in range(back_days, 0, -1):
-        quote = bull_deviation.niushibeili_macd(quote, back_day)
-        bull_market_deviation = quote['macd_bull_market_deviation']
+        quote = market_deviation.bull_deviation_macd(quote, back_day)
+        quote = market_deviation.bear_deviation_macd(quote, back_day)
+        # bull_market_deviation = quote['macd_bull_market_deviation']
 
+    # bull_market_deviation = quote['macd_bear_market_deviation']
     # print(bull_market_deviation[bull_market_deviation.notnull()])
 
     return quote
 
 
-def signal_enter(quote, period):
+def signal(quote, period):
     quote = compute_index(quote)
 
     return quote
 
-
-def signal_exit(quote, period):
-    quote = compute_index(quote)
-
-    return quote
 

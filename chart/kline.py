@@ -195,7 +195,7 @@ class DataFinanceDraw(object):
         # mask2 = data_force_index.loc[:] < -force_index_abs_avg * 5
         # data_force_index[mask2] = -force_index_abs_avg * 5
 
-        data = signal_market_deviation.signal_enter(data, self.period)
+        data = signal_market_deviation.signal(data, self.period)
 
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
 
@@ -282,6 +282,12 @@ class DataFinanceDraw(object):
                                  markersize=50, marker='D'),
 
             ])
+        if get_window(data['macd_bear_market_deviation']).any(skipna=True):
+            self.add_plot.extend([
+                mpf.make_addplot(get_window(data['macd_bear_market_deviation']), type='scatter', width=1, panel=0, color='r',
+                                 markersize=50, marker='D'),
+
+            ])
         if self.show_macd:
             self.n_panels += 1
             # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
@@ -294,12 +300,18 @@ class DataFinanceDraw(object):
             # histogram_negative = histogram
 
             macd_bull_market_deviation = data['macd_bull_market_deviation']
-            d = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values, histogram*1.2).values
+            data_bull_deviation = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values, histogram*1.2).values
+
+            macd_bear_market_deviation = data['macd_bear_market_deviation']
+            data_bear_deviation = macd_bear_market_deviation.mask(macd_bear_market_deviation.notnull().values,
+                                                                  histogram * 1.2).values
 
             # macd panel
             colors = ['lightgrey' if v >= 0 else 'grey' for v in get_window(histogram)]
             colors = [dark_olive_green3 if not numpy.isnan(v) else colors[i]
                       for (i,), v in numpy.ndenumerate(get_window(macd_bull_market_deviation).values)]
+            colors = [light_coral if not numpy.isnan(v) else colors[i]
+                      for (i,), v in numpy.ndenumerate(get_window(macd_bear_market_deviation).values)]
             self.add_plot.extend(
                 [
                     # mpf.make_addplot(get_window(histogram_positive, type='bar', width=0.7, panel=2, color='b')),
@@ -307,8 +319,11 @@ class DataFinanceDraw(object):
                     # mpf.make_addplot(get_window(macd, panel=self.panel_macd, color='lightgrey')),
                     # mpf.make_addplot(get_window(signal, panel=self.panel_macd, color='dimgrey')),
                     mpf.make_addplot(get_window(histogram), type='bar', panel=self.panel_macd, color=colors),  # ), secondary_y=True)
-                    mpf.make_addplot(get_window(d), type='scatter', width=1, panel=self.panel_macd, color='g',
+                    mpf.make_addplot(get_window(data_bull_deviation), type='scatter', width=1, panel=self.panel_macd, color='g',
                                      markersize=50, marker='^', secondary_y=False),
+                    mpf.make_addplot(get_window(data_bear_deviation), type='scatter', width=1, panel=self.panel_macd,
+                                     color='r',
+                                     markersize=50, marker='v', secondary_y=False),
                 ])
 
         # fig = mpf.figure(figsize=(10, 7), style=self.style)  # pass in the self defined style to the whole canvas
@@ -357,8 +372,8 @@ class DataFinanceDraw(object):
         # axlist[7].xaxis.set_major_formatter(xmajorFormatter)
 
         standard_unit = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500]
-        high = self.data['high'].max()
-        low = self.data['low'].min()
+        high = get_window(self.data)['high'].max()
+        low = get_window(self.data)['low'].min()
         yminor_unit_origin = round((high - low) / 12, 2)
         yminor_unit_origin = max(yminor_unit_origin, 0.01)
 
@@ -398,8 +413,8 @@ class DataFinanceDraw(object):
         # self.fig.tight_layout()
         # print(len(axlist))   # 8
 
-        ylim_min = self.data_origin['low'].min()
-        ylim_max = self.data_origin['high'].max()
+        ylim_min = get_window(self.data_origin)['low'].min()
+        ylim_max = get_window(self.data_origin)['high'].max()
         diff = (ylim_max - ylim_min) * 0.1
         axlist[0].set_ylim(ymin=ylim_min - diff, ymax=ylim_max + diff)
         # # 没有效果
@@ -440,9 +455,9 @@ def open_graph(code, peroid, path=None):
 
 if __name__ == "__main__":
     code = '000001'
-    # code = '300502'
-    code = '000999'
-    code = '000625'
+    code = '300502'
+    # code = '000999'
+    # code = '000625'
     period = 'day'   # m5 m30 day week
     open_graph(code, period, 'data/' + code + '.csv')
     # open_graph(code, period)
