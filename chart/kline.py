@@ -58,6 +58,11 @@ def import_csv(path):
     return df
 
 
+def get_window(data):
+    # if isinstance(data) 'pandas.core.series.Series' 'numpy.ndarray' 'pandas.core.frame.DataFrame'
+    return data[-250:]
+
+
 class DataFinanceDraw(object):
     """
     获取数据，并按照 mplfinanace 需求的格式格式化，然后绘图
@@ -131,12 +136,13 @@ class DataFinanceDraw(object):
         # mpl.rcParams['interactive'] = True
         mpl.rcParams['axes.titlesize'] = 1
 
-    def fetch_data(self, code, period, count=250):
-        self.period = period
-        self.data_origin = tx.get_kline_data(code, period, count)
+    def fetch_data(self, code, count=250):
+        if not is_long_period(self.period):
+            count *= 5
+        self.data_origin = tx.get_kline_data(code, self.period, count)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
 
-    def load_data(self, file_name='2020.csv', count=250):
+    def load_data(self, file_name='2020.csv', count=1250):
         """
         获取数据, 把数据格式化成 mplfinance 的标准格式
         :return:
@@ -204,22 +210,22 @@ class DataFinanceDraw(object):
         # data = data.iloc[-100:]
 
         dlxt_long_period_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
-                                  dlxt_long_period]
-        dlxt_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in dlxt]
+                                  get_window(dlxt_long_period)]
+        dlxt_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in get_window(dlxt)]
 
-        force_index_color = ['lightgrey' if v >= 0 else 'grey' for v in data["force_index"]]
+        force_index_color = ['lightgrey' if v >= 0 else 'grey' for v in get_window(data["force_index"])]
         force_index_color = [
             dark_olive_green3 if v == force_index_abs_avg * 5 else light_coral if v == -force_index_abs_avg * 5 else force_index_color[i]
-            for (i,), v in numpy.ndenumerate(data_force_index.values)]
+            for (i,), v in numpy.ndenumerate(get_window(data_force_index).values)]
 
         data_atr = data['atr']
         self.add_plot.extend([
-            mpf.make_addplot(data_atr + exp, type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
-            mpf.make_addplot(data_atr * 2 + exp, type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
-            mpf.make_addplot(data_atr * 3 + exp, type='line', width=1, panel=0, color='dimgrey'),
-            mpf.make_addplot(-data_atr + exp, type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
-            mpf.make_addplot(-data_atr * 2 + exp, type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
-            mpf.make_addplot(-data_atr * 3 + exp, type='line', width=1, panel=0, color='dimgrey'),
+            mpf.make_addplot(get_window(data_atr + exp), type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
+            mpf.make_addplot(get_window(data_atr * 2 + exp), type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
+            mpf.make_addplot(get_window(data_atr * 3 + exp), type='line', width=1, panel=0, color='dimgrey'),
+            mpf.make_addplot(get_window(-data_atr + exp), type='line', width=1, panel=0, color='lightgrey', linestyle='dotted'),
+            mpf.make_addplot(get_window(-data_atr * 2 + exp), type='line', width=1, panel=0, color='grey', linestyle='dashdot'),
+            mpf.make_addplot(get_window(-data_atr * 3 + exp), type='line', width=1, panel=0, color='dimgrey'),
         ])
 
         data_support = self.data[:]['low'].copy()
@@ -235,44 +241,44 @@ class DataFinanceDraw(object):
 
         if not is_long_period(self.period):
             self.add_plot.extend([
-                mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color,
+                mpf.make_addplot(get_window(dlxt_long_period), type='bar', width=1, panel=0, color=dlxt_long_period_color,
                                  alpha=0.1),
-                mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt_long_period,
+                mpf.make_addplot(get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt_long_period,
                                  color=dlxt_long_period_color)])
-            # mpf.make_addplot(dlxt, type='bar', width=1, panel=0, color=dlxt_color, alpha=0.1),
+            # mpf.make_addplot(get_window(dlxt, type='bar', width=1, panel=0, color=dlxt_color, alpha=0.1)),
         else:
             dlxt_long_period_color = ['white' for i in dlxt_long_period_color]
 
         self.add_plot.extend([
-            mpf.make_addplot(data_stress, type='line', color='r'),
-            mpf.make_addplot(data_support, type='line', color='g'),
-            mpf.make_addplot(exp12, type='line', color='dimgrey'),
-            mpf.make_addplot(exp26, type='line', color='black'),
-            mpf.make_addplot(data_force_index, type='bar', panel=self.panel_qlzs, color=force_index_color),
-            mpf.make_addplot(data_force_index, type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
-            mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
+            mpf.make_addplot(get_window(data_stress), type='line', color='r'),
+            mpf.make_addplot(get_window(data_support), type='line', color='g'),
+            mpf.make_addplot(get_window(exp12), type='line', color='dimgrey'),
+            mpf.make_addplot(get_window(exp26), type='line', color='black'),
+            mpf.make_addplot(get_window(data_force_index), type='bar', panel=self.panel_qlzs, color=force_index_color),
+            mpf.make_addplot(get_window(data_force_index), type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
+            mpf.make_addplot(get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
         ])
 
-        if data['channel_signal_enter'].any(skipna=True):
+        if get_window(data['channel_signal_enter']).any(skipna=True):
             self.add_plot.append(
-                mpf.make_addplot(data['channel_signal_enter'], type='scatter', width=1, panel=0, color='lightgrey',
+                mpf.make_addplot(get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color='lightgrey',
                                  markersize=50, marker='^'))
-        if data['channel_signal_exit'].any(skipna=True):
+        if get_window(data['channel_signal_exit']).any(skipna=True):
             self.add_plot.append(
-                mpf.make_addplot(data['channel_signal_exit'], type='scatter', width=1, panel=0, color='dimgrey',
+                mpf.make_addplot(get_window(data['channel_signal_exit']), type='scatter', width=1, panel=0, color='dimgrey',
                                  markersize=50, marker='v'))
 
-        if data['triple_screen_signal_enter'].any(skipna=True):
+        if get_window(data['triple_screen_signal_enter']).any(skipna=True):
             self.add_plot.append(
-                mpf.make_addplot(data['triple_screen_signal_enter'], type='scatter', width=1, panel=0, color='g',
+                mpf.make_addplot(get_window(data['triple_screen_signal_enter']), type='scatter', width=1, panel=0, color='g',
                                  markersize=50, marker='^'))
-        if data['triple_screen_signal_exit'].any(skipna=True):
+        if get_window(data['triple_screen_signal_exit']).any(skipna=True):
             self.add_plot.append(
-                mpf.make_addplot(data['triple_screen_signal_exit'], type='scatter', width=1, panel=0, color='r',
+                mpf.make_addplot(get_window(data['triple_screen_signal_exit']), type='scatter', width=1, panel=0, color='r',
                                  markersize=50, marker='v'))
-        if data['macd_bull_market_deviation'].any(skipna=True):
+        if get_window(data['macd_bull_market_deviation']).any(skipna=True):
             self.add_plot.extend([
-                mpf.make_addplot(data['macd_bull_market_deviation'], type='scatter', width=1, panel=0, color='g',
+                mpf.make_addplot(get_window(data['macd_bull_market_deviation']), type='scatter', width=1, panel=0, color='g',
                                  markersize=50, marker='D'),
 
             ])
@@ -291,17 +297,17 @@ class DataFinanceDraw(object):
             d = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values, histogram*1.2).values
 
             # macd panel
-            colors = ['lightgrey' if v >= 0 else 'grey' for v in histogram]
+            colors = ['lightgrey' if v >= 0 else 'grey' for v in get_window(histogram)]
             colors = [dark_olive_green3 if not numpy.isnan(v) else colors[i]
-                      for (i,), v in numpy.ndenumerate(macd_bull_market_deviation.values)]
+                      for (i,), v in numpy.ndenumerate(get_window(macd_bull_market_deviation).values)]
             self.add_plot.extend(
                 [
-                    # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
-                    # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
-                    # mpf.make_addplot(macd, panel=self.panel_macd, color='lightgrey'),
-                    # mpf.make_addplot(signal, panel=self.panel_macd, color='dimgrey'),
-                    mpf.make_addplot(histogram, type='bar', panel=self.panel_macd, color=colors),  # , secondary_y=True)
-                    mpf.make_addplot(d, type='scatter', width=1, panel=self.panel_macd, color='g',
+                    # mpf.make_addplot(get_window(histogram_positive, type='bar', width=0.7, panel=2, color='b')),
+                    # mpf.make_addplot(get_window(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia')),
+                    # mpf.make_addplot(get_window(macd, panel=self.panel_macd, color='lightgrey')),
+                    # mpf.make_addplot(get_window(signal, panel=self.panel_macd, color='dimgrey')),
+                    mpf.make_addplot(get_window(histogram), type='bar', panel=self.panel_macd, color=colors),  # ), secondary_y=True)
+                    mpf.make_addplot(get_window(d), type='scatter', width=1, panel=self.panel_macd, color='g',
                                      markersize=50, marker='^', secondary_y=False),
                 ])
 
@@ -332,7 +338,7 @@ class DataFinanceDraw(object):
             figratio=(16, 9),
             figscale=1)
 
-        self.fig, axlist = mpf.plot(self.data, **self.kwargs,
+        self.fig, axlist = mpf.plot(get_window(self.data), **self.kwargs,
                                     style=self.style,
                                     show_nontrading=False,
                                     addplot=self.add_plot,
@@ -426,7 +432,7 @@ def open_graph(code, peroid, path=None):
     if path:
         candle.load_data(path)
     else:
-        candle.fetch_data(code, peroid)
+        candle.fetch_data(code)
 
     update(candle)
     show(candle)
@@ -436,6 +442,7 @@ if __name__ == "__main__":
     code = '000001'
     # code = '300502'
     code = '000999'
+    code = '000625'
     period = 'day'   # m5 m30 day week
     open_graph(code, period, 'data/' + code + '.csv')
     # open_graph(code, period)

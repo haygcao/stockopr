@@ -160,12 +160,12 @@ def get_price_info_df_db_week(df, period_type='W'):
     #p.set_index('trade_date', inplace=True)
     period_data = df.resample(period_type).last()
     #period_data['change'] = p['change'].resample(period_type, how=lambda x:(x+1.0).prod() - 1.0, axis=0);
-    period_data['open'] = df['open'].resample(period_type).first();
-    period_data['high'] = df['high'].resample(period_type).max();
-    period_data['low'] = df['low'].resample(period_type).min();
-    period_data['close'] = df['close'].resample(period_type).last();
-    period_data['volume'] = df['volume'].resample(period_type).sum();
-    period_data['turnover'] = df['turnover'].resample(period_type).sum();
+    period_data['open'] = df['open'].resample(period_type).first()
+    period_data['high'] = df['high'].resample(period_type).max()
+    period_data['low'] = df['low'].resample(period_type).min()
+    period_data['close'] = df['close'].resample(period_type).last()
+    period_data['volume'] = df['volume'].resample(period_type).sum()
+    period_data['turnover'] = df['turnover'].resample(period_type).sum()
 
     #period_data.set_index('trade_date', inplace=True)
     period_data = period_data[period_data['code'].notnull()]

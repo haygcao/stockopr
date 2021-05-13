@@ -90,12 +90,16 @@ def dynamical_system_dual_period(quote, n=13, period=None):
 
     # 长周期动力系统
     quote_week = quote_db.get_price_info_df_db_week(quote, period_type)
+    # print(quote[-50:])
+    # print(quote_week[-50:])
     quote_week = dynamical_system(quote_week)
+    # print(quote_week[-50:])
     # quote_week.rename(columns={'dlxt': 'dlxt_long_period'}, inplace=True)
     # quote_week.drop(['open', 'close'], axis=1, inplace=True)
     # quote_week = quote_week[['dlxt']]
     dlxt_long_period = quote_week.resample(period_type_reverse).last()
     dlxt_long_period['dlxt'] = quote_week['dlxt'].resample(period_type_reverse).pad()
+    # print(dlxt_long_period[-50:])
 
     # 补齐最后一天的数据
     if period in ['m30', 'm5', 'm1']:
@@ -117,6 +121,7 @@ def dynamical_system_dual_period(quote, n=13, period=None):
 
     # 中周期动力系统
     quote = dynamical_system(quote)
+    # print(quote[-50:])
 
     dlxt_long_period_copy = dlxt_long_period.copy()
     quote_copy = quote.copy()
