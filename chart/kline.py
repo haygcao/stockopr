@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, Locator
 from matplotlib.widgets import Cursor
 
-from pointor import signal_triple_screen, signal_channel, signal_bull_market_deviation
+from pointor import signal_triple_screen, signal_channel, signal_market_deviation
 from selector.plugin import dynamical_system, force_index
 
 # http://www.cjzzc.com/web_color.html
@@ -195,7 +195,7 @@ class DataFinanceDraw(object):
         # mask2 = data_force_index.loc[:] < -force_index_abs_avg * 5
         # data_force_index[mask2] = -force_index_abs_avg * 5
 
-        data = signal_bull_market_deviation.signal_enter(data, self.period)
+        data = signal_market_deviation.signal_enter(data, self.period)
 
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
 

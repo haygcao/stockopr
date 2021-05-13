@@ -38,7 +38,7 @@ histogram = numpy.array([-1, -2, -3, -2, -1,
                          1, 2, 3])
 
 
-def niushibeili(quote, histogram, back):
+def bull_deviation(quote, histogram, back):
     # back = 125
     # 跳过最右的 histogram 为正的数据, 即可能已经进入夏季
     last_positive = 5
@@ -130,7 +130,7 @@ def niushibeili_macd(quote, back):
     # import pdb; pdb.set_trace()
     histogram = df[2]
 
-    ret = niushibeili(quote, histogram, back)
+    ret = bull_deviation(quote, histogram, back)
     if ret:
         first_min_index, second_min_index = ret
         quote.loc[first_min_index, 'macd_bull_market_deviation'] = quote.loc[first_min_index, 'low']

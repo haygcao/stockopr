@@ -9,7 +9,7 @@ import numpy
 
 from chart.kline import open_graph
 from config.config import period_map
-from pointor import signal_triple_screen, signal_bull_market_deviation
+from pointor import signal_triple_screen, signal_market_deviation
 from pointor import signal_channel
 
 from acquisition import tx
@@ -39,7 +39,7 @@ def update_status(code, data, period):
             return False
 
     # deviation signal
-    data = signal_bull_market_deviation.signal_enter(data, period)
+    data = signal_market_deviation.signal_enter(data, period)
     data_sub = data['macd_bull_market_deviation'][-5:]
     if data_sub.any(skipna=True):
         data_index_ = data_sub[data_sub.notnull()].index[0]
