@@ -200,7 +200,10 @@ class DataFinanceDraw(object):
                                   dlxt_long_period]
         dlxt_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in dlxt]
 
-        force_index_color = [dark_sea_green if v >= 0 else indian_red for v in data["force_index"]]
+        force_index_color = ['lightgrey' if v >= 0 else 'grey' for v in data["force_index"]]
+        force_index_color = [
+            dark_olive_green3 if v == force_index_abs_avg * 5 else light_coral if v == -force_index_abs_avg * 5 else force_index_color[i]
+            for (i,), v in numpy.ndenumerate(data_force_index.values)]
 
         data_atr = data['atr']
         self.add_plot.extend([
@@ -226,11 +229,11 @@ class DataFinanceDraw(object):
             mpf.make_addplot(data_support, type='line', color='g'),
             mpf.make_addplot(exp12, type='line', color='dimgrey'),
             mpf.make_addplot(exp26, type='line', color='black'),
-            mpf.make_addplot(data_force_index, type='bar', width=1, panel=self.panel_qlzs, color=force_index_color),
+            mpf.make_addplot(data_force_index, type='bar', panel=self.panel_qlzs, color=force_index_color),
             mpf.make_addplot(data_force_index, type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt_long_period, color=dlxt_long_period_color),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
-            mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color, alpha=0.2),
+            mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color, alpha=0.1),
         ])
 
         if data['channel_signal_enter'].any(skipna=True):
@@ -251,9 +254,11 @@ class DataFinanceDraw(object):
                 mpf.make_addplot(data['triple_screen_signal_exit'], type='scatter', width=1, panel=0, color='r',
                                  markersize=50, marker='v'))
         if data['macd_bull_market_deviation'].any(skipna=True):
-            self.add_plot.append(
+            self.add_plot.extend([
                 mpf.make_addplot(data['macd_bull_market_deviation'], type='scatter', width=1, panel=0, color='g',
-                                 markersize=50, marker='D'))
+                                 markersize=50, marker='D'),
+
+            ])
         if self.show_macd:
             self.n_panels += 1
             # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
@@ -265,15 +270,22 @@ class DataFinanceDraw(object):
             # histogram[histogram >= 0] = None
             # histogram_negative = histogram
 
+            macd_bull_market_deviation = data['macd_bull_market_deviation']
+            d = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values, histogram*1.2).values
+
             # macd panel
-            colors = [dark_sea_green if v >= 0 else indian_red for v in histogram]
+            colors = ['lightgrey' if v >= 0 else 'grey' for v in histogram]
+            colors = [dark_olive_green3 if not numpy.isnan(v) else colors[i]
+                      for (i,), v in numpy.ndenumerate(macd_bull_market_deviation.values)]
             self.add_plot.extend(
                 [
-                    mpf.make_addplot(histogram, type='bar', panel=self.panel_macd, color=colors),  # color='dimgray'
                     # mpf.make_addplot(histogram_positive, type='bar', width=0.7, panel=2, color='b'),
                     # mpf.make_addplot(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia'),
-                    mpf.make_addplot(macd, panel=self.panel_macd, color='lightgrey', secondary_y=True),
-                    mpf.make_addplot(signal, panel=self.panel_macd, color='dimgrey', secondary_y=True),
+                    # mpf.make_addplot(macd, panel=self.panel_macd, color='lightgrey'),
+                    # mpf.make_addplot(signal, panel=self.panel_macd, color='dimgrey'),
+                    mpf.make_addplot(histogram, type='bar', panel=self.panel_macd, color=colors),  # , secondary_y=True)
+                    mpf.make_addplot(d, type='scatter', width=1, panel=self.panel_macd, color='g',
+                                     markersize=50, marker='^', secondary_y=False),
                 ])
 
         # fig = mpf.figure(figsize=(10, 7), style=self.style)  # pass in the self defined style to the whole canvas
