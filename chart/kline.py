@@ -254,7 +254,7 @@ class DataFinanceDraw(object):
             force_index_bull_market_deviation.notnull().values,
             data_force_index * 1.2).values
 
-        force_index_bear_market_deviation = data['macd_bear_market_deviation']
+        force_index_bear_market_deviation = data['force_index_bear_market_deviation']
         data_force_index_bear_deviation = force_index_bear_market_deviation.mask(
             force_index_bear_market_deviation.notnull().values,
             data_force_index * 1.2).values
