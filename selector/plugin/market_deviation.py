@@ -2,6 +2,8 @@
 import numpy.ma
 import pandas
 
+from config.config import is_long_period
+from selector.plugin import force_index
 from util.macd import macd
 
 # 牛市背离 bull market deviation
@@ -38,7 +40,7 @@ histogram = numpy.array([-1, -2, -3, -2, -1,
                          1, 2, 3])
 
 
-def market_deviation(quote, histogram, back, will=1):
+def _market_deviation(quote, histogram, back, will=1):
 
     # back = 125
     # 跳过最右的 histogram 为正的数据, 即可能已经进入夏季
@@ -140,29 +142,24 @@ def match_close(quote, min_index, will):
     return False
 
 
-def bull_deviation_macd(quote, back):
-    # 价格新低
-    # print(quote['close'])
-    # MACD 没有新低
-    df = macd(quote['close'])
-    # import pdb; pdb.set_trace()
-    histogram = df[2]
-
+def market_deviation(quote, histogram, back, column_name, will):
     # bull market deviation
-    if 'macd_bull_market_deviation' not in quote.columns:
-        # quote.insert(-1, 'bull_market_deviation', numpy.nan)
+    if column_name not in quote.columns:
+        # column_name = 'macd_bull_market_deviation'
+        quote.insert(len(quote.columns), column_name, numpy.nan)
         # quote.loc[:]['macd_bull_market_deviation'] = pandas.Series(numpy.nan, index=quote.index)
-        quote = quote.assign(macd_bull_market_deviation=numpy.nan)
-    ret = market_deviation(quote, histogram, back, will=1)
+        # quote = quote.assign(macd_bull_market_deviation=numpy.nan)
+    ret = _market_deviation(quote, histogram, back, will=will)
     if ret:
         first_min_index, second_min_index = ret
-        quote.loc[first_min_index, 'macd_bull_market_deviation'] = quote.loc[first_min_index, 'low']
-        quote.loc[second_min_index, 'macd_bull_market_deviation'] = quote.loc[second_min_index, 'low']
+        price = 'low' if will > 0 else 'high'
+        quote.loc[first_min_index, column_name] = quote.loc[first_min_index, price]
+        quote.loc[second_min_index, column_name] = quote.loc[second_min_index, price]
 
     return quote
 
 
-def bear_deviation_macd(quote, back):
+def market_deviation_macd(quote, back):
     # 价格新低
     # print(quote['close'])
     # MACD 没有新低
@@ -170,13 +167,14 @@ def bear_deviation_macd(quote, back):
     # import pdb; pdb.set_trace()
     histogram = df[2]
 
-    # bear market deviation
-    if 'macd_bear_market_deviation' not in quote.columns:
-        quote = quote.assign(macd_bear_market_deviation=numpy.nan)
-    ret = market_deviation(quote, histogram, back, will=-1)
-    if ret:
-        first_min_index, second_min_index = ret
-        quote.loc[first_min_index, 'macd_bear_market_deviation'] = quote.loc[first_min_index, 'high']
-        quote.loc[second_min_index, 'macd_bear_market_deviation'] = quote.loc[second_min_index, 'high']
+    quote = market_deviation(quote, histogram, back, 'macd_bull_market_deviation', 1)
+    return market_deviation(quote, histogram, back, 'macd_bear_market_deviation', -1)
 
-    return quote
+
+def market_deviation_force_index(quote, back, period):
+    n = 13 if is_long_period(period) else 2
+    quote = force_index.force_index(quote, n=n)
+    histogram = quote['force_index']
+
+    quote = market_deviation(quote, histogram, back, 'force_index_bull_market_deviation', 1)
+    return market_deviation(quote, histogram, back, 'force_index_bear_market_deviation', -1)

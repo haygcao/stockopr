@@ -42,7 +42,7 @@ selector = {
     'dd': d.dd,
     'zf': zf.zf,
     'qd': qd.qd,
-    'nsbl': niushibeili.market_deviation,
+    'nsbl': niushibeili._market_deviation,
     'dlxt_green': dynamical_system.dynamical_system_green,
     'dlxt_red': dynamical_system.dynamical_system_red,
     'dlxt_blue': dynamical_system.dynamical_system_blue,

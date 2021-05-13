@@ -8,6 +8,9 @@ from selector.plugin import dynamical_system, force_index
 
 def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, force_index, force_index_shift,
                    period):
+    if is_long_period(period):
+        return numpy.nan
+
     # 长中周期动量系统中任一为红色, 均禁止买入
     if (not is_long_period(period) and dlxt_long_period < 0) or dlxt < 0:
         return numpy.nan
@@ -35,6 +38,9 @@ def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
 
 def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, force_index, force_index_shift,
                   period):
+    # if is_long_period(period):
+    #     return numpy.nan
+
     if not is_long_period(period) and dlxt_long_period_shift > dlxt_long_period:
         return high
 
@@ -55,7 +61,8 @@ def compute_index(quote, period=None):
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
     # 强力指数
-    quote = force_index.force_index(quote)
+    n = 13 if is_long_period(period) else 2
+    quote = force_index.force_index(quote, n=n)
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'force_index_shift'] = quote['force_index'].shift(periods=1)

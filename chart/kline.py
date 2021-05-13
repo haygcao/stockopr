@@ -249,6 +249,21 @@ class DataFinanceDraw(object):
         else:
             dlxt_long_period_color = ['white' for i in dlxt_long_period_color]
 
+        force_index_bull_market_deviation = data['force_index_bull_market_deviation']
+        data_force_index_bull_deviation = force_index_bull_market_deviation.mask(
+            force_index_bull_market_deviation.notnull().values,
+            data_force_index * 1.2).values
+
+        force_index_bear_market_deviation = data['macd_bear_market_deviation']
+        data_force_index_bear_deviation = force_index_bear_market_deviation.mask(
+            force_index_bear_market_deviation.notnull().values,
+            data_force_index * 1.2).values
+
+        force_index_color = [dark_olive_green3 if not numpy.isnan(v) else force_index_color[i]
+                  for (i,), v in numpy.ndenumerate(get_window(force_index_bull_market_deviation).values)]
+        force_index_color = [light_coral if not numpy.isnan(v) else force_index_color[i]
+                  for (i,), v in numpy.ndenumerate(get_window(force_index_bear_market_deviation).values)]
+
         self.add_plot.extend([
             mpf.make_addplot(get_window(data_stress), type='line', color='r'),
             mpf.make_addplot(get_window(data_support), type='line', color='g'),
@@ -256,6 +271,12 @@ class DataFinanceDraw(object):
             mpf.make_addplot(get_window(exp26), type='line', color='black'),
             mpf.make_addplot(get_window(data_force_index), type='bar', panel=self.panel_qlzs, color=force_index_color),
             mpf.make_addplot(get_window(data_force_index), type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
+            mpf.make_addplot(get_window(data_force_index_bull_deviation), type='scatter', width=1, panel=self.panel_qlzs,
+                             color='g',
+                             markersize=50, marker='^', secondary_y=False),
+            mpf.make_addplot(get_window(data_force_index_bear_deviation), type='scatter', width=1, panel=self.panel_qlzs,
+                             color='r',
+                             markersize=50, marker='v', secondary_y=False),
             mpf.make_addplot(get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
         ])
 
@@ -270,22 +291,34 @@ class DataFinanceDraw(object):
 
         if get_window(data['triple_screen_signal_enter']).any(skipna=True):
             self.add_plot.append(
-                mpf.make_addplot(get_window(data['triple_screen_signal_enter']), type='scatter', width=1, panel=0, color='g',
+                mpf.make_addplot(get_window(data['triple_screen_signal_enter']), type='scatter', width=1, panel=0, color=dark_olive_green3,
                                  markersize=50, marker='^'))
         if get_window(data['triple_screen_signal_exit']).any(skipna=True):
             self.add_plot.append(
-                mpf.make_addplot(get_window(data['triple_screen_signal_exit']), type='scatter', width=1, panel=0, color='r',
+                mpf.make_addplot(get_window(data['triple_screen_signal_exit']), type='scatter', width=1, panel=0, color=light_coral,
                                  markersize=50, marker='v'))
         if get_window(data['macd_bull_market_deviation']).any(skipna=True):
             self.add_plot.extend([
                 mpf.make_addplot(get_window(data['macd_bull_market_deviation']), type='scatter', width=1, panel=0, color='g',
-                                 markersize=50, marker='D'),
+                                 markersize=50, marker='^'),
 
             ])
         if get_window(data['macd_bear_market_deviation']).any(skipna=True):
             self.add_plot.extend([
                 mpf.make_addplot(get_window(data['macd_bear_market_deviation']), type='scatter', width=1, panel=0, color='r',
-                                 markersize=50, marker='D'),
+                                 markersize=50, marker='v'),
+
+            ])
+        if get_window(data['force_index_bull_market_deviation']).any(skipna=True):
+            self.add_plot.extend([
+                mpf.make_addplot(get_window(data['force_index_bull_market_deviation']), type='scatter', width=1, panel=0, color='g',
+                                 markersize=50, marker='^'),
+
+            ])
+        if get_window(data['force_index_bear_market_deviation']).any(skipna=True):
+            self.add_plot.extend([
+                mpf.make_addplot(get_window(data['force_index_bear_market_deviation']), type='scatter', width=1, panel=0, color='r',
+                                 markersize=50, marker='v'),
 
             ])
         if self.show_macd:
@@ -300,10 +333,10 @@ class DataFinanceDraw(object):
             # histogram_negative = histogram
 
             macd_bull_market_deviation = data['macd_bull_market_deviation']
-            data_bull_deviation = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values, histogram*1.2).values
+            data_macd_bull_deviation = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values, histogram*1.2).values
 
             macd_bear_market_deviation = data['macd_bear_market_deviation']
-            data_bear_deviation = macd_bear_market_deviation.mask(macd_bear_market_deviation.notnull().values,
+            data_macd_bear_deviation = macd_bear_market_deviation.mask(macd_bear_market_deviation.notnull().values,
                                                                   histogram * 1.2).values
 
             # macd panel
@@ -319,9 +352,9 @@ class DataFinanceDraw(object):
                     # mpf.make_addplot(get_window(macd, panel=self.panel_macd, color='lightgrey')),
                     # mpf.make_addplot(get_window(signal, panel=self.panel_macd, color='dimgrey')),
                     mpf.make_addplot(get_window(histogram), type='bar', panel=self.panel_macd, color=colors),  # ), secondary_y=True)
-                    mpf.make_addplot(get_window(data_bull_deviation), type='scatter', width=1, panel=self.panel_macd, color='g',
+                    mpf.make_addplot(get_window(data_macd_bull_deviation), type='scatter', width=1, panel=self.panel_macd, color='g',
                                      markersize=50, marker='^', secondary_y=False),
-                    mpf.make_addplot(get_window(data_bear_deviation), type='scatter', width=1, panel=self.panel_macd,
+                    mpf.make_addplot(get_window(data_macd_bear_deviation), type='scatter', width=1, panel=self.panel_macd,
                                      color='r',
                                      markersize=50, marker='v', secondary_y=False),
                 ])

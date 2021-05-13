@@ -5,6 +5,9 @@ from util.macd import ema
 
 
 def force_index(quote, n=2):
+    if 'force_index' in quote.columns:
+        return quote
+
     close = quote['close']
     close_shift = close.shift(periods=1)
     si_close = close - close_shift
