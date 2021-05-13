@@ -26,7 +26,7 @@ from selector.plugin import dynamical_system, force_index
 
 panel_ratios = {
     3: (8, 0.2, 1.8),
-    4: [7, 0.2, 1.4, 1.4],
+    4: [7.1, 0.1, 1.4, 1.4],
     5: [7, 0.1, 0.1, 1.4, 1.4]
 }
 
@@ -61,13 +61,20 @@ class DataFinanceDraw(object):
     获取数据，并按照 mplfinanace 需求的格式格式化，然后绘图
     """
 
-    def __init__(self, code):
+    def __init__(self, code, period):
+        self.code = code
+        self.period = period
+
         self.show_volume = False
         self.show_macd = True
         self.panel_volume = 1 if self.show_volume else 0
-        self.n_panels = 5 if self.show_volume else 4
-        self.panel_dlxt_long_period = self.panel_volume + 1
-        self.panel_dlxt = self.panel_dlxt_long_period + 1
+        self.n_panels = 4 if self.show_volume else 3
+        if self.period in ['day', 'm5']:
+            self.n_panels += 1
+            self.panel_dlxt_long_period = self.panel_volume + 1
+            self.panel_dlxt = self.panel_dlxt_long_period + 1
+        else:
+            self.panel_dlxt = self.panel_volume + 1
         self.panel_qlzs = self.panel_dlxt + 1
         self.panel_macd = self.panel_qlzs + 1
 
@@ -76,8 +83,6 @@ class DataFinanceDraw(object):
         self.data = None
         self.need_update = False
         self.style = None
-        self.code = code
-        self.period = 'day'
 
         self.add_plot = []
         self.fig = None
@@ -224,6 +229,18 @@ class DataFinanceDraw(object):
         dlxt.values[:] = 1
         # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
         dlxt_long_period.values[:] = self.data_origin['low']
+        # dlxt.values[:] = self.data_origin['low']
+
+        if self.period in ['day', 'm5']:
+            self.add_plot.extend([
+                mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color,
+                                 alpha=0.1),
+                mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt_long_period,
+                                 color=dlxt_long_period_color)])
+            # mpf.make_addplot(dlxt, type='bar', width=1, panel=0, color=dlxt_color, alpha=0.1),
+        else:
+            dlxt_long_period_color = ['white' for i in dlxt_long_period_color]
+
         self.add_plot.extend([
             mpf.make_addplot(data_stress, type='line', color='r'),
             mpf.make_addplot(data_support, type='line', color='g'),
@@ -231,9 +248,7 @@ class DataFinanceDraw(object):
             mpf.make_addplot(exp26, type='line', color='black'),
             mpf.make_addplot(data_force_index, type='bar', panel=self.panel_qlzs, color=force_index_color),
             mpf.make_addplot(data_force_index, type='line', width=1, panel=self.panel_qlzs, color='dimgrey'),
-            mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt_long_period, color=dlxt_long_period_color),
             mpf.make_addplot(dlxt, type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
-            mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color, alpha=0.1),
         ])
 
         if data['channel_signal_enter'].any(skipna=True):
@@ -312,7 +327,7 @@ class DataFinanceDraw(object):
             # ylabel='OHLC Candles',
             # ylabel_lower='Shares\nTraded Volume',
             # axisoff=True,
-            figratio=(2, 1),
+            figratio=(16, 9),
             figscale=1)
 
         self.fig, axlist = mpf.plot(self.data, **self.kwargs,
@@ -405,7 +420,7 @@ def show(candle):
 
 
 def open_graph(code, peroid, path=None):
-    candle = DataFinanceDraw(code)
+    candle = DataFinanceDraw(code, peroid)
     if path:
         candle.load_data(path)
     else:
