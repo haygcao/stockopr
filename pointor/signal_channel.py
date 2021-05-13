@@ -2,42 +2,43 @@
 import numpy
 
 import indicator
+from config.config import is_long_period
 from selector.plugin import dynamical_system
 from util import macd
 
 
-def function_enter(low, dlxt_long_period, dlxt, ema, atr):
-    # if dlxt_long_period == -1:
-    #     return numpy.nan
+def function_enter(low, dlxt_long_period, dlxt, ema, atr, period):
+    if not is_long_period(period) and dlxt_long_period == -1:
+        return numpy.nan
 
     # if dlxt == -1:
     #     if low <= ema - 3*atr:
     #         return low
 
-    # if dlxt == 0:
-    #     if low <= ema - 3*atr:
-    #         return low
+    if dlxt >= 0:
+        if low <= ema - 3*atr:
+            return low
 
-    if low <= ema - 3 * atr:
-        return low
+    # if low <= ema - 3 * atr:
+    #     return low
 
     return numpy.nan
 
 
-def function_exit(high, dlxt_long_period, dlxt, ema, atr):
-    # if dlxt_long_period == 1:
-    #     return numpy.nan
+def function_exit(high, dlxt_long_period, dlxt, ema, atr, period):
+    if not is_long_period(period) and dlxt_long_period == 1:
+        return numpy.nan
 
     # if dlxt == 1:
     #     if high >= ema + 3*atr:
     #         return high
 
-    # if dlxt == 0:
-    #     if high >= ema + 3*atr:
-    #         return high
+    if dlxt <= 0:
+        if high >= ema + 3*atr:
+            return high
 
-    if high >= ema + 3 * atr:
-        return high
+    # if high >= ema + 3 * atr:
+    #     return high
 
     return numpy.nan
 
@@ -57,7 +58,7 @@ def signal_enter(quote, period):
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'channel_signal_enter'] = quote_copy.apply(
-        lambda x: function_enter(x.low, x.dlxt_long_period, x.dlxt, x.ema, x.atr), axis=1)
+        lambda x: function_enter(x.low, x.dlxt_long_period, x.dlxt, x.ema, x.atr, period), axis=1)
 
     return quote_copy
 
@@ -67,7 +68,7 @@ def signal_exit(quote, period):
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'channel_signal_exit'] = quote_copy.apply(
-        lambda x: function_exit(x.high, x.dlxt_long_period, x.dlxt, x.ema, x.atr), axis=1)
+        lambda x: function_exit(x.high, x.dlxt_long_period, x.dlxt, x.ema, x.atr, period), axis=1)
 
     return quote_copy
 

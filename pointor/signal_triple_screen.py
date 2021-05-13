@@ -2,22 +2,22 @@
 import numpy
 
 from acquisition import quote_db
-from config.config import period_map
+from config.config import period_map, is_long_period
 from selector.plugin import dynamical_system, force_index
 
 
 def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, force_index, force_index_shift,
                    period):
     # 长中周期动量系统中任一为红色, 均禁止买入
-    if dlxt_long_period < 0 or dlxt < 0:
+    if (not is_long_period(period) and dlxt_long_period < 0) or dlxt < 0:
         return numpy.nan
 
     # 长周期动量系统变为 红->蓝/绿, 蓝->绿
-    if dlxt_long_period_shift < dlxt_long_period:  # and dlxt_long_period > 0:
+    if not is_long_period(period) and dlxt_long_period_shift < dlxt_long_period:  # and dlxt_long_period > 0:
         return low
 
-    # if dlxt_shift < dlxt:
-    #     return low
+    if is_long_period(period) and dlxt_shift < dlxt and dlxt == 1:
+        return low
 
     # if dlxt_long_period > 0 and dlxt > 0:
     #     return low
@@ -35,7 +35,7 @@ def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
 
 def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, force_index, force_index_shift,
                   period):
-    if dlxt_long_period_shift > dlxt_long_period:
+    if not is_long_period(period) and dlxt_long_period_shift > dlxt_long_period:
         return high
 
     # 暂时不考虑做空, 即长周期动量为红色时, 是处于空仓状态的

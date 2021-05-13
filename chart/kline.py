@@ -5,6 +5,8 @@ import time
 
 import sys; sys.path.append(".")
 
+from config.config import is_long_period
+
 from acquisition import tx
 
 import numpy
@@ -69,7 +71,7 @@ class DataFinanceDraw(object):
         self.show_macd = True
         self.panel_volume = 1 if self.show_volume else 0
         self.n_panels = 4 if self.show_volume else 3
-        if self.period in ['day', 'm5']:
+        if not is_long_period(self.period):
             self.n_panels += 1
             self.panel_dlxt_long_period = self.panel_volume + 1
             self.panel_dlxt = self.panel_dlxt_long_period + 1
@@ -231,7 +233,7 @@ class DataFinanceDraw(object):
         dlxt_long_period.values[:] = self.data_origin['low']
         # dlxt.values[:] = self.data_origin['low']
 
-        if self.period in ['day', 'm5']:
+        if not is_long_period(self.period):
             self.add_plot.extend([
                 mpf.make_addplot(dlxt_long_period, type='bar', width=1, panel=0, color=dlxt_long_period_color,
                                  alpha=0.1),

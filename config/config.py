@@ -234,3 +234,7 @@ period_map = {
         'day': {'period': 'D', 'long_period': 'W', 'kline_long_period': 'week'},
         'week': {'period': 'W', 'long_period': 'M', 'kline_long_period': 'month'},
     }
+
+
+def is_long_period(period):
+    return period in ['week', 'm30']
