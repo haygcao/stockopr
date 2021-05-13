@@ -98,7 +98,7 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     dlxt_long_period['dlxt'] = quote_week['dlxt'].resample(period_type_reverse).pad()
 
     # 补齐最后一天的数据
-    if period in ['m30', 'm5']:
+    if period in ['m30', 'm5', 'm1']:
         last_row_index = dlxt_long_period.index[-1]
         pd_loss = quote[last_row_index:]
         dlxt_long_period = dlxt_long_period.append(pd_loss, )

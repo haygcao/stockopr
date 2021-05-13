@@ -385,6 +385,9 @@ class DataFinanceDraw(object):
 
         # axlist[3].fill_between(self.data.index, self.data['force_index'])
 
+        mng = plt.get_current_fig_manager()
+        mng.window.showMaximized()
+
         plt.show()
         # plt.show(block=False)  # 显示
         # plt.close()  # 关闭plt，释放内存
