@@ -38,8 +38,8 @@ def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
 
 def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, force_index, force_index_shift,
                   period):
-    # if is_long_period(period):
-    #     return numpy.nan
+    if is_long_period(period):
+        return numpy.nan
 
     if not is_long_period(period) and dlxt_long_period_shift > dlxt_long_period:
         return high
