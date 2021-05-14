@@ -49,6 +49,7 @@ def _market_deviation(quote, histogram, back, will=1):
     # 忽略可能出现的最右边的向上穿过 0 线(春夏之交)的 index, 与 skip_last_positive 配合
 
     compute_range = len(histogram) - back
+    # print(compute_range, len(histogram), back)
     pos_zero = [0, 0, compute_range-1]   # 记录即将穿过 0 线的 index, 对应的值不一定为 0
     pos_zero_index = 2
     privot = 0
@@ -80,6 +81,9 @@ def _market_deviation(quote, histogram, back, will=1):
     if pos_zero_index >= 1:
         return False
 
+    if pos_zero[2] == len(histogram) - 1:
+        return False
+
     # print('next match index', quote.index[pos_zero[0]], quote.index[pos_zero[1]], quote.index[pos_zero[2]])
     min_index = match_index(histogram, pos_zero, compute_range, will)
     if not min_index:
@@ -96,6 +100,8 @@ def _market_deviation(quote, histogram, back, will=1):
 
 def match_index(histogram, pos_zero, compute_range, will):
     end_index = -1 if pos_zero[2] == compute_range - 1 else compute_range - 1
+    # print(end_index, compute_range, pos_zero[2])
+    # print(histogram[-20:])
     if will > 0:
         first_min = min(histogram[pos_zero[0]:pos_zero[1]])
         second_min = min(histogram[pos_zero[2]:end_index])
@@ -112,16 +118,17 @@ def match_index(histogram, pos_zero, compute_range, will):
         second_less_zero_count = numpy.ma.sum(np_arr < 0)
     else:
         second_less_zero_count = numpy.ma.sum(np_arr > 0)
-    if second_less_zero_count < 3:
-        return
 
-    if second_min_index == second_less_zero_count - 1:
-        return
+    # if second_less_zero_count < 3:
+    #     return
+    #
+    # if second_min_index == second_less_zero_count - 1:
+    #     return
 
-    for index in range(second_min_index, len(histogram) - 1):
+    for index in range(second_min_index + pos_zero[2], len(histogram) - 1):
         if will * histogram[index] > 0:
             break
-        if will * histogram[index] < will * histogram[second_min_index]:
+        if will * histogram[index] < will * histogram[second_min_index + pos_zero[2]]:
             return
 
     if will > 0:
@@ -163,8 +170,8 @@ def market_deviation(quote, histogram, back, column_name, will):
         # quote.loc[:]['macd_bull_market_deviation'] = pandas.Series(numpy.nan, index=quote.index)
         # quote = quote.assign(macd_bull_market_deviation=numpy.nan)
 
-    if quote[column_name].any(skipna=True):
-        return quote
+    # if quote[column_name].any(skipna=True):
+    #     return quote
 
     ret = _market_deviation(quote, histogram, back, will=will)
     if ret:
@@ -172,17 +179,24 @@ def market_deviation(quote, histogram, back, column_name, will):
         price = 'low' if will > 0 else 'high'
 
         # 处理连续的背离, 即一波接着一波, 前一个 second point 为后一个 first point
-        if numpy.isnan(quote.loc[first_min_index, column_name]) and not numpy.isnan(
-                quote.loc[second_min_index, column_name]):
-            quote.loc[second_min_index, column_name] = numpy.nan
-        else:
-            quote.loc[first_min_index, column_name] = quote.loc[first_min_index, price]
-            quote.loc[second_min_index, column_name] = quote.loc[second_min_index, price]
+        # if numpy.isnan(quote.loc[first_min_index, column_name]) and not numpy.isnan(
+        #         quote.loc[second_min_index, column_name]):
+        #     print('nan', second_min_index, column_name)
+        #     quote.loc[second_min_index, column_name] = numpy.nan
+        # else:
+        #     quote.loc[first_min_index, column_name] = quote.loc[first_min_index, price]
+        #     quote.loc[second_min_index, column_name] = quote.loc[second_min_index, price]
 
-    return quote
+        quote.loc[first_min_index, column_name] = quote.loc[first_min_index, price]
+        quote.loc[second_min_index, column_name] = quote.loc[second_min_index, price]
+
+        index = numpy.where(quote[column_name].index == first_min_index)[0][0]
+        return len(quote) - index - 1
+
+    return 1
 
 
-def market_deviation_macd(quote, back):
+def market_deviation_macd(quote, back, period, will):
     # 价格新低
     # print(quote['close'])
     # MACD 没有新低
@@ -190,16 +204,18 @@ def market_deviation_macd(quote, back):
     # import pdb; pdb.set_trace()
     histogram = df[2]
 
-    quote = market_deviation(quote, histogram, back, 'macd_bull_market_deviation', 1)
-    return market_deviation(quote, histogram, back, 'macd_bear_market_deviation', -1)
+    column_name = 'macd_bull_market_deviation' if will == 1 else 'macd_bear_market_deviation'
+
+    return market_deviation(quote, histogram, back, column_name, will)
 
 
-def market_deviation_force_index(quote, back, period):
+def market_deviation_force_index(quote, back, period, will):
     # import ipdb;
     # ipdb.set_trace()
     n = 13 if is_long_period(period) else 2
     quote = force_index.force_index(quote, n=n)
     histogram = quote['force_index']
 
-    quote = market_deviation(quote, histogram, back, 'force_index_bull_market_deviation', 1)
-    return market_deviation(quote, histogram, back, 'force_index_bear_market_deviation', -1)
+    column_name = 'force_index_bull_market_deviation' if will == 1 else 'force_index_bear_market_deviation'
+
+    return market_deviation(quote, histogram, back, column_name, will)

@@ -527,8 +527,8 @@ if __name__ == "__main__":
     # code = '000999'
     # code = '000625'
     period = 'day'   # m5 m30 day week
-    # open_graph(code, period, 'data/' + code + '.csv')
-    open_graph(code, period)
+    open_graph(code, period, 'data/' + code + '.csv')
+    # open_graph(code, period)
 
     # code = '000001'
     # candle = DataFinanceDraw(code)

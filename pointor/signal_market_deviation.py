@@ -6,10 +6,13 @@ from selector.plugin import market_deviation
 
 def compute_index(quote, period):
     back_days = 125
-    for back_day in range(0, back_days):
-        quote = market_deviation.market_deviation_macd(quote, back_day)
-        quote = market_deviation.market_deviation_force_index(quote, back_day, period)
-        # bull_market_deviation = quote['macd_bull_market_deviation']
+
+    for func in [market_deviation.market_deviation_macd, market_deviation.market_deviation_force_index]:
+        for will in [1, -1]:
+            back_day = 0
+            while back_day < back_days:
+                n = func(quote, back_day, period, will)
+                back_day += n
 
     # bull_market_deviation = quote['macd_bear_market_deviation']
     # print(bull_market_deviation[bull_market_deviation.notnull()])
