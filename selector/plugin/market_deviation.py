@@ -41,6 +41,7 @@ histogram = numpy.array([-1, -2, -3, -2, -1,
 
 
 def _market_deviation(quote, histogram, back, will=1):
+    # import ipdb; ipdb.set_trace()
     # back = 125
     # 跳过最右的 histogram 为正的数据, 即可能已经进入夏季
     last_positive = 5
@@ -99,9 +100,9 @@ def _market_deviation(quote, histogram, back, will=1):
 
 
 def match_index(histogram, pos_zero, compute_range, will):
-    end_index = -1 if pos_zero[2] == compute_range - 1 else compute_range - 1
-    # print(end_index, compute_range, pos_zero[2])
-    # print(histogram[-20:])
+    end_index = compute_range if pos_zero[2] == compute_range - 1 else compute_range - 1
+    end_index = None if end_index >= len(histogram) - 1 else end_index
+
     if will > 0:
         first_min = min(histogram[pos_zero[0]:pos_zero[1]])
         second_min = min(histogram[pos_zero[2]:end_index])
@@ -114,10 +115,10 @@ def match_index(histogram, pos_zero, compute_range, will):
 
     np_arr = histogram[pos_zero[2]:end_index]
     second_min_index = numpy.where(np_arr == second_min)[-1][0]
-    if will > 0:
-        second_less_zero_count = numpy.ma.sum(np_arr < 0)
-    else:
-        second_less_zero_count = numpy.ma.sum(np_arr > 0)
+    # if will > 0:
+    #     second_less_zero_count = numpy.ma.sum(np_arr < 0)
+    # else:
+    #     second_less_zero_count = numpy.ma.sum(np_arr > 0)
 
     # if second_less_zero_count < 3:
     #     return
@@ -150,13 +151,15 @@ def match_index(histogram, pos_zero, compute_range, will):
 
 def match_close(quote, min_index, will):
     if will > 0:
-        first_min_close = quote['close'][min_index[0]-1:min_index[0]+1].min()
-        second_min_close = quote['close'][min_index[1]-1:min_index[1]+1].min()
+        price = 'close'
+        first_min_close = quote[price][min_index[0]-1:min_index[0]+2].min()
+        second_min_close = quote[price][min_index[1]-1:min_index[1]+2].min()
         if second_min_close < first_min_close and second_min_close / first_min_close < 1:
             return True
     else:
-        first_min_close = quote['close'][min_index[0]-1:min_index[0]+1].max()
-        second_min_close = quote['close'][min_index[1]-1:min_index[1]+1].max()
+        price = 'close'
+        first_min_close = quote[price][min_index[0]-1:min_index[0]+2].max()
+        second_min_close = quote[price][min_index[1]-1:min_index[1]+2].max()
         if second_min_close > first_min_close and first_min_close / second_min_close < 1:
             return True
     return False

@@ -106,6 +106,8 @@ def get_price_info_df_file_day(code, days, end_date, path):
     df = pd.read_csv(path, nrows=days, index_col=0, usecols=[0, 6, 3, 4, 5, 11, 12], encoding='gbk')
     df.columns = labels
 
+    df = df.sort_index()
+
     return df
 
 
