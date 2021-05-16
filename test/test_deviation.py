@@ -2,8 +2,44 @@
 
 import unittest
 
+import numpy
+
 from acquisition.quote_db import get_price_info_df_file_day
 from selector.plugin.market_deviation import market_deviation_force_index
+
+
+# 牛市背离 bull market deviation
+histogram = [-1, -2, -3, -2, -1,
+             0, 1,
+             0, -1, -2, -1,
+             0, 1, 2]
+
+# 牛市背离
+histogram = [-1, -2, -3, -2, -1,
+             1,
+             -1, -2, -1,
+             1, 2]
+
+# 牛市背离
+histogram = [-1, -2, -3, -2, -1,
+             1,
+             -1, -2]
+
+# 牛市背离
+histogram = [-1, -2, -3, -2, -1,
+             1,
+             -1, -2, -1]
+
+# 牛市背离
+histogram = numpy.array([-1, -2, -3, -2, -1,
+                         1, 2, 1,
+                         -1, -2, -1])
+
+# 牛市背离
+histogram = numpy.array([-1, -2, -3, -2, -1,
+                         1, 2, 1,
+                         -1, -2, -3,
+                         1, 2, 3])
 
 
 class DeviationTestCase(unittest.TestCase):

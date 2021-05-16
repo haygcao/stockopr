@@ -6,39 +6,6 @@ from config.config import is_long_period
 from selector.plugin import force_index
 from util.macd import macd
 
-# 牛市背离 bull market deviation
-histogram = [-1, -2, -3, -2, -1,
-             0, 1,
-             0, -1, -2, -1,
-             0, 1, 2]
-
-# 牛市背离
-histogram = [-1, -2, -3, -2, -1,
-             1,
-             -1, -2, -1,
-             1, 2]
-
-# 牛市背离
-histogram = [-1, -2, -3, -2, -1,
-             1,
-             -1, -2]
-
-# 牛市背离
-histogram = [-1, -2, -3, -2, -1,
-             1,
-             -1, -2, -1]
-
-# 牛市背离
-histogram = numpy.array([-1, -2, -3, -2, -1,
-                         1, 2, 1,
-                         -1, -2, -1])
-
-# 牛市背离
-histogram = numpy.array([-1, -2, -3, -2, -1,
-                         1, 2, 1,
-                         -1, -2, -3,
-                         1, 2, 3])
-
 
 def _market_deviation(quote, histogram, back, will=1):
     # import ipdb; ipdb.set_trace()
