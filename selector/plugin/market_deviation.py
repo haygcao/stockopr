@@ -91,7 +91,7 @@ def _market_deviation(quote, histogram, back, will=1):
         return False
 
     # print('next match close', quote.index[min_index[0]], quote.index[min_index[1]])
-    if match_close(quote, min_index, will):
+    if match_close(quote, histogram, min_index, will):
         first_min_index = quote.index[min_index[0]]
         second_min_index = quote.index[min_index[1]]
         # print('{} {}, {} {}'.format(min_index[0], first_min_index, min_index[0], second_min_index))
@@ -110,8 +110,9 @@ def match_index(histogram, pos_zero, compute_range, will):
         first_min = max(histogram[pos_zero[0]:pos_zero[1]])
         second_min = max(histogram[pos_zero[2]:end_index])
 
-    if pos_zero[2] - pos_zero[1] < 3:
-        return
+    # days of second wave too short, ignore
+    # if pos_zero[2] - pos_zero[1] < 3:
+    #     return
 
     np_arr = histogram[pos_zero[2]:end_index]
     second_min_index = numpy.where(np_arr == second_min)[-1][0]
@@ -132,36 +133,34 @@ def match_index(histogram, pos_zero, compute_range, will):
         if will * histogram[index] < will * histogram[second_min_index + pos_zero[2]]:
             return
 
-    if will > 0:
-        if first_min < second_min:
-            if second_min / first_min > 0.7:
-                return
-            np_arr = histogram[pos_zero[0]:pos_zero[1]]
-            first_min_index = numpy.where(np_arr == first_min)[-1][0]
-            return first_min_index + pos_zero[0], second_min_index + pos_zero[2]
-    else:
-        if first_min > second_min:
-            if second_min / first_min > 0.7:
-                return
-            np_arr = histogram[pos_zero[0]:pos_zero[1]]
-            first_min_index = numpy.where(np_arr == first_min)[-1][0]
-            return first_min_index + pos_zero[0], second_min_index + pos_zero[2]
+    if will * first_min < will * second_min:
+        np_arr = histogram[pos_zero[0]:pos_zero[1]]
+        first_min_index = numpy.where(np_arr == first_min)[-1][0]
+        return first_min_index + pos_zero[0], second_min_index + pos_zero[2]
+
     return
 
 
-def match_close(quote, min_index, will):
-    if will > 0:
-        price = 'close'
-        first_min_close = quote[price][min_index[0]-1:min_index[0]+2].min()
-        second_min_close = quote[price][min_index[1]-1:min_index[1]+2].min()
-        if second_min_close < first_min_close and second_min_close / first_min_close < 1:
-            return True
-    else:
-        price = 'close'
-        first_min_close = quote[price][min_index[0]-1:min_index[0]+2].max()
-        second_min_close = quote[price][min_index[1]-1:min_index[1]+2].max()
-        if second_min_close > first_min_close and first_min_close / second_min_close < 1:
-            return True
+def match_close(quote, histogram, min_index, will):
+    prices = ['close', 'low'] if will == 1 else ['close', 'high']
+    min_max = min if will == 1 else max
+
+    first_index, second_index = min_index
+    for price in prices:
+        first_price = min_max(quote[price][first_index - 1:first_index + 2])
+        second_price = min_max(quote[price][second_index - 1:second_index + 2])
+
+        if will * second_price < will * first_price:  # and second_price / first_price < 1:
+            if histogram[second_index] / histogram[first_index] < 0.9:
+                return True
+
+        if second_index - first_index <= 2:
+            return False
+
+        if max(first_price, second_price) / min(first_price, second_price) < 1.01:
+            if histogram[second_index] / histogram[first_index] < 0.3:
+                return True
+
     return False
 
 

@@ -1,4 +1,8 @@
 from config.confighandler import ConfigHandler
+
+import os
+cwd = os.getcwd()
+# ch = ConfigHandler(os.path.join(os.getcwd(), 'config', 'config.ini'), 'db')
 ch = ConfigHandler('config/config.ini', 'db')
 db_host = ch.db_host
 db = ch.db

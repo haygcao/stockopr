@@ -483,11 +483,11 @@ class DataFinanceDraw(object):
                 index_second = numpy.where(data.index == points.index[index+1])[0][0]
                 ax.arrow(index_first, points.values[index], index_second - index_first,
                          (points.values[index + 1] - points.values[index]), shape=shape, color=color,
-                         length_includes_head=True, width=unit1, head_width=unit1*6, head_length=unit1*3)
+                         length_includes_head=True, width=unit1, head_width=0, head_length=0)
 
                 ax2.arrow(index_first, points2.values[index], index_second - index_first,
                           (points2.values[index + 1] - points2.values[index]), shape=shape, color=color,
-                          length_includes_head=True, width=unit2, head_width=unit2*6, head_length=unit2*3)
+                          length_includes_head=True, width=unit2, head_width=0, head_length=0)
 
         ax = axlist[0] if is_long_period(self.period) else axlist[0]
         for column_name in ['macd_bull_market_deviation', 'macd_bear_market_deviation', 'force_index_bull_market_deviation', 'force_index_bear_market_deviation']:
@@ -509,7 +509,7 @@ class DataFinanceDraw(object):
 
             if 'bull' in column_name:
                 will = 1
-                color = green  # if 'macd' in column_name else dark_green
+                color = dark_green  # if 'macd' in column_name else dark_green
             else:
                 will = -1
                 color = red   # if 'macd' in column_name else dark_red

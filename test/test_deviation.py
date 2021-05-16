@@ -8,6 +8,8 @@ from selector.plugin.market_deviation import market_deviation_force_index
 
 class DeviationTestCase(unittest.TestCase):
     def setUp(self):
+        import os
+        # os.chdir('D:/workspace/stockopr')
         # self.widget = Widget('The widget')
         code = '300502'
         self.quote = get_price_info_df_file_day(code, 250, '2021-5-13', 'data/300502.csv')

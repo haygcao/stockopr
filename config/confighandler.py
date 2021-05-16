@@ -4,6 +4,8 @@ import configparser
 
 class ConfigHandler:
     def __init__(self, cfg, section):
+        # import os
+        # print(os.path.exists(cfg), cfg, section)
         self.cp = configparser.ConfigParser()
         self.cp.read(cfg)
         self.section = section
