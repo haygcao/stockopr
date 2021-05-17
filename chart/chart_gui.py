@@ -1,5 +1,8 @@
 import multiprocessing
 import sys
+import warnings
+warnings.simplefilter("ignore", UserWarning)
+sys.coinit_flags = 2
 
 from monitor import monitor_today
 
