@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy.ma
-import pandas
 
 from config.config import is_long_period
-from selector.plugin import force_index
+from indicator import force_index
+from indicator.decorator import computed
 from util.macd import macd
 
 
@@ -174,11 +174,11 @@ def market_deviation_macd(quote, back, period, will):
     # MACD 没有新低
     df = macd(quote['close'])
     # import pdb; pdb.set_trace()
-    histogram = df[2]
+    quote['macd_histogram'] = df[2]
 
     column_name = 'macd_bull_market_deviation' if will == 1 else 'macd_bear_market_deviation'
 
-    return market_deviation(quote, period, histogram, back, column_name, will)
+    return market_deviation(quote, period, quote['macd_histogram'], back, column_name, will)
 
 
 def market_deviation_force_index(quote, back, period, will):
@@ -186,8 +186,22 @@ def market_deviation_force_index(quote, back, period, will):
     # ipdb.set_trace()
     n = 13 if is_long_period(period) else 2
     quote = force_index.force_index(quote, n=n)
-    histogram = quote['force_index']
 
     column_name = 'force_index_bull_market_deviation' if will == 1 else 'force_index_bear_market_deviation'
 
-    return market_deviation(quote, period, histogram, back, column_name, will)
+    return market_deviation(quote, period, quote['force_index'], back, column_name, will)
+
+
+@computed(column_name='macd_bull_market_deviation')
+def compute_index(quote, period, back_days):
+    for func in [market_deviation_force_index, market_deviation_macd]:
+        for will in [1, -1]:
+            back_day = 0
+            while back_day <= back_days:
+                quote, n = func(quote, back_day, period, will)
+                back_day += n
+
+    # bull_market_deviation = quote['macd_bear_market_deviation']
+    # print(bull_market_deviation[bull_market_deviation.notnull()])
+
+    return quote

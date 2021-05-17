@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy
 
-from acquisition import quote_db
-from config.config import period_map, is_long_period
-from selector.plugin import dynamical_system, force_index
+from config.config import is_long_period
+from indicator import force_index, dynamical_system
 
 
 def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, force_index, force_index_shift,

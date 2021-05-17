@@ -107,6 +107,7 @@ def get_price_info_df_file_day(code, days, end_date, path):
     df.columns = labels
 
     df = df.sort_index()
+    df = df.assign(code=code)
 
     return df
 

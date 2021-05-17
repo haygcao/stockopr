@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import math
 
+from indicator.decorator import computed
 from util.macd import ema
 
 
+@computed(column_name='force_index13')
 def force_index(quote, n=2):
     if 'force_index' in quote.columns:
         return quote
@@ -17,10 +19,13 @@ def force_index(quote, n=2):
     digit = int(math.log10(max_vol)) + 1
     volume_adjust = volume / pow(10, digit-1)
     si = si_close * volume_adjust
-    si_ema = ema(si, n)
+
+    si_ema = ema(si, 2)
+    si_ema13 = ema(si, 13)
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'force_index'] = si_ema.values
+    quote_copy.loc[:, 'force_index13'] = si_ema13.values
 
     return quote_copy
 

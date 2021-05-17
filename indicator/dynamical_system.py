@@ -4,8 +4,10 @@ import pandas as pd
 
 from acquisition import quote_db
 from config.config import period_map
-from util.macd import macd
-from util.macd import ema
+# from util.macd import macd
+# from util.macd import ema
+from indicator import ema, macd
+from indicator.decorator import computed
 
 
 def function(ema_, macd_):
@@ -23,13 +25,15 @@ def dynamical_system(quote, n=13):
         # print('dynamical_system - dlxt already')
         return quote
 
-    ema13 = ema(quote['close'], n)['ema']
+    quote = ema.compute_ema(quote)
+    ema13 = quote['ema13']
     # ema26 = ema(quote['close'], 26)
 
     # print(ema13.iloc[-1])
     # print(ema13.values[-1])
-
-    histogram = pd.Series(macd(quote['close'])[2])
+    quote = macd.compute_macd(quote)
+    # histogram = pd.Series(macd(quote['close'])[2])
+    histogram = quote['macd_histogram']
 
     ema13_shift = ema13.shift(periods=1)
     dlxt_ema = ema13 > ema13_shift
@@ -37,7 +41,7 @@ def dynamical_system(quote, n=13):
     quote_copy = quote.copy()
     quote_copy.loc[:, 'dlxt_ema13'] = dlxt_ema.values
 
-    quote_copy.loc[:, 'macd'] = histogram
+    # quote_copy.loc[:, 'macd'] = histogram
     histogram_shift = histogram.shift(periods=1)
     dlxt_macd = histogram > histogram_shift
     quote_copy.loc[:, 'dlxt_macd'] = dlxt_macd.values
@@ -45,6 +49,8 @@ def dynamical_system(quote, n=13):
     # df.city.apply(lambda x: 1 if 'ing' in x else 0)
     # quote_copy_copy = quote_copy.copy()
     quote_copy.loc[:, 'dlxt'] = quote_copy.apply(lambda x: function(x.dlxt_ema13, x.dlxt_macd), axis=1)
+
+    # quote_copy.drop(['macd'], axis=1)
 
     return quote_copy
 
@@ -76,11 +82,8 @@ def compute_period(quote):
     return period
 
 
+@computed(column_name='dlxt')
 def dynamical_system_dual_period(quote, n=13, period=None):
-    if 'dlxt' in quote.columns:
-        # print('dynamical_system_dual_period - dlxt already')
-        return quote
-
     # 长中周期动力系统中，均不为红色，且至少一个为绿色，强力指数为负
     # pandas.infer_freq(candle.data_origin.index)   # If not continuous pandas.infer_freq will return None.
     if not period:

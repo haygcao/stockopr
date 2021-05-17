@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 import functools
-import threading
-import time
 
 import sys;
-
-import matplotlib
 
 sys.path.append(".")
 
@@ -22,11 +18,11 @@ import matplotlib as mpl  # 用于设置曲线参数
 from cycler import cycler  # 用于定制线条颜色
 import pandas
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator, FormatStrFormatter, Locator
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from matplotlib.widgets import Cursor
 
 from pointor import signal_triple_screen, signal_channel, signal_market_deviation
-from selector.plugin import dynamical_system, force_index
+from indicator import force_index
 
 # http://www.cjzzc.com/web_color.html
 
@@ -262,9 +258,9 @@ class DataFinanceDraw(object):
         ])
 
         data_support = self.data[:]['low'].copy()
-        data_stress = self.data[:]['high'].copy()
-        # data_stress = data_stress.mask(data_stress > 0, data_stress.max())
-        data_stress[:] = self.data[-60:]['high'].max()
+        data_resistance = self.data[:]['high'].copy()
+        # data_resistance = data_resistance.mask(data_resistance > 0, data_resistance.max())
+        data_resistance[:] = self.data[-60:]['high'].max()
         data_support[:] = self.data[-60:]['low'].min()
 
         dlxt.values[:] = 1
@@ -316,7 +312,7 @@ class DataFinanceDraw(object):
                   for (i,), v in numpy.ndenumerate(get_window(force_index_bear_market_deviation).values)]
 
         self.add_plot.extend([
-            mpf.make_addplot(get_window(data_stress), type='line', color=grey),
+            mpf.make_addplot(get_window(data_resistance), type='line', color=grey),
             mpf.make_addplot(get_window(data_support), type='line', color=grey),
             mpf.make_addplot(get_window(exp12), type='line', color=dimgrey),
             mpf.make_addplot(get_window(exp26), type='line', color=black),

@@ -1,8 +1,5 @@
 #-*- coding: utf-8 -*-
 
-import os
-import datetime
-
 import config.config as config
 import selector.util as util
 
@@ -12,7 +9,6 @@ import acquisition.quote_db as quote_db
 import selector.plugin.hp as hp
 import selector.plugin.second_wave as second_wave
 import selector.plugin.tp as tp
-import selector.plugin.qd as qd
 
 import selector.plugin.z as z
 import selector.plugin.d as d
@@ -20,9 +16,9 @@ import selector.plugin.d as d
 import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
-import selector.plugin.market_deviation as niushibeili
-import selector.plugin.dynamical_system as dynamical_system
-import selector.plugin.force_index as force_index
+import indicator.market_deviation as niushibeili
+import indicator.dynamical_system as dynamical_system
+import indicator.force_index as force_index
 
 import selector.selected as selected
 

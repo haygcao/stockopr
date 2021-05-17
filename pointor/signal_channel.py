@@ -3,7 +3,7 @@ import numpy
 
 import indicator
 from config.config import is_long_period
-from selector.plugin import dynamical_system
+from indicator import dynamical_system
 from util import macd
 
 

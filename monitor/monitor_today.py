@@ -4,16 +4,16 @@ import datetime
 import multiprocessing
 import time
 
-import sys
-
 import numpy
 
+import indicator
 from chart.kline import open_graph
 from config.config import period_map
 from pointor import signal_triple_screen, signal_market_deviation
 from pointor import signal_channel
 
 from acquisition import tx
+from indicator import dynamical_system
 from toolkit import tradeapi
 
 status_map = {}

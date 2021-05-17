@@ -5,7 +5,7 @@ import unittest
 import numpy
 
 from acquisition.quote_db import get_price_info_df_file_day
-from selector.plugin.market_deviation import market_deviation_force_index
+from indicator.market_deviation import market_deviation_force_index
 
 
 # 牛市背离 bull market deviation
@@ -44,7 +44,6 @@ histogram = numpy.array([-1, -2, -3, -2, -1,
 
 class DeviationTestCase(unittest.TestCase):
     def setUp(self):
-        import os
         # os.chdir('D:/workspace/stockopr')
         # self.widget = Widget('The widget')
         code = '300502'
