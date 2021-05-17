@@ -51,6 +51,7 @@ dark_green = '#006400'
 lightgrey = 'lightgrey'
 grey = 'grey'
 dimgrey = 'dimgrey'
+grey91 = '#E8E8E8'
 black = 'black'
 marker_up = '^'
 marker_down = 'v'
@@ -146,7 +147,10 @@ class DataFinanceDraw(object):
             gridaxis='both',
             gridstyle='-.',
             y_on_right=False,
-            marketcolors=mc)
+            marketcolors=mc,
+            facecolor=grey91,
+            figcolor=grey91
+        )
 
         # 设置均线颜色，配色表可见下图
         # 建议设置较深的颜色且与红色、绿色形成对比
