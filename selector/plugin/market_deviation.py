@@ -7,7 +7,7 @@ from selector.plugin import force_index
 from util.macd import macd
 
 
-def _market_deviation(quote, histogram, back, will=1):
+def _market_deviation(quote, period, histogram, back, will=1):
     # import ipdb; ipdb.set_trace()
     # back = 125
     # 跳过最右的 histogram 为正的数据, 即可能已经进入夏季
@@ -58,7 +58,7 @@ def _market_deviation(quote, histogram, back, will=1):
         return False
 
     # print('next match close', quote.index[min_index[0]], quote.index[min_index[1]])
-    if match_close(quote, histogram, min_index, will):
+    if match_close(quote, period, histogram, min_index, will):
         first_min_index = quote.index[min_index[0]]
         second_min_index = quote.index[min_index[1]]
         # print('{} {}, {} {}'.format(min_index[0], first_min_index, min_index[0], second_min_index))
@@ -108,7 +108,7 @@ def match_index(histogram, pos_zero, compute_range, will):
     return
 
 
-def match_close(quote, histogram, min_index, will):
+def match_close(quote, period, histogram, min_index, will):
     prices = ['close', 'low'] if will == 1 else ['close', 'high']
     min_max = min if will == 1 else max
 
@@ -117,21 +117,24 @@ def match_close(quote, histogram, min_index, will):
         first_price = min_max(quote[price][first_index - 1:first_index + 2])
         second_price = min_max(quote[price][second_index - 1:second_index + 2])
 
-        if will * second_price < will * first_price:  # and second_price / first_price < 1:
-            if histogram[second_index] / histogram[first_index] < 0.9:
+        if will * second_price < will * first_price:
+            if histogram[second_index] / histogram[first_index] < 0.7:
                 return True
 
         if second_index - first_index <= 2:
             return False
 
-        if max(first_price, second_price) / min(first_price, second_price) < 1.01:
+        if period in ['m1', 'm5']:
+            return False
+
+        if max(first_price, second_price) / min(first_price, second_price) < 1.005:
             if histogram[second_index] / histogram[first_index] < 0.3:
                 return True
 
     return False
 
 
-def market_deviation(quote, histogram, back, column_name, will):
+def market_deviation(quote, period, histogram, back, column_name, will):
     # bull market deviation
     if column_name not in quote.columns:
         # column_name = 'macd_bull_market_deviation'
@@ -142,7 +145,7 @@ def market_deviation(quote, histogram, back, column_name, will):
     # if quote[column_name].any(skipna=True):
     #     return quote
 
-    ret = _market_deviation(quote, histogram, back, will=will)
+    ret = _market_deviation(quote, period, histogram, back, will=will)
     if ret:
         first_min_index, second_min_index = ret
         price = 'low' if will > 0 else 'high'
@@ -175,7 +178,7 @@ def market_deviation_macd(quote, back, period, will):
 
     column_name = 'macd_bull_market_deviation' if will == 1 else 'macd_bear_market_deviation'
 
-    return market_deviation(quote, histogram, back, column_name, will)
+    return market_deviation(quote, period, histogram, back, column_name, will)
 
 
 def market_deviation_force_index(quote, back, period, will):
@@ -187,4 +190,4 @@ def market_deviation_force_index(quote, back, period, will):
 
     column_name = 'force_index_bull_market_deviation' if will == 1 else 'force_index_bear_market_deviation'
 
-    return market_deviation(quote, histogram, back, column_name, will)
+    return market_deviation(quote, period, histogram, back, column_name, will)

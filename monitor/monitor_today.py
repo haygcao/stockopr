@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import atexit
 import datetime
 import multiprocessing
 import time
@@ -16,6 +17,11 @@ from acquisition import tx
 from toolkit import tradeapi
 
 status_map = {}
+
+
+@atexit.register
+def goodbye():
+    print("monitor stopped")
 
 
 def get_min_data(code, m='m5', count=250):
@@ -41,7 +47,7 @@ def update_status(code, data, period):
     # deviation signal
     data = signal_market_deviation.signal(data, period, back_days=0)
     for column_name in ['macd_bull_market_deviation', 'macd_bear_market_deviation', 'force_index_bull_market_deviation', 'force_index_bear_market_deviation']:
-        n = 3 if period == 'm5' else 3
+        n = 1 if period == 'm5' else 1
         data_sub = data[column_name][-n:]
         command = 'B' if 'bull' in column_name else 'S'
         deviation = 'bull deviation' if command == 'B' else 'bear deviation'
