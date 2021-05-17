@@ -1,10 +1,13 @@
 import multiprocessing
 import sys
+
+from monitor import monitor_today
+
 sys.path.append('.')
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton)
 
-from chart.kline import open_graph
+from chart import kline
 
 
 class Example(QWidget):
@@ -13,6 +16,7 @@ class Example(QWidget):
 
         self.code = '300502'
         self.period = 'day'
+        self.monitor_proc = None
 
         self.initUI()
 
@@ -51,6 +55,9 @@ class Example(QWidget):
         btn = QPushButton('show', self)
         btn.clicked.connect(self.show_chart)
 
+        self.btn_monitor = QPushButton('monitor on', self)
+        self.btn_monitor.clicked.connect(self.control_monitor)
+
         grid = QGridLayout()
 
         grid.setSpacing(10)
@@ -58,6 +65,7 @@ class Example(QWidget):
         grid.addWidget(comboCode, 2, 0)
         grid.addWidget(comboPeriod, 2, 1)
         grid.addWidget(btn, 2, 2)
+        grid.addWidget(self.btn_monitor, 1, 1)
 
         self.setLayout(grid)
 
@@ -82,10 +90,23 @@ class Example(QWidget):
 
     def show_chart(self):
         print('open {} {}'.format(self.code, self.period))
-        p = multiprocessing.Process(target=open_graph, args=(self.code, self.period,))
+        p = multiprocessing.Process(target=kline.open_graph, args=(self.code, self.period,))
         p.start()
         p.join(timeout=1)
         # open_graph(self.code, self.period)
+
+    def control_monitor(self):
+        if self.btn_monitor.isChecked():
+            print('stop monitor')
+            self.btn_monitor.setCheckable(False)
+            self.monitor_proc.terminate()
+            self.monitor_proc = None
+        else:
+            print('start monitor')
+            self.btn_monitor.setCheckable(True)
+            self.monitor_proc = multiprocessing.Process(target=monitor_today.monitor_today, args=())
+            self.monitor_proc.start()
+            self.monitor_proc.join(timeout=1)
 
 
 if __name__ == '__main__':

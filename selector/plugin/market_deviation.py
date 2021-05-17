@@ -160,9 +160,9 @@ def market_deviation(quote, histogram, back, column_name, will):
         quote.loc[second_min_index, column_name] = quote.loc[second_min_index, price]
 
         index = numpy.where(quote[column_name].index == first_min_index)[0][0]
-        return len(quote) - index - 1
+        return quote, len(quote) - index - 1
 
-    return 1
+    return quote, 1
 
 
 def market_deviation_macd(quote, back, period, will):
