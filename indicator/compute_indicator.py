@@ -11,7 +11,7 @@ def compute_indicator(quote, period):
     quote = ema.compute_ema(quote)
     # force_index - force_index force_index13
     quote = force_index.force_index(quote)
-    # dynamical system - dlxt_ema13(True/False), dlxt_macd(True/False), dlxt_long_period, dlxt, dlxt_long_period_shift, dlxt_shift (compute shift when using)
+    # dynamical system - dlxt_ema13(True/False), dlxt_macd(True/False), dlxt_long_period, dlxt
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
     # atr - atr, ema26
     quote = atr.compute_atr(quote)

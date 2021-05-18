@@ -129,9 +129,7 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     dlxt_long_period_copy = dlxt_long_period.copy()
     quote_copy = quote.copy()
     quote_copy.loc[:, 'dlxt_long_period'] = dlxt_long_period_copy['dlxt'].loc[:]
-    quote_copy.loc[:, 'dlxt_long_period_shift'] = dlxt_long_period_copy['dlxt'].loc[:].shift(periods=1)
     quote_copy.loc[:, 'dlxt'] = quote['dlxt']
-    quote_copy.loc[:, 'dlxt_shift'] = quote['dlxt'].shift(periods=1)
 
     # for debug
     # print(quote_copy.iloc[-50:])

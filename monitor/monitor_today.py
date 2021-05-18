@@ -3,20 +3,43 @@ import atexit
 import datetime
 import multiprocessing
 import time
+from dataclasses import dataclass
 
 import numpy
 
 import indicator
 from chart.kline import open_graph
 from config.config import period_map
-from pointor import signal_triple_screen, signal_market_deviation
+from pointor import signal_dynamical_system, signal_market_deviation
 from pointor import signal_channel
 
 from acquisition import tx
 from indicator import dynamical_system
 from toolkit import tradeapi
 
-status_map = {}
+signal_map = {}
+# {
+#     'code': [TradeSignal, ]
+# }
+
+
+@dataclass
+class TradeSignal:
+    # signal_map = {}
+    code: str
+    date: datetime.datetime = datetime.datetime.now()
+    command: str = ''
+    category: str = ''
+    period: str = ''
+    last: bool = False
+
+    def __init__(self, code: str, date: datetime.datetime, command: str, category: str, period: str, last: bool):
+        self.code = code
+        self.date = date
+        self.command = command
+        self.category = category
+        self.period = period
+        self.last = last
 
 
 @atexit.register
@@ -38,9 +61,9 @@ def get_day_data(code, period='day', count=250):
 
 def update_status(code, data, period):
     data_index_ = data.index[-1]
-    period_status = status_map[code][str(period)]
+    period_status = signal_map[code]
     if period_status:
-        if period.startswith('m') and (data_index_ - period_status[-1]['date']).seconds < int(period[1:])*60:
+        if period.startswith('m') and (data_index_ - period_status[-1].date).seconds < int(period[1:])*60:
             print('{} - no new data'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             return False
 
@@ -53,8 +76,8 @@ def update_status(code, data, period):
         deviation = 'bull deviation' if command == 'B' else 'bear deviation'
         if data_sub.any(skipna=True):
             data_index_ = data_sub[data_sub.notnull()].index[0]
-            if not period_status or (data_index_ != period_status[-1]['date'] or period_status[-1]['type'] != deviation):
-                period_status.append({'date': data_index_, 'command': command, 'type': deviation, 'last': True})
+            if not period_status or (data_index_ != period_status[-1].date or period_status[-1].category != deviation):
+                period_status.append(TradeSignal(code, data_index_, command, deviation, period, True))
                 return True
 
     # data_sub = data['macd_bear_market_deviation'][-5:]
@@ -65,27 +88,27 @@ def update_status(code, data, period):
     #         return True
 
     # triple_screen signal
-    data = signal_triple_screen.signal_enter(data, period=period)
-    data = signal_triple_screen.signal_exit(data, period=period)
+    data = signal_dynamical_system.signal_enter(data, period=period)
+    data = signal_dynamical_system.signal_exit(data, period=period)
 
-    # if not numpy.isnan(data['triple_screen_signal_enter'][-1]):
-    if data['triple_screen_signal_enter'][-1] > 0:
-        period_status.append({'date': data_index_, 'command': 'B', 'type': 'triple screen', 'last': True})
+    # if not numpy.isnan(data['dynamical_system_signal_enter'][-1]):
+    if data['dynamical_system_signal_enter'][-1] > 0:
+        period_status.append(TradeSignal(code, data_index_, 'B', 'dynamical system', period, True))
         return True
 
-    if not numpy.isnan(data['triple_screen_signal_exit'][-1]):
-        period_status.append({'date': data_index_, 'command': 'S', 'type': 'triple screen', 'last': True})
+    if not numpy.isnan(data['dynamical_system_signal_exit'][-1]):
+        period_status.append(TradeSignal(code, data_index_, 'S', 'dynamical system', period, True))
         return True
 
     data = signal_channel.signal_enter(data, period=period)
     data = signal_channel.signal_exit(data, period=period)
 
     if not numpy.isnan(data['channel_signal_enter'][-1]):
-        period_status.append({'date': data_index_, 'command': 'B', 'type': 'channel', 'last': True})
+        period_status.append(TradeSignal(code, data_index_, 'B', 'channel', period, True))
         return True
 
     if not numpy.isnan(data['channel_signal_exit'][-1]):
-        period_status.append({'date': data_index_, 'command': 'S', 'type': 'channel', 'last': True})
+        period_status.append(TradeSignal(code, data_index_, 'S', 'channel', period, True))
         return True
 
     # if not status_map[code][str(m)] or data['dlxt'][-1] != status_map[code][str(m)][-1]:
@@ -93,7 +116,7 @@ def update_status(code, data, period):
     #     return True
 
     if period_status:
-        period_status[-1]['last'] = False
+        period_status[-1].last = False
 
     return False
 
@@ -145,13 +168,13 @@ def monitor(codes, period):
         for code in codes:
             period_signal = check(code, period)
             if period_signal:
-                print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), status_map))
+                print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), signal_map))
                 p = multiprocessing.Process(target=open_graph, args=(code, period_signal,))
                 p.start()
 
-                singal_info = status_map[code][period_signal][-1]
-                order(code, singal_info['command'], singal_info['type'])
-                notify(code, singal_info['command'], singal_info['type'])
+                singal_info = signal_map[code][-1]
+                order(code, singal_info.command, singal_info.category)
+                notify(code, singal_info.command, singal_info.category)
 
                 p.join(timeout=1)
         time.sleep(60)
@@ -162,12 +185,9 @@ def monitor_today():
     code = '300502'
     codes = [code]
     for code in codes:
-        status_map[code] = {}
-        status_map[code]['m1'] = []
-        status_map[code]['m5'] = []
-        status_map[code]['m30'] = []
+        signal_map[code] = []
 
-    print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), status_map))
+    print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), signal_map))
     monitor(codes, period)
 
 

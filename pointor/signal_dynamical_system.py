@@ -5,8 +5,7 @@ from config.config import is_long_period
 from indicator import force_index, dynamical_system
 
 
-def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, force_index, force_index_shift,
-                   period):
+def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, period):
     if is_long_period(period):
         return numpy.nan
 
@@ -24,19 +23,10 @@ def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
     # if dlxt_long_period > 0 and dlxt > 0:
     #     return low
 
-    # ema13 向上, 强力指数下穿 0
-    if dlxt_ema13 and force_index_shift >= 0 and force_index < 0:   # and dlxt > 0:
-        return low
-
-    # ema13 向上, 强力指数为负, 且开始变大
-    # if dlxt_ema13 and force_index_shift < 0 and force_index > force_index_shift:   # and dlxt > 0:
-    #     return low
-
     return numpy.nan
 
 
-def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, force_index, force_index_shift,
-                  period):
+def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, period):
     if is_long_period(period):
         return numpy.nan
 
@@ -50,21 +40,15 @@ def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
     if period in ['week', 'day', 'm30'] and dlxt_shift > dlxt and dlxt < 0:
         return high
 
-    # if dlxt == 0 and 0 < force_index < force_index_shift:
-    #     return high
-
     return numpy.nan
 
 
 def compute_index(quote, period=None):
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
-    # 强力指数
-    n = 13 if is_long_period(period) else 2
-    quote = force_index.force_index(quote, n=n)
-
     quote_copy = quote.copy()
-    quote_copy.loc[:, 'force_index_shift'] = quote['force_index'].shift(periods=1)
+    quote_copy.loc[:, 'dlxt_long_period_shift'] = quote['dlxt_long_period'].loc[:].shift(periods=1)
+    quote_copy.loc[:, 'dlxt_shift'] = quote['dlxt'].shift(periods=1)
 
     return quote_copy
 
@@ -73,9 +57,12 @@ def signal_enter(quote, period=None):
     quote = compute_index(quote, period)
 
     quote_copy = quote.copy()
-    quote_copy.loc[:, 'triple_screen_signal_enter'] = quote_copy.apply(
-        lambda x: function_enter(x.low, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift,
-                                 x.dlxt_ema13, x.force_index, x.force_index_shift, period), axis=1)
+    quote_copy.loc[:, 'dynamical_system_signal_enter'] = quote_copy.apply(
+        lambda x: function_enter(
+            x.low, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift, x.dlxt_ema13, period), axis=1)
+
+    # remove temp data
+    quote_copy.drop(['dlxt_long_period_shift', 'dlxt_shift'], axis=1)
 
     return quote_copy
 
@@ -85,10 +72,12 @@ def signal_exit(quote, period=None):
     quote = compute_index(quote, period)
 
     quote_copy = quote.copy()
-    quote_copy.loc[:, 'triple_screen_signal_exit'] = quote.apply(
-        lambda x: function_exit(x.high, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift,
-                                x.force_index, x.force_index_shift, period),
+    quote_copy.loc[:, 'dynamical_system_signal_exit'] = quote.apply(
+        lambda x: function_exit(x.high, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift, period),
         axis=1)
+
+    # remove temp data
+    quote_copy.drop(['dlxt_long_period_shift', 'dlxt_shift'], axis=1)
 
     return quote_copy
 

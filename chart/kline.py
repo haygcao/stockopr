@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from matplotlib.widgets import Cursor
 
-from pointor import signal_triple_screen, signal_channel, signal_market_deviation
+from pointor import signal_dynamical_system, signal_channel, signal_market_deviation
 from indicator import force_index
 
 # http://www.cjzzc.com/web_color.html
@@ -198,8 +198,8 @@ class DataFinanceDraw(object):
 
         # data = dynamical_system.dynamical_system(data)
         # triple_screen signal
-        data = signal_triple_screen.signal_enter(data, period=self.period)
-        data = signal_triple_screen.signal_exit(data, period=self.period)
+        data = signal_dynamical_system.signal_enter(data, period=self.period)
+        data = signal_dynamical_system.signal_exit(data, period=self.period)
 
         data = signal_channel.signal_enter(data, period=self.period)
         data = signal_channel.signal_exit(data, period=self.period)
@@ -327,10 +327,10 @@ class DataFinanceDraw(object):
             self.add_plot.append(mpf.make_addplot(get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color=lightgrey, markersize=50, marker=marker_up))
         if get_window(data['channel_signal_exit']).any(skipna=True):
             self.add_plot.append( mpf.make_addplot(get_window(data['channel_signal_exit']), type='scatter', width=1, panel=0, color=dimgrey, markersize=50, marker=marker_down))
-        if get_window(data['triple_screen_signal_enter']).any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(get_window(data['triple_screen_signal_enter']), type='scatter', width=1, panel=0, color=dark_olive_green3, markersize=50, marker=marker_up))
-        if get_window(data['triple_screen_signal_exit']).any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(get_window(data['triple_screen_signal_exit']), type='scatter', width=1, panel=0, color=light_coral, markersize=50, marker=marker_down))
+        if get_window(data['dynamical_system_signal_enter']).any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(get_window(data['dynamical_system_signal_enter']), type='scatter', width=1, panel=0, color=dark_olive_green3, markersize=50, marker=marker_up))
+        if get_window(data['dynamical_system_signal_exit']).any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(get_window(data['dynamical_system_signal_exit']), type='scatter', width=1, panel=0, color=light_coral, markersize=50, marker=marker_down))
 
         if get_window(data['macd_bull_market_deviation']).any(skipna=True):
             self.add_plot.extend([mpf.make_addplot(get_window(macd_bull_market_deviation_single_point), type='scatter', width=1, panel=0, color=green, markersize=50, marker=marker_up),])
