@@ -6,18 +6,15 @@ from indicator import force_index, dynamical_system
 
 
 def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, period):
-    if is_long_period(period):
-        return numpy.nan
-
     # 长中周期动量系统中任一为红色, 均禁止买入
     if (not is_long_period(period) and dlxt_long_period < 0) or dlxt < 0:
         return numpy.nan
 
     # 长周期动量系统变为 红->蓝/绿, 蓝->绿
-    if not is_long_period(period) and dlxt_long_period_shift < dlxt_long_period:  # and dlxt_long_period > 0:
+    if not is_long_period(period) and dlxt_long_period_shift < dlxt_long_period and dlxt_long_period_shift < 0:
         return low
 
-    if is_long_period(period) and dlxt_shift < dlxt and dlxt == 1:
+    if is_long_period(period) and dlxt_shift < dlxt and dlxt_shift < 0:
         return low
 
     # if dlxt_long_period > 0 and dlxt > 0:
@@ -27,10 +24,7 @@ def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
 
 
 def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, period):
-    if is_long_period(period):
-        return numpy.nan
-
-    if not is_long_period(period) and dlxt_long_period_shift > dlxt_long_period:
+    if not is_long_period(period) and dlxt_long_period_shift > dlxt_long_period < 0:
         return high
 
     # 暂时不考虑做空, 即长周期动量为红色时, 是处于空仓状态的
@@ -54,6 +48,10 @@ def compute_index(quote, period=None):
 
 
 def signal_enter(quote, period=None):
+    if is_long_period(period):
+        quote = quote.assign(dynamical_system_signal_enter=numpy.nan)
+        return quote
+
     quote = compute_index(quote, period)
 
     quote_copy = quote.copy()
@@ -68,6 +66,10 @@ def signal_enter(quote, period=None):
 
 
 def signal_exit(quote, period=None):
+    if is_long_period(period):
+        quote = quote.assign(dynamical_system_signal_exit=numpy.nan)
+        return quote
+
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
     quote = compute_index(quote, period)
 

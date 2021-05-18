@@ -239,6 +239,22 @@ period_map = {
         'week': {'period': 'W', 'long_period': 'M', 'kline_long_period': 'month'},
     }
 
+period_price_diff_ratio_deviation_map = {
+    'm1': 0.998,
+    'm5': 0.995,
+    'm30': 0.99,
+    'day': 0.98,
+    'week': 0.96
+}
+
+period_price_diff_ratio_atr_map = {
+    'm1': 4,
+    'm5': 4,
+    'm30': 3,
+    'day': 3,
+    'week': 3
+}
+
 
 def is_long_period(period):
     return period in ['week', 'm30']

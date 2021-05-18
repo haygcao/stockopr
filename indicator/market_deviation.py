@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy.ma
 
-from config.config import is_long_period
+from config.config import is_long_period, period_price_diff_ratio_deviation_map
 from indicator import force_index
 from indicator.decorator import computed
 from util.macd import macd
@@ -94,6 +94,9 @@ def match_index(histogram, pos_zero, compute_range, will):
     # if second_min_index == second_less_zero_count - 1:
     #     return
 
+    if second_min_index + pos_zero[2] == len(histogram) - 1:
+        return
+
     for index in range(second_min_index + pos_zero[2], len(histogram) - 1):
         if will * histogram[index] > 0:
             break
@@ -110,21 +113,26 @@ def match_index(histogram, pos_zero, compute_range, will):
 
 def match_close(quote, period, histogram, min_index, will):
     prices = ['close', 'low'] if will == 1 else ['close', 'high']
+    # prices = ['close']
     min_max = min if will == 1 else max
+
+    diff_price_ratio = period_price_diff_ratio_deviation_map[period]
 
     first_index, second_index = min_index
     for price in prices:
         first_price = min_max(quote[price][first_index - 1:first_index + 2])
         second_price = min_max(quote[price][second_index - 1:second_index + 2])
 
-        if will * second_price < will * first_price:
-            if histogram[second_index] / histogram[first_index] < 0.7:
+        diff_price = min(first_price, second_price) / max(first_price, second_price)
+
+        if will * second_price < will * first_price and diff_price < diff_price_ratio:
+            if histogram[second_index] / histogram[first_index] < 0.8:
                 return True
 
         if second_index - first_index <= 2:
             return False
 
-        if period in ['m1', 'm5']:
+        if period in ['m1', 'm5', 'm30', 'day']:
             return False
 
         if max(first_price, second_price) / min(first_price, second_price) < 1.005:

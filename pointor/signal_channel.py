@@ -2,43 +2,47 @@
 import numpy
 
 import indicator
-from config.config import is_long_period
+from config.config import is_long_period, period_price_diff_ratio_atr_map
 from indicator import dynamical_system
 from util import macd
 
 
 def function_enter(low, dlxt_long_period, dlxt, ema, atr, period):
-    if not is_long_period(period) and dlxt_long_period == -1:
-        return numpy.nan
+    # if not is_long_period(period) and dlxt_long_period == -1:
+    #     return numpy.nan
 
     # if dlxt == -1:
     #     if low <= ema - 3*atr:
     #         return low
 
+    times = period_price_diff_ratio_atr_map[period]
+
     if dlxt >= 0:
-        if low <= ema - 3*atr:
+        if low <= ema - times * atr:
             return low
 
-    # if low <= ema - 3 * atr:
-    #     return low
+    if low <= ema - (times + 1) * atr:
+        return low
 
     return numpy.nan
 
 
 def function_exit(high, dlxt_long_period, dlxt, ema, atr, period):
-    if not is_long_period(period) and dlxt_long_period == 1:
-        return numpy.nan
+    # if not is_long_period(period) and dlxt_long_period == 1:
+    #     return numpy.nan
 
     # if dlxt == 1:
     #     if high >= ema + 3*atr:
     #         return high
 
+    times = period_price_diff_ratio_atr_map[period]
+
     if dlxt <= 0:
-        if high >= ema + 3*atr:
+        if high >= ema + times * atr:
             return high
 
-    # if high >= ema + 3 * atr:
-    #     return high
+    if high >= ema + (times + 1) * atr:
+        return high
 
     return numpy.nan
 
