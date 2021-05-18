@@ -28,7 +28,7 @@ def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
         return high
 
     # 暂时不考虑做空, 即长周期动量为红色时, 是处于空仓状态的
-    if dlxt_long_period < 0:
+    if not is_long_period(period) and dlxt_long_period < 0:
         return numpy.nan
 
     if period in ['week', 'day', 'm30'] and dlxt_shift > dlxt and dlxt < 0:
