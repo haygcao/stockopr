@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from matplotlib.widgets import Cursor
 
-from pointor import signal_dynamical_system, signal_channel, signal_market_deviation
+from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_stop_loss
 from indicator import force_index
 
 # http://www.cjzzc.com/web_color.html
@@ -196,6 +196,7 @@ class DataFinanceDraw(object):
         # 添加macd子图
         histogram = macd - signal
 
+        data = signal_stop_loss.signal_exit(data)
         # data = dynamical_system.dynamical_system(data)
         # triple_screen signal
         data = signal_dynamical_system.signal_enter(data, period=self.period)
@@ -257,6 +258,8 @@ class DataFinanceDraw(object):
             mpf.make_addplot(get_window(-data_atr * 3 + exp), type='line', width=1, panel=0, color=dimgrey),
         ])
 
+        data_stop_loss = self.data[:]['stop_loss'].copy()
+        data_stop_loss_signal_exit = self.data[:]['stop_loss_signal_exit'].copy()
         data_support = self.data[:]['low'].copy()
         data_resistance = self.data[:]['high'].copy()
         # data_resistance = data_resistance.mask(data_resistance > 0, data_resistance.max())
@@ -312,6 +315,7 @@ class DataFinanceDraw(object):
                   for (i,), v in numpy.ndenumerate(get_window(force_index_bear_market_deviation).values)]
 
         self.add_plot.extend([
+            mpf.make_addplot(get_window(data_stop_loss), type='line', color=light_coral),
             mpf.make_addplot(get_window(data_resistance), type='line', color=grey),
             mpf.make_addplot(get_window(data_support), type='line', color=grey),
             mpf.make_addplot(get_window(exp12), type='line', color=dimgrey),
@@ -323,6 +327,8 @@ class DataFinanceDraw(object):
             mpf.make_addplot(get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
         ])
 
+        if get_window(data['stop_loss_signal_exit']).any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple, markersize=50, marker=marker_down))
         if get_window(data['channel_signal_enter']).any(skipna=True):
             self.add_plot.append(mpf.make_addplot(get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
         if get_window(data['channel_signal_exit']).any(skipna=True):

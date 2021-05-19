@@ -93,7 +93,10 @@ def update_status(code, data, period):
 
     # deviation signal
     data = signal_market_deviation.signal(data, period, back_days=0)
-    for column_name in ['macd_bull_market_deviation', 'macd_bear_market_deviation', 'force_index_bull_market_deviation', 'force_index_bear_market_deviation']:
+    for column_name in ['macd_bull_market_deviation',
+                        'macd_bear_market_deviation',
+                        'force_index_bull_market_deviation',
+                        'force_index_bear_market_deviation']:
         n = 1 if period == 'm5' else 1
         data_sub = data[column_name][-n:]
         command = 'B' if 'bull' in column_name else 'S'
@@ -101,15 +104,6 @@ def update_status(code, data, period):
         if data_sub.any(skipna=True):
             data_index_ = data_sub[data_sub.notnull()].index[0]
             return TradeSignal(code, data_index_, command, deviation, period, True)
-
-    # data_sub = data['macd_bear_market_deviation'][-5:]
-    # if data_sub.any(skipna=True):
-    #     data_index_ = data_sub[data_sub.notnull()].index[0]
-    #     if data_index_ != period_status[-1]['date'] or period_status[-1]['type'] != 'bear deviation':
-    #         period_status.append({'date': data_index_, 'command': 'B', 'type': 'bear deviation', 'last': True})
-    #         return True
-
-    # if not numpy.isnan(data['dynamical_system_signal_enter'][-1]):
 
     data = signal_channel.signal_enter(data, period=period)
     data = signal_channel.signal_exit(data, period=period)
@@ -119,6 +113,10 @@ def update_status(code, data, period):
 
     if not numpy.isnan(data['channel_signal_exit'][-1]):
         return TradeSignal(code, data_index_, 'S', 'channel', period, True)
+
+    # long period do not check dynamical system signal
+    if period in ['m30']:
+        return
 
     # dynamical system signal
     data = signal_dynamical_system.signal_enter(data, period=period)
@@ -137,13 +135,12 @@ def update_status(code, data, period):
 
 
 def check(code, period):
-    # long_period = period_map[period]['kline_long_period']
-    # data30 = get_min_data(code, long_period)
-    # print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), long_period))
-    # trade_signal = update_status(code, data30, long_period)
-    # if trade_signal:
-    #     return trade_signal
-    # return
+    long_period = period_map[period]['kline_long_period']
+    data30 = get_min_data(code, long_period)
+    print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), long_period))
+    trade_signal = update_status(code, data30, long_period)
+    if trade_signal:
+        return trade_signal
 
     data5 = get_min_data(code, period)
     print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), period))

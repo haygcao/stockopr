@@ -248,12 +248,16 @@ period_price_diff_ratio_deviation_map = {
 }
 
 period_price_diff_ratio_atr_map = {
-    'm1': 4,
-    'm5': 4,
-    'm30': 3,
+    'm1': 5,
+    'm5': 5,
+    'm30': 4,
     'day': 3,
     'week': 3
 }
+
+stop_loss_atr_ratio = 1
+stop_loss_atr_back_days = 10
+stop_loss_atr_price = 'high'
 
 
 def is_long_period(period):
