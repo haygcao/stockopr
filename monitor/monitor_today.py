@@ -137,19 +137,19 @@ def update_status(code, data, period):
 
 
 def check(code, period):
-    long_period = period_map[period]['kline_long_period']
-    data30 = get_min_data(code, long_period)
-    print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), long_period))
-    trade_signal = update_status(code, data30, long_period)
-    if trade_signal:
-        return trade_signal
-    return
-
-    # data5 = get_min_data(code, period)
-    # print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), period))
-    # trade_signal = update_status(code, data5, period)
+    # long_period = period_map[period]['kline_long_period']
+    # data30 = get_min_data(code, long_period)
+    # print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), long_period))
+    # trade_signal = update_status(code, data30, long_period)
     # if trade_signal:
     #     return trade_signal
+    # return
+
+    data5 = get_min_data(code, period)
+    print('{} - now check {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), period))
+    trade_signal = update_status(code, data5, period)
+    if trade_signal:
+        return trade_signal
 
 
 def order(trade_singal: TradeSignal):
