@@ -3,6 +3,7 @@ import numpy
 
 from config.config import is_long_period
 from indicator import force_index, dynamical_system
+from indicator.decorator import computed
 
 
 def function_enter(low, dlxt_long_period, dlxt,  dlxt_ema13, force_index, force_index_shift, period):
@@ -44,6 +45,7 @@ def compute_index(quote, period=None):
     return quote_copy
 
 
+@computed(column_name='force_index_signal_enter')
 def signal_enter(quote, period=None):
     if is_long_period(period):
         quote = quote.assign(force_index_signal_enter=numpy.nan)
@@ -62,6 +64,7 @@ def signal_enter(quote, period=None):
     return quote_copy
 
 
+@computed(column_name='force_index_signal_exit')
 def signal_exit(quote, period=None):
     if is_long_period(period):
         quote = quote.assign(force_index_signal_exit=numpy.nan)

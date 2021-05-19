@@ -2,6 +2,7 @@ import numpy
 
 import indicator
 from config.config import is_long_period, stop_loss_atr_ratio, stop_loss_atr_back_days, stop_loss_atr_price
+from indicator.decorator import computed
 
 
 def function(high, close, stop_loss, stop_loss_shift, atr, period):
@@ -31,6 +32,7 @@ def compute_index(quote, period=None):
     return quote_copy
 
 
+@computed(column_name='stop_loss_signal_exit')
 def signal_exit(quote, period=None):
     if is_long_period(period):
         quote = quote.assign(stop_loss_signal_exit=numpy.nan)

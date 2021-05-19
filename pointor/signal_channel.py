@@ -4,6 +4,7 @@ import numpy
 import indicator
 from config.config import is_long_period, period_price_diff_ratio_atr_map
 from indicator import dynamical_system
+from indicator.decorator import computed
 from util import macd
 
 
@@ -57,6 +58,7 @@ def compute_index(quote, period):
     return quote
 
 
+@computed(column_name='channel_signal_enter')
 def signal_enter(quote, period):
     quote = compute_index(quote, period)
 
@@ -67,6 +69,7 @@ def signal_enter(quote, period):
     return quote_copy
 
 
+@computed(column_name='channel_signal_exit')
 def signal_exit(quote, period):
     quote = compute_index(quote, period)
 
