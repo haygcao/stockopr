@@ -12,7 +12,8 @@ import acquisition.quote_www as quote_www
 
 import pointor.signal_gd as signal_gd
 import dealer.bought as basic
-from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index
+from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
+    signal_stop_loss
 
 
 def mktime(_datetime):
@@ -132,6 +133,9 @@ def compute_signal(quote, period):
 
     quote_copy.loc[:, 'signal_enter'] = positive
     quote_copy.loc[:, 'signal_exit'] = negative
+
+    # 止损
+    quote_copy = signal_stop_loss.signal_exit(quote_copy)
 
     return quote_copy
 

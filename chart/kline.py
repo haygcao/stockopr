@@ -186,6 +186,7 @@ class DataFinanceDraw(object):
 
     def more_panel_draw(self):
         data = self.data_origin   # .iloc[-100:]
+        data = signal.compute_signal(data, self.period)
         """
         make_addplot 绘制多个图，这里添加macd指标为例
         """
@@ -327,14 +328,13 @@ class DataFinanceDraw(object):
             mpf.make_addplot(get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
         ])
 
-        data = signal.compute_signal(data, self.period)
         if get_window(data['signal_enter']).any(skipna=True):
             self.add_plot.append(mpf.make_addplot(get_window(data['signal_enter']), type='scatter', width=1, color=dark_olive_green3, markersize=50, marker=marker_up))
         if get_window(data['signal_exit']).any(skipna=True):
             self.add_plot.append(mpf.make_addplot(get_window(data['signal_exit']), type='scatter', width=1, color=light_coral, markersize=50, marker=marker_down))
 
-        # if get_window(data['stop_loss_signal_exit']).any(skipna=True):
-        #     self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple, markersize=50, marker=marker_down))
+        if get_window(data['stop_loss_signal_exit']).any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple, markersize=50, marker=marker_down))
         # if get_window(data['channel_signal_enter']).any(skipna=True):
         #     self.add_plot.append(mpf.make_addplot(get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
         # if get_window(data['channel_signal_exit']).any(skipna=True):
