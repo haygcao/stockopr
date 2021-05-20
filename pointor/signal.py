@@ -94,8 +94,17 @@ def compute_signal(quote, period):
     negative_all = quote_copy['signal_exit']
     negative = negative_all[negative_all > 0]
 
-    if positive.empty:
-        pass
+    if not positive.empty and negative.empty:
+        j = 1
+        while j < len(positive):
+            positive[j] = numpy.nan
+            j += 1
+
+    if positive.empty and not negative.empty:
+        j = 1
+        while j < len(negative):
+            negative[j] = numpy.nan
+            j += 1
 
     i = 0
     j = 0

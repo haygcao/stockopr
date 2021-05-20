@@ -1,3 +1,5 @@
+import datetime
+
 import numpy
 import pandas
 
@@ -62,19 +64,27 @@ def signal_exit(quote, period=None):
     stop_loss_signal_exit = quote_copy['stop_loss_signal_exit']
     stop_loss_signal_exit_tmp = stop_loss_signal_exit[stop_loss_signal_exit > 0]
     date = stop_loss_signal_exit_tmp.index[0]
+    # print(signal_enter[signal_enter > 0])
     while date:
         r = signal_enter[signal_enter.index >= date]
         date_enter = stop_loss_signal_exit.last_valid_index() if r.empty else r.first_valid_index()
 
+        while date_enter and (not numpy.isnan(quote_copy.loc[date_enter, 'macd_bull_market_deviation'])\
+                or not numpy.isnan(quote_copy.loc[date_enter, 'force_index_bull_market_deviation'])):
+            r = signal_enter[signal_enter.index > date_enter]
+            date_enter = stop_loss_signal_exit.last_valid_index() if r.empty else r.first_valid_index()
+
+            # r = numpy.where(stop_loss_signal_exit_tmp.index > date_enter)
+            # if len(r[0]) > 0:
+            #     date = stop_loss_signal_exit_tmp.index[r[0][0]]
+            # else:
+            #     break
+            # continue
+
         # stop_loss_signal_exit = stop_loss_signal_exit.mask(date < stop_loss_signal_exit.index <= date_enter, numpy.nan)
         # mask = stop_loss_signal_exit.index.between(date, date_enter)
         # stop_loss_signal_exit[mask] = numpy.nan
-        for s in ['stop_loss_signal_exit', 'stop_loss']:
-            value = quote_copy.loc[date, s]
-            quote_copy.loc[date:date_enter, s] = numpy.nan
-            if date == date_enter:
-                continue
-            quote_copy.loc[date, s] = value
+        quote_copy = remove_signal(date, date_enter, quote_copy)
 
         # A value is trying to be set on a copy of a slice from a DataFrame
         # for s in [stop_loss_signal_exit, stop_loss]:
@@ -89,5 +99,17 @@ def signal_exit(quote, period=None):
         if r.empty:
             break
         date = r.first_valid_index()
+
+    return quote_copy
+
+
+def remove_signal(date, date_enter, quote_copy, inclusive_left=False):
+    for s in ['stop_loss_signal_exit', 'stop_loss']:
+        value = quote_copy.loc[date, s]
+        quote_copy.loc[date:date_enter, s] = numpy.nan
+        if date == date_enter:
+            continue
+        if not inclusive_left:
+            quote_copy.loc[date, s] = value
 
     return quote_copy
