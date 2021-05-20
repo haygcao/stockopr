@@ -16,7 +16,7 @@ class SignalTestCase(unittest.TestCase):
     def test_compute_signal(self):
         quote = signal.compute_signal(self.quote, period='day')
         # print(quote[:50])
-        # print(quote[-50:])
+        print(quote[-50:])
         # print(quote.columns)
 
 

@@ -83,16 +83,6 @@ def compute_signal(quote, period):
         quote_copy.loc[:, 'signal_exit'] = quote_copy.apply(
             lambda x: function(x.high, x.signal_exit, eval('x.{}'.format(column)), column), axis=1)
 
-    column_list = ['force_index_bull_market_deviation',
-                   'macd_bull_market_deviation',
-                   'force_index_bear_market_deviation',
-                   'macd_bear_market_deviation']
-    for column in column_list:
-        deviation = quote[column]
-        deviation = deviation[deviation < 0] if 'bull' in column else deviation[deviation < 0]
-        for i in range(len(deviation) - 1, 0, -2):
-            quote['signal_enter'][deviation.index[i]] = 1
-
     # 如果一天同时出现看多/看空信号，按看空处理
     # q = quote_copy[quote_copy['signal_enter']]
 
@@ -134,9 +124,28 @@ def compute_signal(quote, period):
     quote_copy.loc[:, 'signal_enter'] = positive
     quote_copy.loc[:, 'signal_exit'] = negative
 
+    # 背离
+    # 背离是重要的信号，不与其他信号合并
+    column_list = ['force_index_bull_market_deviation',
+                   'macd_bull_market_deviation',
+                   'force_index_bear_market_deviation',
+                   'macd_bear_market_deviation']
+    for column in column_list:
+        deviation = quote[column]
+        # deviation = deviation[deviation < 0] if 'bull' in column else deviation[deviation < 0]
+        if 'bull' in column:
+            deviation = deviation[deviation > 0]
+            signal_all_column = 'signal_enter'
+        else:
+            deviation = deviation[deviation > 0]
+            signal_all_column = 'signal_exit'
+
+        for i in range(len(deviation) - 1, 0, -2):
+            # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
+            quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
+
     # 止损
     quote_copy = signal_stop_loss.signal_exit(quote_copy)
-
     return quote_copy
 
 

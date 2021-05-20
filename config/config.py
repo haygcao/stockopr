@@ -255,7 +255,7 @@ period_price_diff_ratio_atr_map = {
     'week': 3
 }
 
-stop_loss_atr_ratio = 1
+stop_loss_atr_ratio = 2
 stop_loss_atr_back_days = 10
 stop_loss_atr_price = 'high'
 
