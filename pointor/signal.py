@@ -26,10 +26,11 @@ def function(price, signal_all, signal, column_name):
     #     signal_all = []
 
     if not numpy.isnan(signal):
-        if numpy.isnan(signal_all):
-            signal_all = 1
-        else:
-            signal_all += 1
+        signal_all = signal
+        # if numpy.isnan(signal_all):
+        #     signal_all = 1
+        # else:
+        #     signal_all += 1
 
     return signal_all
 
@@ -143,6 +144,9 @@ def compute_signal(quote, period):
         for i in range(len(deviation) - 1, 0, -2):
             # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
             quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
+
+    # debug, check deviation signal added
+    # print(quote_copy[-70:-50]['signal_enter'])
 
     # 止损
     quote_copy = signal_stop_loss.signal_exit(quote_copy)

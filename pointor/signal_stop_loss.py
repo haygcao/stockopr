@@ -15,7 +15,7 @@ from indicator.decorator import computed
 
 def function_exit(high, close, stop_loss):
     if close < stop_loss:
-        return stop_loss
+        return high
 
     return numpy.nan
 
@@ -63,7 +63,7 @@ def signal_exit(quote, period=None):
     stop_loss_signal_exit_tmp = stop_loss_signal_exit[stop_loss_signal_exit > 0]
     date = stop_loss_signal_exit_tmp.index[0]
     while date:
-        r = signal_enter[signal_enter.index > date]
+        r = signal_enter[signal_enter.index >= date]
         date_enter = stop_loss_signal_exit.last_valid_index() if r.empty else r.first_valid_index()
 
         # stop_loss_signal_exit = stop_loss_signal_exit.mask(date < stop_loss_signal_exit.index <= date_enter, numpy.nan)
@@ -72,6 +72,8 @@ def signal_exit(quote, period=None):
         for s in ['stop_loss_signal_exit', 'stop_loss']:
             value = quote_copy.loc[date, s]
             quote_copy.loc[date:date_enter, s] = numpy.nan
+            if date == date_enter:
+                continue
             quote_copy.loc[date, s] = value
 
         # A value is trying to be set on a copy of a slice from a DataFrame
