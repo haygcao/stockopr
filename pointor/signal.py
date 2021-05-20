@@ -94,11 +94,15 @@ def compute_signal(quote, period):
     negative_all = quote_copy['signal_exit']
     negative = negative_all[negative_all > 0]
 
+    if positive.empty:
+        pass
+
     i = 0
     j = 0
-    next_positive = positive.index[i]
-    next_negative = negative.index[j]
-    while i < len(positive) - 1 or j < len(negative) - 1:
+    while not positive.empty and not negative.empty and (i < len(positive) - 1 or j < len(negative) - 1):
+        next_positive = positive.index[i]
+        next_negative = negative.index[j]
+
         temp_positive = positive[i]
         temp_negative = negative[j]
         temp_positive_index = i

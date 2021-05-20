@@ -3,7 +3,7 @@ import numpy
 
 from config.config import is_long_period
 from indicator import force_index, dynamical_system
-from indicator.decorator import computed
+from indicator.decorator import computed, ignore_long_period
 
 
 def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, period):
@@ -49,10 +49,11 @@ def compute_index(quote, period=None):
 
 
 @computed(column_name='dynamical_system_signal_enter')
+@ignore_long_period(column_name='dynamical_system_signal_enter')
 def signal_enter(quote, period=None):
-    if is_long_period(period):
-        quote = quote.assign(dynamical_system_signal_enter=numpy.nan)
-        return quote
+    # if is_long_period(period):
+    #     quote = quote.assign(dynamical_system_signal_enter=numpy.nan)
+    #     return quote
 
     quote = compute_index(quote, period)
 
@@ -68,10 +69,11 @@ def signal_enter(quote, period=None):
 
 
 @computed(column_name='dynamical_system_signal_exit')
+@ignore_long_period(column_name='dynamical_system_signal_exit')
 def signal_exit(quote, period=None):
-    if is_long_period(period):
-        quote = quote.assign(dynamical_system_signal_exit=numpy.nan)
-        return quote
+    # if is_long_period(period):
+    #     quote = quote.assign(dynamical_system_signal_exit=numpy.nan)
+    #     return quote
 
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
     quote = compute_index(quote, period)

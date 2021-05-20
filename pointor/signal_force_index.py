@@ -3,7 +3,7 @@ import numpy
 
 from config.config import is_long_period
 from indicator import force_index, dynamical_system
-from indicator.decorator import computed
+from indicator.decorator import computed, ignore_long_period
 
 
 def function_enter(low, dlxt_long_period, dlxt,  dlxt_ema13, force_index, force_index_shift, period):
@@ -36,27 +36,27 @@ def compute_index(quote, period=None):
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
     # 强力指数
-    n = 13 if is_long_period(period) else 2
-    quote = force_index.force_index(quote, n=n)
+    quote = force_index.force_index(quote)
 
-    quote_copy = quote.copy()
-    quote_copy.loc[:, 'force_index_shift'] = quote['force_index'].shift(periods=1)
-
-    return quote_copy
+    return quote
 
 
 @computed(column_name='force_index_signal_enter')
+@ignore_long_period(column_name='force_index_signal_enter')
 def signal_enter(quote, period=None):
-    if is_long_period(period):
-        quote = quote.assign(force_index_signal_enter=numpy.nan)
-        return quote
+    # if is_long_period(period):
+    #     quote = quote.assign(force_index_signal_enter=numpy.nan)
+    #     return quote
 
     quote = compute_index(quote, period)
 
+    column = 'force_index13' if is_long_period(period) else 'force_index'
     quote_copy = quote.copy()
+    quote_copy.loc[:, 'force_index_shift'] = quote[column].shift(periods=1)
     quote_copy.loc[:, 'force_index_signal_enter'] = quote_copy.apply(
         lambda x: function_enter(
-            x.low, x.dlxt_long_period, x.dlxt, x.dlxt_ema13, x.force_index, x.force_index_shift, period), axis=1)
+            x.low, x.dlxt_long_period, x.dlxt, x.dlxt_ema13,
+            x.force_index13 if is_long_period(period) else x.force_index, x.force_index_shift, period), axis=1)
 
     # remove temp data
     quote_copy.drop(['force_index_shift'], axis=1)
@@ -65,10 +65,11 @@ def signal_enter(quote, period=None):
 
 
 @computed(column_name='force_index_signal_exit')
+@ignore_long_period(column_name='force_index_signal_exit')
 def signal_exit(quote, period=None):
-    if is_long_period(period):
-        quote = quote.assign(force_index_signal_exit=numpy.nan)
-        return quote
+    # if is_long_period(period):
+    #     quote = quote.assign(force_index_signal_exit=numpy.nan)
+    #     return quote
 
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
     quote = compute_index(quote, period)

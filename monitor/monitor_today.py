@@ -9,7 +9,7 @@ import numpy
 
 from chart.kline import open_graph
 from config.config import period_map
-from pointor import signal_dynamical_system, signal_market_deviation
+from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
 
 from acquisition import tx
@@ -83,7 +83,7 @@ def get_day_data(code, period='day', count=250):
     return data
 
 
-def update_status(code, data, period):
+def update_status_old(code, data, period):
     data_index_ = data.index[-1]
 
     # if period_status:
@@ -132,6 +132,20 @@ def update_status(code, data, period):
     #     return True
 
     return
+
+
+def update_status(code, data, period):
+    data_index_ = data.index[-1]
+    data = signal.compute_signal(data, period)
+
+    if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
+        return TradeSignal(code, data_index_, 'S', '', period, True)
+
+    if not numpy.isnan(data['signal_exit'][-1]):
+        return TradeSignal(code, data_index_, 'S', '', period, True)
+
+    if not numpy.isnan(data['signal_enter'][-1]):
+        return TradeSignal(code, data_index_, 'B', '', period, True)
 
 
 def check(code, period):
