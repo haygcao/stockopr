@@ -2,6 +2,7 @@ import datetime
 
 import numpy
 import pandas
+import pandas as pd
 
 import indicator
 from config.config import is_long_period, stop_loss_atr_ratio, stop_loss_atr_back_days, stop_loss_atr_price
@@ -29,20 +30,26 @@ def compute_index(quote, period=None):
 
     # quote = quote.assign(signal_enter_merged=numpy.nan)
     # signal_enter_merged = quote['signal_enter_merged']
-    signal_enter_merged = quote['force_index_bull_market_deviation_signal_enter']
+    signal_enter_merged = quote['force_index_bull_market_deviation_signal_enter'].copy()
 
-    def func(x1, x2):
-        if numpy.isnan(x1):
-            return x2
-        if numpy.isnan(x2):
-            return x1
-        return max(x1, x2)
+    # def func(x1, x2):
+    #     if numpy.isnan(x1):
+    #         return x2
+    #
+    #     if numpy.isnan(x2):
+    #         return x1
+    #
+    #     return max(x1, x2)
+    #
+    # column_list = ['force_index_bull_market_deviation_signal_enter',
+    #                'macd_bull_market_deviation_signal_enter']
+    # for column in column_list:
+    #     deviation = quote['macd_bull_market_deviation_signal_enter']
+    #     signal_enter_merged = signal_enter_merged.combine(deviation, func=lambda x1, x2: func(x1, x2))
 
-    column_list = ['force_index_bull_market_deviation_signal_enter',
-                   'macd_bull_market_deviation_signal_enter']
-    for column in column_list:
-        deviation = quote[column]
-        signal_enter_merged = signal_enter_merged.combine(deviation, func)
+    deviation = quote['macd_bull_market_deviation_signal_enter']
+    for i in range(0, len(signal_enter_merged)):
+        signal_enter_merged.iloc[i] = max(signal_enter_merged.iloc[i], deviation.iloc[i])
 
     quote = quote.assign(stop_loss=numpy.nan)
     date_index0 = signal_enter_merged.index[0]

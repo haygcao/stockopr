@@ -6,6 +6,7 @@ import datetime
 import copy
 
 import numpy
+import pandas
 
 import acquisition.quote_db as quote_db
 import acquisition.quote_www as quote_www
@@ -90,21 +91,23 @@ def compute_signal(quote, period):
         quote_copy.loc[:, 'signal_exit'] = quote_copy.apply(
             lambda x: function(x.high, x.signal_exit, eval('x.{}'.format(column)), column), axis=1)
 
-    positive_all = quote_copy['signal_enter']
-    negative_all = quote_copy['signal_exit']
-
-    # 如果一天同时出现看多/看空信号，按看多处理
-    def func(n, p):
-        if not numpy.isnan(p):
-            return numpy.nan
-        return n
-
-    negative_all = negative_all.combine(positive_all, func)
+    positive_all = quote_copy['signal_enter'].copy()
+    negative_all = quote_copy['signal_exit'].copy()
 
     # 合并看多
+    for i in range(0, len(positive_all)):
+        negative_all.iloc[i] = negative_all.iloc[i] if numpy.isnan(positive_all.iloc[i]) else numpy.nan
 
     positive = positive_all[positive_all > 0]
     negative = negative_all[negative_all > 0]
+
+    # 如果一天同时出现看多/看空信号，按看多处理
+    # def func(n: numpy.float64, p: numpy.float64):
+    #     if not numpy.isnan(p):
+    #         return numpy.nan
+    #     return n
+    #
+    # negative = negative.combine(positive, func=lambda x1, x2: func(x1, x2))
 
     # if not positive.empty and negative.empty:
     #     j = 1
