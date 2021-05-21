@@ -316,7 +316,6 @@ class DataFinanceDraw(object):
                   for (i,), v in numpy.ndenumerate(get_window(force_index_bear_market_deviation).values)]
 
         self.add_plot.extend([
-            mpf.make_addplot(get_window(data_stop_loss), type='line', color=light_coral),
             mpf.make_addplot(get_window(data_resistance), type='line', color=grey),
             mpf.make_addplot(get_window(data_support), type='line', color=grey),
             mpf.make_addplot(get_window(exp12), type='line', color=dimgrey),
@@ -333,6 +332,8 @@ class DataFinanceDraw(object):
         if get_window(data['signal_exit']).any(skipna=True):
             self.add_plot.append(mpf.make_addplot(get_window(data['signal_exit']), type='scatter', width=1, color=light_coral, markersize=50, marker=marker_down))
 
+        if get_window(data_stop_loss).any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss), type='line', color=light_coral))
         if get_window(data['stop_loss_signal_exit']).any(skipna=True):
             self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple, markersize=50, marker=marker_down))
         # if get_window(data['channel_signal_enter']).any(skipna=True):

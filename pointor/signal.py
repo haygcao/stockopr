@@ -58,7 +58,10 @@ def compute_signal(quote, period):
     # 处理合并看多信号
     column_list = ['dynamical_system_signal_enter',
                    'channel_signal_enter',
-                   'force_index_signal_enter']
+                   'force_index_signal_enter',
+                   'force_index_bull_market_deviation',
+                   'macd_bull_market_deviation',
+                   ]
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
 
@@ -75,7 +78,10 @@ def compute_signal(quote, period):
     # 处理合并看空信号
     column_list = ['dynamical_system_signal_exit',
                    'channel_signal_exit',
-                   'force_index_signal_exit']
+                   'force_index_signal_exit',
+                   'force_index_bear_market_deviation',
+                   'macd_bear_market_deviation'
+                   ]
     # 'macd_bear_market_deviation',
     # 'force_index_bear_market_deviation']
 
@@ -84,31 +90,37 @@ def compute_signal(quote, period):
         quote_copy.loc[:, 'signal_exit'] = quote_copy.apply(
             lambda x: function(x.high, x.signal_exit, eval('x.{}'.format(column)), column), axis=1)
 
-    # 如果一天同时出现看多/看空信号，按看空处理
-    # q = quote_copy[quote_copy['signal_enter']]
+    positive_all = quote_copy['signal_enter']
+    negative_all = quote_copy['signal_exit']
+
+    # 如果一天同时出现看多/看空信号，按看多处理
+    def func(n, p):
+        if not numpy.isnan(p):
+            return numpy.nan
+        return n
+
+    negative_all = negative_all.combine(positive_all, func)
 
     # 合并看多
-    positive_all = quote_copy['signal_enter']
-    positive = positive_all[positive_all > 0]
 
-    negative_all = quote_copy['signal_exit']
+    positive = positive_all[positive_all > 0]
     negative = negative_all[negative_all > 0]
 
-    if not positive.empty and negative.empty:
-        j = 1
-        while j < len(positive):
-            positive[j] = numpy.nan
-            j += 1
-
-    if positive.empty and not negative.empty:
-        j = 1
-        while j < len(negative):
-            negative[j] = numpy.nan
-            j += 1
+    # if not positive.empty and negative.empty:
+    #     j = 1
+    #     while j < len(positive):
+    #         positive[j] = numpy.nan
+    #         j += 1
+    #
+    # if positive.empty and not negative.empty:
+    #     j = 1
+    #     while j < len(negative):
+    #         negative[j] = numpy.nan
+    #         j += 1
 
     i = 0
     j = 0
-    while not positive.empty and not negative.empty and (i < len(positive) - 1 or j < len(negative) - 1):
+    while not positive.empty and not negative.empty and i < len(positive) and j < len(negative):
         next_positive = positive.index[i]
         next_negative = negative.index[j]
 
@@ -116,50 +128,44 @@ def compute_signal(quote, period):
         temp_negative = negative[j]
         temp_positive_index = i
         temp_negative_index = j
-        while (next_positive <= next_negative or j == len(negative) - 1) and i < len(positive) - 1:
+        while next_positive <= next_negative and i < len(positive):
             positive[i] = numpy.nan
             i += 1
+            if i == len(positive):
+                break
             next_positive = positive.index[i]
             # next_negative = negative.index[j]
         positive[temp_positive_index] = temp_positive
-        while (next_positive > next_negative or i == len(positive) - 1) and j < len(negative) - 1:
+        while next_positive > next_negative and j < len(negative):
             negative[j] = numpy.nan
             j += 1
             # next_positive = positive.index[i]
+            if j == len(negative):
+                break
             next_negative = negative.index[j]
         negative[temp_negative_index] = temp_negative
+
+    i += 1
+    j += 1
+    while i < len(positive):
+        if numpy.isnan(quote_copy.loc[positive.index[i], 'macd_bull_market_deviation'])\
+                and numpy.isnan(quote_copy.loc[positive.index[i], 'force_index_bull_market_deviation']):
+            positive[i] = numpy.nan
+        i += 1
+    while j < len(negative):
+        if numpy.isnan(quote_copy.loc[negative.index[i], 'macd_bear_market_deviation']) \
+                and numpy.isnan(quote_copy.loc[negative.index[i], 'force_index_bear_market_deviation']):
+            negative[j] = numpy.nan
+        j += 1
 
     positive = positive[positive > 0]
     negative = negative[negative > 0]
 
-    positive = positive.mask(positive > 0, quote['low'])
-    negative = negative.mask(negative > 0, quote['high'])
+    # positive = positive.mask(positive > 0, quote['low'])
+    # negative = negative.mask(negative > 0, quote['high'])
 
     quote_copy.loc[:, 'signal_enter'] = positive
     quote_copy.loc[:, 'signal_exit'] = negative
-
-    # 背离
-    # 背离是重要的信号，不与其他信号合并
-    column_list = ['force_index_bull_market_deviation',
-                   'macd_bull_market_deviation',
-                   'force_index_bear_market_deviation',
-                   'macd_bear_market_deviation']
-    for column in column_list:
-        deviation = quote[column]
-        # deviation = deviation[deviation < 0] if 'bull' in column else deviation[deviation < 0]
-        if 'bull' in column:
-            deviation = deviation[deviation > 0]
-            signal_all_column = 'signal_enter'
-        else:
-            deviation = deviation[deviation > 0]
-            signal_all_column = 'signal_exit'
-
-        for i in range(len(deviation) - 1, 0, -2):
-            # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
-            quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
-
-    # debug, check deviation signal added
-    # print(quote_copy[-70:-50]['signal_enter'])
 
     # 止损
     quote_copy = signal_stop_loss.signal_exit(quote_copy)

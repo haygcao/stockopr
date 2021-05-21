@@ -25,7 +25,32 @@ def function_exit(high, close, stop_loss):
 def compute_index(quote, period=None):
     quote = indicator.atr.compute_atr(quote)
 
-    quote.loc[:, 'stop_loss'] = quote[stop_loss_atr_price].rolling(stop_loss_atr_back_days, min_periods=1).max() - stop_loss_atr_ratio * quote['atr']
+    # 牛市背离
+
+    # quote = quote.assign(signal_enter_merged=numpy.nan)
+    # signal_enter_merged = quote['signal_enter_merged']
+    signal_enter_merged = quote['force_index_bull_market_deviation_signal_enter']
+
+    def func(x1, x2):
+        if numpy.isnan(x1):
+            return x2
+        if numpy.isnan(x2):
+            return x1
+        return max(x1, x2)
+
+    column_list = ['force_index_bull_market_deviation_signal_enter',
+                   'macd_bull_market_deviation_signal_enter']
+    for column in column_list:
+        deviation = quote[column]
+        signal_enter_merged = signal_enter_merged.combine(deviation, func)
+
+    quote = quote.assign(stop_loss=numpy.nan)
+    date_index0 = signal_enter_merged.index[0]
+    date_index_list = signal_enter_merged[signal_enter_merged > 0].index.to_list()
+    date_index_list.append(quote.index[-1])
+    for date_index in date_index_list:
+        quote.loc[date_index0:date_index, 'stop_loss'] = quote.loc[date_index0:date_index, stop_loss_atr_price].rolling(stop_loss_atr_back_days, min_periods=1).max() - stop_loss_atr_ratio * quote.loc[date_index0:date_index, 'atr']
+        date_index0 = date_index
 
     return quote
 
@@ -63,23 +88,23 @@ def signal_exit(quote, period=None):
     stop_loss = quote_copy['stop_loss']
     stop_loss_signal_exit = quote_copy['stop_loss_signal_exit']
     stop_loss_signal_exit_tmp = stop_loss_signal_exit[stop_loss_signal_exit > 0]
-    date = stop_loss_signal_exit_tmp.index[0]
+    date = stop_loss_signal_exit_tmp.index[0] if not stop_loss_signal_exit_tmp.empty else None
     # print(signal_enter[signal_enter > 0])
     while date:
         r = signal_enter[signal_enter.index >= date]
         date_enter = stop_loss_signal_exit.last_valid_index() if r.empty else r.first_valid_index()
 
-        while date_enter and (not numpy.isnan(quote_copy.loc[date_enter, 'macd_bull_market_deviation'])\
-                or not numpy.isnan(quote_copy.loc[date_enter, 'force_index_bull_market_deviation'])):
-            r = signal_enter[signal_enter.index > date_enter]
-            date_enter = stop_loss_signal_exit.last_valid_index() if r.empty else r.first_valid_index()
-
-            # r = numpy.where(stop_loss_signal_exit_tmp.index > date_enter)
-            # if len(r[0]) > 0:
-            #     date = stop_loss_signal_exit_tmp.index[r[0][0]]
-            # else:
-            #     break
-            # continue
+        # while date_enter and (not numpy.isnan(quote_copy.loc[date_enter, 'macd_bull_market_deviation'])\
+        #         or not numpy.isnan(quote_copy.loc[date_enter, 'force_index_bull_market_deviation'])):
+        #     r = signal_enter[signal_enter.index > date_enter]
+        #     date_enter = stop_loss_signal_exit.last_valid_index() if r.empty else r.first_valid_index()
+        #
+        #     # r = numpy.where(stop_loss_signal_exit_tmp.index > date_enter)
+        #     # if len(r[0]) > 0:
+        #     #     date = stop_loss_signal_exit_tmp.index[r[0][0]]
+        #     # else:
+        #     #     break
+        #     # continue
 
         # stop_loss_signal_exit = stop_loss_signal_exit.mask(date < stop_loss_signal_exit.index <= date_enter, numpy.nan)
         # mask = stop_loss_signal_exit.index.between(date, date_enter)
@@ -104,7 +129,9 @@ def signal_exit(quote, period=None):
 
 
 def remove_signal(date, date_enter, quote_copy, inclusive_left=False):
-    for s in ['stop_loss_signal_exit', 'stop_loss']:
+    column_list = ['stop_loss_signal_exit', 'stop_loss']
+    # column_list = ['stop_loss_signal_exit']
+    for s in column_list:
         value = quote_copy.loc[date, s]
         quote_copy.loc[date:date_enter, s] = numpy.nan
         if date == date_enter:
