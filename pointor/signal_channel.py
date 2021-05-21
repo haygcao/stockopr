@@ -9,8 +9,11 @@ from util import macd
 
 
 def function_enter(low, dlxt_long_period, dlxt, ema, atr, period, date):
-    # if not is_long_period(period) and dlxt_long_period == -1:
-    #     return numpy.nan
+    if not is_long_period(period) and dlxt_long_period == -1:
+        return numpy.nan
+
+    if dlxt == -1:
+        return numpy.nan
 
     # if dlxt == -1:
     #     if low <= ema - 3*atr:
