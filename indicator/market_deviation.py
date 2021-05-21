@@ -78,8 +78,8 @@ def match_index(histogram, pos_zero, compute_range, will):
         second_min = max(histogram[pos_zero[2]:end_index])
 
     # days of second wave too short, ignore
-    if pos_zero[2] - pos_zero[1] < 2:
-        return
+    # if pos_zero[2] - pos_zero[1] < 2:
+    #     return
 
     np_arr = histogram[pos_zero[2]:end_index]
     second_min_index = numpy.where(np_arr == second_min)[-1][0]

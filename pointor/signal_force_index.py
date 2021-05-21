@@ -6,17 +6,22 @@ from indicator import force_index, dynamical_system
 from indicator.decorator import computed, ignore_long_period
 
 
-def function_enter(low, dlxt_long_period, dlxt,  dlxt_ema13, force_index, force_index_shift, period):
+def function_enter(low, dlxt_long_period, dlxt,  dlxt_ema13, force_index, force_index_shift, period, date):
     if dlxt_long_period < 0 or dlxt < 0:
         return numpy.nan
 
-    # ema13 向上, 强力指数下穿 0
-    if dlxt_ema13 and force_index_shift >= 0 and force_index < 0:   # and dlxt > 0:
+    # ema13 向上, 强力指数下穿 0   # 信号出现时，买单价格设置为比最高价最一个最小单位，如果股价下跌，动态下调买入价，程序自动交易时，放弃
+    # if dlxt_ema13 and force_index_shift >= 0 and force_index < 0:   # and dlxt > 0:
+    #     return low
+
+    # ema13 向上, 强力指数上穿 0
+    if dlxt_long_period > 0 and dlxt_ema13 and force_index_shift < 0 and force_index >= 0:   # and dlxt > 0:
+        # print(date, '5')
         return low
 
     # ema13 向上, 强力指数为负, 且开始变大
-    if dlxt_ema13 and force_index_shift < 0 and force_index > force_index_shift:   # and dlxt > 0:
-        return low
+    # if dlxt_ema13 and force_index_shift < 0 and force_index > force_index_shift:   # and dlxt > 0:
+    #     return low
 
     return numpy.nan
 
@@ -56,7 +61,7 @@ def signal_enter(quote, period=None):
     quote_copy.loc[:, 'force_index_signal_enter'] = quote_copy.apply(
         lambda x: function_enter(
             x.low, x.dlxt_long_period, x.dlxt, x.dlxt_ema13,
-            x.force_index13 if is_long_period(period) else x.force_index, x.force_index_shift, period), axis=1)
+            x.force_index13 if is_long_period(period) else x.force_index, x.force_index_shift, period, x.name), axis=1)
 
     # remove temp data
     quote_copy.drop(['force_index_shift'], axis=1)

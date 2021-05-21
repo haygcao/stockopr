@@ -60,8 +60,8 @@ def compute_signal(quote, period):
     column_list = ['dynamical_system_signal_enter',
                    'channel_signal_enter',
                    'force_index_signal_enter',
-                   'force_index_bull_market_deviation',
-                   'macd_bull_market_deviation',
+                   'force_index_bull_market_deviation_signal_enter',
+                   'macd_bull_market_deviation_signal_enter',
                    ]
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
@@ -80,8 +80,8 @@ def compute_signal(quote, period):
     column_list = ['dynamical_system_signal_exit',
                    'channel_signal_exit',
                    'force_index_signal_exit',
-                   'force_index_bear_market_deviation',
-                   'macd_bear_market_deviation'
+                   'force_index_bear_market_deviation_signal_exit',
+                   'macd_bear_market_deviation_signal_exit'
                    ]
     # 'macd_bear_market_deviation',
     # 'force_index_bear_market_deviation']
@@ -156,8 +156,8 @@ def compute_signal(quote, period):
             positive[i] = numpy.nan
         i += 1
     while j < len(negative):
-        if numpy.isnan(quote_copy.loc[negative.index[i], 'macd_bear_market_deviation']) \
-                and numpy.isnan(quote_copy.loc[negative.index[i], 'force_index_bear_market_deviation']):
+        if numpy.isnan(quote_copy.loc[negative.index[j], 'macd_bear_market_deviation']) \
+                and numpy.isnan(quote_copy.loc[negative.index[j], 'force_index_bear_market_deviation']):
             negative[j] = numpy.nan
         j += 1
 

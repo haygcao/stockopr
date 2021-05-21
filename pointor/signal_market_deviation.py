@@ -29,5 +29,6 @@ def signal(quote, period, back_days=125):
         for i in range(len(deviation) - 1, 0, -2):
             # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
             quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
+            # print(deviation.index[i], '0')
 
     return quote_copy

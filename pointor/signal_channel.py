@@ -8,7 +8,7 @@ from indicator.decorator import computed
 from util import macd
 
 
-def function_enter(low, dlxt_long_period, dlxt, ema, atr, period):
+def function_enter(low, dlxt_long_period, dlxt, ema, atr, period, date):
     # if not is_long_period(period) and dlxt_long_period == -1:
     #     return numpy.nan
 
@@ -20,9 +20,11 @@ def function_enter(low, dlxt_long_period, dlxt, ema, atr, period):
 
     if dlxt >= 0:
         if low <= ema - times * atr:
+            # print(date, '1')
             return low
 
     if low <= ema - (times + 1) * atr:
+        # print(date, '2')
         return low
 
     return numpy.nan
@@ -64,7 +66,7 @@ def signal_enter(quote, period):
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'channel_signal_enter'] = quote_copy.apply(
-        lambda x: function_enter(x.low, x.dlxt_long_period, x.dlxt, x.ema, x.atr, period), axis=1)
+        lambda x: function_enter(x.low, x.dlxt_long_period, x.dlxt, x.ema, x.atr, period, x.name), axis=1)
 
     return quote_copy
 

@@ -6,16 +6,18 @@ from indicator import force_index, dynamical_system
 from indicator.decorator import computed, ignore_long_period
 
 
-def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, period):
+def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, period, date):
     # 长中周期动量系统中任一为红色, 均禁止买入
     if (not is_long_period(period) and dlxt_long_period < 0) or dlxt < 0:
         return numpy.nan
 
     # 长周期动量系统变为 红->蓝/绿, 蓝->绿
     if not is_long_period(period) and dlxt_long_period_shift < dlxt_long_period and dlxt_long_period_shift < 0:
+        # print(date, '4')
         return low
 
     if is_long_period(period) and dlxt_shift < dlxt and dlxt_shift < 0:
+        # print(date, '3')
         return low
 
     # if dlxt_long_period > 0 and dlxt > 0:
@@ -60,7 +62,7 @@ def signal_enter(quote, period=None):
     quote_copy = quote.copy()
     quote_copy.loc[:, 'dynamical_system_signal_enter'] = quote_copy.apply(
         lambda x: function_enter(
-            x.low, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift, x.dlxt_ema13, period), axis=1)
+            x.low, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift, x.dlxt_ema13, period, x.name), axis=1)
 
     # remove temp data
     quote_copy.drop(['dlxt_long_period_shift', 'dlxt_shift'], axis=1)

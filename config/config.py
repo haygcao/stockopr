@@ -249,7 +249,7 @@ period_price_diff_ratio_deviation_map = {
 
 period_price_diff_ratio_atr_map = {
     'm1': 5,
-    'm5': 5,
+    'm5': 4,
     'm30': 4,
     'day': 3,
     'week': 3
