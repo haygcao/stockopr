@@ -187,6 +187,8 @@ class DataFinanceDraw(object):
     def more_panel_draw(self):
         data = self.data_origin   # .iloc[-100:]
         data = signal.compute_signal(data, self.period)
+
+        exp13 = data['close'].ewm(span=13, adjust=False).mean()
         """
         make_addplot 绘制多个图，这里添加macd指标为例
         """
@@ -318,7 +320,7 @@ class DataFinanceDraw(object):
         self.add_plot.extend([
             mpf.make_addplot(get_window(data_resistance), type='line', color=grey),
             mpf.make_addplot(get_window(data_support), type='line', color=grey),
-            mpf.make_addplot(get_window(exp12), type='line', color=dimgrey),
+            mpf.make_addplot(get_window(exp13), type='line', color=dimgrey),
             mpf.make_addplot(get_window(exp26), type='line', color=black),
             mpf.make_addplot(get_window(data_force_index), type='bar', panel=self.panel_force_index, color=force_index_color),
             mpf.make_addplot(get_window(data_force_index), type='line', width=1, panel=self.panel_force_index, color=dimgrey),
@@ -336,6 +338,9 @@ class DataFinanceDraw(object):
             self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss), type='line', color=light_coral))
         if get_window(data['stop_loss_signal_exit']).any(skipna=True):
             self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple, markersize=50, marker=marker_down))
+        if get_window(data['ema_value_signal_enter']).any(skipna=True):
+            self.add_plot.append(mpf.make_addplot(get_window(data['ema_value_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
+
         # if get_window(data['channel_signal_enter']).any(skipna=True):
         #     self.add_plot.append(mpf.make_addplot(get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
         # if get_window(data['channel_signal_exit']).any(skipna=True):

@@ -47,16 +47,23 @@ def compute_index(quote, period=None):
     #     deviation = quote['macd_bull_market_deviation_signal_enter']
     #     signal_enter_merged = signal_enter_merged.combine(deviation, func=lambda x1, x2: func(x1, x2))
 
-    deviation = quote['macd_bull_market_deviation_signal_enter']
-    for i in range(0, len(signal_enter_merged)):
-        # signal_enter_merged.iloc[i] = max(signal_enter_merged.iloc[i], deviation.iloc[i])
-        signal_enter_merged.iloc[i] = signal_enter_merged.iloc[i] if numpy.isnan(deviation.iloc[i]) else deviation.iloc[i]
+    column_list = ['macd_bull_market_deviation_signal_enter', 'ema_value_signal_enter']
+    column_list = ['macd_bull_market_deviation_signal_enter']
+    for column in column_list:
+        series = quote[column]
+        for i in range(0, len(signal_enter_merged)):
+            # max(1, nan) -> 1   max(nan, 1) -> nan
+            # signal_enter_merged.iloc[i] = max(signal_enter_merged.iloc[i], deviation.iloc[i])
+            signal_enter_merged.iloc[i] = signal_enter_merged.iloc[i] if numpy.isnan(series.iloc[i]) else series.iloc[i]
 
     quote = quote.assign(stop_loss=numpy.nan)
     date_index0 = signal_enter_merged.index[0]
     date_index_list = signal_enter_merged[signal_enter_merged > 0].index.to_list()
     date_index_list.append(quote.index[-1])
     for date_index in date_index_list:
+        # tmp_atr = indicator.atr.compute_atr(quote.loc[date_index0:date_index].copy())
+        # quote.loc[date_index0:date_index, 'stop_loss'] = quote.loc[date_index0:date_index, stop_loss_atr_price].rolling(
+        #     stop_loss_atr_back_days, min_periods=1).max() - stop_loss_atr_ratio * tmp_atr.loc[date_index0:date_index, 'atr']
         quote.loc[date_index0:date_index, 'stop_loss'] = quote.loc[date_index0:date_index, stop_loss_atr_price].rolling(stop_loss_atr_back_days, min_periods=1).max() - stop_loss_atr_ratio * quote.loc[date_index0:date_index, 'atr']
         date_index0 = date_index
 
@@ -138,7 +145,7 @@ def signal_exit(quote, period=None):
 
 def remove_signal(date, date_enter, quote_copy, inclusive_left=False):
     column_list = ['stop_loss_signal_exit', 'stop_loss']
-    column_list = ['stop_loss_signal_exit']
+    # column_list = ['stop_loss_signal_exit']
     for s in column_list:
         value = quote_copy.loc[date, s]
         quote_copy.loc[date:date_enter, s] = numpy.nan

@@ -7,12 +7,12 @@ from indicator.decorator import computed, ignore_long_period
 
 
 def function_enter(low, close, dlxt_long_period, dlxt, dlxt_ema13, ema13, ema26, ema26_shift, period, date):
-    if dlxt_long_period < 0 or dlxt < 0:
+    if dlxt_long_period < 0:  # or dlxt < 0:
         return numpy.nan
 
     # ema13 向上, close 回归 ema13 ~ ema26 价值区间
-    if dlxt_long_period > 0 and ema26_shift > 0 and close < ema13:
-        print(date, '5')
+    if dlxt_long_period > 0 and ema26 > ema26_shift and close < ema13:
+        # print(date, '5')
         return low
 
     return numpy.nan

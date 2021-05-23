@@ -101,7 +101,7 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     column_list = ['dynamical_system_signal_enter',
                    'channel_signal_enter',
                    'force_index_signal_enter',
-                   'ema_value_signal_enter',
+                   # 'ema_value_signal_enter',
                    'force_index_bull_market_deviation_signal_enter',
                    'macd_bull_market_deviation_signal_enter',
                    ]

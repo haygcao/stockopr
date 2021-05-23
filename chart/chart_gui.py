@@ -33,6 +33,7 @@ class Example(QWidget):
         comboCode.addItem("000625")
         comboCode.addItem("000725")
         comboCode.addItem("600519")
+        comboCode.addItem("000963")
 
         comboCode.activated[str].connect(self.onActivatedCode)
 

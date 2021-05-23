@@ -9,8 +9,9 @@ from pointor import signal
 class SignalTestCase(unittest.TestCase):
     def setUp(self):
         code = '300502'
-        self.period = 'm30'
-        count = 250
+        code = '000963'
+        self.period = 'day'
+        count = 250 * 5
         # self.quote = get_price_info_df_file_day(code, 250, '2021-5-13', 'data/300502.csv')
         self.quote = tx.get_kline_data(code, self.period, count)
 
@@ -20,7 +21,7 @@ class SignalTestCase(unittest.TestCase):
     def test_compute_signal(self):
         quote = signal.compute_signal(self.quote, period=self.period)
         # print(quote[:50])
-        print(quote[-50:])
+        # print(quote[-50:])
         # print(quote.columns)
 
 
