@@ -49,7 +49,8 @@ def compute_index(quote, period=None):
 
     deviation = quote['macd_bull_market_deviation_signal_enter']
     for i in range(0, len(signal_enter_merged)):
-        signal_enter_merged.iloc[i] = max(signal_enter_merged.iloc[i], deviation.iloc[i])
+        # signal_enter_merged.iloc[i] = max(signal_enter_merged.iloc[i], deviation.iloc[i])
+        signal_enter_merged.iloc[i] = signal_enter_merged.iloc[i] if numpy.isnan(deviation.iloc[i]) else deviation.iloc[i]
 
     quote = quote.assign(stop_loss=numpy.nan)
     date_index0 = signal_enter_merged.index[0]
@@ -137,7 +138,7 @@ def signal_exit(quote, period=None):
 
 def remove_signal(date, date_enter, quote_copy, inclusive_left=False):
     column_list = ['stop_loss_signal_exit', 'stop_loss']
-    # column_list = ['stop_loss_signal_exit']
+    column_list = ['stop_loss_signal_exit']
     for s in column_list:
         value = quote_copy.loc[date, s]
         quote_copy.loc[date:date_enter, s] = numpy.nan

@@ -13,11 +13,11 @@ def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
 
     # 长周期动量系统变为 红->蓝/绿, 蓝->绿
     if not is_long_period(period) and dlxt_long_period_shift < dlxt_long_period and dlxt_long_period_shift < 0:
-        print(date, '4')
+        # print(date, '4')
         return low
 
     if is_long_period(period) and dlxt_shift < dlxt and dlxt_shift < 0:
-        print(date, '3')
+        # print(date, '3')
         return low
 
     # if dlxt_long_period > 0 and dlxt > 0:

@@ -14,7 +14,7 @@ import acquisition.quote_www as quote_www
 import pointor.signal_gd as signal_gd
 import dealer.bought as basic
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
-    signal_stop_loss
+    signal_stop_loss, signal_ema_value
 
 
 def mktime(_datetime):
@@ -75,6 +75,9 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     quote = signal_force_index.signal_enter(quote, period)
     quote = signal_force_index.signal_exit(quote, period)
 
+    # ema 价值回归
+    quote = signal_ema_value.signal_enter(quote, period)
+
     if 'signal_enter' not in quote.columns:
         quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
     if 'signal_exit' not in quote.columns:
@@ -98,12 +101,13 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     column_list = ['dynamical_system_signal_enter',
                    'channel_signal_enter',
                    'force_index_signal_enter',
+                   'ema_value_signal_enter',
                    'force_index_bull_market_deviation_signal_enter',
                    'macd_bull_market_deviation_signal_enter',
                    ]
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
-    
+
     for column in column_list:
         quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
