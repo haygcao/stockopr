@@ -40,7 +40,26 @@ def function_conflict(signal_enter, signal_exit):
     pass
 
 
-def compute_signal(quote, period):
+# supplemental_signal: [(code, date, 'B/S', price), (code, date, 'B/S', price), ...]
+def get_supplemental_signal(supplemental_signal_path):
+    import csv
+    with open(supplemental_signal_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+
+        signal_list = []
+        for row in reader:
+            row['date'] = datetime.datetime.strptime(row['date'], '%Y-%m-%d %H:%M')
+            signal_list.append(row)
+
+    return signal_list
+
+
+def get_date_period(date, period, quote_date_index):
+    ret = quote_date_index[quote_date_index >= date]
+    return quote_date_index[-1] if ret.empty else ret[0]
+
+
+def compute_signal(quote, period, supplemental_signal_path=None):
     # 动力系统
     quote = signal_dynamical_system.signal_enter(quote, period=period)
     quote = signal_dynamical_system.signal_exit(quote, period=period)
@@ -56,6 +75,25 @@ def compute_signal(quote, period):
     quote = signal_force_index.signal_enter(quote, period)
     quote = signal_force_index.signal_exit(quote, period)
 
+    if 'signal_enter' not in quote.columns:
+        quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
+    if 'signal_exit' not in quote.columns:
+        quote.insert(len(quote.columns), 'signal_exit', numpy.nan)
+
+    quote_copy = quote.copy()
+
+    # 处理系统外交易信号
+    supplemental_signal_path = 'data/trade.csv'
+    supplemental_signal = get_supplemental_signal(supplemental_signal_path)
+    code = str(quote['code'][0])
+    for signal_dict in supplemental_signal:
+        if code != signal_dict['code']:
+            continue
+        date = get_date_period(signal_dict['date'], period, quote.index)
+        signal_all_column = 'signal_enter' if signal_dict['command'] == 'B' else 'signal_exit'
+        quote_copy.loc[date, signal_all_column] = quote_copy.loc[date, 'close']
+
+    # 合并
     # 处理合并看多信号
     column_list = ['dynamical_system_signal_enter',
                    'channel_signal_enter',
@@ -65,13 +103,7 @@ def compute_signal(quote, period):
                    ]
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
-
-    if 'signal_enter' not in quote.columns:
-        quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
-    if 'signal_exit' not in quote.columns:
-        quote.insert(len(quote.columns), 'signal_exit', numpy.nan)
-
-    quote_copy = quote.copy()
+    
     for column in column_list:
         quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
