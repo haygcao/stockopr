@@ -230,6 +230,22 @@ B = 'B'
 S = 'S'
 N = ''
 
+signal_enter_list = [
+    'dynamical_system_signal_enter',
+    'channel_signal_enter',
+    'force_index_signal_enter',
+    'ema_value_signal_enter',
+    'force_index_bull_market_deviation_signal_enter',
+    'macd_bull_market_deviation_signal_enter',
+]
+
+signal_exit_list = [
+    'dynamical_system_signal_exit',
+    'channel_signal_exit',
+    'force_index_signal_exit',
+    'force_index_bear_market_deviation_signal_exit',
+    'macd_bear_market_deviation_signal_exit',
+]
 
 period_map = {
         'm1': {'period': '1min', 'long_period': '5min', 'kline_long_period': 'm5'},

@@ -48,24 +48,36 @@ def compute_index(quote, period=None):
     #     signal_enter_merged = signal_enter_merged.combine(deviation, func=lambda x1, x2: func(x1, x2))
 
     column_list = ['macd_bull_market_deviation_signal_enter', 'ema_value_signal_enter']
-    column_list = ['macd_bull_market_deviation_signal_enter']
+    # column_list = ['macd_bull_market_deviation_signal_enter']
     for column in column_list:
         series = quote[column]
         for i in range(0, len(signal_enter_merged)):
             # max(1, nan) -> 1   max(nan, 1) -> nan
             # signal_enter_merged.iloc[i] = max(signal_enter_merged.iloc[i], deviation.iloc[i])
-            signal_enter_merged.iloc[i] = signal_enter_merged.iloc[i] if numpy.isnan(series.iloc[i]) else series.iloc[i]
+            # signal_enter_merged.iloc[i] = series.iloc[i] if not numpy.isnan(series.iloc[i]) and numpy.isnan(
+            #     quote['signal_enter'].iloc[i]) else signal_enter_merged.iloc[i]
+            if numpy.isnan(series.iloc[i]):
+                continue
+
+            if column != 'ema_value_signal_enter':
+                signal_enter_merged.iloc[i] = series.iloc[i]
+                continue
+
+            if not numpy.isnan(quote['signal_enter'].iloc[i] or numpy.isnan(series.iloc[i - 1])):
+                signal_enter_merged.iloc[i] = series.iloc[i]
 
     quote = quote.assign(stop_loss=numpy.nan)
-    date_index0 = signal_enter_merged.index[0]
-    date_index_list = signal_enter_merged[signal_enter_merged > 0].index.to_list()
-    date_index_list.append(quote.index[-1])
-    for date_index in date_index_list:
-        # tmp_atr = indicator.atr.compute_atr(quote.loc[date_index0:date_index].copy())
-        # quote.loc[date_index0:date_index, 'stop_loss'] = quote.loc[date_index0:date_index, stop_loss_atr_price].rolling(
-        #     stop_loss_atr_back_days, min_periods=1).max() - stop_loss_atr_ratio * tmp_atr.loc[date_index0:date_index, 'atr']
-        quote.loc[date_index0:date_index, 'stop_loss'] = quote.loc[date_index0:date_index, stop_loss_atr_price].rolling(stop_loss_atr_back_days, min_periods=1).max() - stop_loss_atr_ratio * quote.loc[date_index0:date_index, 'atr']
-        date_index0 = date_index
+    index0 = signal_enter_merged.index[0]
+    index_list = signal_enter_merged[signal_enter_merged > 0].index.to_list()
+    index_list.append(quote.index[-1])
+    for index in index_list:
+        # 不重算 ATR
+        # tmp_quote = indicator.atr.compute_atr(quote.loc[index0:index].copy())
+        # quote.loc[index0:index, 'stop_loss'] = quote.loc[index0:index, stop_loss_atr_price].rolling(
+        #     stop_loss_atr_back_days, min_periods=1).max() - stop_loss_atr_ratio * tmp_quote.loc[index0:index, 'atr']
+        quote.loc[index0:index, 'stop_loss'] = quote.loc[index0:index, stop_loss_atr_price].rolling(
+            stop_loss_atr_back_days, min_periods=1).max() - stop_loss_atr_ratio * quote.loc[index0:index, 'atr']
+        index0 = index
 
     return quote
 

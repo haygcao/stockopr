@@ -13,6 +13,7 @@ import acquisition.quote_www as quote_www
 
 import pointor.signal_gd as signal_gd
 import dealer.bought as basic
+from config import config
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
     signal_stop_loss, signal_ema_value
 
@@ -98,13 +99,7 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     # 合并
     # 处理合并看多信号
-    column_list = ['dynamical_system_signal_enter',
-                   'channel_signal_enter',
-                   'force_index_signal_enter',
-                   # 'ema_value_signal_enter',
-                   'force_index_bull_market_deviation_signal_enter',
-                   'macd_bull_market_deviation_signal_enter',
-                   ]
+    column_list = config.signal_enter_list
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
 
@@ -113,12 +108,7 @@ def compute_signal(quote, period, supplemental_signal_path=None):
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
 
     # 处理合并看空信号
-    column_list = ['dynamical_system_signal_exit',
-                   'channel_signal_exit',
-                   'force_index_signal_exit',
-                   'force_index_bear_market_deviation_signal_exit',
-                   'macd_bear_market_deviation_signal_exit'
-                   ]
+    column_list = config.signal_exit_list
     # 'macd_bear_market_deviation',
     # 'force_index_bear_market_deviation']
 

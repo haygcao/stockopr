@@ -338,8 +338,8 @@ class DataFinanceDraw(object):
             self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss), type='line', color=light_coral))
         if get_window(data['stop_loss_signal_exit']).any(skipna=True):
             self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple, markersize=50, marker=marker_down))
-        if get_window(data['ema_value_signal_enter']).any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(get_window(data['ema_value_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
+        # if get_window(data['ema_value_signal_enter']).any(skipna=True):
+        #     self.add_plot.append(mpf.make_addplot(get_window(data['ema_value_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
 
         # if get_window(data['channel_signal_enter']).any(skipna=True):
         #     self.add_plot.append(mpf.make_addplot(get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
