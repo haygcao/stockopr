@@ -7,6 +7,8 @@ import time
 from datetime import date
 import datetime
 
+import pymysql
+
 import util.mysqlcli as mysqlcli
 import acquisition.quote_www as price
 import config.config as config
