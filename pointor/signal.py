@@ -86,6 +86,10 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     quote_copy = quote.copy()
 
+    tmp = quote_copy.index.duplicated()
+    if tmp.any():
+        quote_copy = quote_copy[~quote_copy.index.duplicated(keep='first')]
+
     # 处理系统外交易信号
     supplemental_signal_path = 'data/trade.csv'
     supplemental_signal = get_supplemental_signal(supplemental_signal_path)
@@ -126,6 +130,10 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     positive = positive_all[positive_all > 0]
     negative = negative_all[negative_all > 0]
+
+    # print('signals before merged')
+    # print(positive)
+    # print(negative)
 
     # 如果一天同时出现看多/看空信号，按看多处理
     # def func(n: numpy.float64, p: numpy.float64):
@@ -174,10 +182,6 @@ def compute_signal(quote, period, supplemental_signal_path=None):
             next_negative = negative.index[j]
         negative[temp_negative_index] = temp_negative
 
-    tmp = quote_copy.index.duplicated()
-    if tmp.any():
-        quote_copy = quote_copy[~quote_copy.index.duplicated(keep='first')]
-
     i += 1
     j += 1
     while i < len(positive):
@@ -193,6 +197,10 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     positive = positive[positive > 0]
     negative = negative[negative > 0]
+
+    # print('signals after merged')
+    # print(positive)
+    # print(negative)
 
     # positive = positive.mask(positive > 0, quote['low'])
     # negative = negative.mask(negative > 0, quote['high'])
