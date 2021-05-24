@@ -16,7 +16,8 @@ import selector.plugin.d as d
 import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
-import indicator.market_deviation as niushibeili
+from selector.plugin import market_deviation
+from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
 
@@ -38,7 +39,8 @@ selector = {
     'dd': d.dd,
     'zf': zf.zf,
     'qd': qd.qd,
-    'nsbl': niushibeili._market_deviation,
+    'nsbl': market_deviation.market_deviation,   # 牛市背离
+    'jzhg': ema_value.ema_value,   # 价值回归
     'dlxt_green': dynamical_system.dynamical_system_green,
     'dlxt_red': dynamical_system.dynamical_system_red,
     'dlxt_blue': dynamical_system.dynamical_system_blue,

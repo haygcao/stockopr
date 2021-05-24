@@ -226,7 +226,8 @@ class DataFinanceDraw(object):
         # mask2 = data_force_index.loc[:] < -force_index_abs_avg * 5
         # data_force_index[mask2] = -force_index_abs_avg * 5
 
-        data = signal_market_deviation.signal(data, self.period)
+        data = signal_market_deviation.signal_enter(data, self.period)
+        data = signal_market_deviation.signal_exit(data, self.period)
 
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
 

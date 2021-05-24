@@ -70,7 +70,8 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     quote = signal_channel.signal_exit(quote, period=period)
 
     # 背离
-    quote = signal_market_deviation.signal(quote, period)
+    quote = signal_market_deviation.signal_enter(quote, period)
+    quote = signal_market_deviation.signal_exit(quote, period)
 
     # 强力指数
     quote = signal_force_index.signal_enter(quote, period)

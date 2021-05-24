@@ -92,7 +92,8 @@ def update_status_old(code, data, period):
     #         return False
 
     # deviation signal
-    data = signal_market_deviation.signal(data, period, back_days=0)
+    data = signal_market_deviation.signal_enter(data, period, back_days=0)
+    data = signal_market_deviation.signal_exit(data, period, back_days=0)
     for column_name in ['macd_bull_market_deviation',
                         'macd_bear_market_deviation',
                         'force_index_bull_market_deviation',
