@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 import numpy
 
+import config.config
 from chart.kline import open_graph
 from config.config import period_map
 from pointor import signal_dynamical_system, signal_market_deviation, signal
@@ -167,10 +168,12 @@ def check(code, period):
 
 
 def order(trade_singal: TradeSignal):
-    count = 1500
+    trade = config.config.get_trade_config(trade_singal.code)
+    count = trade['count']
     print('{} {} {}'.format(trade_singal.command, trade_singal.code, count))
     try:
-        tradeapi.order(trade_singal.command, trade_singal.code, count, auto=False)
+        auto = 'auto_buy' if trade_singal.command == 'B' else 'auto_sell'
+        tradeapi.order(trade_singal.command, trade_singal.code, count, auto=trade[auto])
     except Exception as e:
         print('call tradeapi error:', e)
         # import traceback

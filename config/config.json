@@ -1,0 +1,5 @@
+{
+  "global": {"auto_buy": false, "auto_sell": false},
+  "300502": {"auto_buy": false, "auto_sell": false, "count": 1500},
+  "002739": {"auto_buy": false, "auto_sell": false, "count": 1500}
+}

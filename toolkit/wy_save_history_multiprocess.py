@@ -58,6 +58,7 @@ def gen_stock_code(symbol):
 def save(csv_queue):
     ok = False
     start_date = datetime.datetime(2010, 1, 1)
+    start_date = datetime.datetime(2021, 4, 29)
 
     while True:
         with mysqlcli.get_cursor() as c:

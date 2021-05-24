@@ -278,3 +278,16 @@ stop_loss_atr_price = 'high'
 
 def is_long_period(period):
     return period in ['week', 'm30']
+
+
+def get_trade_config(code):
+    import json
+    fp = open('config/config.json')
+    trade = json.load(fp)
+
+    fp.close()
+
+    if code in trade:
+        return trade[code]
+
+    return trade['global']
