@@ -135,11 +135,13 @@ def update_status_old(code, data, period):
 
 
 def update_status(code, data, period):
-    data_index_ = data.index[-1]
+    data_index_: datetime.datetime = data.index[-1]
     data = signal.compute_signal(data, period)
 
     if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
-        return TradeSignal(code, data_index_, 'S', '', period, True)
+        minute = int(period[1:])
+        if data_index_.minute % minute == minute - 1 and data_index_.second > 45:
+            return TradeSignal(code, data_index_, 'S', '', period, True)
 
     if not numpy.isnan(data['signal_exit'][-1]):
         return TradeSignal(code, data_index_, 'S', '', period, True)
@@ -217,7 +219,7 @@ def monitor_today():
             notify(trade_signal)
 
             p.join(timeout=1)
-        time.sleep(60)
+        time.sleep(15)
 
 
 if __name__ == '__main__':

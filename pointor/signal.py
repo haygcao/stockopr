@@ -174,6 +174,10 @@ def compute_signal(quote, period, supplemental_signal_path=None):
             next_negative = negative.index[j]
         negative[temp_negative_index] = temp_negative
 
+    tmp = quote_copy.index.duplicated()
+    if tmp.any():
+        quote_copy = quote_copy[~quote_copy.index.duplicated(keep='first')]
+
     i += 1
     j += 1
     while i < len(positive):
