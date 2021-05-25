@@ -42,8 +42,8 @@ def save_sh_index_trade_info():
     if val:
         quote_db.insert_into_quote([val,])
 
-def save_quote_tx():
-    _xls = tx.download_quote_xls()
+def save_quote_tx(xls=None):
+    _xls = xls if xls else tx.download_quote_xls()
     if _xls:
         val_list = tx.get_quote(_xls)
         quote_db.insert_into_quote(val_list)
@@ -102,14 +102,16 @@ def save_quote_wy():
         except Exception as e:
             print(e)
 
-def save_quote():
+def save_quote(xls):
     save_sh_index_trade_info()
-    #save_quote_tx()
-    save_quote_wy()
+    save_quote_tx(xls)
+    # save_quote_wy()
 
 
 if __name__ == '__main__':
     if not dt.istradeday():
         pass
         #exit(0)
-    save_quote()
+    xls = None
+    xls = 'data/xls/2021-05-24.xls'
+    save_quote(xls)
