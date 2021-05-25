@@ -27,7 +27,7 @@ def filter_quote(quote):
     if 'ST' in name or '退市' in name:
         return True
 
-    min_days = config.DAY_MIN * 5 if config.USING_LONG_PERIOD else config.DAY_MIN
+    min_days = config.WEEK_MIN * 5 if config.USING_LONG_PERIOD else config.DAY_MIN
     if len(quote) < min_days:
         return True
 

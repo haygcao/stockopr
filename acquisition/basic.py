@@ -1,6 +1,6 @@
-#-*- encoding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 
-#from util import get_pid_by_name
+# from util import get_pid_by_name
 import subprocess
 import os
 import time
@@ -13,40 +13,45 @@ import util.mysqlcli as mysqlcli
 import acquisition.quote_www as price
 import config.config as config
 
+
 def get_all_stock_code():
     with mysqlcli.get_cursor() as c:
-        #sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
+        # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
         sql = "SELECT code FROM {0} where type = 'A'".format(config.sql_tab_basic_info)
         c.execute(sql)
         stock_code_list = c.fetchall()
 
         return [code['code'] for code in stock_code_list]
 
+
 # insert new row
 # stock_list[(code, name), ...]
 def save_stock_list_into_db(stock_list):
     with mysqlcli.get_cursor() as cursor:
-        sql_fmt = u"INSERT INTO basic_info (code, name) VALUES ('{}', '{}')"
+        sql_str = u"INSERT IGNORE INTO basic_info (code, name) VALUES ('%s', '%s')"
+        value_list = []
         for code, name in stock_list:
-            sql = sql_fmt.format(code, name)
-            try:
-                cursor.execute(sql, None)
-            except pymysql.err.IntegrityError as e:
-                pass
-            except Exception as e:
-                print(e)
+            value_list.append((code, name))
+
+        try:
+            cursor.executemany(sql_str, value_list)
+        except pymysql.err.IntegrityError as e:
+            pass
+        except Exception as e:
+            print(e)
+
 
 # update old row
 # stock_list[(code, name), ...]
 def update_stock_list_into_db(stock_list):
     with mysqlcli.get_cursor() as cursor:
         # Create a new record
-        #sql_fmt = u"INSERT INTO basic_info (code, name) VALUES ('{}', '{}') ON DUPLICATE KEY update name = {}"
+        # sql_fmt = u"INSERT INTO basic_info (code, name) VALUES ('{}', '{}') ON DUPLICATE KEY update name = {}"
         sql_ins = "INSERT INTO basic_info (code, name) VALUES ('{}', '{}')"
         sql_sel = 'select name from basic_info where code = "{0}"'
         sql_upd = 'update basic_info set name = "{1}" where code = "{0}"'
         for code, name in stock_list:
-            #sql = sql.format(code, name.decode('unicode-escape'))
+            # sql = sql.format(code, name.decode('unicode-escape'))
             try:
                 sql = sql_sel.format(code)
                 n = cursor.execute(sql, None)
@@ -58,10 +63,11 @@ def update_stock_list_into_db(stock_list):
                 if r['name'] == name:
                     continue
                 sql = sql_upd.format(code, name)
-                #sql = sql_fmt.format(code, name)
+                # sql = sql_fmt.format(code, name)
                 cursor.execute(sql, None)
             except Exception as e:
-                print(e) #(1062, "Duplicate entry '603999' for key 'PRIMARY'")
+                print(e)  # (1062, "Duplicate entry '603999' for key 'PRIMARY'")
+
 
 def get_selected_stock_code():
     code_list = []
@@ -73,12 +79,14 @@ def get_selected_stock_code():
             code_list.append(item['code'])
         return code_list
 
+
 def sum_trade_date(code):
     with mysqlcli.get_cursor() as c:
         sql = 'select count(code) from {0} where code = "{1}"'.format(config.sql_tab_quote, code)
         c.execute(sql)
         r = c.fetchone()
         return list(r.values())[0]
+
 
 def save_stock_name():
     stock_code_list = get_all_stock_code()
@@ -99,7 +107,7 @@ def save_stock_name():
             continue
 
         try:
-            #val_list.append(tuple([code, stock_info['name']]))
+            # val_list.append(tuple([code, stock_info['name']]))
             time.sleep(0.1)
             sql = 'insert into {0} (code, name) values ("%s", "%s")'.format(config.sql_tab_basic_info) % tuple([code, stock_info['name']])
             c.execute(sql)
@@ -107,13 +115,14 @@ def save_stock_name():
         except Exception as e:
             print(e)
 
-    #for val in val_list:
-    #    print(val)
-    #sql = 'insert into basic_info (code, name) values (%s, %s)'
-    #c.executemany(sql, val_list)
-    #conn.commit()
+    # for val in val_list:
+    #     print(val)
+    # sql = 'insert into basic_info (code, name) values (%s, %s)'
+    # c.executemany(sql, val_list)
+    # conn.commit()
     c.close()
     conn.close()
+
 
 # 没有调用
 def update_stock_name():
@@ -127,31 +136,33 @@ def update_stock_name():
             code_i = int(code)
             if code_i >= 600000:
                 continue
-            #val_list.append(tuple([code, stock_info['name']]))
+            # val_list.append(tuple([code, stock_info['name']]))
             sql = 'update {0} set code = "%s" where code = "%d"'.format(config.sql_tab_basic_info) % tuple([code, code_i])
             c.execute(sql)
             conn.commit()
         except Exception as e:
             print(e)
 
-    #for val in val_list:
-    #    print(val)
-    #sql = 'insert into basic_info (code, name) values (%s, %s)'
-    #c.executemany(sql, val_list)
-    #conn.commit()
+    # for val in val_list:
+    #     print(val)
+    # sql = 'insert into basic_info (code, name) values (%s, %s)'
+    # c.executemany(sql, val_list)
+    # conn.commit()
     c.close()
     conn.close()
+
 
 def get_stock_name(code):
     with mysqlcli.get_cursor() as c:
         try:
             sql = 'select name from {0} where code = "{1}"'.format(config.sql_tab_basic_info, code)
             c.execute(sql)
-            #name = c.fetchall()
+            # name = c.fetchall()
             r = c.fetchone()
             return r['name']
         except Exception as e:
             print(e)
+
 
 def get_future_name(code):
     if code.find('1') > 0:
@@ -163,12 +174,11 @@ def get_future_name(code):
         try:
             sql = 'select name from future_variety where code = "{1}"'.format(config.sql_tab_basic_info, code)
             c.execute(sql)
-            #name = c.fetchall()
+            # name = c.fetchall()
             r = c.fetchone()
             return r['name']
         except Exception as e:
             print(e)
-
 
 
 if __name__ == '__main__':

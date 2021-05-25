@@ -21,9 +21,9 @@ def test_select():
     import util.mysqlcli as mysqlcli
     _conn = mysqlcli.get_connection()
     code = '300502'
-    code = '600588'
-    code = '300312'
-    code = '300946'
+    # code = '600588'
+    # code = '300312'
+    # code = '300946'
     df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
     df = df.sort_index()
     ret = selector.is_match(df, 'nsbl')

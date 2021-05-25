@@ -30,11 +30,13 @@ def save_stock_basic_info(xlsfile):
     stock_list = sorted(stock_list)
     basic.save_stock_list_into_db(stock_list)
 
+
 def update_stock_basic_info(xlsfile):
     # http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr
     stock_list = tx.get_stock_list(xlsfile)
     stock_list = sorted(stock_list)
     basic.update_stock_list_into_db(stock_list)
+
 
 # 指数
 def save_sh_index_trade_info():
@@ -113,5 +115,5 @@ if __name__ == '__main__':
         pass
         #exit(0)
     xls = None
-    xls = 'data/xls/2021-05-24.xls'
+    # xls = 'data/xls/2021-05-24.xls'
     save_quote(xls)
