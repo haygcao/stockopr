@@ -1,7 +1,9 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import config.config as config
+from acquisition import basic
 from util.macd import ma
+
 
 def almost_equal(m, n, almost=config.ALMOST_EQUAL):
     l = m
@@ -11,6 +13,7 @@ def almost_equal(m, n, almost=config.ALMOST_EQUAL):
         return True
     return False
 
+
 def gen_ma(quote, n=config.MA_NUM, l=config.MAS):
     r = []
     for i in range(n):
@@ -18,22 +21,33 @@ def gen_ma(quote, n=config.MA_NUM, l=config.MAS):
 
     return r
 
+
 def filter_quote(quote):
-    if len(quote) < config.MIN:
+    name = basic.get_stock_name(quote['code'][-1])
+    if 'ST' in name or '退市' in name:
         return True
+
+    min_days = config.DAY_MIN * 5 if config.USING_LONG_PERIOD else config.DAY_MIN
+    if len(quote) < min_days:
+        return True
+
     return False
+
 
 def filer_code(code):
     if basic.sum_trade_date(code) < config.MIN:
         return True
     return False
 
+
 def verify(code, dt=True):
     pass
 
-def print_time(t):
+
+def print_time(cost):
     if int(cost/5) == 0:
         print(cost)
+
 
 def print_line(a):
     if a % 100 == 0:

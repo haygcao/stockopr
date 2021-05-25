@@ -112,25 +112,25 @@ def is_quote_of_today(_xls):
 def get_stock_list_from_quote_xls(_xls):
     stock_list = []
 
-    #打开excel
-    data = xlrd.open_workbook(_xls) #注意这里的workbook首字母是小写
+    # 打开excel
+    data = xlrd.open_workbook(_xls)  # 注意这里的workbook首字母是小写
 
-    #查看文件中包含sheet的名称
+    # 查看文件中包含sheet的名称
     sheets = data.sheet_names()
     sheet = sheets[0]
 
-    #得到第一个工作表，或者通过索引顺序 或 工作表名称
+    # 得到第一个工作表，或者通过索引顺序 或 工作表名称
     table = data.sheets()[0]
     table = data.sheet_by_index(0)
     table = data.sheet_by_name(sheet)
-    #获取行数和列数
-    #nrows = table.nrows
-    #ncols = table.ncols
-    #获取整行和整列的值（数组）
+    # 获取行数和列数
+    # nrows = table.nrows
+    # ncols = table.ncols
+    # 获取整行和整列的值（数组）
     i = 0
     table.row_values(i)
     table.col_values(i)
-    #循环行,得到索引的列表
+    # 循环行,得到索引的列表
     B = False
     for rownum in range(table.nrows):
         row = table.row_values(rownum)
@@ -139,25 +139,25 @@ def get_stock_list_from_quote_xls(_xls):
 
         code = row[0][2:]
         name = row[1]
-        #ex = 1 if code >= 600000 else 2
+        # ex = 1 if code >= 600000 else 2
 
-        #stock_list.append((code, name, ex))
+        # stock_list.append((code, name, ex))
         stock_list.append((code, name))
 
         continue
 
         break
-    ##单元格
-        #cell_A1 = table.cell(0,0).value
-        ##分别使用行列索引
-        #cell_A1 = table.row(0)[0].value
-        #cell_A2 = table.col(1)[0].value
+    # 单元格
+    # cell_A1 = table.cell(0,0).value
+    # 分别使用行列索引
+    # cell_A1 = table.row(0)[0].value
+    # cell_A2 = table.col(1)[0].value
 
     return stock_list
 
 
 def check_format(row):
-    #if len(row) != 13:
+    # if len(row) != 13:
     #    return False
     if row != ['代码', '名称', '最新价', '涨跌幅', '涨跌额', '买入', '卖出', '成交量', '成交额', '今开', '昨收', '最高', '最低']:
         return False

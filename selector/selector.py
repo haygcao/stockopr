@@ -69,7 +69,7 @@ def _select(q, rq, strategy_name):
     while True:
         try:
             code = q.get(True, 0.1)
-            df = quote_db.get_price_info_df_db(code, 250, '', config.T, _conn)
+            df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
             if is_match(df, strategy_name):
                 selected.add_selected(code, strategy_name)
                 print('{}'.format(code))

@@ -147,6 +147,9 @@ selector
 '''
 T = 'W'
 # T = 'D'
+USING_LONG_PERIOD = True
+MAX_CLOSE_PAST_DAYS = 30 * 9
+DECLINE_RATIO = 0.5
 
 DAY_MIN = 250
 WEEK_MIN = 52

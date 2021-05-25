@@ -600,8 +600,9 @@ if __name__ == "__main__":
     code = '300502'
     # code = '000999'
     # code = '000625'
-    period = 'day'   # m5 m30 day week
-    open_graph(code, period, 'data/' + code + '.csv')
+    code = '600588'
+    period = 'week'   # m5 m30 day week
+    open_graph(code, period, 'data/csv/' + code + '.csv')
     # open_graph(code, period)
 
     # code = '000001'

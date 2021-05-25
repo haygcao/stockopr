@@ -20,7 +20,11 @@ def test_select():
     import config.config as config
     import util.mysqlcli as mysqlcli
     _conn = mysqlcli.get_connection()
-    df = quote_db.get_price_info_df_db('300502', 250, '', config.T, _conn)
+    code = '300502'
+    code = '600588'
+    code = '300312'
+    code = '300946'
+    df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
     df = df.sort_index()
     ret = selector.is_match(df, 'nsbl')
     # ret = selector.is_match(df, 'dlxt_blue')
@@ -67,8 +71,8 @@ def test_signal():
 if __name__ == '__main__':
     t = time.time()
     # test_save_quote()
-    # test_select_mp()
-    test_select()
+    test_select_mp()
+    # test_select()
     # test_trend_recognition()
     # test_signal()
 
