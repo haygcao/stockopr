@@ -362,8 +362,8 @@ If the current period's high is above the prior period's high and the low is bel
 Methods 2 and 3 are used when there is a gap or an inside day.
 A gap occurs when the previous close is greater than the current high (signaling a potential gap down or limit move) or the previous close is lower than the current low (signaling a potential gap up or limit move).
 '''
-def atr(prices):
+def atr(prices, timeperiod=14):
     df = pd.DataFrame()
-    df['atr'] = ATR(prices, timeperiod=14)
+    df['atr'] = ATR(prices, timeperiod=timeperiod)
 
     return df

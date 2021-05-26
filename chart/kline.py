@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 import functools
 
 import sys;
@@ -97,6 +98,13 @@ class DataFinanceDraw(object):
     """
 
     def __init__(self, code, period):
+        self.init_timestamp = datetime.datetime.now().timestamp()
+        self.load_data_timestamp = 0
+        self.compute_timestamp = 0
+        self.plot_timestamp = 0
+        self.add_line_timestamp = 0
+        self.show_timestamp = 0
+
         self.code = code
         self.period = period
 
@@ -175,6 +183,7 @@ class DataFinanceDraw(object):
             count *= 5
         self.data_origin = tx.get_kline_data(code, self.period, count)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
+        self.load_data_timestamp = datetime.datetime.now().timestamp()
 
     def load_data(self, file_name='2020.csv', count=1250):
         """
@@ -183,6 +192,7 @@ class DataFinanceDraw(object):
         """
         data = import_csv(file_name)
         self.data_origin = data.iloc[-count:]
+        self.load_data_timestamp = datetime.datetime.now().timestamp()
 
     def more_panel_draw(self):
         data = self.data_origin   # .iloc[-100:]
@@ -393,6 +403,8 @@ class DataFinanceDraw(object):
         # av = fig.add_subplot(2, 1, 2, sharex=ax)  # volume chart subplot
         # mpf.plot(self.data, type='candle', ax=ax, volume=av)
 
+        self.compute_timestamp = datetime.datetime.now().timestamp()
+
     def show(self):
         # 设置基本参数
         # type:绘制图形的类型, 有candle, renko, ohlc, line等
@@ -425,6 +437,8 @@ class DataFinanceDraw(object):
                                     #panel_ratios=(8, 0.2, 1.8),
                                     panel_ratios=panel_ratios[self.n_panels]
                                     )
+
+        self.plot_timestamp = datetime.datetime.now().timestamp()
 
         # import matplotlib.dates as mdates
         # xmajorLocator = mdates.DayLocator(1)
@@ -568,9 +582,13 @@ class DataFinanceDraw(object):
         mng = plt.get_current_fig_manager()
         mng.window.showMaximized()
 
+        self.add_line_timestamp = datetime.datetime.now().timestamp()
+
         plt.show()
         # plt.show(block=False)  # 显示
         # plt.close()  # 关闭plt，释放内存
+
+        self.show_timestamp = datetime.datetime.now().timestamp()
 
 
 def update(candle):
@@ -594,14 +612,24 @@ def open_graph(code, peroid, path=None):
     update(candle)
     show(candle)
 
+    # print(candle.init_timestamp)
+    # print(candle.load_data_timestamp)
+    # print(candle.compute_timestamp)
+    # print(candle.plot_timestamp)
+    # print(candle.add_line_timestamp)
+    # print(candle.show_timestamp)
+
+    print(candle.add_line_timestamp - candle.init_timestamp)
+
+
 
 if __name__ == "__main__":
     code = '000001'
     code = '300502'
     # code = '000999'
     # code = '000625'
-    code = '600588'
-    period = 'week'   # m5 m30 day week
+    # code = '600588'
+    period = 'day'   # m5 m30 day week
     open_graph(code, period, 'data/csv/' + code + '.csv')
     # open_graph(code, period)
 

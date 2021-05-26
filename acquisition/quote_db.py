@@ -7,6 +7,7 @@ import pandas as pd
 import util.mysqlcli as mysqlcli
 import config.config as config
 
+
 # quote
 # insert ignore into
 def insert_into_quote(val_list):
@@ -22,6 +23,7 @@ def insert_into_quote(val_list):
             c.executemany(sql_str, val_list)
         except Exception as e:
             print(e)
+
 
 def get_price_info_db(code, trade_date = None):
     with mysqlcli.get_cursor() as c:
@@ -50,6 +52,7 @@ def get_price_info_db(code, trade_date = None):
         #print(r['trade_date'], r['close'])
 
         return r
+
 
 def get_price_info_list_db(code, trade_date = 1):
     with mysqlcli.get_cursor() as c:

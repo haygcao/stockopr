@@ -1,6 +1,7 @@
 import multiprocessing
 import sys
 import warnings
+
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
 
@@ -17,6 +18,7 @@ class Example(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.dict = {}
         self.code = '300502'
         self.period = 'day'
         self.monitor_proc = None
@@ -25,24 +27,21 @@ class Example(QWidget):
 
     def initUI(self):
         self.lbl = QLabel("", self)
+        self.log = QLabel("this for log", self)
 
         comboCode = QComboBox(self)
-        comboCode.addItem("300502")
-        comboCode.addItem("002739")
-        comboCode.addItem("000999")
-        comboCode.addItem("000625")
-        comboCode.addItem("000725")
-        comboCode.addItem("600519")
-        comboCode.addItem("000963")
+        # comboCode.adjustSize()
+        comboCode.resize(comboCode.width() + 50, comboCode.height())
+        with open('data/portfolio.txt', encoding='utf8') as fp:
+            for code_name in fp:
+                # name = basic.get_stock_name(code)
+                comboCode.addItem(code_name)
 
         comboCode.activated[str].connect(self.onActivatedCode)
 
         comboPeriod = QComboBox(self)
-        comboPeriod.addItem("m1")
-        comboPeriod.addItem("m5")
-        comboPeriod.addItem("m30")
-        comboPeriod.addItem("day")
-        comboPeriod.addItem("week")
+        for period in ['m1', 'm5', 'm30', 'day', 'week']:
+            comboPeriod.addItem(period)
 
         # comboPeriod.move(50, 50)
         # self.lbl.move(50, 150)
@@ -70,6 +69,7 @@ class Example(QWidget):
         grid.addWidget(comboPeriod, 2, 1)
         grid.addWidget(btn, 2, 2)
         grid.addWidget(self.btn_monitor, 1, 1)
+        grid.addWidget(self.log, 3, 0)
 
         self.setLayout(grid)
 
@@ -83,7 +83,7 @@ class Example(QWidget):
         self.lbl.adjustSize()
 
     def onActivatedCode(self, text):
-        self.code = text
+        self.code = text.split()[0]
         self.lbl.setText('open {} {}'.format(self.code, self.period))
         self.lbl.adjustSize()
 

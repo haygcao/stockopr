@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import config.config as config
 import selector.util as util
@@ -7,27 +7,29 @@ from selector.plugin._ht import ht_ma
 from selector.plugin._dt import dt_ma
 from selector.plugin.hp  import hp_ma
 
+
 def second_wave(quote):
     # 20天前, 还在整理
     if not hp_ma(quote, 30, 30, almost=1):
         return False
 
-    #if not hp_boll(quote):
-    #    return False
+    # if not hp_boll(quote):
+    #     return False
 
-    #if not hp_ma(quote, r=2):
-    #    return False
+    # if not hp_ma(quote, r=2):
+    #     return False
 
     # ma30, ma60 向上
     if not dt_ma(quote, last_n_maN=2):
         return False
 
-    #print(quote['code'][-1])
+    # print(quote['code'][-1])
 
     if not ht_ma(quote, almost=2):
         return False
 
     return True
+
 
 # ma5 == ma20
 # ma5 - ma60 > 5%
@@ -44,5 +46,3 @@ def second_wave2(quote, begin=config.SECOND_DAY, last_n_maN=config.SECOND_LAST_N
         return True
 
     return False
-
-
