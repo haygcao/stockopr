@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
+
 import datetime
 import multiprocessing
 import functools
+import sys
 
 from selector import util
 
@@ -97,7 +100,14 @@ def select_one_strategy(code_list, strategy_name):
 
     nproc = multiprocessing.cpu_count()
     with multiprocessing.Pool(nproc) as p:
-        r = p.map(select_func, [code for code in code_list])
+        # r = p.map(select_func, [code for code in code_list])
+        # code_list = [code for code in r if code]
+
+        r = []
+        for i, _ in enumerate(p.imap_unordered(select_func, [code for code in code_list]), 1):
+            r.append(_)
+            if i % 100 == 0:
+                sys.stderr.write('\rdone {0:%}'.format(round(i/len(code_list), 2)))
         code_list = [code for code in r if code]
 
     print('{} {}: {}'.format(datetime.datetime.now(), strategy_name, len(code_list)))

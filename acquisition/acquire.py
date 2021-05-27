@@ -113,9 +113,9 @@ def save_quote_wy():
 
 
 def save_quote(xls=None):
-    save_sh_index_trade_info()
     save_quote_tx(xls)
     # save_quote_wy()
+    save_sh_index_trade_info()
 
 
 if __name__ == '__main__':
