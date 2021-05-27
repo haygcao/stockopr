@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
 
 import datetime
 import multiprocessing
 import functools
 import sys
+
+import tqdm
 
 from selector import util
 
@@ -104,10 +105,14 @@ def select_one_strategy(code_list, strategy_name):
         # code_list = [code for code in r if code]
 
         r = []
-        for i, _ in enumerate(p.imap_unordered(select_func, [code for code in code_list]), 1):
+        # for i, _ in enumerate(p.imap_unordered(select_func, [code for code in code_list]), 1):
+        #     r.append(_)
+        #     if i % 100 == 0:
+        #         sys.stderr.write('\rdone {0:%}'.format(i/len(code_list)))
+        for _ in tqdm.tqdm(p.imap_unordered(select_func, [code for code in code_list]),
+                           total=len(code_list), ncols=120):
             r.append(_)
-            if i % 100 == 0:
-                sys.stderr.write('\rdone {0:%}'.format(round(i/len(code_list), 2)))
+
         code_list = [code for code in r if code]
 
     print('{} {}: {}'.format(datetime.datetime.now(), strategy_name, len(code_list)))
