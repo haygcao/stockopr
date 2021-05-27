@@ -85,7 +85,7 @@ create table if not exists financial_data (
 create table selected(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    class varchar(8),
+    class varchar(32),
     `rank` int
     );
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import datetime
 import time
 
 #import toolkit.wy_save_history_multiprocess
@@ -21,12 +21,14 @@ def test_select():
     import util.mysqlcli as mysqlcli
     _conn = mysqlcli.get_connection()
     code = '300502'
+    # code = '000625'
     # code = '600588'
     # code = '300312'
     # code = '300946'
     df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
     df = df.sort_index()
-    ret = selector.is_match(df, 'nsbl')
+    ret = selector.is_match(df, 'hot_strong')
+    # ret = selector.is_match(df, 'nsbl')
     # ret = selector.is_match(df, 'dlxt_blue')
     # ret = selector.is_match(df, 'qlzs_p')
     print(ret)
@@ -35,7 +37,9 @@ def test_select():
 def test_select_mp():
     import selector.selector as selector
     import acquisition.basic as basic
-    code_list = selector.select('nsbl')
+    # code_list = selector.select(['nsbl'])
+    code_list = selector.select(['ema_value'])
+    # code_list = selector.select(['hot_strong', 'ema_value'])
     for code in code_list:
         print(code, basic.get_stock_name(code))
     print('+++ {0} +++'.format(len(code_list)))
@@ -69,11 +73,14 @@ def test_signal():
 
 
 if __name__ == '__main__':
-    t = time.time()
+    t1 = time.time()
     # test_save_quote()
     test_select_mp()
     # test_select()
     # test_trend_recognition()
     # test_signal()
 
-    print('{0}'.format(time.time() - t))
+    t2 = time.time()
+    print('cost: [{}]   {} - {}'.format(round(t2 - t1, 2),
+                                      datetime.datetime.fromtimestamp(t1).strftime('%H:%M:%S'),
+                                      datetime.datetime.fromtimestamp(t2).strftime('%H:%M:%S')))

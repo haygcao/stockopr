@@ -1,6 +1,6 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
-import selector.util as util
+from selector import util
 
 import acquisition.basic as basic
 import acquisition.quote_db as quote_db
@@ -39,7 +39,7 @@ selector = {
     'zf': zf.zf,
     'qd': qd.qd,
     'nsbl': market_deviation.market_deviation,   # 牛市背离
-    'jzhg': ema_value.ema_value,   # 价值回归
+    'ema_value': ema_value.ema_value,   # 价值回归
     'hot_strong': hot_strong.hot_strong,
     'dlxt_green': dynamical_system.dynamical_system_green,
     'dlxt_red': dynamical_system.dynamical_system_red,
@@ -70,12 +70,13 @@ def _select(q, rq, strategy_name):
         try:
             code = q.get(True, 0.1)
             df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
+
             if is_match(df, strategy_name):
                 selected.add_selected(code, strategy_name)
-                print('{}'.format(code))
+                # print('{}'.format(code))
                 rq.put(code)
         except Empty:
-            #print('{0} [{1}]: finished'.format(datetime.datetime.now(), os.getpid()))
+            # print('{0} [{1}]: finished'.format(datetime.datetime.now(), os.getpid()))
             break
         except Exception as e:
             import traceback
@@ -84,21 +85,31 @@ def _select(q, rq, strategy_name):
     _conn.close()
 
 
-def select(strategy_name):
+def select(strategy_name_list):
     r = []
     code_list = basic.get_all_stock_code()
-    #code_list = future.get_future_contract_list()
+    # code_list = future.get_future_contract_list()
+    # code_list = ['300502']
 
     rq = Queue()
 
     code_queue = Queue()
     for code in code_list:
-        code_queue.put(code)
+        rq.put(code)
 
-    nproc = 16
-    p_list = [Process(target=_select, args=(code_queue, rq, strategy_name,)) for i in range(nproc)]
-    [p.start() for p in p_list]
-    [p.join() for p in p_list]
+    nproc = 12
+    for strategy_name in strategy_name_list:
+        for _i in range(rq.qsize()):
+            code_queue.put(rq.get())
+
+        p_list = [Process(target=_select, args=(code_queue, rq, strategy_name,)) for i in range(nproc)]
+        [p.start() for p in p_list]
+        [p.join() for p in p_list]
+
+        print('{}: {}'.format(strategy_name, rq.qsize()))
+
+        if rq.empty():
+            break
 
     for _i in range(rq.qsize()):
         r.append(rq.get_nowait())
