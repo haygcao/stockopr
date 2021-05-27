@@ -63,7 +63,6 @@ def _download_quote_xls():
     _xls = 'data/xls/{0}.xls'.format(trade_date)
 
     if os.path.exists(_xls):
-        print('existed')
         return _xls
 
     try_ = 5
@@ -96,14 +95,27 @@ def download_quote_xls():
     return _xls
 
 
-def is_quote_of_today(_xls):
-    data = xlrd.open_workbook(_xls)  # 注意这里的workbook首字母是小写
+def get_trade_date(xls):
+    data = xlrd.open_workbook(xls)  # 注意这里的workbook首字母是小写
     sheet = data.sheet_names()[0]
     table = data.sheet_by_name(sheet)
     # ['数据更新时间', '12-25 15:15:12', '', '', '', '', '', '', '', '', '', '', '']
     update_day = table.row_values(0)[1].split()[0]
-    dt = str(datetime.date.today())
-    if dt.find(update_day) < 0:
+
+    return get_trade_date_from_str(update_day)
+
+
+def get_trade_date_from_str(date_str):
+    year = datetime.date.today().year
+    trade_date = datetime.datetime.strptime('{}-{}'.format(year, date_str.split(' ')[0]), '%Y-%m-%d')
+
+    return trade_date
+
+
+def is_quote_of_today(_xls):
+    update_day = get_trade_date(_xls)
+    today = datetime.date.today()
+    if today <= update_day:
         return False
     return True
 
@@ -193,7 +205,7 @@ def get_quote(xlsfile, dt=None):
     # 循环行,得到索引的列表
     trade_date = None
     # ['数据更新时间', '12-25 15:15:12', '', '', '', '', '', '', '', '', '', '', '']
-    update_day =table.row_values(0)[1].split()[0]
+    update_day = table.row_values(0)[1].split()[0]
     # if dt == None:
     #     dt = str(datetime.date.today())
     # if dt.find(update_day) < 0:
@@ -201,8 +213,7 @@ def get_quote(xlsfile, dt=None):
     #     #os.remove(xlsfile)
     #     return
 
-    year = datetime.date.today().year
-    trade_date = datetime.datetime.strptime('{}-{}'.format(year, update_day.split(' ')[0]), '%Y-%m-%d')
+    trade_date = get_trade_date_from_str(update_day)
     val_many = []
     for rownum in range(table.nrows):
         row = table.row_values(rownum)
@@ -219,14 +230,14 @@ def get_quote(xlsfile, dt=None):
         row.append(trade_date)
         row[0] = row[0][2:]
 
-        #AttributeError: 'dict' object has no attribute 'iteritems'
+        # AttributeError: 'dict' object has no attribute 'iteritems'
         key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
-        indice = [0, 13, 9, 11, 12, 2, 7, 8] #subscript
+        indice = [0, 13, 9, 11, 12, 2, 7, 8]  # subscript
         fmt_list = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s']
         val_list = []
         volume = row[7]
         if int(volume) <= 0:
-            #print(row[0], '停牌')
+            # print(row[0], '停牌')
             continue
         row[7] *= 100
 
@@ -234,7 +245,7 @@ def get_quote(xlsfile, dt=None):
             val_list.append(row[idx])
             if key_list[i] != key_dict[key_xls[idx]]:
                 exit(0)
-            #print('{0}\t{1}\t{2}'.format(key_list[i], key_xls[idx], row[idx]))
+            # print('{0}\t{1}\t{2}'.format(key_list[i], key_xls[idx], row[idx]))
 
 
         val = tuple(val_list)

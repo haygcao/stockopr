@@ -51,9 +51,6 @@ selector = {
     'qlzs_m': force_index.force_index_minus
 }
 
-from queue import Empty
-from multiprocessing import Queue, Process
-
 
 def is_match(df, strategy_name):
     if util.filter_quote(df):
@@ -84,6 +81,16 @@ def _select(strategy_name, code):
 
 
 def select_one_strategy(code_list, strategy_name):
+    """
+    https://docs.python.org/3/library/multiprocessing.html
+    This means that if you try joining that process you may get a deadlock
+    unless you are sure that all items which have been put on the queue have been consumed.
+    Similarly, if the child process is non-daemonic then the parent process may hang on exit
+    when it tries to join all its non-daemonic children.
+
+    Note that a queue created using a manager does not have this issue.
+    """
+
     print('{} [{}] to check {}...'.format(datetime.datetime.now(), len(code_list), strategy_name))
 
     select_func = functools.partial(_select, strategy_name)

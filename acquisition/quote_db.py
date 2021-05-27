@@ -136,23 +136,23 @@ def get_price_info_df_db_day(code, days=1, end_date=None, conn=None):
     sql = 'SELECT {0} FROM {1} WHERE {5}'.format(', '.join(key_list), table[1], on, 'name', table[0], where)
 
     df = pd.read_sql(sql, con=_conn, index_col=['trade_date'])
-    #df = pd.read_sql(sql, con=conn)
-    #df.index.names = ['date']
-    #df = pd.read_sql(sql, con=conn)
+    # df = pd.read_sql(sql, con=conn)
+    # df.index.names = ['date']
+    # df = pd.read_sql(sql, con=conn)
 
     if conn == None:
         _conn.close()
 
-    #df = df.reset_index('trade_date') # no
-    #df = df.reindex(df['trade_date']) # ok, but no value, because new index not eq old index
-    #print(df.index.name)
-    #print(df)
-    #exit(0)
+    # df = df.reset_index('trade_date') # no
+    # df = df.reindex(df['trade_date']) # ok, but no value, because new index not eq old index
+    # print(df.index.name)
+    # print(df)
+    # exit(0)
 
-    #df = df.set_index('trade_date')
-    #df.set_index('trade_date', inplace=True)
-    # sort() sort_index() sort_values()
-    #df.sort(ascending=True, inplace=True) # FutureWarning: sort(....) is deprecated, use sort_index(.....)
+    # df = df.set_index('trade_date')
+    # df.set_index('trade_date', inplace=True)
+    #  sort() sort_index() sort_values()
+    # df.sort(ascending=True, inplace=True) # FutureWarning: sort(....) is deprecated, use sort_index(.....)
     df.sort_index(ascending=True, inplace=True)
 
     return df
@@ -161,11 +161,11 @@ def get_price_info_df_db_day(code, days=1, end_date=None, conn=None):
 def get_price_info_df_db_week(df, period_type='W'):
     # W M Q 12D 30min
     df.index = pd.to_datetime(df.index)
-    #print(p.columns)
+    # print(p.columns)
 
-    #p.set_index('trade_date', inplace=True)
+    # p.set_index('trade_date', inplace=True)
     period_data = df.resample(period_type).last()
-    #period_data['change'] = p['change'].resample(period_type, how=lambda x:(x+1.0).prod() - 1.0, axis=0);
+    # period_data['change'] = p['change'].resample(period_type, how=lambda x:(x+1.0).prod() - 1.0, axis=0);
     period_data['open'] = df['open'].resample(period_type).first()
     period_data['high'] = df['high'].resample(period_type).max()
     period_data['low'] = df['low'].resample(period_type).min()
@@ -173,10 +173,11 @@ def get_price_info_df_db_week(df, period_type='W'):
     period_data['volume'] = df['volume'].resample(period_type).sum()
     period_data['turnover'] = df['turnover'].resample(period_type).sum()
 
-    #period_data.set_index('trade_date', inplace=True)
+    # period_data.set_index('trade_date', inplace=True)
     period_data = period_data[period_data['code'].notnull()]
 
     return period_data
+
 
 # w: avg, max, min...
 def get_price_stat_db(code, pv, day, w):
@@ -186,6 +187,14 @@ def get_price_stat_db(code, pv, day, w):
         else:
             pv = 'volume'
         sql = 'select {4}({3}) as avg{3} from (select close from {0} where code = "{1}" order by trade_date desc limit {3}) as tmp'.format(config.sql_tab_quote, code, pv, day, w)
+        c.execute(sql)
+        r = c.fetchone()
+        return list(r.values())[0]
+
+
+def get_latest_trade_date():
+    with mysqlcli.get_cursor() as c:
+        sql = 'select max(trade_date) from quote'
         c.execute(sql)
         r = c.fetchone()
         return list(r.values())[0]

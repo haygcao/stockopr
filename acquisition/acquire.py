@@ -44,15 +44,22 @@ def save_sh_index_trade_info():
     if val:
         quote_db.insert_into_quote([val,])
 
-def save_quote_tx(xls=None):
+
+def save_quote_tx(xls):
     _xls = xls if xls else tx.download_quote_xls()
     if _xls:
+        trade_date = tx.get_trade_date(_xls)
+        db_latest_trade_date = quote_db.get_latest_trade_date()
+        if trade_date.day == db_latest_trade_date.day:
+            return
+
         val_list = tx.get_quote(_xls)
         quote_db.insert_into_quote(val_list)
         save_stock_basic_info(_xls)
         today = datetime.date.today()
         if today.day == 1:
             update_stock_basic_info(_xls)
+
 
 # 网易行情接口
 def save_quote_wy():
@@ -71,7 +78,7 @@ def save_quote_wy():
         df_quote[key] = round(df_quote[key]*100, 2)
     key = 'LB'
     df_quote[key] = round(df_quote[key], 2)
-    #print(df_quote[df_quote['CODE'] == '600839'])
+    # print(df_quote[df_quote['CODE'] == '600839'])
 
     with mysqlcli.get_cursor() as c:
         try:
@@ -84,7 +91,7 @@ def save_quote_wy():
 
             # Do not insert the row number (index=False)
             df_quote.to_sql(name='temp_quote', con=engine, if_exists='append', index=False, chunksize=20000)
-            #connection.close()
+            # connection.close()
 
             sql_str = "select code, close, high, low, open, yestclose from quote where code in ('000001', '000002', '000003', '000004', '000005') and trade_date in (select max(trade_date) from quote);"
             c.execute(sql_str)
@@ -98,13 +105,14 @@ def save_quote_wy():
             r2_sorted = sorted(r2, key = lambda x:x['code'])
             if r1_sorted != r2_sorted:
                 c.execute('insert into quote select * from temp_quote;')
-                #c.execute('insert into temp_quote_test select * from temp_quote;')
+                # c.execute('insert into temp_quote_test select * from temp_quote;')
             else:
                 print('not trade day')
         except Exception as e:
             print(e)
 
-def save_quote(xls):
+
+def save_quote(xls=None):
     save_sh_index_trade_info()
     save_quote_tx(xls)
     # save_quote_wy()
@@ -113,7 +121,7 @@ def save_quote(xls):
 if __name__ == '__main__':
     if not dt.istradeday():
         pass
-        #exit(0)
+        # exit(0)
     xls = None
     # xls = 'data/xls/2021-05-24.xls'
     save_quote(xls)

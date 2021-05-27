@@ -619,8 +619,7 @@ def open_graph(code, peroid, path=None):
     # print(candle.add_line_timestamp)
     # print(candle.show_timestamp)
 
-    print(candle.add_line_timestamp - candle.init_timestamp)
-
+    print('show candle cost [{}]'.format(round(candle.add_line_timestamp - candle.init_timestamp, 2)))
 
 
 if __name__ == "__main__":
