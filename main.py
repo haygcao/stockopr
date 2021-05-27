@@ -37,9 +37,9 @@ def test_select():
 def test_select_mp():
     import selector.selector as selector
     import acquisition.basic as basic
-    # code_list = selector.select(['nsbl'])
-    code_list = selector.select(['ema_value'])
-    # code_list = selector.select(['hot_strong', 'ema_value'])
+    strategy_name_list = ['ema_value']
+    strategy_name_list = ['hot_strong', 'ema_value']
+    code_list = selector.select(strategy_name_list)
     for code in code_list:
         print(code, basic.get_stock_name(code))
     print('+++ {0} +++'.format(len(code_list)))
@@ -73,6 +73,8 @@ def test_signal():
 
 
 if __name__ == '__main__':
+    print('{} start scan...'.format(datetime.datetime.now()))
+
     t1 = time.time()
     # test_save_quote()
     test_select_mp()

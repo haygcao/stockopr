@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import datetime
+import multiprocessing
+import functools
 
 from selector import util
 
@@ -63,55 +66,44 @@ def is_match(df, strategy_name):
     return False
 
 
-def _select(q, rq, strategy_name):
+def _select(strategy_name, code):
     import util.mysqlcli as mysqlcli
     _conn = mysqlcli.get_connection()
-    while True:
-        try:
-            code = q.get(True, 0.1)
-            df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
 
-            if is_match(df, strategy_name):
-                selected.add_selected(code, strategy_name)
-                # print('{}'.format(code))
-                rq.put(code)
-        except Empty:
-            # print('{0} [{1}]: finished'.format(datetime.datetime.now(), os.getpid()))
-            break
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
+    df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
+
+    ret = None
+    if is_match(df, strategy_name):
+        selected.add_selected(code, strategy_name)
+        # print('{}'.format(code))
+        ret = code
 
     _conn.close()
 
+    return ret
+
+
+def select_one_strategy(code_list, strategy_name):
+    print('{} [{}] to check {}...'.format(datetime.datetime.now(), len(code_list), strategy_name))
+
+    select_func = functools.partial(_select, strategy_name)
+
+    nproc = multiprocessing.cpu_count()
+    with multiprocessing.Pool(nproc) as p:
+        r = p.map(select_func, [code for code in code_list])
+        code_list = [code for code in r if code]
+
+    print('{} {}: {}'.format(datetime.datetime.now(), strategy_name, len(code_list)))
+
+    return code_list
+
 
 def select(strategy_name_list):
-    r = []
     code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
     # code_list = ['300502']
 
-    rq = Queue()
-
-    code_queue = Queue()
-    for code in code_list:
-        rq.put(code)
-
-    nproc = 12
     for strategy_name in strategy_name_list:
-        for _i in range(rq.qsize()):
-            code_queue.put(rq.get())
+        code_list = select_one_strategy(code_list, strategy_name)
 
-        p_list = [Process(target=_select, args=(code_queue, rq, strategy_name,)) for i in range(nproc)]
-        [p.start() for p in p_list]
-        [p.join() for p in p_list]
-
-        print('{}: {}'.format(strategy_name, rq.qsize()))
-
-        if rq.empty():
-            break
-
-    for _i in range(rq.qsize()):
-        r.append(rq.get_nowait())
-
-    return r
+    return code_list
