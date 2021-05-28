@@ -1,6 +1,6 @@
 import unittest
 
-from log4python.log4python import Log
+from util.log import logger
 
 
 class LogTestCase(unittest.TestCase):
@@ -11,8 +11,7 @@ class LogTestCase(unittest.TestCase):
         pass
 
     def test_log(self):
-        logger = Log("LogTest", filename='D:\\log.txt')
-        logger.debug("debug log")
+        logger.debug("debug log %s", "comma", 'xxx')
         logger.info("info log")
 
 
