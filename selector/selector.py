@@ -128,4 +128,6 @@ def select(strategy_name_list):
     for strategy_name in strategy_name_list:
         code_list = select_one_strategy(code_list, strategy_name)
 
+    code_list.sort()
+
     return code_list

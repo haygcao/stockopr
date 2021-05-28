@@ -1,4 +1,6 @@
 __pycache__
 .idea
+log4python
+log4p.py
 data
 venv
