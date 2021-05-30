@@ -34,6 +34,7 @@ class TradeGUITestCase(unittest.TestCase):
         print(is_dealt)
         menoy = operation.get_asset()
         print(menoy)
+
         detail = operation.get_operation_detail()
         print(detail)
         pre_position = cur_position

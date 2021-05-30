@@ -24,6 +24,26 @@ pos_buy_and_sell = (25, 159)
 pos_centre = (1024, 1024)
 
 
+def copy_to_clipboard():
+    """
+    # https://pywinauto.readthedocs.io/en/latest/code/pywinauto.keyboard.html
+    '+': {VK_SHIFT}
+    '^': {VK_CONTROL}
+    '%': {VK_MENU} a.k.a. Alt key
+    """
+    pywinauto.mouse.click(coords=pos_centre)
+    pywinauto.mouse.release(coords=pos_centre)
+    time.sleep(0.2)
+
+    # pywinauto.mouse.right_click(coords=pos_centre)
+    # pywinauto.mouse.release(coords=pos_centre)
+    # time.sleep(0.2)
+    # pywinauto.keyboard.send_keys('C')
+
+    pywinauto.keyboard.send_keys('^c')
+    time.sleep(0.2)
+
+
 class OperationThs:
     def __init__(self):
         try:
@@ -149,13 +169,8 @@ class OperationThs:
         column = ['资金帐户', '银行名称', '币种', '资金余额', '可用资金', '可取资金', '交易冻结', '委托买入冻结金额', '证券市值', '多金融产品市值', '现金资产', '总资产', '预计利息', '利息税']
         pywinauto.mouse.click(coords=pos_asset)
         pywinauto.mouse.release(coords=pos_asset)
-
-        pywinauto.mouse.click(coords=pos_centre)
-        pywinauto.mouse.release(coords=pos_centre)
-
-        pywinauto.mouse.right_click(coords=pos_centre)
-        pywinauto.mouse.release(coords=pos_centre)
-        pywinauto.keyboard.send_keys('C')
+        time.sleep(0.2)
+        copy_to_clipboard()
 
         data = pywinauto.clipboard.GetData()
         return self.__clean_clipboard_data(data, cols=14)
@@ -168,13 +183,8 @@ class OperationThs:
 
         pywinauto.mouse.click(coords=pos_detail)
         pywinauto.mouse.release(coords=pos_detail)
-
-        pywinauto.mouse.click(coords=pos_centre)
-        pywinauto.mouse.release(coords=pos_centre)
-
-        pywinauto.mouse.right_click(coords=pos_centre)
-        pywinauto.mouse.release(coords=pos_centre)
-        pywinauto.keyboard.send_keys('C')
+        time.sleep(0.2)
+        copy_to_clipboard()
 
         data = pywinauto.clipboard.GetData()
         return self.__clean_clipboard_data(data, cols=21)
@@ -200,6 +210,7 @@ class OperationThs:
         """
         self.__dialog_window.CVirtualGridCtrl.RightClick(coords=(30, 30))
         self.__main_window.TypeKeys('C')
+        time.sleep(0.2)
 
     def __get_cleaned_data(self, cols=12):
         """
@@ -260,12 +271,13 @@ class OperationThs:
             return 0
         pre_len = len(pre_position)
         cur_len = len(cur_position)
+        index_position = 2
         if pre_len == cur_len:
             for row in range(cur_len):
                 if cur_position[row][0] == code:
-                    return int(float(cur_position[row][1]) - float(pre_position[row][1]))
+                    return int(float(cur_position[row][index_position]) - float(pre_position[row][index_position]))
         if cur_len > pre_len:
-            return int(float(cur_position[-1][1]))
+            return int(float(cur_position[-1][index_position]))
 
     def withdraw(self, code, direction):
         """
