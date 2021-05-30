@@ -170,3 +170,71 @@ create table fund_stock (
     crawl_date date);
 
 create unique index fund_stock_fund_code_date_code on fund_stock(fund_code, fund_date, code);
+
+-- 资金管理
+--
+create table trade_order (
+  id int NOT NULL AUTO_INCREMENT,
+  `date` date,
+  code varchar(8),
+  capital_quota decimal(10, 3),
+  `position` int,
+  open_price decimal(5, 2),
+  stop_loss decimal(5, 2),
+  stop_profit decimal(5, 2),
+  profitability_ratios decimal(6, 3),
+  PRIMARY key (id)
+);
+
+
+-- 按日更新
+create table asset(
+  `date` date,
+  total decimal(10, 3),
+  idle decimal(10, 3),
+  market_value decimal(10, 3),
+  total_profit decimal(10, 3),
+  today_profit decimal(10, 3)
+);
+
+
+-- 按日更新
+create table `position` (
+  `date` date,
+  code varchar(8),
+  `position` int,
+  cost_price decimal(10, 3),
+  price decimal(10, 3),
+  cost decimal(10, 3),
+  market_value decimal(10, 3),
+  total_profit decimal(10, 3),
+  total_profit_percent decimal(6, 3),
+  today_profit decimal(10, 3),
+  today_profit_percent decimal(6, 3),
+  position_percent decimal(6, 3),
+  open_date timestamp
+);
+
+-- 逐次更新
+create table operation_detail(
+  order_id int,
+  `time` timestamp,
+  code varchar(8),
+  operation varchar(16),
+  price decimal(10, 3),
+  `count` int,
+  amount int,
+  cost decimal(10, 3),
+  position_remain int,
+  profit decimal(10, 3)
+);
+
+drop table asset;
+drop table trade_order;
+drop table position;
+drop table operation_detail;
+create index asset_date on asset(date);
+create index trade_order_code_date on trade_order(code, date);
+create index position_code_date on `position`(code, date);
+create index operation_detail_code_date on operation_detail(code, time);
+create index operation_detail_order_id on operation_detail(order_id);
