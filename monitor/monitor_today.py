@@ -3,9 +3,11 @@ import atexit
 import datetime
 import multiprocessing
 import time
+import types
 from dataclasses import dataclass
 
 import numpy
+import pandas
 
 import config.config
 from chart.kline import open_graph
@@ -75,7 +77,8 @@ def goodbye():
 
 def get_min_data(code, m='m5', count=250):
     try:
-        return tx.get_kline_data(code, m, count)
+        data = tx.get_kline_data(code, m, count)
+        return data
     except Exception as e:
         print('get data error:', e)
 
@@ -156,7 +159,7 @@ def update_status(code, data, period):
 def check(code, period):
     long_period = period_map[period]['kline_long_period']
     data30 = get_min_data(code, long_period)
-    if data30.empty:
+    if not isinstance(data30, pandas.DataFrame) or data30.empty:
         return
     print('{} - now check {} {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), code, long_period))
     trade_signal = update_status(code, data30, long_period)
@@ -164,7 +167,7 @@ def check(code, period):
         return trade_signal
 
     data5 = get_min_data(code, period)
-    if data5.empty:
+    if not isinstance(data5, pandas.DataFrame) or data5.empty:
         return
     print('{} - now check {} {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), code, period))
     trade_signal = update_status(code, data5, period)

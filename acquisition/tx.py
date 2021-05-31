@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import random
 import time
 import datetime
 import urllib.request
@@ -8,6 +9,8 @@ import urllib.request
 import pandas
 import requests
 import xlrd
+
+from acquisition import quote_db
 
 url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
 url_min = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
@@ -17,6 +20,34 @@ url_day = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{peri
 def init():
     if not os.path.exists('data/xls'):
         os.makedirs('data/xls')
+
+
+def get_realtime_data_sina(code):
+    """
+    股票名称、今日开盘价、昨日收盘价、当前价格、今日最高价、今日最低价、竞买价、竞卖价、成交股数、成交金额、买1手、买1报价、买2手、买2报价、…、买5报价、…、卖5报价、日期、时间
+    var hq_str_sz300502="新易盛,48.000,47.500,48.210,48.400,47.530,48.210,48.220,4009118,192785421.290,3312,48.210,500,48.140,7500,48.130,2000,48.100,400,48.090,23800,48.220,40900,48.250,200,48.260,3900,48.280,400,48.290,2021-05-31,11:30:03,00";
+    """
+    url = 'http://hq.sinajs.cn/list={code}'
+    symbol = '{}{}'.format('sh' if code.startswith('6') else 'sz', code)
+    url = url.format(code=symbol)
+    try:
+        ret = requests.get(url)
+    except Exception as e:
+        return
+
+    data = str(ret.content).split('"')[1]
+    data_arr = data.split(',')
+    open = float(data_arr[1])
+    close = float(data_arr[3])
+    high = float(data_arr[4])
+    low = float(data_arr[5])
+    volume = float(data_arr[8])
+    columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'turnover']
+
+    df = pandas.DataFrame([[code, open, close, high, low, volume, 0]], columns=columns, index=[
+        datetime.datetime.strptime('{} {}'.format(data_arr[-3], data_arr[-2]), '%Y-%m-%d %H:%M:%S')])
+
+    return df
 
 
 def get_kline_data_sina(code, period='day', count=250):
@@ -30,13 +61,15 @@ def get_kline_data_sina(code, period='day', count=250):
         url = url_temp.format(code=symbol, period=period[1:], count=count)
     else:
         # week 无法复权
-        start_date = datetime.date.today() - datetime.timedelta(count if period == 'day' else count * 7)
-        url = url_day.format(code=symbol, period=period, start_date=start_date.strftime('%Y-%m-%d'), count=count)
+        quote = quote_db.get_price_info_df_db(code, count, period_type='D')
+        quote_today = get_realtime_data_sina(code)
+        quote = quote.append(quote_today)
+        return quote
 
     try:
         ret = requests.get(url)
     except Exception as e:
-        return pandas.DataFrame()
+        return
 
     df = pandas.read_json(ret.content, orient='records')
     df = df.assign(code=code)
@@ -82,7 +115,7 @@ def get_kline_data_tx(code, period='day', count=250):
     try:
         ret = requests.get(url)
     except Exception as e:
-        return pandas.DataFrame()
+        return
 
     import json
     d = json.loads(ret.content)
@@ -114,8 +147,10 @@ def get_kline_data_tx(code, period='day', count=250):
 
 
 def get_kline_data(code, period='day', count=250):
-    quote = get_kline_data_tx(code, period, count)
-    if quote.empty:
+    func_list = [get_kline_data_tx, get_kline_data_sina]
+    index = random.randint(0, len(func_list) - 1)
+    quote = func_list[index](code, period, count)
+    if quote is None:
         quote = get_kline_data_sina(code, period, count)
     return quote
 
