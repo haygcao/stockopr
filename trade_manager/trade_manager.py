@@ -150,19 +150,25 @@ def create_trade_order(code):
     money = query_money()
     total_money = money.total_money
 
-    loss = total_money * 0.01
+    loss = total_money * config.one_risk_rate
     total_loss_used = query_total_risk_amount()
-    total_loss_remain = total_money * 0.06 - total_loss_used
+    total_loss_remain = total_money * config.total_risk_rate - total_loss_used
 
     loss = min(loss, total_loss_remain)
+    loss = min(loss, money.avail_money)
     position = loss / (price - stop_loss) // 100 * 100
+    position = min(position, money.avail_money / price // 100 * 100)
     if position < 100:
         return
 
     stop_profit = compute_stop_profit(quote_week)
 
+    profitability_ratios = (stop_profit - price) / (price - stop_loss)
+    if profitability_ratios < 2:
+        return
+
     val = [datetime.date.today(), code, position * price, position, price, stop_loss, stop_profit,
-           (position * price) / total_money, (stop_profit - price) / (price - stop_loss), 'ING']
+           (position * price) / total_money, profitability_ratios, 'ING']
 
     val = tuple(val)
 
@@ -180,7 +186,6 @@ def create_trade_order(code):
 
 
 def handle_excess(code):
-    pass
     logger.warn('{} excess...'.format(code))
 
 

@@ -177,7 +177,7 @@ class OperationThs:
         asset_list = []
         data = pywinauto.clipboard.GetData()
         for row in self.__clean_clipboard_data(data, cols=14):
-            asset = trade_data.Asset(float(row[3]), float(row[4]))
+            asset = trade_data.Asset(float(row[column.index('总资产')]), float(row[4]))
             # asset.total_money = row[3]
             # asset.avail_money = row[4]
             asset_list.append(asset)

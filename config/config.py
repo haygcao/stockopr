@@ -295,3 +295,8 @@ def get_trade_config(code):
         return trade[code]
 
     return trade['global']
+
+
+# risk management
+total_risk_rate = 1   # 0.06   # 6%
+one_risk_rate = 0.1   # 0.01   # 1%
