@@ -104,6 +104,7 @@ def signal_exit(quote, period=None):
     quote = compute_index(quote, period)
 
     quote_copy = quote.copy()
+    quote_copy.loc[:, 'stop_loss_full'] = quote.loc[:, 'stop_loss']
     # quote_copy.loc[:, 'stop_loss_shift'] = quote['stop_loss'].shift(periods=1)
     # quote_copy.loc[:, 'stop_loss_signal_exit'] = quote['close'] < quote['stop_loss']
     quote_copy.loc[:, 'stop_loss_signal_exit'] = quote_copy.apply(

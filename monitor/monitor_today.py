@@ -17,6 +17,7 @@ from pointor import signal_channel
 
 from acquisition import tx
 from toolkit import tradeapi
+from trade_manager import trade_manager
 
 
 @dataclass
@@ -176,16 +177,11 @@ def check(code, period):
 
 
 def order(trade_singal: TradeSignal):
-    trade = config.config.get_trade_config(trade_singal.code)
-    count = trade['count']
-    print('{} {} {}'.format(trade_singal.command, trade_singal.code, count))
-    try:
-        auto = 'auto_buy' if trade_singal.command == 'B' else 'auto_sell'
-        tradeapi.order(trade_singal.command, trade_singal.code, count, auto=trade[auto])
-    except Exception as e:
-        print('call tradeapi error:', e)
-        # import traceback
-        # print(traceback.print_exc())
+    print('{} {}'.format(trade_singal.command, trade_singal.code))
+    if trade_singal.command == 'B':
+        trade_manager.buy(trade_singal.code)
+    else:
+        trade_manager.sell(trade_singal.code)
 
 
 def notify(trade_singal: TradeSignal):

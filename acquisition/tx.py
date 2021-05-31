@@ -45,8 +45,9 @@ def get_realtime_data_sina(code):
     volume = float(data_arr[8])
     columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'turnover']
 
+    index = data_arr.index(datetime.date.today().strftime('%Y-%m-%d'))
     df = pandas.DataFrame([[code, open, close, high, low, volume, 0]], columns=columns, index=[
-        datetime.datetime.strptime('{} {}'.format(data_arr[-3], data_arr[-2]), '%Y-%m-%d %H:%M:%S')])
+        datetime.datetime.strptime('{} {}'.format(data_arr[index], data_arr[index + 1]), '%Y-%m-%d %H:%M:%S')])
 
     return df
 

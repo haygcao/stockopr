@@ -3,7 +3,7 @@ import numpy
 
 import indicator
 from config.config import is_long_period, period_price_diff_ratio_atr_map
-from indicator import dynamical_system
+from indicator import atr, dynamical_system
 from indicator.decorator import computed
 from util import macd
 
@@ -56,7 +56,7 @@ def function_exit(high, dlxt_long_period, dlxt, ema, atr, period):
 def compute_index(quote, period):
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
-    quote = indicator.atr.compute_atr(quote)
+    quote = atr.compute_atr(quote)
     ema26 = macd.ema(quote, 26)
     quote['ema'] = ema26
 

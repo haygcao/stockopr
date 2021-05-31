@@ -175,14 +175,16 @@ create unique index fund_stock_fund_code_date_code on fund_stock(fund_code, fund
 --
 create table trade_order (
   id int NOT NULL AUTO_INCREMENT,
-  `date` date,
-  code varchar(8),
+  `date` date not null,
+  code varchar(8) not null,
   capital_quota decimal(10, 3),
-  `position` int,
-  open_price decimal(5, 2),
-  stop_loss decimal(5, 2),
-  stop_profit decimal(5, 2),
+  `position` int not null,
+  open_price decimal(5, 2) not null,
+  stop_loss decimal(5, 2) not null,
+  risk_rate decimal(5, 2),
+  stop_profit decimal(5, 2) not null,
   profitability_ratios decimal(6, 3),
+  status varchar(8)
   PRIMARY key (id)
 );
 
