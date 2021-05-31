@@ -16,6 +16,7 @@ sql_tab_bought = ch.sql_table_bought
 sql_tab_cleared = ch.sql_table_cleared
 sql_tab_trade_detail=ch.sql_table_trade_detail
 sql_tab_trade_detail_history=ch.sql_table_trade_detail_history
+sql_tab_trade_order = ch.sql_table_trade_order
 
 charg = ConfigHandler('config/config.ini', 'arg')
 check_per_sec = charg.check_per_sec

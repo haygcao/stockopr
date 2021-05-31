@@ -8,6 +8,8 @@ import pywinauto
 import pywinauto.clipboard
 import pywinauto.application
 
+from data_structure import trade_data
+
 NUM_OF_STOCKS = 5  # 自定义股票数量
 is_start = False
 is_monitor = True
@@ -32,7 +34,7 @@ def copy_to_clipboard():
     '%': {VK_MENU} a.k.a. Alt key
     """
     pywinauto.mouse.click(coords=pos_centre)
-    pywinauto.mouse.release(coords=pos_centre)
+    # pywinauto.mouse.release(coords=pos_centre)
     time.sleep(0.2)
 
     # pywinauto.mouse.right_click(coords=pos_centre)
@@ -50,7 +52,7 @@ class OperationThs:
             self.__app = pywinauto.application.Application()
             self.__app.connect(title='网上股票交易系统5.0')
             top_hwnd = pywinauto.findwindows.find_window(title='网上股票交易系统5.0')
-            self.__main_window = self.__app.window_(handle=top_hwnd)
+            self.__main_window = self.__app.window(handle=top_hwnd)
             self.max_window()
             pywinauto.mouse.click(coords=pos_buy_and_sell)
             pywinauto.mouse.release(coords=pos_buy_and_sell)
@@ -63,7 +65,7 @@ class OperationThs:
                 tkinter.messagebox.showerror('错误', '获取[同花顺双向委托界面]的窗口句柄错误！')
                 exit()
 
-            self.__dialog_window = self.__app.window_(handle=dialog_hwnd)
+            self.__dialog_window = self.__app.window(handle=dialog_hwnd)
         except Exception as e:
             pass
 
@@ -72,14 +74,14 @@ class OperationThs:
         :param code: 代码， 字符串
         :param quantity: 数量， 字符串
         """
-        self.__dialog_window.Edit1.SetFocus()
+        self.__dialog_window.Edit1.set_focus()
         time.sleep(0.2)
-        self.__dialog_window.Edit1.SetEditText(code)
+        self.__dialog_window.Edit1.set_edit_text(code)
         time.sleep(0.2)
         if quantity != '0':
-            self.__dialog_window.Edit3.SetEditText(quantity)
+            self.__dialog_window.Edit3.set_edit_text(quantity)
             time.sleep(0.2)
-        self.__dialog_window.Button1.Click()
+        self.__dialog_window.Button1.click()
         time.sleep(0.2)
 
     def __sell(self, code, quantity):
@@ -88,14 +90,14 @@ class OperationThs:
         :param code: 股票代码， 字符串
         :param quantity: 数量， 字符串
         """
-        self.__dialog_window.Edit4.SetFocus()
+        self.__dialog_window.Edit4.set_focus()
         time.sleep(0.2)
-        self.__dialog_window.Edit4.SetEditText(code)
+        self.__dialog_window.Edit4.set_edit_text(code)
         time.sleep(0.2)
         if quantity != '0':
-            self.__dialog_window.Edit6.SetEditText(quantity)
+            self.__dialog_window.Edit6.set_edit_text(quantity)
             time.sleep(0.2)
-        self.__dialog_window.Button2.Click()
+        self.__dialog_window.Button2.click()
         time.sleep(0.2)
 
     def __close_popup_window(self):
@@ -103,9 +105,9 @@ class OperationThs:
         关闭一个弹窗。
         :return: 如果有弹出式对话框，返回True，否则返回False
         """
-        popup_hwnd = self.__main_window.PopupWindow()
+        popup_hwnd = self.__main_window.popup_window()
         if popup_hwnd:
-            popup_window = self.__app.window_(handle=popup_hwnd)
+            popup_window = self.__app.window(handle=popup_hwnd)
             popup_window.SetFocus()
             popup_window.Button.Click()
             return True
@@ -142,23 +144,23 @@ class OperationThs:
         """
         最大化窗口
         """
-        if self.__main_window.GetShowState() != 3:
-            self.__main_window.Maximize()
-        self.__main_window.SetFocus()
+        if self.__main_window.get_show_state() != 3:
+            self.__main_window.maximize()
+        self.__main_window.set_focus()
 
     def min_window(self):
         """
         最小化窗体
         """
-        if self.__main_window.GetShowState() != 2:
-            self.__main_window.Minimize()
+        if self.__main_window.get_show_state() != 2:
+            self.__main_window.minimize()
 
     def refresh(self, t=0.5):
         """
         点击刷新按钮
         :param t:刷新后的等待时间
         """
-        self.__dialog_window.Button5.Click()
+        self.__dialog_window.Button5.click()
         time.sleep(t)
 
     def get_asset(self):
@@ -168,12 +170,19 @@ class OperationThs:
         # return float(self.__dialog_window.Static19.WindowText())
         column = ['资金帐户', '银行名称', '币种', '资金余额', '可用资金', '可取资金', '交易冻结', '委托买入冻结金额', '证券市值', '多金融产品市值', '现金资产', '总资产', '预计利息', '利息税']
         pywinauto.mouse.click(coords=pos_asset)
-        pywinauto.mouse.release(coords=pos_asset)
+        # pywinauto.mouse.release(coords=pos_asset)
         time.sleep(0.2)
         copy_to_clipboard()
 
+        asset_list = []
         data = pywinauto.clipboard.GetData()
-        return self.__clean_clipboard_data(data, cols=14)
+        for row in self.__clean_clipboard_data(data, cols=14):
+            asset = trade_data.Asset(row[3], row[4])
+            # asset.total_money = row[3]
+            # asset.avail_money = row[4]
+            asset_list.append(asset)
+
+        return asset_list
 
     def get_operation_detail(self):
         """
@@ -182,7 +191,7 @@ class OperationThs:
         column = ['成交时间', '发生日期', '证券代码', '证券名称', '业务名称', '发生金额', '资金本次余额', '股份余额', '成交数量', '成交价格', '成交金额', '手续费', '印花税', '附加费', '委托编号', '股东代码', '币种', '过户费', '交易所清算费', '资金帐号', '备注']
 
         pywinauto.mouse.click(coords=pos_detail)
-        pywinauto.mouse.release(coords=pos_detail)
+        # pywinauto.mouse.release(coords=pos_detail)
         time.sleep(0.2)
         copy_to_clipboard()
 
@@ -208,8 +217,8 @@ class OperationThs:
         拷贝持仓信息至剪贴板
         :return:
         """
-        self.__dialog_window.CVirtualGridCtrl.RightClick(coords=(30, 30))
-        self.__main_window.TypeKeys('C')
+        self.__dialog_window.CVirtualGridCtrl.right_click(coords=(30, 30))
+        self.__main_window.type_keys('C')
         time.sleep(0.2)
 
     def __get_cleaned_data(self, cols=12):
@@ -227,7 +236,7 @@ class OperationThs:
         :param choice: 选择个标签页。持仓，撤单，委托，成交
         :return:
         """
-        rect = self.__dialog_window.CCustomTabCtrl.ClientRect()
+        rect = self.__dialog_window.CCustomTabCtrl.client_rect()
         x = rect.width() // 8
         y = rect.height() // 2
         if choice == 'W':
@@ -238,7 +247,7 @@ class OperationThs:
             x *= 5
         elif choice == 'A':
             x *= 7
-        self.__dialog_window.CCustomTabCtrl.ClickInput(coords=(x, y))
+        self.__dialog_window.CCustomTabCtrl.click_input(coords=(x, y))
         time.sleep(0.5)
 
     def __get_info(self, choice):
@@ -253,8 +262,16 @@ class OperationThs:
         获取持仓
         :return:
         """
-        column = ['证券代码', '证券名称', '股份余额', '实际数量', '可用股份', '冻结数量', '成本价1', '当前价', '浮动盈亏', '盈亏比例(%)', '最新市值', '交易市场']
-        return self.__get_info(choice='W')
+        columns = ['证券代码', '证券名称', '股份余额', '实际数量', '可用股份', '冻结数量', '成本价1', '当前价', '浮动盈亏', '盈亏比例(%)', '最新市值', '交易市场']
+        position_list = []
+        for row in self.__get_info(choice='W'):
+            position = trade_data.Position(row[0], int(row[3]), int(row[4]))
+            # position.code = row[0]
+            # position.current_position = int(row[3])
+            # position.avail_position = int(row[4])
+            position_list.append(position)
+
+        return position_list
 
     @staticmethod
     def get_deal(code, pre_position, cur_position):
