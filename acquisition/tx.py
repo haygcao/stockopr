@@ -11,6 +11,7 @@ import requests
 import xlrd
 
 from acquisition import quote_db
+from config.config import period_map
 
 url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
 url_min = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
@@ -61,9 +62,12 @@ def get_kline_data_sina(code, period='day', count=250):
         url = url_temp.format(code=symbol, period=period[1:], count=count)
     else:
         # week 无法复权
+        count = count * 5 if period == 'week' else count
         quote = quote_db.get_price_info_df_db(code, count, period_type='D')
         quote_today = get_realtime_data_sina(code)
         quote = quote.append(quote_today)
+        if period == 'week':
+            quote = quote_db.get_price_info_df_db_week(quote, period_type=period_map[period]['period'])
         return quote
 
     try:
@@ -74,6 +78,7 @@ def get_kline_data_sina(code, period='day', count=250):
     df = pandas.read_json(ret.content, orient='records')
     df = df.assign(code=code)
     df = df.assign(turnover=0)
+    df['day'] = pandas.to_datetime(df['day'], format='%Y-%m-%d %H:%M:%S')
     df.set_index('day', inplace=True)
     # df.index = df['day']
     return df
