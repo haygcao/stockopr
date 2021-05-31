@@ -10,7 +10,7 @@ from toolkit import tradeapi
 from util import mysqlcli, macd
 
 
-# from util.log import logger
+from util.log import logger
 
 
 def query_quota_position(code):
@@ -181,7 +181,7 @@ def create_trade_order(code):
 
 def handle_excess(code):
     pass
-    # logger.warn('{} excess...'.format(code))
+    logger.warn('{} excess...'.format(code))
 
 
 def patrol():
