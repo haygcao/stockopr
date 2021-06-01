@@ -20,6 +20,9 @@ class RiskManagementTestCase(unittest.TestCase):
         code = '300502'
         trade_manager.create_trade_order(code)
 
+    def test_patrol(self):
+        trade_manager.patrol()
+
 
 def suite():
     suite = unittest.TestSuite()

@@ -12,11 +12,11 @@ from data_structure import trade_data
 def query_quota_position(code):
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT `position` FROM {0} where code = '{1}'  order by date desc limit 1".format(config.sql_tab_trade_order, code)
+        sql = "SELECT `position` FROM {0} where code = '{1}' and status = 'ING' order by date desc limit 1".format(config.sql_tab_trade_order, code)
         c.execute(sql)
         postion = c.fetchone()
 
-        return int(postion['position'])
+        return int(postion['position']) if postion else None
 
 
 def query_trade_order_map(code=None):

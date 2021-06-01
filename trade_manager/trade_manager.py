@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 
+from PyQt5.QtWidgets import QMessageBox, QApplication
+
 from acquisition import tx, quote_db
 from config import config
 from data_structure import trade_data
@@ -9,7 +11,7 @@ from pointor import signal
 from toolkit import tradeapi
 from util import mysqlcli, macd
 
-# from util.log import logger
+from util.log import logger
 
 
 class TradeManager:
@@ -22,6 +24,7 @@ class TradeManager:
     def get_operation(cls):
         if not cls.operation:
             cls.operation = tradeapi.OperationThs()
+        cls.operation.max_window()
         return cls.operation
 
 
@@ -57,12 +60,15 @@ def check_quota(code, direction):
 
 def buy(code, count=0, price=0):
     position_quota = quote_db.query_quota_position(code)
+    if not position_quota:
+        return
+
     position = query_position(code)
-    current_position = position.current_position
+    current_position = position.current_position if position else 0
 
     avail_position = position_quota - current_position
-    # if avail_position < 100:
-    #     return
+    if avail_position < 100:
+        return
 
     trade = config.get_trade_config(code)
     if count == 0:
@@ -162,9 +168,12 @@ def create_trade_order(code):
             print(e)
 
 
-def handle_excess(code):
-    pass
-    # logger.warn('{} excess...'.format(code))
+def handle_illegal_position(code):
+    logger.warning('{} excess...'.format(code))
+
+    app = QApplication([])
+    msg_box = QMessageBox(QMessageBox.Warning, '警告', '[{}]违规仓位, 请务必遵守规则, '.format(code))
+    msg_box.exec_()
 
 
 def patrol():
@@ -173,12 +182,13 @@ def patrol():
     for position in position_list:
         quota = quote_db.query_quota_position(position.code)
         if not quota:
-            handle_excess(position.code)
+            handle_illegal_position(position.code)
             continue
         if position.current_position > quota:
-            handle_excess(position.code)
+            handle_illegal_position(position.code)
             continue
 
 
 if __name__ == '__main__':
-    patrol()
+    # patrol()
+    handle_illegal_position('300502')

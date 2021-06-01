@@ -15,7 +15,7 @@ pos_position = (36, 258)
 pos_detail = (36, 456)
 pos_asset = (45, 354)
 pos_buy_and_sell = (25, 159)
-pos_centre = (1024, 1024)
+pos_centre = (159, 365)
 
 
 def copy_to_clipboard():
@@ -379,7 +379,7 @@ def order(direct, code, count, price=0, auto=False):
     main_window = app.window(title='网上股票交易系统5.0')
     max_window(main_window)
 
-    # time.sleep(0.5)
+    time.sleep(0.5)
     # pywinauto.mouse.click(coords=pos_asset)
     # time.sleep(0.2)
 

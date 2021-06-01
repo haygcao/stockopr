@@ -46,6 +46,11 @@ class TradeGUITestCase(unittest.TestCase):
         # tradeapi.order('B', code, count, auto=False)
         trade_manager.buy(code, count)
 
+        code = '300501'
+        count = 100
+        # tradeapi.order('B', code, count, auto=False)
+        trade_manager.buy(code, count)
+
 
 def suite():
     suite = unittest.TestSuite()
