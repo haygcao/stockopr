@@ -42,7 +42,7 @@ class TradeGUITestCase(unittest.TestCase):
 
     def test_order(self):
         code = '300502'
-        count = 100
+        count = 0
         # tradeapi.order('B', code, count, auto=False)
         trade_manager.buy(code, count)
 

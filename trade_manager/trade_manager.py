@@ -59,6 +59,9 @@ def check_quota(code, direction):
 
 
 def buy(code, count=0, price=0):
+    """
+    单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
+    """
     position_quota = quote_db.query_quota_position(code)
     if not position_quota:
         return
@@ -70,18 +73,26 @@ def buy(code, count=0, price=0):
     if avail_position < 100:
         return
 
-    trade = config.get_trade_config(code)
-    if count == 0:
-        count = trade['count']
-    auto = trade['auto_buy']
+    quote = tx.get_realtime_data_sina(code)
+    money = query_money()
+    max_position = money.avail_money / (price if price > 0 else quote['close'].iloc[-1] * 1.01) // 100 * 100
 
-    count = min(avail_position, count)
+    trade = config.get_trade_config(code)
+    auto = trade['auto_buy']
+    # if count == 0:
+    #     count = trade['count']
+    # avail_position = min(avail_position, count)
+
+    count = min(max_position, avail_position)
     # operation = TradeManager.get_operation()
     # operation.__buy(code, count, price, auto=auto)
     order('B', code, count, price, auto=auto)
 
 
 def sell(code, count=0, price=0):
+    """
+    单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
+    """
     position = query_position(code)
     current_position = position.current_position
     avail_position = position.avail_position
@@ -90,11 +101,14 @@ def sell(code, count=0, price=0):
     to_position = min(avail_position, to_position)
 
     trade = config.get_trade_config(code)
-    if count == 0:
-        count = trade['count']
     auto = trade['auto_sell']
 
-    count = min(to_position, count)
+    # if count == 0:
+    #     count = trade['count']
+    # count = min(to_position, count)
+
+    # count = to_position
+    count = avail_position
     # operation = TradeManager.get_operation()
     # operation.__sell(code, count, price, auto=auto)
     order('S', code, count, price, auto=auto)
