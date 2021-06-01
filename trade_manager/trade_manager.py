@@ -17,7 +17,8 @@ def query_position(code):
     可以卖的股数
     还可以买的股数
     """
-    position_list = tradeapi.OperationThs.get_position()
+    operation = tradeapi.OperationThs()
+    position_list = operation.get_position()
     for position in position_list:
         if position.code != code:
             continue

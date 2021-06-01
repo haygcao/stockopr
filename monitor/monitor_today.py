@@ -156,14 +156,13 @@ def update_status_old(code, data, period):
 
 def check_trade_order_stop_loss(code, data):
     stop_loss = TradeSignalManager.get_stop_loss(code)
-    if data['close'].iloc[-1] <= stop_loss:
-        return True
-    return False
+    return data['close'].iloc[-1] <= stop_loss
 
 
 def update_status(code, data, period):
     data_index_: datetime.datetime = data.index[-1]
-    if check_trade_order_stop_loss(code, data):
+    # TODO
+    if False and check_trade_order_stop_loss(code, data):
         return TradeSignal(code, data_index_, 'S', 'trade order stop loss', period, True)
 
     data = signal.compute_signal(data, period)

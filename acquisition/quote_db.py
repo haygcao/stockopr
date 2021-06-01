@@ -30,7 +30,7 @@ def query_trade_order_map(code=None):
         order_map = {}
         for row in ret:
             trade_order = trade_data.TradeOrder(row['code'], int(row['position']), float(row['open_price']), float(row['stop_loss']), float(row['stop_profit']))
-            order_map.update({code: trade_order})
+            order_map.update({row['code']: trade_order})
 
         return order_map
 

@@ -11,8 +11,8 @@ class LogTestCase(unittest.TestCase):
         pass
 
     def test_log(self):
-        logger.debug("debug log %s %s", "comma", 'xxx')
-        logger.info("info log")
+        logger.debug("debug log %s %s %s", "comma", 'xxx', 100, 1.001)
+        logger.info("info log", 'aaa', 111, 1.01)
 
 
 def suite():
