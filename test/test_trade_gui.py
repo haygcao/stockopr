@@ -4,6 +4,7 @@ import unittest
 
 from toolkit import tradeapi
 from toolkit.tradeapi import OperationThs
+from trade_manager import trade_manager
 
 
 class TradeGUITestCase(unittest.TestCase):
@@ -41,8 +42,9 @@ class TradeGUITestCase(unittest.TestCase):
 
     def test_order(self):
         code = '300502'
-        count = '100'
-        tradeapi.order('B', code, count, auto=False)
+        count = 100
+        # tradeapi.order('B', code, count, auto=False)
+        trade_manager.buy(code, count)
 
 
 def suite():

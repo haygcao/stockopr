@@ -11,16 +11,7 @@ import pywinauto.application
 from data_structure import trade_data
 from util import util
 
-NUM_OF_STOCKS = 5  # 自定义股票数量
-is_start = False
-is_monitor = True
-set_stocks_info = []
-actual_stocks_info = []
-consignation_info = []
-is_ordered = [1] * NUM_OF_STOCKS  # 1：未下单  0：已下单
-is_dealt = [0] * NUM_OF_STOCKS  # 0: 未成交   负整数：卖出数量， 正整数：买入数量
-stock_codes = [''] * NUM_OF_STOCKS
-
+pos_position = (36, 258)
 pos_detail = (36, 456)
 pos_asset = (45, 354)
 pos_buy_and_sell = (25, 159)
@@ -47,6 +38,15 @@ def copy_to_clipboard():
     time.sleep(0.2)
 
 
+def max_window(window):
+    """
+    最大化窗口
+    """
+    if window.get_show_state() != 3:
+        window.maximize()
+    window.set_focus()
+
+
 class OperationThs:
     def __init__(self):
         try:
@@ -55,22 +55,24 @@ class OperationThs:
             top_hwnd = pywinauto.findwindows.find_window(title='网上股票交易系统5.0')
             self.__main_window = self.__app.window(handle=top_hwnd)
             self.max_window()
-            pywinauto.mouse.click(coords=pos_buy_and_sell)
-            pywinauto.mouse.release(coords=pos_buy_and_sell)
+            return
 
-            dialog_hwnd = \
-            pywinauto.findwindows.find_windows(top_level_only=False, class_name='#32770', parent=top_hwnd)[0]
-            wanted_hwnds = pywinauto.findwindows.find_windows(top_level_only=False, parent=dialog_hwnd)
-            print('wanted_hwnds length', len(wanted_hwnds))
-            if len(wanted_hwnds) == 0:
-                tkinter.messagebox.showerror('错误', '获取[同花顺双向委托界面]的窗口句柄错误！')
-                exit()
-
-            self.__dialog_window = self.__app.window(handle=dialog_hwnd)
+            # pywinauto.mouse.click(coords=pos_buy_and_sell)
+            # pywinauto.mouse.release(coords=pos_buy_and_sell)
+            #
+            # dialog_hwnd = \
+            # pywinauto.findwindows.find_windows(top_level_only=False, class_name='#32770', parent=top_hwnd)[0]
+            # wanted_hwnds = pywinauto.findwindows.find_windows(top_level_only=False, parent=dialog_hwnd)
+            # print('wanted_hwnds length', len(wanted_hwnds))
+            # if len(wanted_hwnds) == 0:
+            #     tkinter.messagebox.showerror('错误', '获取[同花顺双向委托界面]的窗口句柄错误！')
+            #     exit()
+            #
+            # self.__dialog_window = self.__app.window(handle=dialog_hwnd)
         except Exception as e:
             pass
 
-    def __buy(self, code, quantity):
+    def __buy(self, code, quantity, price=0, auto=False):
         """买函数
         :param code: 代码， 字符串
         :param quantity: 数量， 字符串
@@ -82,10 +84,11 @@ class OperationThs:
         if quantity != '0':
             self.__dialog_window.Edit3.set_edit_text(quantity)
             time.sleep(0.2)
-        self.__dialog_window.Button1.click()
+        if auto:
+            self.__dialog_window.Button1.click()
         time.sleep(0.2)
 
-    def __sell(self, code, quantity):
+    def __sell(self, code, quantity, price=0, auto=False):
         """
         卖函数
         :param code: 股票代码， 字符串
@@ -98,7 +101,8 @@ class OperationThs:
         if quantity != '0':
             self.__dialog_window.Edit6.set_edit_text(quantity)
             time.sleep(0.2)
-        self.__dialog_window.Button2.click()
+        if auto:
+            self.__dialog_window.Button2.click()
         time.sleep(0.2)
 
     def __close_popup_window(self):
@@ -264,12 +268,19 @@ class OperationThs:
         :return:
         """
         columns = ['证券代码', '证券名称', '股份余额', '实际数量', '可用股份', '冻结数量', '成本价1', '当前价', '浮动盈亏', '盈亏比例(%)', '最新市值', '交易市场']
+        pywinauto.mouse.click(coords=pos_position)
+        # pywinauto.mouse.release(coords=pos_asset)
+        time.sleep(0.2)
+        copy_to_clipboard()
+
         position_list = []
-        for row in self.__get_info(choice='W'):
-            position = trade_data.Position(row[0], int(row[3]), int(row[4]))
-            # position.code = row[0]
-            # position.current_position = int(row[3])
-            # position.avail_position = int(row[4])
+        data = pywinauto.clipboard.GetData()
+        for row in self.__clean_clipboard_data(data, cols=12):
+            current_position = int(float(row[3]))
+            avail_position = int(float(row[4]))
+
+            position = trade_data.Position(row[0], current_position, avail_position)
+
             position_list.append(position)
 
         return position_list
@@ -353,6 +364,10 @@ def get_screen_size():
     return win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1)
 
 
+def get_cursor_pos():
+    return win32api.GetCursorPos()
+
+
 def order(direct, code, count, price=0, auto=False):
     pid = util.get_pid_by_exec('C:\\同花顺软件\\同花顺\\xiadan.exe')
 
@@ -362,6 +377,12 @@ def order(direct, code, count, price=0, auto=False):
         app = pywinauto.Application(backend="win32").connect(process=pid)
 
     main_window = app.window(title='网上股票交易系统5.0')
+    max_window(main_window)
+
+    # time.sleep(0.5)
+    # pywinauto.mouse.click(coords=pos_asset)
+    # time.sleep(0.2)
+
     if direct == 'B':
         main_window.type_keys('{F2}')
         main_window.type_keys('{F1}')

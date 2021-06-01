@@ -9,7 +9,20 @@ from pointor import signal
 from toolkit import tradeapi
 from util import mysqlcli, macd
 
-from util.log import logger
+# from util.log import logger
+
+
+class TradeManager:
+    operation: tradeapi.OperationThs = None
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def get_operation(cls):
+        if not cls.operation:
+            cls.operation = tradeapi.OperationThs()
+        return cls.operation
 
 
 def query_position(code):
@@ -17,7 +30,7 @@ def query_position(code):
     可以卖的股数
     还可以买的股数
     """
-    operation = tradeapi.OperationThs()
+    operation = TradeManager.get_operation()
     position_list = operation.get_position()
     for position in position_list:
         if position.code != code:
@@ -26,7 +39,7 @@ def query_position(code):
 
 
 def query_money():
-    operation = tradeapi.OperationThs()
+    operation = TradeManager.get_operation()
     money = operation.get_asset()
     return money[0]
 
@@ -48,19 +61,21 @@ def buy(code, count=0, price=0):
     current_position = position.current_position
 
     avail_position = position_quota - current_position
-    if avail_position < 100:
-        return
+    # if avail_position < 100:
+    #     return
 
-    trade = config.config.get_trade_config(code)
+    trade = config.get_trade_config(code)
     if count == 0:
         count = trade['count']
     auto = trade['auto_buy']
 
     count = min(avail_position, count)
+    # operation = TradeManager.get_operation()
+    # operation.__buy(code, count, price, auto=auto)
     order('B', code, count, price, auto=auto)
 
 
-def sell(code, count, price=0):
+def sell(code, count=0, price=0):
     position = query_position(code)
     current_position = position.current_position
     avail_position = position.avail_position
@@ -68,12 +83,14 @@ def sell(code, count, price=0):
     to_position = ((current_position / 2) // 100) * 100
     to_position = min(avail_position, to_position)
 
-    trade = config.config.get_trade_config(code)
+    trade = config.get_trade_config(code)
     if count == 0:
         count = trade['count']
     auto = trade['auto_sell']
 
     count = min(to_position, count)
+    # operation = TradeManager.get_operation()
+    # operation.__sell(code, count, price, auto=auto)
     order('S', code, count, price, auto=auto)
 
 
@@ -146,11 +163,12 @@ def create_trade_order(code):
 
 
 def handle_excess(code):
-    logger.warn('{} excess...'.format(code))
+    pass
+    # logger.warn('{} excess...'.format(code))
 
 
 def patrol():
-    operation = tradeapi.OperationThs()
+    operation = TradeManager.get_operation()
     position_list = operation.get_position()
     for position in position_list:
         quota = quote_db.query_quota_position(position.code)

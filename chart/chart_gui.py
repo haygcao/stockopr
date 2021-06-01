@@ -2,7 +2,8 @@ import multiprocessing
 import sys
 import warnings
 
-import acquisition.acquire
+from acquisition import acquire
+from trade_manager import trade_manager
 
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
@@ -24,6 +25,7 @@ class Example(QWidget):
         self.code = '300502'
         self.period = 'day'
         self.monitor_proc = None
+        self.count = '0'
 
         self.initUI()
 
@@ -50,12 +52,12 @@ class Example(QWidget):
 
         combo_period.activated[str].connect(self.on_activated_period)
 
-        qle = QLineEdit('300502', self)
+        qle_code = QLineEdit('300502', self)
 
         # qle.move(60, 100)
         # self.lbl.move(60, 40)
 
-        qle.textChanged[str].connect(self.on_changed)
+        qle_code.textChanged[str].connect(self.on_code_changed)
 
         btn = QPushButton('show', self)
         btn.clicked.connect(self.show_chart)
@@ -66,18 +68,32 @@ class Example(QWidget):
         btn_update_quote = QPushButton('update quote', self)
         btn_update_quote.clicked.connect(self.update_quote)
 
+        qle_count = QLineEdit(self.count, self)
+        qle_count.textChanged[str].connect(self.on_count_changed)
+
+        btn_buy = QPushButton('Buy', self)
+        btn_buy.clicked.connect(self.buy)
+
+        btn_sell = QPushButton('Sell', self)
+        btn_sell.clicked.connect(self.sell)
+
         grid = QGridLayout()
 
         grid.setSpacing(10)
         grid.addWidget(self.lbl, 1, 0)
         grid.addWidget(self.combo_code, 2, 0)
-        grid.addWidget(qle, 2, 1)
         grid.addWidget(combo_period, 2, 2)
         grid.addWidget(btn, 2, 3)
         grid.addWidget(btn_load, 2, 4)
         grid.addWidget(self.btn_monitor, 1, 1)
         grid.addWidget(btn_update_quote, 1, 2)
-        grid.addWidget(self.log, 3, 0)
+
+        grid.addWidget(qle_code, 3, 0)
+        grid.addWidget(qle_count, 3, 1)
+        grid.addWidget(btn_buy, 3, 2)
+        grid.addWidget(btn_sell, 3, 3)
+
+        grid.addWidget(self.log, 4, 0)
 
         self.setLayout(grid)
 
@@ -85,9 +101,14 @@ class Example(QWidget):
         self.setWindowTitle('K')
         self.show()
 
-    def on_changed(self, text):
+    def on_code_changed(self, text):
         self.code = text
         self.lbl.setText('open {} {}'.format(self.code, self.period))
+        self.lbl.adjustSize()
+
+    def on_count_changed(self, text):
+        self.count = text
+        self.lbl.setText('order {} {}'.format(self.code, self.count))
         self.lbl.adjustSize()
 
     def on_activated_code(self, text):
@@ -130,8 +151,14 @@ class Example(QWidget):
             self.monitor_proc.start()
 
     def update_quote(self):
-        p = multiprocessing.Process(target=acquisition.acquire.save_quote, args=())
+        p = multiprocessing.Process(target=acquire.save_quote, args=())
         p.start()
+
+    def buy(self):
+        trade_manager.buy(self.code, int(self.count))
+
+    def sell(self):
+        trade_manager.sell(self.code, int(self.count))
 
 
 if __name__ == '__main__':
