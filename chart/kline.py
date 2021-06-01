@@ -25,6 +25,8 @@ from matplotlib.widgets import Cursor
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_stop_loss, signal
 from indicator import force_index
 
+import logging
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
 # http://www.cjzzc.com/web_color.html
 
 panel_ratios = {

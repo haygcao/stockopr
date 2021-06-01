@@ -13,6 +13,12 @@ import xlrd
 from acquisition import quote_db
 from config.config import period_map
 
+import logging
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+# logging.Logger.manager.loggerDict
+
 url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
 url_min = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
 url_day = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{period},{start_date},,{count},qfq'  # 2020-7-16,2021-5-7,

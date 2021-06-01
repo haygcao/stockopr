@@ -13,6 +13,8 @@ class LogTestCase(unittest.TestCase):
     def test_log(self):
         logger.debug("debug log %s %s %s", "comma", 'xxx', 100, 1.001)
         logger.info("info log", 'aaa', 111, 1.01)
+        logger.warning("info log", 'aaa', 111, 1.01)
+        logger.error("info log", 'aaa', 111, 1.01)
 
 
 def suite():
