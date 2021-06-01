@@ -161,8 +161,8 @@ def check_trade_order_stop_loss(code, data):
 
 def update_status(code, data, period):
     data_index_: datetime.datetime = data.index[-1]
-    # TODO
-    if False and check_trade_order_stop_loss(code, data):
+
+    if check_trade_order_stop_loss(code, data):
         return TradeSignal(code, data_index_, 'S', 'trade order stop loss', period, True)
 
     data = signal.compute_signal(data, period)

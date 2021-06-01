@@ -2,6 +2,8 @@ import multiprocessing
 import sys
 import warnings
 
+from PyQt5 import QtCore
+
 from acquisition import acquire
 from trade_manager import trade_manager
 
@@ -12,14 +14,27 @@ from monitor import monitor_today
 
 sys.path.append('.')
 from PyQt5.QtWidgets import (QWidget, QLabel,
-                             QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton)
+                             QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow)
 
 from chart import kline
 
 
-class Example(QWidget):
+class Main(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.initUI()
+        self.show()
+
+    def initUI(self):
+        self.alertWidget = Panel()
+        self.setCentralWidget(self.alertWidget)
+
+
+class Panel(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
         self.dict = {}
         self.code = '300502'
@@ -163,5 +178,7 @@ class Example(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = Example()
+
+    # ex = Main()
+    ex = Panel()
     sys.exit(app.exec_())
