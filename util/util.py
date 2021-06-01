@@ -2,12 +2,14 @@ import psutil
 import datetime
 import time
 
+
 def get_pname_by_id(pid):
     try:
         p = psutil.Process(pid)
         return p.name()
     except psutil.NoSuchProcess:
         return None
+
 
 def get_pid_by_name(pname):
     """ get process by name
@@ -32,6 +34,24 @@ def get_pid_by_name(pname):
             pass
     return -1
 
+
+def get_pid_by_exec(exec_path):
+    exec = exec_path.split('\\')[-1]
+    proc_list = [proc for proc in psutil.process_iter() if exec == proc.name().lower()]
+
+    return proc_list[0].pid if proc_list else -1
+
+
+def get_pid_of_python_proc(args):
+    for proc in psutil.process_iter():
+        if proc.name() != 'python.exe':
+            continue
+        cmdline = proc.cmdline()
+        if args in str(cmdline):
+            return proc.pid
+    return -1
+
+
 def print_stock_info(stock_info):
     #['highest', 'lowest', 'last_min', 'cur', 'time_last_record', 'name']
     key_str = ['price', 'last_min', 'high', 'low']
@@ -40,6 +60,7 @@ def print_stock_info(stock_info):
     for key in key_str:
         cnt += key + ':%.2f\t' % stock_info[key]
     print(cnt)
+
 
 def pause_trade(day):
     today = datetime.date.today()
@@ -56,8 +77,10 @@ def get_day(day, delta):
 
     return str(day)
 
+
 def get_today():
     return time.strftime('%Y-%m-%d', time.localtime(time.time()))
+
 
 def get_diff_days(day1, day2):
     ymd = [int(i) for i in day1.split('-')]
@@ -67,7 +90,8 @@ def get_diff_days(day1, day2):
 
     return (date2 - date1).days
 
+
 if __name__ == '__main__':
-    #r = get_day('2015-12-31', 1)
-    r = get_diff_days('2015-12-31','2016-01-10')
+    # r = get_day('2015-12-31', 1)
+    r = get_diff_days('2015-12-31', '2016-01-10')
     print(r)

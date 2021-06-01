@@ -9,48 +9,7 @@ from pointor import signal
 from toolkit import tradeapi
 from util import mysqlcli, macd
 
-
 from util.log import logger
-
-
-def query_quota_position(code):
-    with mysqlcli.get_cursor() as c:
-        # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT `position` FROM {0} where code = '{1}'  order by date desc limit 1".format(config.sql_tab_trade_order, code)
-        c.execute(sql)
-        postion = c.fetchone()
-
-        return int(postion['position'])
-
-
-def query_trade_order_list(code=None):
-    with mysqlcli.get_cursor() as c:
-        sql = "SELECT code, position, open_price, stop_loss, stop_profit FROM {0} where status = 'ING'".format(config.sql_tab_trade_order)
-        if code:
-            sql += " and code = {}".format(code)
-
-        c.execute(sql)
-        ret = c.fetchall()
-        order_list = []
-        for row in ret:
-            trade_order = trade_data.TradeOrder(row['code'], int(row['position']), float(row['open_price']), float(row['stop_loss']), float(row['stop_profit']))
-            order_list.append(trade_order)
-
-        return order_list
-
-
-def query_total_risk_amount():
-    total_loss = 0
-    with mysqlcli.get_cursor() as c:
-        sql = "SELECT code, (position * (open_price - stop_loss)) as loss FROM {0} where status = 'ING'".format(config.sql_tab_trade_order)
-
-        c.execute(sql)
-        ret = c.fetchall()
-        for row in ret:
-            code, loss = row['code'], float(row['loss'])
-            total_loss += loss
-
-        return total_loss
 
 
 def query_position(code):
@@ -76,14 +35,14 @@ def check_quota(code, direction):
     巡检, 周期巡检超出配额的已有仓位
     """
     current_position = query_position(code)
-    quota_position = query_quota_position()
+    quota_position = quote_db.query_quota_position()
     if current_position.current_position > quota_position:
         return False
     return True
 
 
 def buy(code, count=0, price=0):
-    position_quota = query_quota_position(code)
+    position_quota = quote_db.query_quota_position(code)
     position = query_position(code)
     current_position = position.current_position
 
@@ -151,7 +110,7 @@ def create_trade_order(code):
     total_money = money.total_money
 
     loss = total_money * config.one_risk_rate
-    total_loss_used = query_total_risk_amount()
+    total_loss_used = quote_db.query_total_risk_amount()
     total_loss_remain = total_money * config.total_risk_rate - total_loss_used
 
     loss = min(loss, total_loss_remain)
@@ -193,7 +152,7 @@ def patrol():
     operation = tradeapi.OperationThs()
     position_list = operation.get_position()
     for position in position_list:
-        quota = query_quota_position(position.code)
+        quota = quote_db.query_quota_position(position.code)
         if not quota:
             handle_excess(position.code)
             continue

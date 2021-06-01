@@ -9,6 +9,7 @@ import pywinauto.clipboard
 import pywinauto.application
 
 from data_structure import trade_data
+from util import util
 
 NUM_OF_STOCKS = 5  # 自定义股票数量
 is_start = False
@@ -348,19 +349,12 @@ class OperationThs:
         self.__close_popup_windows()
 
 
-def get_pid_by_exec(exec_path):
-    exec = exec_path.split('\\')[-1]
-    proc_list = [proc for proc in psutil.process_iter() if exec == proc.name().lower()]
-
-    return proc_list[0].pid if proc_list else -1
-
-
 def get_screen_size():
     return win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1)
 
 
 def order(direct, code, count, price=0, auto=False):
-    pid = get_pid_by_exec('C:\\同花顺软件\\同花顺\\xiadan.exe')
+    pid = util.get_pid_by_exec('C:\\同花顺软件\\同花顺\\xiadan.exe')
 
     if pid < 0:
         app = pywinauto.Application(backend="win32").start('C:\\同花顺软件\\同花顺\\xiadan.exe')

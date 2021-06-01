@@ -12,10 +12,11 @@ import pandas
 import config.config
 from chart.kline import open_graph
 from config.config import period_map
+from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
 
-from acquisition import tx
+from acquisition import tx, quote_db
 from toolkit import tradeapi
 from trade_manager import trade_manager
 
@@ -43,11 +44,17 @@ class TradeSignalManager:
     #     'code': [TradeSignal, ]
     # }
     signal_map = {}
+    # {
+    #     'code': data_structure.trade_data.TradeOrder
+    # }
+    from collections.abc import Mapping
+    trade_order_map: dict[str, trade_data.TradeOrder]
 
     @classmethod
     def init(cls, code_list):
         for code in code_list:
             cls.signal_map[code] = []
+        cls.trade_order_map = quote_db.query_trade_order_map()
 
     @classmethod
     def get_trade_signal_list(cls, code):
@@ -69,6 +76,12 @@ class TradeSignalManager:
             return False
 
         return True
+
+    @classmethod
+    def get_stop_loss(cls, code):
+        if code in cls.trade_order_map:
+            return cls.trade_order_map[code].stop_loss
+        return -1
 
 
 @atexit.register
@@ -141,8 +154,18 @@ def update_status_old(code, data, period):
     return
 
 
+def check_trade_order_stop_loss(code, data):
+    stop_loss = TradeSignalManager.get_stop_loss(code)
+    if data['close'].iloc[-1] <= stop_loss:
+        return True
+    return False
+
+
 def update_status(code, data, period):
     data_index_: datetime.datetime = data.index[-1]
+    if check_trade_order_stop_loss(code, data):
+        return TradeSignal(code, data_index_, 'S', 'trade order stop loss', period, True)
+
     data = signal.compute_signal(data, period)
 
     if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
