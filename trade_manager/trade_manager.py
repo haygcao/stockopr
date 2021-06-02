@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import datetime
+import multiprocessing
+import threading
 
 from PyQt5.QtWidgets import QMessageBox, QApplication
 
 from acquisition import tx, quote_db
 from config import config
 from data_structure import trade_data
-from indicator import atr, ema
+from indicator import atr, ema, dynamical_system
 from pointor import signal
 from toolkit import tradeapi
 from util import mysqlcli, macd
@@ -64,6 +66,13 @@ def buy(code, count=0, price=0):
     """
     position_quota = quote_db.query_quota_position(code)
     if not position_quota:
+        popup_warning_message_box('请先创建交易指令单, 请务必遵守规则!')
+        return
+
+    quote = tx.get_kline_data(code)
+    quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
+    if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
+        popup_warning_message_box('动力系统为红色, 禁止买入, 请务必遵守规则!')
         return
 
     position = query_position(code)
@@ -71,9 +80,10 @@ def buy(code, count=0, price=0):
 
     avail_position = position_quota - current_position
     if avail_position < 100:
+        popup_warning_message_box('配额已用完, 请务必遵守规则!')
         return
 
-    quote = tx.get_realtime_data_sina(code)
+    # quote = tx.get_realtime_data_sina(code)
     money = query_money()
     max_position = money.avail_money / (price if price > 0 else quote['close'].iloc[-1] * 1.01) // 100 * 100
 
@@ -190,9 +200,17 @@ def create_trade_order(code):
 def handle_illegal_position(code):
     logger.warning('{} excess...'.format(code))
 
+    popup_warning_message_box('[{}]违规仓位, 请务必遵守规则, '.format(code))
+
+
+def _popup_warning_message_box(msg):
     app = QApplication([])
-    msg_box = QMessageBox(QMessageBox.Warning, '警告', '[{}]违规仓位, 请务必遵守规则, '.format(code))
+    msg_box = QMessageBox(QMessageBox.Warning, '警告', msg)
     msg_box.exec_()
+
+
+def popup_warning_message_box(msg):
+    multiprocessing.Process(target=_popup_warning_message_box, args=(msg,)).start()
 
 
 def patrol():

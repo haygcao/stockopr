@@ -1,8 +1,5 @@
-import sys
-import tkinter
 import unittest
 
-from toolkit import tradeapi
 from toolkit.tradeapi import OperationThs
 from trade_manager import trade_manager
 
