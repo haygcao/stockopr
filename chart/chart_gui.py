@@ -5,6 +5,7 @@ import warnings
 import pywinauto
 import win32api
 from PyQt5 import QtCore
+from PyQt5.QtGui import QIcon
 
 from acquisition import acquire, basic
 from trade_manager import trade_manager
@@ -38,6 +39,9 @@ class Main(QMainWindow):
 class Panel(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle('Icon')
+        self.setWindowIcon(QIcon('data/icon11.png'))
+
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
         self.dict = {}

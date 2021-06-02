@@ -94,6 +94,8 @@ def sell(code, count=0, price=0):
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
     position = query_position(code)
+    if not position:
+        return
     current_position = position.current_position
     avail_position = position.avail_position
 
