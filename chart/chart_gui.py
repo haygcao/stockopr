@@ -4,7 +4,7 @@ import warnings
 
 from PyQt5 import QtCore
 
-from acquisition import acquire
+from acquisition import acquire, basic
 from trade_manager import trade_manager
 
 warnings.simplefilter("ignore", UserWarning)
@@ -117,6 +117,8 @@ class Panel(QWidget):
         self.show()
 
     def on_code_changed(self, text):
+        if len(text) > 1 and text[0] not in '036' and text[-1] == ';':
+            text = basic.get_stock_code(text[:-1])
         self.code = text
         self.lbl.setText('open {} {}'.format(self.code, self.period))
         self.lbl.adjustSize()

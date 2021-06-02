@@ -115,7 +115,10 @@ def sell(code, count=0, price=0):
 
 
 def order(direct, code, count, price=0, auto=False):
-    tradeapi.order(direct, code, count, price, auto)
+    try:
+        tradeapi.order(direct, code, count, price, auto)
+    except Exception as e:
+        print(e)
 
 
 def compute_stop_profit(quote):
