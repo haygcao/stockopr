@@ -37,8 +37,14 @@ def function(price, signal_all, signal, column_name):
     return signal_all
 
 
-def function_conflict(signal_enter, signal_exit):
-    pass
+def function_tune_enter_signal_by_stop_loss(signal_enter, high, low, close, stop_loss):
+    if numpy.isnan(signal_enter):
+        return signal_enter
+
+    if (close - stop_loss) / close < 0.02 or (low < stop_loss):
+        return numpy.nan
+
+    return signal_enter
 
 
 # supplemental_signal: [(code, date, 'B/S', price), (code, date, 'B/S', price), ...]
@@ -230,6 +236,15 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     # 止损
     quote_copy = signal_stop_loss.signal_exit(quote_copy)
+
+    # 消除价格与 stop loss 相差不大的 enter 信号
+    quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
+        lambda x: function_tune_enter_signal_by_stop_loss(x.signal_enter, x.high, x.low, x.close, x.stop_loss_full), axis=1)
+
+    # 重新计算止损
+    quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
+    quote_copy = signal_stop_loss.signal_exit(quote_copy)
+
     return quote_copy
 
 
