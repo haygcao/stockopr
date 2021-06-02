@@ -36,9 +36,8 @@ def get_pid_by_name(pname):
 
 
 def get_pid_by_exec(exec_path):
-    exec = exec_path.split('\\')[-1]
+    exec = exec_path.split('\\')[-1].lower()
     proc_list = [proc for proc in psutil.process_iter() if exec == proc.name().lower()]
-
     return proc_list[0].pid if proc_list else -1
 
 

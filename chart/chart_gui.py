@@ -2,10 +2,14 @@ import multiprocessing
 import sys
 import warnings
 
+import pywinauto
+import win32api
 from PyQt5 import QtCore
 
 from acquisition import acquire, basic
 from trade_manager import trade_manager
+from util import util
+from util.pywinauto_util import max_window
 
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
@@ -55,6 +59,9 @@ class Panel(QWidget):
 
         self.combo_code.activated[str].connect(self.on_activated_code)
 
+        btn_tdx = QPushButton('通达信', self)
+        btn_tdx.clicked.connect(self.open_tdx)
+
         btn_load = QPushButton('load', self)
         btn_load.clicked.connect(self.load)
 
@@ -74,8 +81,8 @@ class Panel(QWidget):
 
         qle_code.textChanged[str].connect(self.on_code_changed)
 
-        btn = QPushButton('show', self)
-        btn.clicked.connect(self.show_chart)
+        btn_show_chart = QPushButton('show', self)
+        btn_show_chart.clicked.connect(self.show_chart)
 
         self.btn_monitor = QPushButton('monitor stopped', self)
         self.btn_monitor.clicked.connect(self.control_monitor)
@@ -97,8 +104,9 @@ class Panel(QWidget):
         grid.setSpacing(10)
         grid.addWidget(self.lbl, 1, 0)
         grid.addWidget(self.combo_code, 2, 0)
-        grid.addWidget(combo_period, 2, 2)
-        grid.addWidget(btn, 2, 3)
+        grid.addWidget(combo_period, 2, 1)
+        grid.addWidget(btn_show_chart, 2, 2)
+        grid.addWidget(btn_tdx, 2, 3)
         grid.addWidget(btn_load, 2, 4)
         grid.addWidget(self.btn_monitor, 1, 1)
         grid.addWidget(btn_update_quote, 1, 2)
@@ -132,6 +140,22 @@ class Panel(QWidget):
         self.code = text.split()[0]
         self.lbl.setText('open {} {}'.format(self.code, self.period))
         self.lbl.adjustSize()
+
+    def open_tdx(self):
+        pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
+        if pid < 0:
+            app = pywinauto.Application(backend="win32").start('C:\\new_tdx\\TdxW.exe')
+        else:
+            app = pywinauto.Application(backend="win32").connect(process=pid)
+
+        pos = win32api.GetCursorPos()
+        main_window = app.window(class_name='TdxW_MainFrame_Class')
+        max_window(main_window)
+        win32api.SetCursorPos(pos)
+
+        # main_window.type_keys(str(self.code))
+        pywinauto.keyboard.send_keys(str(self.code))
+        pywinauto.keyboard.send_keys('{ENTER}')
 
     def load(self):
         self.combo_code.clear()

@@ -10,6 +10,7 @@ import pywinauto.application
 
 from data_structure import trade_data
 from util import util
+from util.pywinauto_util import max_window
 
 pos_position = (36, 258)
 pos_detail = (36, 456)
@@ -36,15 +37,6 @@ def copy_to_clipboard():
 
     pywinauto.keyboard.send_keys('^c')
     time.sleep(0.2)
-
-
-def max_window(window):
-    """
-    最大化窗口
-    """
-    if window.get_show_state() != 3:
-        window.maximize()
-    window.set_focus()
 
 
 class OperationThs:
