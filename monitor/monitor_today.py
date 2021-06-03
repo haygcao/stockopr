@@ -2,14 +2,13 @@
 import atexit
 import datetime
 import multiprocessing
+import random
 import time
-import types
 from dataclasses import dataclass
 
 import numpy
 import pandas
 
-import config.config
 from chart.kline import open_graph
 from config.config import period_map
 from data_structure import trade_data
@@ -17,7 +16,6 @@ from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
 
 from acquisition import tx, quote_db
-from toolkit import tradeapi
 from trade_manager import trade_manager
 
 
@@ -47,7 +45,6 @@ class TradeSignalManager:
     # {
     #     'code': data_structure.trade_data.TradeOrder
     # }
-    from collections.abc import Mapping
     trade_order_map: dict[str, trade_data.TradeOrder]
 
     @classmethod
@@ -157,6 +154,7 @@ def update_status_old(code, data, period):
 def check_trade_order_stop_loss(code, data):
     stop_loss = TradeSignalManager.get_stop_loss(code)
     return data['close'].iloc[-1] <= stop_loss
+    # return False
 
 
 def update_status(code, data, period):
@@ -249,6 +247,7 @@ def monitor_today():
             notify(trade_signal)
 
             p.join(timeout=1)
+            time.sleep(random.randint(3, 10))
         time.sleep(15)
 
 

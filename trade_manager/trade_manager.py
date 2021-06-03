@@ -1,33 +1,32 @@
 # -*- coding: utf-8 -*-
 import datetime
 import multiprocessing
-import threading
 
 from PyQt5.QtWidgets import QMessageBox, QApplication
 
 from acquisition import tx, quote_db
 from config import config
-from data_structure import trade_data
 from indicator import atr, ema, dynamical_system
 from pointor import signal
-from toolkit import tradeapi
-from util import mysqlcli, macd
+from trade_manager import tradeapi
+from util import mysqlcli
 
 from util.log import logger
 
 
 class TradeManager:
-    operation: tradeapi.OperationThs = None
+    # operation: tradeapi.OperationThs = None
 
     def __init__(self):
         pass
 
     @classmethod
     def get_operation(cls):
-        if not cls.operation:
-            cls.operation = tradeapi.OperationThs()
-        cls.operation.max_window()
-        return cls.operation
+        pass
+        # if not cls.operation:
+        #     cls.operation = tradeapi.OperationThs()
+        # cls.operation.max_window()
+        # return cls.operation
 
 
 def query_position(code):
@@ -35,18 +34,14 @@ def query_position(code):
     可以卖的股数
     还可以买的股数
     """
-    operation = TradeManager.get_operation()
-    position_list = operation.get_position()
-    for position in position_list:
-        if position.code != code:
-            continue
-        return position
+    position = tradeapi.query_position(code)
+
+    return position
 
 
 def query_money():
-    operation = TradeManager.get_operation()
-    money = operation.get_asset()
-    return money[0]
+    money = tradeapi.get_asset()
+    return money
 
 
 def check_quota(code, direction):
@@ -214,8 +209,7 @@ def popup_warning_message_box(msg):
 
 
 def patrol():
-    operation = TradeManager.get_operation()
-    position_list = operation.get_position()
+    position_list = tradeapi.get_position()
     for position in position_list:
         quota = quote_db.query_quota_position(position.code)
         if not quota:

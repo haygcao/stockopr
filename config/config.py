@@ -3,7 +3,11 @@ from config.confighandler import ConfigHandler
 import os
 cwd = os.getcwd()
 # ch = ConfigHandler(os.path.join(os.getcwd(), 'config', 'config.ini'), 'db')
-ch = ConfigHandler('config/config.ini', 'db')
+if 'test' in os.getcwd():
+    ch = ConfigHandler('../config/config.ini', 'db')
+else:
+    ch = ConfigHandler('config/config.ini', 'db')
+
 db_host = ch.db_host
 db = ch.db
 db_user = ch.db_user
@@ -296,6 +300,15 @@ def get_trade_config(code):
 
     return trade['global']
 
+
+def get_tradeapi_server():
+    import json
+    fp = open('config/config.json')
+    trade = json.load(fp)
+
+    fp.close()
+
+    return trade['tradeapi_server']['base_url']
 
 # risk management
 total_risk_rate = 1   # 0.06   # 6%
