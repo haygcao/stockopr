@@ -30,7 +30,7 @@ selenium==3.141.0
 six==1.15.0
 soupsieve==2.2.1
 TA-Lib @ file:///C:/Users/S/Downloads/TA_Lib-0.4.19-cp39-cp39-win_amd64.whl
-urllib3==1.26.4
+urllib3==1.26.5
 xlrd==2.0.1
 
 SQLAlchemy~=1.4.15
