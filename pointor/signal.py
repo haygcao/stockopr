@@ -72,8 +72,8 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     quote = signal_dynamical_system.signal_exit(quote, period=period)
 
     # 通道
-    quote = signal_channel.signal_enter(quote, period=period)
-    quote = signal_channel.signal_exit(quote, period=period)
+    # quote = signal_channel.signal_enter(quote, period=period)
+    # quote = signal_channel.signal_exit(quote, period=period)
 
     # 背离
     quote = signal_market_deviation.signal_enter(quote, period)
@@ -97,17 +97,6 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     if tmp.any():
         quote_copy = quote_copy[~quote_copy.index.duplicated(keep='first')]
 
-    # 处理系统外交易信号
-    supplemental_signal_path = 'data/trade.csv'
-    supplemental_signal = get_supplemental_signal(supplemental_signal_path)
-    code = str(quote['code'][0])
-    for signal_dict in supplemental_signal:
-        if code != signal_dict['code']:
-            continue
-        date = get_date_period(signal_dict['date'], period, quote.index)
-        signal_all_column = 'signal_enter' if signal_dict['command'] == 'B' else 'signal_exit'
-        quote_copy.loc[date, signal_all_column] = quote_copy.loc[date, 'close']
-
     # 合并
     # 处理合并看多信号
     column_list = config.signal_enter_list
@@ -123,10 +112,18 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     # 'macd_bear_market_deviation',
     # 'force_index_bear_market_deviation']
 
+    # 止损
+    quote_copy = signal_stop_loss.signal_exit(quote_copy)
+
     # quote_copy = quote  # .copy()
     for column in column_list:
         quote_copy.loc[:, 'signal_exit'] = quote_copy.apply(
             lambda x: function(x.high, x.signal_exit, eval('x.{}'.format(column)), column), axis=1)
+
+    # 消除价格与 stop loss 相差不大的 enter 信号
+    quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
+        lambda x: function_tune_enter_signal_by_stop_loss(x.signal_enter, x.high, x.low, x.close, x.stop_loss_full),
+        axis=1)
 
     positive_all = quote_copy['signal_enter'].copy()
     negative_all = quote_copy['signal_exit'].copy()
@@ -234,12 +231,16 @@ def compute_signal(quote, period, supplemental_signal_path=None):
             # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
             quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
 
-    # 止损
-    quote_copy = signal_stop_loss.signal_exit(quote_copy)
-
-    # 消除价格与 stop loss 相差不大的 enter 信号
-    quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
-        lambda x: function_tune_enter_signal_by_stop_loss(x.signal_enter, x.high, x.low, x.close, x.stop_loss_full), axis=1)
+    # 处理系统外交易信号
+    supplemental_signal_path = 'data/trade.csv'
+    supplemental_signal = get_supplemental_signal(supplemental_signal_path)
+    code = str(quote['code'][0])
+    for signal_dict in supplemental_signal:
+        if code != signal_dict['code']:
+            continue
+        date = get_date_period(signal_dict['date'], period, quote.index)
+        signal_all_column = 'signal_enter' if signal_dict['command'] == 'B' else 'signal_exit'
+        quote_copy.loc[date, signal_all_column] = quote_copy.loc[date, 'close']
 
     # 重新计算止损
     quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)

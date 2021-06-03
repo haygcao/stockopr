@@ -17,7 +17,7 @@ sys.coinit_flags = 2
 
 from monitor import monitor_today
 
-sys.path.append('.')
+sys.path.append('chart')
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow)
 

@@ -11,7 +11,7 @@ def function_enter(low, close, dlxt_long_period, dlxt, dlxt_ema13, ema13, ema26,
         return numpy.nan
 
     # ema13 向上, close 回归 ema13 ~ ema26 价值区间
-    if dlxt_long_period > 0 and ema26 >= ema26_shift and low <= ema13:
+    if dlxt_long_period >= 0 and ema26 >= ema26_shift and low <= ema13:
         # print(date, '5')
         return low
 
