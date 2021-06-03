@@ -2,8 +2,8 @@ import tornado.ioloop
 import tornado.options
 from tornado.options import define, options
 
-from application.application import Application
-from .config import port
+from server.application.application import Application
+from server.config import port
 
 define("port", default=port, help="run on the given port", type=int)
 
