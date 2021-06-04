@@ -10,7 +10,7 @@ import numpy
 import pandas
 
 from chart.kline import open_graph
-from config.config import period_map, signal_deviation
+from config.config import period_map, signal_deviation, Policy
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
@@ -25,15 +25,15 @@ class TradeSignal:
     code: str
     date: datetime.datetime = datetime.datetime.now()
     command: str = ''
-    category: str = ''
+    policy: Policy = Policy.DEFAULT
     period: str = ''
     last: bool = False
 
-    def __init__(self, code: str, date: datetime.datetime, command: str, category: str, period: str, last: bool):
+    def __init__(self, code: str, date: datetime.datetime, command: str, category: Policy, period: str, last: bool):
         self.code = code
         self.date = date
         self.command = command
-        self.category = category
+        self.policy = category
         self.period = period
         self.last = last
 
@@ -118,19 +118,18 @@ def update_status_old(code, data, period):
         n = 1 if period == 'm5' else 1
         data_sub = data[column_name][-n:]
         command = 'B' if 'bull' in column_name else 'S'
-        deviation = 'bull deviation' if command == 'B' else 'bear deviation'
         if data_sub.any(skipna=True):
             data_index_ = data_sub[data_sub.notnull()].index[0]
-            return TradeSignal(code, data_index_, command, deviation, period, True)
+            return TradeSignal(code, data_index_, command, Policy.DEVIATION, period, True)
 
     data = signal_channel.signal_enter(data, period=period)
     data = signal_channel.signal_exit(data, period=period)
 
     if not numpy.isnan(data['channel_signal_enter'][-1]):
-        return TradeSignal(code, data_index_, 'B', 'channel', period, True)
+        return TradeSignal(code, data_index_, 'B', Policy.CHANNEL, period, True)
 
     if not numpy.isnan(data['channel_signal_exit'][-1]):
-        return TradeSignal(code, data_index_, 'S', 'channel', period, True)
+        return TradeSignal(code, data_index_, 'S', Policy.CHANNEL, period, True)
 
     # long period do not check dynamical system signal
     if period in ['m30']:
@@ -141,10 +140,10 @@ def update_status_old(code, data, period):
     data = signal_dynamical_system.signal_exit(data, period=period)
 
     if data['dynamical_system_signal_enter'][-1] > 0:
-        return TradeSignal(code, data_index_, 'B', 'dynamical system', period, True)
+        return TradeSignal(code, data_index_, 'B', Policy.DYNAMICAL_SYSTEM, period, True)
 
     if not numpy.isnan(data['dynamical_system_signal_exit'][-1]):
-        return TradeSignal(code, data_index_, 'S', 'dynamical system', period, True)
+        return TradeSignal(code, data_index_, 'S', Policy.DYNAMICAL_SYSTEM, period, True)
     # if not status_map[code][str(m)] or data['dlxt'][-1] != status_map[code][str(m)][-1]:
     #     status_map[code][str(m)].append((datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), data['dlxt'][-1]))
     #     return True
@@ -162,25 +161,25 @@ def update_status(code, data, period):
     data_index_: datetime.datetime = data.index[-1]
 
     if check_trade_order_stop_loss(code, data):
-        return TradeSignal(code, data_index_, 'S', 'trade order stop loss', period, True)
+        return TradeSignal(code, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
     data = signal.compute_signal(data, period)
 
     if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
         minute = int(period[1:])
         if data_index_.minute % minute == minute - 1:  # and data_index_.second > 45:
-            return TradeSignal(code, data_index_, 'S', '', period, True)
+            return TradeSignal(code, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
     for deviation in signal_deviation:
         if not numpy.isnan(data[deviation][-2]):
             direct = 'B' if 'bull' in deviation else 'S'
-            return TradeSignal(code, data_index_, direct, '', period, True)
+            return TradeSignal(code, data_index_, direct, Policy.DEVIATION, period, True)
 
     if not numpy.isnan(data['signal_exit'][-1]):
-        return TradeSignal(code, data_index_, 'S', '', period, True)
+        return TradeSignal(code, data_index_, 'S', Policy.DEFAULT, period, True)
 
     if not numpy.isnan(data['signal_enter'][-1]):
-        return TradeSignal(code, data_index_, 'B', '', period, True)
+        return TradeSignal(code, data_index_, 'B', Policy.DEFAULT, period, True)
 
 
 def check(code, period):
@@ -205,7 +204,7 @@ def check(code, period):
 def order(trade_singal: TradeSignal):
     logger.info('{} {}'.format(trade_singal.command, trade_singal.code))
     if trade_singal.command == 'B':
-        trade_manager.buy(trade_singal.code)
+        trade_manager.buy(trade_singal.code, policy=trade_singal.policy)
     else:
         trade_manager.sell(trade_singal.code)
 
@@ -216,7 +215,7 @@ def notify(trade_singal: TradeSignal):
     command = '买入' if trade_singal.command == 'B' else '卖出'
     # tts
     from toolkit import tts
-    txt = '注意, {1}信号, {2}, {0}'.format(' '.join(trade_singal.code), command, trade_singal.category)
+    txt = '注意, {1}信号, {2}, {0}'.format(' '.join(trade_singal.code), command, trade_singal.policy.name)
     logger.info(txt)
     tts.say(txt)
 

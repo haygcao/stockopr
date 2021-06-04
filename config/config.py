@@ -1,3 +1,5 @@
+from enum import Enum
+
 from config.confighandler import ConfigHandler
 
 import os
@@ -328,3 +330,13 @@ def get_tradeapi_server():
 # risk management
 total_risk_rate = 1   # 0.06   # 6%
 one_risk_rate = 0.1   # 0.01   # 1%
+
+
+class Policy(Enum):
+    DEFAULT = 0
+    DEVIATION = 1
+    EMA_VALUE = 2
+    CHANNEL = 3
+    FORCE_INDEX = 4
+    DYNAMICAL_SYSTEM = 5
+    STOP_LOSS = 6

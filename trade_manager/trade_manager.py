@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QMessageBox, QApplication
 
 from acquisition import tx, quote_db
 from config import config
+from config.config import Policy
 from indicator import atr, ema, dynamical_system
 from pointor import signal
 from trade_manager import tradeapi
@@ -55,7 +56,7 @@ def check_quota(code, direction):
     return True
 
 
-def buy(code, count=0, price=0):
+def buy(code, count=0, price=0, policy: Policy = None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -65,10 +66,11 @@ def buy(code, count=0, price=0):
         return
 
     quote = tx.get_kline_data(code)
-    quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
-    if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
-        popup_warning_message_box('动力系统为红色, 禁止买入, 请务必遵守规则!')
-        return
+    if policy != Policy.DEVIATION:
+        quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
+        if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
+            popup_warning_message_box('动力系统为红色, 禁止买入, 请务必遵守规则!')
+            return
 
     position = query_position(code)
     current_position = position.current_position if position else 0
