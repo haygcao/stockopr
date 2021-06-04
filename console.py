@@ -7,7 +7,7 @@ import win32api
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 
-from acquisition import acquire, basic
+from acquisition import acquire, basic, quote_db
 from trade_manager import trade_manager
 from util import util
 from util.pywinauto_util import max_window
@@ -167,6 +167,11 @@ class Panel(QWidget):
             for code_name in fp:
                 # name = basic.get_stock_name(code)
                 self.combo_code.addItem(code_name)
+
+        code_name_map = quote_db.query_trade_order_map()
+        for code, order in code_name_map.items():
+            name = basic.get_stock_name(code)
+            self.combo_code.addItem('{} {}'.format(code, name))
 
     def on_activated_period(self, text):
         self.period = text
