@@ -12,7 +12,8 @@ class TradeApiTestCase(unittest.TestCase):
 
     def test_query_position(self):
         code = '300502'
-        tradeapi.query_position(code)
+        ret = tradeapi.query_position(code)
+        print(ret)
 
 
 def suite():

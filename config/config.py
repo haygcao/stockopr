@@ -3,10 +3,10 @@ from config.confighandler import ConfigHandler
 import os
 cwd = os.getcwd()
 # ch = ConfigHandler(os.path.join(os.getcwd(), 'config', 'config.ini'), 'db')
-if 'test' in os.getcwd():
-    ch = ConfigHandler('../config/config.ini', 'db')
-else:
-    ch = ConfigHandler('config/config.ini', 'db')
+
+config_dir = '../config' if 'test' in os.getcwd() else 'config'
+
+ch = ConfigHandler(os.path.join(config_dir, 'config.ini'), 'db')
 
 db_host = ch.db_host
 db = ch.db
@@ -22,7 +22,7 @@ sql_tab_trade_detail=ch.sql_table_trade_detail
 sql_tab_trade_detail_history=ch.sql_table_trade_detail_history
 sql_tab_trade_order = ch.sql_table_trade_order
 
-charg = ConfigHandler('config/config.ini', 'arg')
+charg = ConfigHandler(os.path.join(config_dir, 'config.ini'), 'arg')
 check_per_sec = charg.check_per_sec
 
 ###
@@ -291,7 +291,7 @@ def is_long_period(period):
 
 def get_trade_config(code):
     import json
-    fp = open('config/config.json')
+    fp = open(os.path.join(config_dir, 'config.json'))
     trade = json.load(fp)
 
     fp.close()
@@ -304,7 +304,7 @@ def get_trade_config(code):
 
 def get_tradeapi_server():
     import json
-    fp = open('config/config.json')
+    fp = open(os.path.join(config_dir, 'config.json'))
     trade = json.load(fp)
 
     fp.close()

@@ -71,6 +71,9 @@ def get_kline_data_sina(code, period='day', count=250):
         # week 无法复权
         count = count * 5 if period == 'week' else count
         quote = quote_db.get_price_info_df_db(code, count, period_type='D')
+        now = datetime.datetime.now()
+        if quote.index[-1] == datetime.date.today() or now.hour < 9 or (now.hour == 9 and now.hour < 30):
+            return quote
         quote_today = get_realtime_data_sina(code)
         quote = quote.append(quote_today)
         if period == 'week':
