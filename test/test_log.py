@@ -15,6 +15,8 @@ class LogTestCase(unittest.TestCase):
         logger.info("info log", 'aaa', 111, 1.01)
         logger.warning("info log", 'aaa', 111, 1.01)
         logger.error("info log", 'aaa', 111, 1.01)
+        d = {'a': 1, 'b': 2}
+        logger.info(d)
 
 
 def suite():

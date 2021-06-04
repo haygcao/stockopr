@@ -17,6 +17,7 @@ from pointor import signal_channel
 
 from acquisition import tx, quote_db
 from trade_manager import trade_manager
+from util.log import logger
 
 
 @dataclass
@@ -83,7 +84,7 @@ class TradeSignalManager:
 
 @atexit.register
 def goodbye():
-    print("monitor stopped")
+    logger.info("monitor stopped")
 
 
 def get_min_data(code, m='m5', count=250):
@@ -91,7 +92,7 @@ def get_min_data(code, m='m5', count=250):
         data = tx.get_kline_data(code, m, count)
         return data
     except Exception as e:
-        print('get data error:', e)
+        logger.info('get data error:', e)
 
 
 def get_day_data(code, period='day', count=250):
@@ -104,7 +105,7 @@ def update_status_old(code, data, period):
 
     # if period_status:
     #     if period.startswith('m') and (data_index_ - period_status[-1].date).seconds < int(period[1:])*60:
-    #         print('{} - no new data'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    #         logger.info('no new data')
     #         return False
 
     # deviation signal
@@ -152,9 +153,9 @@ def update_status_old(code, data, period):
 
 
 def check_trade_order_stop_loss(code, data):
-    stop_loss = TradeSignalManager.get_stop_loss(code)
-    return data['close'].iloc[-1] <= stop_loss
-    # return False
+    # stop_loss = TradeSignalManager.get_stop_loss(code)
+    # return data['close'].iloc[-1] <= stop_loss
+    return False
 
 
 def update_status(code, data, period):
@@ -182,7 +183,7 @@ def check(code, period):
     data30 = get_min_data(code, long_period)
     if not isinstance(data30, pandas.DataFrame) or data30.empty:
         return
-    print('{} - now check {} {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), code, long_period))
+    logger.info('now check {} {} status'.format(code, long_period))
     trade_signal = update_status(code, data30, long_period)
     if trade_signal:
         return trade_signal
@@ -190,14 +191,14 @@ def check(code, period):
     data5 = get_min_data(code, period)
     if not isinstance(data5, pandas.DataFrame) or data5.empty:
         return
-    print('{} - now check {} {} status'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), code, period))
+    logger.info('now check {} {} status'.format(code, period))
     trade_signal = update_status(code, data5, period)
     if trade_signal:
         return trade_signal
 
 
 def order(trade_singal: TradeSignal):
-    print('{} {}'.format(trade_singal.command, trade_singal.code))
+    logger.info('{} {}'.format(trade_singal.command, trade_singal.code))
     if trade_singal.command == 'B':
         trade_manager.buy(trade_singal.code)
     else:
@@ -211,18 +212,24 @@ def notify(trade_singal: TradeSignal):
     # tts
     from toolkit import tts
     txt = '注意, {1}信号, {2}, {0}'.format(' '.join(trade_singal.code), command, trade_singal.category)
-    print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), txt))
+    logger.info(txt)
     tts.say(txt)
+
+
+def query_trade_order_code_list():
+    r = quote_db.query_trade_order_map()
+    return [code for code, name in r.items()]
 
 
 def monitor_today():
     period = 'm5'
-    code = '300502'
-    code_list = [code, '002739']
+    code_list = ['300502']
+    code_list = query_trade_order_code_list()
 
     TradeSignalManager.init(code_list)
 
-    print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), TradeSignalManager.signal_map))
+    logger.info('code list monitored:', str(code_list))
+    logger.info(TradeSignalManager.signal_map)
     while True:
         now = datetime.datetime.now()
         if now.hour == 15:
@@ -239,7 +246,7 @@ def monitor_today():
             if not TradeSignalManager.need_signal(trade_signal):
                 continue
 
-            print('{} - {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), TradeSignalManager.signal_map))
+            logger.info(TradeSignalManager.signal_map)
             p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period,))
             p.start()
 
