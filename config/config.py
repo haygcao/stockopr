@@ -245,9 +245,14 @@ signal_enter_list = [
     # 'channel_signal_enter',
     'force_index_signal_enter',
     'ema_value_signal_enter',
+    'resistance_support_signal_enter',
     'force_index_bull_market_deviation_signal_enter',
     'macd_bull_market_deviation_signal_enter',
 ]
+
+# signal_enter_list = [
+#     'resistance_support_signal_enter',
+# ]
 
 signal_enter_deviation = [
     'force_index_bull_market_deviation_signal_enter',
@@ -258,10 +263,16 @@ signal_exit_list = [
     'dynamical_system_signal_exit',
     # 'channel_signal_exit',
     'force_index_signal_exit',
+    'resistance_support_signal_exit',
     'force_index_bear_market_deviation_signal_exit',
     'macd_bear_market_deviation_signal_exit',
     'stop_loss_signal_exit'
 ]
+
+# signal_exit_list = [
+#     'resistance_support_signal_exit',
+#     # 'stop_loss_signal_exit'
+# ]
 
 signal_exit_deviation = [
     'force_index_bear_market_deviation_signal_exit',
@@ -330,6 +341,11 @@ def get_tradeapi_server():
 # risk management
 total_risk_rate = 1   # 0.06   # 6%
 one_risk_rate = 0.1   # 0.01   # 1%
+
+#
+resistance_over_rate = 0.02
+support_under_rate = 0.02
+resistance_support_backdays = 5
 
 
 class Policy(Enum):

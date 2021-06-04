@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import numpy
 import pandas
 
-from chart.kline import open_graph
+from chart import open_graph
 from config.config import period_map, signal_deviation, Policy
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
@@ -49,10 +49,12 @@ class TradeSignalManager:
     trade_order_map: dict[str, trade_data.TradeOrder]
 
     @classmethod
-    def init(cls, code_list):
-        for code in code_list:
-            cls.signal_map[code] = []
+    def reload_trade_order(cls):
         cls.trade_order_map = quote_db.query_trade_order_map()
+        for code in cls.trade_order_map.keys():
+            if code in cls.signal_map:
+                continue
+            cls.signal_map[code] = []
 
     @classmethod
     def get_trade_signal_list(cls, code):
@@ -227,14 +229,11 @@ def query_trade_order_code_list():
 
 def monitor_today():
     period = 'm5'
-    code_list = ['300502']
-    code_list = query_trade_order_code_list()
 
-    TradeSignalManager.init(code_list)
-
-    logger.info('code list monitored:', str(code_list))
     logger.info(TradeSignalManager.signal_map)
     while True:
+        TradeSignalManager.reload_trade_order()
+
         now = datetime.datetime.now()
         if now.hour == 15:
             return
@@ -242,7 +241,8 @@ def monitor_today():
             time.sleep(60)
             continue
 
-        for code in code_list:
+        for code in TradeSignalManager.trade_order_map.keys():
+            time.sleep(random.randint(3, 10))
             trade_signal = check(code, period)
             if not trade_signal:
                 continue
@@ -258,7 +258,6 @@ def monitor_today():
             notify(trade_signal)
 
             p.join(timeout=1)
-            time.sleep(random.randint(3, 10))
 
 
 if __name__ == '__main__':

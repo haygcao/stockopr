@@ -15,7 +15,7 @@ import pointor.signal_gd as signal_gd
 import dealer.bought as basic
 from config import config
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
-    signal_stop_loss, signal_ema_value
+    signal_stop_loss, signal_ema_value, signal_resistance_support
 
 
 def mktime(_datetime):
@@ -56,6 +56,8 @@ def get_supplemental_signal(supplemental_signal_path):
         signal_list = []
         for row in reader:
             row['date'] = datetime.datetime.strptime(row['date'], '%Y-%m-%d %H:%M')
+            if row['code'].startswith('#'):
+                continue
             signal_list.append(row)
 
     return signal_list
@@ -86,10 +88,25 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     # ema 价值回归
     quote = signal_ema_value.signal_enter(quote, period)
 
+    # 阻力位, 支撑位
+    quote = signal_resistance_support.signal_enter(quote, period)
+    quote = signal_resistance_support.signal_exit(quote, period)
+
     if 'signal_enter' not in quote.columns:
         quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
     if 'signal_exit' not in quote.columns:
         quote.insert(len(quote.columns), 'signal_exit', numpy.nan)
+
+    # 处理系统外交易信号
+    supplemental_signal_path = 'data/trade.csv'
+    supplemental_signal = get_supplemental_signal(supplemental_signal_path)
+    code = str(quote['code'][0])
+    for signal_dict in supplemental_signal:
+        if code != signal_dict['code']:
+            continue
+        date = get_date_period(signal_dict['date'], period, quote.index)
+        signal_all_column = 'signal_enter' if signal_dict['command'] == 'B' else 'signal_exit'
+        quote.loc[date, signal_all_column] = quote.loc[date, 'close']
 
     quote_copy = quote.copy()
 
@@ -107,13 +124,13 @@ def compute_signal(quote, period, supplemental_signal_path=None):
         quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
 
+    # 计算止损数据
+    quote_copy = signal_stop_loss.signal_exit(quote_copy)
+
     # 处理合并看空信号
     column_list = config.signal_exit_list
     # 'macd_bear_market_deviation',
     # 'force_index_bear_market_deviation']
-
-    # 止损
-    quote_copy = signal_stop_loss.signal_exit(quote_copy)
 
     # quote_copy = quote  # .copy()
     for column in column_list:
@@ -121,23 +138,26 @@ def compute_signal(quote, period, supplemental_signal_path=None):
             lambda x: function(x.high, x.signal_exit, eval('x.{}'.format(column)), column), axis=1)
 
     # 消除价格与 stop loss 相差不大的 enter 信号
-    quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
-        lambda x: function_tune_enter_signal_by_stop_loss(x.signal_enter, x.high, x.low, x.close, x.stop_loss_full),
-        axis=1)
+    # quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
+    #     lambda x: function_tune_enter_signal_by_stop_loss(x.signal_enter, x.high, x.low, x.close, x.stop_loss_full),
+    #     axis=1)
 
     positive_all = quote_copy['signal_enter'].copy()
     negative_all = quote_copy['signal_exit'].copy()
 
     # 合并看多
     for i in range(0, len(positive_all)):
-        negative_all.iloc[i] = negative_all.iloc[i] if numpy.isnan(positive_all.iloc[i]) else numpy.nan
+        positive_all.iloc[i] = positive_all.iloc[i] if numpy.isnan(negative_all.iloc[i]) else numpy.nan
 
     positive = positive_all[positive_all > 0]
     negative = negative_all[negative_all > 0]
 
     # print('signals before merged')
-    # print(positive)
-    # print(negative)
+    # print(positive[-50:])
+    # # print(quote_copy[quote_copy.index.isin(positive.index)]['resistance_support_signal_enter'])
+    # print(negative[-50:])
+
+    # print('signals after merged')
 
     # 如果一天同时出现看多/看空信号，按看多处理
     # def func(n: numpy.float64, p: numpy.float64):
@@ -203,8 +223,9 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     negative = negative[negative > 0]
 
     # print('signals after merged')
-    # print(positive)
-    # print(negative)
+    # print(positive[-50:])
+    # # print(quote_copy[quote_copy.index.isin(positive.index)]['resistance_support_signal_enter'])
+    # print(negative[-50:])
 
     # positive = positive.mask(positive > 0, quote['low'])
     # negative = negative.mask(negative > 0, quote['high'])
@@ -214,37 +235,26 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     # 背离
     # 背离是重要的信号，不与其他信号合并
-    column_list = ['force_index_bull_market_deviation_signal_enter',
-                   'macd_bull_market_deviation_signal_enter',
-                   'force_index_bear_market_deviation_signal_exit',
-                   'macd_bear_market_deviation_signal_exit']
-    for column in column_list:
-        deviation = quote[column]
-        # deviation = deviation[deviation < 0] if 'bull' in column else deviation[deviation < 0]
-        if 'bull' in column:
-            deviation = deviation[deviation > 0]
-            signal_all_column = 'signal_enter'
-        else:
-            deviation = deviation[deviation > 0]
-            signal_all_column = 'signal_exit'
-        for i in range(0, len(deviation)):
-            # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
-            quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
+    # column_list = ['force_index_bull_market_deviation_signal_enter',
+    #                'macd_bull_market_deviation_signal_enter',
+    #                'force_index_bear_market_deviation_signal_exit',
+    #                'macd_bear_market_deviation_signal_exit']
+    # for column in column_list:
+    #     deviation = quote[column]
+    #     # deviation = deviation[deviation < 0] if 'bull' in column else deviation[deviation < 0]
+    #     if 'bull' in column:
+    #         deviation = deviation[deviation > 0]
+    #         signal_all_column = 'signal_enter'
+    #     else:
+    #         deviation = deviation[deviation > 0]
+    #         signal_all_column = 'signal_exit'
+    #     for i in range(0, len(deviation)):
+    #         # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
+    #         quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
 
-    # 处理系统外交易信号
-    supplemental_signal_path = 'data/trade.csv'
-    supplemental_signal = get_supplemental_signal(supplemental_signal_path)
-    code = str(quote['code'][0])
-    for signal_dict in supplemental_signal:
-        if code != signal_dict['code']:
-            continue
-        date = get_date_period(signal_dict['date'], period, quote.index)
-        signal_all_column = 'signal_enter' if signal_dict['command'] == 'B' else 'signal_exit'
-        quote_copy.loc[date, signal_all_column] = quote_copy.loc[date, 'close']
-
-    # 重新计算止损
-    quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
-    quote_copy = signal_stop_loss.signal_exit(quote_copy)
+    # # 重新计算止损
+    # quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
+    # quote_copy = signal_stop_loss.signal_exit(quote_copy)
 
     return quote_copy
 

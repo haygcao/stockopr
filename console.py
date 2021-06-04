@@ -21,7 +21,7 @@ sys.path.append('chart')
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow)
 
-from chart import kline
+import chart
 
 
 class Main(QMainWindow):
@@ -180,7 +180,7 @@ class Panel(QWidget):
 
     def show_chart(self):
         print('open {} {}'.format(self.code, self.period))
-        p = multiprocessing.Process(target=kline.open_graph, args=(self.code, self.period,))
+        p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period,))
         p.start()
         p.join(timeout=1)
         # open_graph(self.code, self.period)

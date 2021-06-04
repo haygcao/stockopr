@@ -333,6 +333,8 @@ class DataFinanceDraw(object):
         self.add_plot.extend([
             mpf.make_addplot(get_window(data_resistance), type='line', color=grey),
             mpf.make_addplot(get_window(data_support), type='line', color=grey),
+            mpf.make_addplot(get_window(self.data['resistance']), type='line', color=dimgrey),
+            mpf.make_addplot(get_window(self.data['support']), type='line', color=dimgrey),
             mpf.make_addplot(get_window(exp13), type='line', color=dimgrey),
             mpf.make_addplot(get_window(exp26), type='line', color=black),
             mpf.make_addplot(get_window(data_force_index), type='bar', panel=self.panel_force_index, color=force_index_color),
@@ -630,9 +632,10 @@ if __name__ == "__main__":
     # code = '000999'
     # code = '000625'
     # code = '600588'
+    code = '601633'
     period = 'day'   # m5 m30 day week
-    open_graph(code, period, 'data/csv/' + code + '.csv')
-    # open_graph(code, period)
+    # open_graph(code, period, 'data/csv/' + code + '.csv')
+    open_graph(code, period)
 
     # code = '000001'
     # candle = DataFinanceDraw(code)
