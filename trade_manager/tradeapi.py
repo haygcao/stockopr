@@ -30,7 +30,11 @@ def query_position(code):
     url = 'http://{}/query_position'.format(base_url)
     data = {'code': code}
     response = requests.post(url, data=json.dumps(data), headers=headers)
-    d = json.loads(response.content)
+    json_str = response.content
+    if not json_str:
+        return None
+
+    d = json.loads(json_str)
     position = trade_data.Position(code, d['current_position'], d['avail_position'])
 
     return position

@@ -10,7 +10,7 @@ import numpy
 import pandas
 
 from chart.kline import open_graph
-from config.config import period_map
+from config.config import period_map, signal_deviation
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
@@ -168,8 +168,13 @@ def update_status(code, data, period):
 
     if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
         minute = int(period[1:])
-        if data_index_.minute % minute == minute - 1 and data_index_.second > 45:
+        if data_index_.minute % minute == minute - 1:  # and data_index_.second > 45:
             return TradeSignal(code, data_index_, 'S', '', period, True)
+
+    for deviation in signal_deviation:
+        if not numpy.isnan(data[deviation][-2]):
+            direct = 'B' if 'bull' in deviation else 'S'
+            return TradeSignal(code, data_index_, direct, '', period, True)
 
     if not numpy.isnan(data['signal_exit'][-1]):
         return TradeSignal(code, data_index_, 'S', '', period, True)
@@ -255,7 +260,6 @@ def monitor_today():
 
             p.join(timeout=1)
             time.sleep(random.randint(3, 10))
-        time.sleep(15)
 
 
 if __name__ == '__main__':
