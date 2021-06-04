@@ -63,8 +63,8 @@ def compute_index(quote, period=None):
                 signal_enter_merged.iloc[i] = series.iloc[i]
                 continue
 
-            if not numpy.isnan(quote['signal_enter'].iloc[i] or numpy.isnan(series.iloc[i - 1])):
-                signal_enter_merged.iloc[i] = series.iloc[i]
+            # if not numpy.isnan(quote['signal_enter'].iloc[i] or numpy.isnan(series.iloc[i - 1])):
+            #     signal_enter_merged.iloc[i] = series.iloc[i]
 
     quote = quote.assign(stop_loss=numpy.nan)
     index0 = signal_enter_merged.index[0]
