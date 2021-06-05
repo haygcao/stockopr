@@ -199,6 +199,10 @@ def compute_signal(quote, period, supplemental_signal_path=None):
         positive[temp_positive_index] = temp_positive
         while next_positive > next_negative and j < len(negative):
             negative[j] = numpy.nan
+            date_index = negative.index[j]
+            quote_copy.loc[date_index, 'stop_loss'] = numpy.nan
+            quote_copy.loc[date_index, 'stop_loss_signal_exit'] = numpy.nan
+
             j += 1
             # next_positive = positive.index[i]
             if j == len(negative):
