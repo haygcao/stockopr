@@ -347,6 +347,10 @@ resistance_over_rate = 0.02
 support_under_rate = 0.02
 resistance_support_backdays = 5
 
+supplemental_signal_path = os.path.join(config_dir, '..', 'data/trade.csv')
+# 振荡阈值
+oscillation_threshold = 1.05
+
 
 class Policy(Enum):
     DEFAULT = 0

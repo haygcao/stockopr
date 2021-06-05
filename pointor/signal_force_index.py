@@ -7,6 +7,7 @@ from indicator.decorator import computed, ignore_long_period
 
 
 def function_enter(low, dlxt_long_period, dlxt,  dlxt_ema13, force_index, force_index_shift, period, date):
+    return numpy.nan
     if dlxt_long_period < 0 or dlxt < 0:
         return numpy.nan
 
@@ -14,14 +15,14 @@ def function_enter(low, dlxt_long_period, dlxt,  dlxt_ema13, force_index, force_
     # if dlxt_ema13 and force_index_shift >= 0 and force_index < 0:   # and dlxt > 0:
     #     return low
 
-    # ema13 向上, 强力指数上穿 0
-    if dlxt_long_period > 0 and dlxt_ema13 and force_index_shift < 0 and force_index >= 0:   # and dlxt > 0:
-        # print(date, '5')
-        return low
+    # ema13 向上, 强力指数 <0 或上穿 0
+    # if dlxt_ema13 > 0 and (force_index < 0 or force_index_shift < 0):
+    #     # print(date, '5')
+    #     return low
 
     # ema13 向上, 强力指数为负, 且开始变大
-    # if dlxt_ema13 and force_index_shift < 0 and force_index > force_index_shift:   # and dlxt > 0:
-    #     return low
+    if dlxt_ema13 > 0 and force_index_shift < 0 and force_index > force_index_shift:
+        return low
 
     return numpy.nan
 

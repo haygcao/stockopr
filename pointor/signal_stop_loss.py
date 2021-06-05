@@ -157,18 +157,20 @@ def signal_exit(quote, period=None):
 
 
 def remove_signal(date, date_enter, quote_copy, inclusive_left=False):
+    if date == date_enter:
+        return quote_copy
+
     column_list = ['stop_loss_signal_exit', 'stop_loss']
     # column_list = ['stop_loss_signal_exit']
     for s in column_list:
         value_begin = quote_copy.loc[date, s]
         value_end = quote_copy.loc[date_enter, s] if date_enter else numpy.nan
         quote_copy.loc[date:date_enter, s] = numpy.nan
-        if date == date_enter:
-            continue
+
         if not inclusive_left:
             quote_copy.loc[date, s] = value_begin
 
-        if date_enter:
+        if date_enter and s == 'stop_loss':
             quote_copy.loc[date_enter, s] = value_end
 
     return quote_copy

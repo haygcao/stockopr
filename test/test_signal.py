@@ -11,6 +11,7 @@ class SignalTestCase(unittest.TestCase):
         code = '300502'
         code = '000963'
         code = '601633'
+        code = '300359'
         self.period = 'day'
         count = 250 * 5
         # self.quote = get_price_info_df_file_day(code, 250, '2021-5-13', 'data/300502.csv')

@@ -98,7 +98,7 @@ def compute_signal(quote, period, supplemental_signal_path=None):
         quote.insert(len(quote.columns), 'signal_exit', numpy.nan)
 
     # 处理系统外交易信号
-    supplemental_signal_path = 'data/trade.csv'
+    supplemental_signal_path = config.supplemental_signal_path
     supplemental_signal = get_supplemental_signal(supplemental_signal_path)
     code = str(quote['code'][0])
     for signal_dict in supplemental_signal:

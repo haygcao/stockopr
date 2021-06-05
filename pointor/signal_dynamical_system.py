@@ -7,6 +7,10 @@ from indicator.decorator import computed, ignore_long_period
 
 
 def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, period, date):
+    # 非长周期, 不提供看多信号
+    if not is_long_period(period):
+        return numpy.nan
+
     # 长中周期动量系统中任一为红色, 均禁止买入
     if (not is_long_period(period) and dlxt_long_period < 0) or dlxt < 0:
         return numpy.nan

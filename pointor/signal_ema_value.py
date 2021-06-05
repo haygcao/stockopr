@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy
 
+from config import config
 from config.config import is_long_period
 from indicator import force_index, dynamical_system, ema
 from indicator.decorator import computed, ignore_long_period
@@ -10,8 +11,8 @@ def function_enter(low, close, dlxt_long_period, dlxt, dlxt_ema13, ema13, ema26,
     if dlxt_long_period < 0:  # or dlxt < 0:
         return numpy.nan
 
-    # ema13 向上, close 回归 ema13 ~ ema26 价值区间
-    if dlxt_long_period >= 0 and ema26 >= ema26_shift and low <= ema13:
+    # ema13 向上, close 回归 ema13 ~ ema26 价值区间, ema13 >= ema26
+    if dlxt_long_period >= 0 and ema26_shift <= ema26 <= ema13 and low <= ema13:
         # print(date, '5')
         return low
 
@@ -40,6 +41,12 @@ def signal_enter(quote, period=None):
         lambda x: function_enter(
             x.low, x.close, x.dlxt_long_period, x.dlxt, x.dlxt_ema13, x.ema13, x.ema26, x.ema26_shift, period, x.name),
         axis=1)
+
+    # 过滤掉振荡走势中的信号
+    ema26_rolling_min = quote_copy.loc[:, 'ema26'].rolling(20, min_periods=1).min()
+    ema_value_signal_enter = quote_copy.loc[:, 'ema_value_signal_enter']
+    quote_copy.loc[:, 'ema_value_signal_enter'] = ema_value_signal_enter.mask(
+        ema_value_signal_enter / ema26_rolling_min < config.oscillation_threshold, numpy.nan)
 
     # remove temp data
     quote_copy.drop(['ema26_shift'], axis=1)
