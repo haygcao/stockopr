@@ -345,7 +345,7 @@ one_risk_rate = 0.1   # 0.01   # 1%
 #
 resistance_over_rate = 0.02
 support_under_rate = 0.02
-resistance_support_backdays = 5
+resistance_support_backdays = 1
 
 supplemental_signal_path = os.path.join(config_dir, '..', 'data/trade.csv')
 # 振荡阈值

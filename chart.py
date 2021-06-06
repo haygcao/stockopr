@@ -282,6 +282,13 @@ class DataFinanceDraw(object):
         data_resistance[:] = self.data[-60:]['high'].max()
         data_support[:] = self.data[-60:]['low'].min()
 
+        data_resistance_20 = self.data['resistance']
+        data_resistance_20 = data_resistance_20.mask(data_resistance_20.index < data_resistance_20.index[-20], numpy.nan)
+        data_resistance_20 = data_resistance_20.mask(data_resistance_20 > 0, data_resistance_20.max())
+        data_support_20 = self.data['support']
+        data_support_20 = data_support_20.mask(data_support_20.index < data_support_20.index[-20], numpy.nan)
+        data_support_20 = data_support_20.mask(data_support_20 > 0, data_support_20.min())
+
         dlxt.values[:] = 1
         # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
         dlxt_long_period.values[:] = self.data_origin['low']
@@ -333,8 +340,8 @@ class DataFinanceDraw(object):
         self.add_plot.extend([
             mpf.make_addplot(get_window(data_resistance), type='line', color=grey),
             mpf.make_addplot(get_window(data_support), type='line', color=grey),
-            mpf.make_addplot(get_window(self.data['resistance']), type='line', color=dimgrey),
-            mpf.make_addplot(get_window(self.data['support']), type='line', color=dimgrey),
+            mpf.make_addplot(get_window(data_resistance_20), type='line', color=black),
+            mpf.make_addplot(get_window(data_support_20), type='line', color=black),
             mpf.make_addplot(get_window(exp13), type='line', color=dimgrey),
             mpf.make_addplot(get_window(exp26), type='line', color=black),
             mpf.make_addplot(get_window(data_force_index), type='bar', panel=self.panel_force_index, color=force_index_color),
