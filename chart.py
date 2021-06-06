@@ -2,10 +2,6 @@
 import datetime
 import functools
 
-import sys;
-
-sys.path.append(".")
-
 from config.config import is_long_period
 
 from acquisition import tx
@@ -35,9 +31,12 @@ panel_ratios = {
     5: [7, 0.1, 0.1, 1.4, 1.4]
 }
 
+yellow = '#FFFF00'
+orange = '#FFA500'
 light_green = '#90EE90'
 dark_olive_green3 = '#A2CD5A'
 light_coral = '#F08080'
+blue = '#0000FF'
 light_blue = '#ADD8E6'
 indian_red = '#CD5C5C'
 indian_red1 = '#FF6A6A'
@@ -47,6 +46,9 @@ red = 'r'
 dark_red = '#8B0000'
 green = 'g'
 dark_green = '#006400'
+sea_green = '#2E8B57'
+medium_sea_green = '#3CB371'
+light_sea_green = '#20B2AA'
 lightgrey = 'lightgrey'
 grey = 'grey'
 dimgrey = 'dimgrey'
@@ -283,11 +285,11 @@ class DataFinanceDraw(object):
         data_support[:] = self.data[-60:]['low'].min()
 
         data_resistance_20 = self.data['resistance']
-        data_resistance_20 = data_resistance_20.mask(data_resistance_20.index < data_resistance_20.index[-20], numpy.nan)
-        data_resistance_20 = data_resistance_20.mask(data_resistance_20 > 0, data_resistance_20.max())
+        data_resistance_20 = data_resistance_20.mask(data_resistance_20.index < data_resistance_20.index[-60], numpy.nan)
+        data_resistance_20 = data_resistance_20.mask(data_resistance_20 > 0, data_resistance_20[-1])
         data_support_20 = self.data['support']
-        data_support_20 = data_support_20.mask(data_support_20.index < data_support_20.index[-20], numpy.nan)
-        data_support_20 = data_support_20.mask(data_support_20 > 0, data_support_20.min())
+        data_support_20 = data_support_20.mask(data_support_20.index < data_support_20.index[-60], numpy.nan)
+        data_support_20 = data_support_20.mask(data_support_20 > 0, data_support_20[-1])
 
         dlxt.values[:] = 1
         # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
@@ -340,8 +342,8 @@ class DataFinanceDraw(object):
         self.add_plot.extend([
             mpf.make_addplot(get_window(data_resistance), type='line', color=grey),
             mpf.make_addplot(get_window(data_support), type='line', color=grey),
-            mpf.make_addplot(get_window(data_resistance_20), type='line', color=black),
-            mpf.make_addplot(get_window(data_support_20), type='line', color=black),
+            mpf.make_addplot(get_window(data_resistance_20), type='line', color=green),
+            mpf.make_addplot(get_window(data_support_20), type='line', color=red),
             mpf.make_addplot(get_window(exp13), type='line', color=dimgrey),
             mpf.make_addplot(get_window(exp26), type='line', color=black),
             mpf.make_addplot(get_window(data_force_index), type='bar', panel=self.panel_force_index, color=force_index_color),
@@ -512,14 +514,14 @@ class DataFinanceDraw(object):
 
         # 带箭头的线
         map_index = {
-            'macd_bull_market_deviation': {'data':self.histogram_macd, 'ax': axlist[6] if is_long_period(self.period) else axlist[8]},
-            'macd_bear_market_deviation': {'data':self.histogram_macd, 'ax': axlist[6] if is_long_period(self.period) else axlist[8]},
-            'force_index_bull_market_deviation': {'data':self.histogram_force_index, 'ax': axlist[4] if is_long_period(self.period) else axlist[6]},
-            'force_index_bear_market_deviation': {'data':self.histogram_force_index, 'ax': axlist[4] if is_long_period(self.period) else axlist[6]},
+            'macd_bull_market_deviation': {'data': self.histogram_macd, 'ax': axlist[6] if is_long_period(self.period) else axlist[8]},
+            'macd_bear_market_deviation': {'data': self.histogram_macd, 'ax': axlist[6] if is_long_period(self.period) else axlist[8]},
+            'force_index_bull_market_deviation': {'data': self.histogram_force_index, 'ax': axlist[4] if is_long_period(self.period) else axlist[6]},
+            'force_index_bear_market_deviation': {'data': self.histogram_force_index, 'ax': axlist[4] if is_long_period(self.period) else axlist[6]},
         }
 
         def draw_deviation_line(data, ax, ax2, data1, data2, unit1, unit2, color, will):
-            '''
+            """
             width: float, default: 0.001
             Width of full arrow tail.
 
@@ -531,7 +533,7 @@ class DataFinanceDraw(object):
 
             head_length: float or None, default: 1.5*head_width
             Length of arrow head.
-            '''
+            """
             points = data1[data1.notnull()]
             if not points.any(skipna=True):
                 return
