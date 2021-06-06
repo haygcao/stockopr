@@ -11,13 +11,13 @@ from util import util
 
 def monitor():
     root_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    monitor_path = os.path.join(root_dir, 'monitor', 'monitor_today.py')
+    monitor_path = os.path.join(root_dir, 'quotation_monitor.py')
     while True:
         now = datetime.datetime.now()
         if now.hour >= 15:
             return
 
-        pid = util.get_pid_of_python_proc('monitor_today')
+        pid = util.get_pid_of_python_proc('quotation_monitor')
         if pid < 0:
             # from monitor import monitor_today
             # p = multiprocessing.Process(target=monitor_today.monitor_today)

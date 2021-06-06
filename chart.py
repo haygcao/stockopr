@@ -184,12 +184,12 @@ class DataFinanceDraw(object):
 
     def fetch_data(self, code, count=250):
         if not is_long_period(self.period):
-            count *= 5
+            count *= 1   # 5
         self.data_origin = tx.get_kline_data(code, self.period, count)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
-    def load_data(self, file_name='2020.csv', count=1250):
+    def load_data(self, file_name='2020.csv', count=250):
         """
         获取数据, 把数据格式化成 mplfinance 的标准格式
         :return:

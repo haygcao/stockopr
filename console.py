@@ -15,7 +15,7 @@ from util.pywinauto_util import max_window
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
 
-from monitor import monitor_today
+import quotation_monitor
 
 sys.path.append('chart')
 from PyQt5.QtWidgets import (QWidget, QLabel,
@@ -197,7 +197,7 @@ class Panel(QWidget):
             print('start monitor')
             self.btn_monitor.setText('monitor running')
             self.btn_monitor.setCheckable(True)
-            self.monitor_proc = multiprocessing.Process(target=monitor_today.monitor_today, args=())
+            self.monitor_proc = multiprocessing.Process(target=quotation_monitor.monitor_today, args=())
             self.monitor_proc.start()
 
     def update_quote(self):
