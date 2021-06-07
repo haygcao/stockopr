@@ -2,6 +2,8 @@
 
 import os, sys
 import time, datetime
+
+import pandas
 import xlrd
 import urllib.request
 import json
@@ -118,13 +120,60 @@ def save_quote_xl():
         # MySql connection in sqlAlchemy
         engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
 
+        df_quote.loc[:, 'trade_date'] = df_quote.index
+
+        tmp = df_quote['code'].duplicated()
+        if tmp.any():
+            print('duplicated...')
+            df_quote = df_quote[~df_quote['code'].duplicated(keep='first')]
+
+        # Do not insert the row number (index=False)
+        df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
+        # df_quote.to_csv('2021-06-07.csv')
+    except Exception as e:
+        print(e)
+
+
+def save_quote_tx_one_day(trade_day):
+    code_list = basic.get_all_stock_code()
+    # code_list = code_list[:5]
+
+    retry_code_list = []
+    empty_code_list = []
+    df_quote = pandas.DataFrame()
+    for n in range(5):
+        for code in code_list:
+            df = tx.get_kline_data_tx(code, count=1, start_date=trade_day, end_date=trade_day)
+            if isinstance(df, pandas.DataFrame):
+                if df.empty:
+                    empty_code_list.append(code)
+                    print('{} no data'.format(code))
+                    continue
+                if df.index[-1] != trade_day:
+                    continue
+                df_quote = df_quote.append(df)
+            else:
+                retry_code_list.append(code)
+        # time.sleep(0.5)
+        if not retry_code_list:
+            break
+        code_list = retry_code_list
+        print('retry [{}] -\n'.format(len(retry_code_list), str(retry_code_list)))
+        print('empty [{}] -\n'.format(len(empty_code_list), str(empty_code_list)))
+
+    try:
+        # MySql connection in sqlAlchemy
+        engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
+
+        df_quote.loc[:, 'trade_date'] = df_quote.index
+
         # Do not insert the row number (index=False)
         df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
     except Exception as e:
         print(e)
 
 
-def save_quote(xls=None):
+def save_quote(trade_date=None, xls=None):
     # save_quote_tx(xls)
     save_quote_xl()
     # save_quote_wy()
@@ -138,3 +187,6 @@ if __name__ == '__main__':
     xls = None
     # xls = 'data/xls/2021-05-24.xls'
     save_quote(xls)
+    # trade_date = datetime.date(2021, 6, 4)
+    # # trade_date = datetime.date.today()
+    # save_quote_tx_one_day(trade_date)

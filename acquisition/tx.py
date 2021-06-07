@@ -30,6 +30,21 @@ def init():
         os.makedirs('data/xls')
 
 
+# 获取股票代码列表
+def url_to_list():
+    url = 'http://quote.eastmoney.com/stocklist.html'
+    allCodeList = []
+    html = urllib.request.urlopen(url).read()
+    html = html.decode('gbk')
+    s = r'<li><a target="_blank" href="http://quote.eastmoney.com/\S\S(.*?).html">'
+    pat = re.compile(s)
+    code = pat.findall(html)
+    for item in code:
+        if item[0] == '6' or item[0] == '3' or item[0] == '0':
+            allCodeList.append(item)
+    return allCodeList
+
+
 def _parsing_dayprice_json(types=None, page=1):
     """
            处理当日行情分页数据，格式为json
@@ -159,7 +174,7 @@ def get_kline_data_sina(code, period='day', count=250):
     return df
 
 
-def get_kline_data_tx(code, period='day', count=250):
+def get_kline_data_tx(code, period='day', count=250, start_date=None, end_date=None):
     """
     {
       "code": 300502,
@@ -190,13 +205,16 @@ def get_kline_data_tx(code, period='day', count=250):
     else:
         # week 无法复权
         # start_date = datetime.date.today() - datetime.timedelta(count + count//7 * 2 if period == 'day' else count * 7)
-        start_date = quote_db.query_date(code, count)
-        url = url_config.tx_day_url.format(code=symbol, period=period, start_date=start_date.strftime('%Y-%m-%d'), count=count)
+        if not start_date:
+            start_date = quote_db.query_date(code, count)
+        if not end_date:
+            end_date = datetime.date.today()
+        url = url_config.tx_day_url.format(code=symbol, period=period, start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d'), count=count)
 
     try:
-        print(url)
         ret = requests.get(url)
     except Exception as e:
+        print(e)
         return
 
     import json
@@ -204,7 +222,13 @@ def get_kline_data_tx(code, period='day', count=250):
     jstr = jstr[jstr.index('=')+1:]
     d = json.loads(jstr)
 
-    quote = d['data'][symbol][period if is_minute_data else 'qfq{}'.format(period)]
+    period_ = period if is_minute_data else 'qfq{}'.format(period)
+    if period_ not in d['data'][symbol]:
+        if period not in d['data'][symbol]:
+            print(code, url)
+            return
+        period_ = period
+    quote = d['data'][symbol][period_]
 
     d_3m3 = {}
 
