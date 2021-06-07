@@ -9,6 +9,16 @@ import config.config as config
 from data_structure import trade_data
 
 
+def query_date(code, count):
+    with mysqlcli.get_cursor() as c:
+        # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
+        sql = "select min(trade_date) min_date from (select trade_date from quote where code = '{}' order by trade_date desc limit {}) as t".format(code, count)
+        c.execute(sql)
+        date = c.fetchone()
+
+        return date['min_date'] if date else None
+
+
 def query_quota_position(code):
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)

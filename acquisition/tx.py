@@ -130,7 +130,8 @@ def get_kline_data_tx(code, period='day', count=250):
         url = url_min.format(code=symbol, period=period, count=count)
     else:
         # week 无法复权
-        start_date = datetime.date.today() - datetime.timedelta(count if period == 'day' else count * 7)
+        # start_date = datetime.date.today() - datetime.timedelta(count + count//7 * 2 if period == 'day' else count * 7)
+        start_date = quote_db.query_date(code, count)
         url = url_day.format(code=symbol, period=period, start_date=start_date.strftime('%Y-%m-%d'), count=count)
 
     try:
@@ -169,6 +170,7 @@ def get_kline_data_tx(code, period='day', count=250):
 
 def get_kline_data(code, period='day', count=250):
     func_list = [get_kline_data_tx, get_kline_data_sina]
+    func_list = [get_kline_data_tx]
     index = random.randint(0, len(func_list) - 1)
     quote = func_list[index](code, period, count)
     if quote is None:

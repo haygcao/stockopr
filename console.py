@@ -2,26 +2,23 @@ import multiprocessing
 import sys
 import warnings
 
-import pywinauto
-import win32api
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (QWidget, QLabel,
+                             QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow)
+import pywinauto
+import win32api
 
+import chart
+import watch_dog
 from acquisition import acquire, basic, quote_db
 from trade_manager import trade_manager
 from util import util
 from util.pywinauto_util import max_window
 
+
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
-
-import quotation_monitor
-
-sys.path.append('chart')
-from PyQt5.QtWidgets import (QWidget, QLabel,
-                             QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow)
-
-import chart
 
 
 class Main(QMainWindow):
@@ -88,8 +85,8 @@ class Panel(QWidget):
         btn_show_chart = QPushButton('show', self)
         btn_show_chart.clicked.connect(self.show_chart)
 
-        self.btn_monitor = QPushButton('monitor stopped', self)
-        self.btn_monitor.clicked.connect(self.control_monitor)
+        self.btn_monitor = QPushButton('watch dog stopped', self)
+        self.btn_monitor.clicked.connect(self.control_watch_dog)
 
         btn_update_quote = QPushButton('update quote', self)
         btn_update_quote.clicked.connect(self.update_quote)
@@ -185,19 +182,19 @@ class Panel(QWidget):
         p.join(timeout=1)
         # open_graph(self.code, self.period)
 
-    def control_monitor(self):
+    def control_watch_dog(self):
         if self.btn_monitor.isChecked():
-            print('stop monitor')
-            self.btn_monitor.setText('monitor stopped')
+            print('stop watch dog')
+            self.btn_monitor.setText('watch dog stopped')
             self.btn_monitor.setCheckable(False)
             self.monitor_proc.terminate()
             self.monitor_proc.join()
             self.monitor_proc = None
         else:
-            print('start monitor')
-            self.btn_monitor.setText('monitor running')
+            print('start watch dog')
+            self.btn_monitor.setText('watch dog running')
             self.btn_monitor.setCheckable(True)
-            self.monitor_proc = multiprocessing.Process(target=quotation_monitor.monitor_today, args=())
+            self.monitor_proc = multiprocessing.Process(target=watch_dog.monitor, args=())
             self.monitor_proc.start()
 
     def update_quote(self):
