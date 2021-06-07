@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-
+import json
 import os
 import random
+import re
 import time
 import datetime
 import urllib.request
@@ -27,6 +28,63 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 def init():
     if not os.path.exists('data/xls'):
         os.makedirs('data/xls')
+
+
+def _parsing_dayprice_json(types=None, page=1):
+    """
+           处理当日行情分页数据，格式为json
+     Parameters
+     ------
+        pageNum:页码
+     return
+     -------
+        DataFrame 当日所有股票交易数据(DataFrame)
+    """
+
+    request = urllib.request.Request(url_config.xl_day_price_url % (types, page))
+    text = urllib.request.urlopen(request, timeout=10).read()
+    if text == 'null':
+        return None
+    # reg = re.compile(r'\,(.*?)\:')
+    # text = reg.sub(r',"\1":', text.decode('gbk'))
+    # text = text.replace('"{symbol', '{"symbol')
+    # text = text.replace('{symbol', '{"symbol"')
+    # jstr = json.dumps(text)
+
+    df = pandas.read_json(text, orient='records', dtype={'code': object})
+
+    return df
+
+
+def get_today_all():
+    """
+        一次性获取最近一个日交易日所有股票的交易数据
+    return
+    -------
+      DataFrame
+           属性：代码，名称，涨跌幅，现价，开盘价，最高价，最低价，最日收盘价，成交量，换手率，成交额，市盈率，市净率，总市值，流通市值
+    """
+    PAGE_NUM = [40, 60, 80, 100]
+    df = _parsing_dayprice_json('hs_a', 1)
+    if df is not None:
+        for i in range(2, PAGE_NUM[1]):
+            newdf = _parsing_dayprice_json('hs_a', i)
+            df = df.append(newdf, ignore_index=True)
+    df = df.append(_parsing_dayprice_json('shfxjs', 1),
+                   ignore_index=True)
+
+    df.rename(columns={'trade': 'close'}, inplace=True)
+    columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'turnover']
+    for column in df.columns:
+        if column in columns:
+            continue
+        df = df.drop(column, axis=1)
+    #     df = df.ix[df.volume > 0]
+    df = df.assign(turnover=0)
+    df = df.assign(date=datetime.date.today())
+    df.set_index('date', inplace=True)
+
+    return df
 
 
 def get_realtime_data_sina(code):
@@ -136,12 +194,15 @@ def get_kline_data_tx(code, period='day', count=250):
         url = url_config.tx_day_url.format(code=symbol, period=period, start_date=start_date.strftime('%Y-%m-%d'), count=count)
 
     try:
+        print(url)
         ret = requests.get(url)
     except Exception as e:
         return
 
     import json
-    d = json.loads(ret.content)
+    jstr = ret.content.decode()
+    jstr = jstr[jstr.index('=')+1:]
+    d = json.loads(jstr)
 
     quote = d['data'][symbol][period if is_minute_data else 'qfq{}'.format(period)]
 

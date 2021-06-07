@@ -112,8 +112,21 @@ def save_quote_wy():
             print(e)
 
 
+def save_quote_xl():
+    df_quote = tx.get_today_all()
+    try:
+        # MySql connection in sqlAlchemy
+        engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
+
+        # Do not insert the row number (index=False)
+        df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
+    except Exception as e:
+        print(e)
+
+
 def save_quote(xls=None):
-    save_quote_tx(xls)
+    # save_quote_tx(xls)
+    save_quote_xl()
     # save_quote_wy()
     # save_sh_index_trade_info()
 

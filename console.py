@@ -213,6 +213,7 @@ class Panel(QWidget):
                 # self.monitor_proc.terminate()
                 # self.monitor_proc.join()
                 # self.monitor_proc = None
+                # os.kill(pid, signal.CTRL_C_EVENT)
                 psutil.Process(pid=pid).terminate()
             else:
                 print('start watch dog')

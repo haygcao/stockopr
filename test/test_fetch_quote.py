@@ -17,6 +17,10 @@ class FetchQuoteTestCase(unittest.TestCase):
         quote = tx.get_kline_data_sina(code, period, count)
         print(quote)
 
+    def test_fetch_today_all_quote_sina(self):
+        quote = tx.get_today_all()
+        print(quote)
+
 
 def suite():
     suite = unittest.TestSuite()
