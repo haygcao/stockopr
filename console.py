@@ -1,7 +1,13 @@
 import multiprocessing
+import os
+import signal
+import subprocess
 import sys
+import threading
+import time
 import warnings
 
+import psutil
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QWidget, QLabel,
@@ -45,6 +51,9 @@ class Panel(QWidget):
         self.code = '300502'
         self.period = 'day'
         self.monitor_proc = None
+        self.check_thread = None
+        self.rlock = threading.RLock()
+        self.running = True
         self.count = '0'
 
         self.initUI()
@@ -85,8 +94,18 @@ class Panel(QWidget):
         btn_show_chart = QPushButton('show', self)
         btn_show_chart.clicked.connect(self.show_chart)
 
-        self.btn_monitor = QPushButton('watch dog stopped', self)
+        pid = util.get_pid_of_python_proc('watch_dog')
+        if pid < 0:
+            txt = 'watch dog stopped'
+            color = 'red'
+        else:
+            txt = 'watch dog running'
+            color = 'green'
+        self.btn_monitor = QPushButton(txt, self)
+        self.btn_monitor.setStyleSheet("background-color : {}".format(color))
         self.btn_monitor.clicked.connect(self.control_watch_dog)
+
+        threading.Thread(target=self.check_watch_dog, args=()).start()
 
         btn_update_quote = QPushButton('update quote', self)
         btn_update_quote.clicked.connect(self.update_quote)
@@ -183,19 +202,27 @@ class Panel(QWidget):
         # open_graph(self.code, self.period)
 
     def control_watch_dog(self):
-        if self.btn_monitor.isChecked():
-            print('stop watch dog')
-            self.btn_monitor.setText('watch dog stopped')
-            self.btn_monitor.setCheckable(False)
-            self.monitor_proc.terminate()
-            self.monitor_proc.join()
-            self.monitor_proc = None
-        else:
-            print('start watch dog')
-            self.btn_monitor.setText('watch dog running')
-            self.btn_monitor.setCheckable(True)
-            self.monitor_proc = multiprocessing.Process(target=watch_dog.monitor, args=())
-            self.monitor_proc.start()
+        with self.rlock:
+            pid = util.get_pid_of_python_proc('watch_dog')
+            # if self.btn_monitor.isChecked():
+            if pid > 0:
+                print('stop watch dog')
+                self.btn_monitor.setText('watch dog stopped')
+                self.btn_monitor.setStyleSheet("background-color : red")
+                # self.btn_monitor.setCheckable(False)
+                # self.monitor_proc.terminate()
+                # self.monitor_proc.join()
+                # self.monitor_proc = None
+                psutil.Process(pid=pid).terminate()
+            else:
+                print('start watch dog')
+                self.btn_monitor.setText('watch dog running')
+                self.btn_monitor.setStyleSheet("background-color : green")
+                # self.btn_monitor.setCheckable(True)
+                # self.monitor_proc = multiprocessing.Process(target=watch_dog.monitor, args=())
+                # self.monitor_proc.start()
+
+                util.run_subprocess('watch_dog.py')
 
     def update_quote(self):
         p = multiprocessing.Process(target=acquire.save_quote, args=())
@@ -207,10 +234,47 @@ class Panel(QWidget):
     def sell(self):
         trade_manager.sell(self.code, int(self.count))
 
+    def check_watch_dog(self):
+        pid_prev_check = -1
+        while self.running:
+            pid = util.get_pid_of_python_proc('watch_dog')
+            if pid == pid_prev_check:
+                time.sleep(3)
+                continue
+
+            pid_prev_check = pid
+            if pid < 0:
+                txt = 'watch dog stopped'
+                color = 'red'
+            else:
+                txt = 'watch dog running'
+                color = 'green'
+
+            print('check watch dog', color)
+            with self.rlock:
+                self.btn_monitor.setText(txt)
+                self.btn_monitor.setStyleSheet("background-color : {}".format(color))
+
+        print('check thread exit')
+
+    def stop_check_thread(self):
+        ex.running = False
+
+    def stop_watch_dog(self):
+        pid = util.get_pid_of_python_proc('watch_dog')
+        if pid > 0:
+            print('send signal.CTRL_C_EVENT')
+            os.kill(pid, signal.CTRL_C_EVENT)
+            # psutil.Process(pid).terminate()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # ex = Main()
     ex = Panel()
-    sys.exit(app.exec_())
+    rc = app.exec_()
+    ex.stop_check_thread()
+    ex.stop_watch_dog()
+
+    sys.exit(rc)

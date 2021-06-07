@@ -1,3 +1,6 @@
+import os
+import subprocess
+
 import psutil
 import datetime
 import time
@@ -49,6 +52,16 @@ def get_pid_of_python_proc(args):
         if args in str(cmdline):
             return proc.pid
     return -1
+
+
+def run_subprocess(script):
+    # root_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    root_dir = os.path.join(os.path.dirname(__file__), '..')
+    monitor_path = os.path.join(root_dir, script)
+    os.environ['PYTHONPATH'] = root_dir
+    py = str(os.path.join(root_dir, 'venv', 'Scripts', 'python.exe'))
+    # subprocess.run([py, monitor_path])
+    subprocess.Popen([py, monitor_path])
 
 
 def print_stock_info(stock_info):
