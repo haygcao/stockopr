@@ -11,6 +11,7 @@ import requests
 import xlrd
 
 from acquisition import quote_db
+from config import url as url_config
 from config.config import period_map
 
 import logging
@@ -19,9 +20,8 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 # logging.Logger.manager.loggerDict
 
-url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
-url_min = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
-url_day = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{period},{start_date},,{count},qfq'  # 2020-7-16,2021-5-7,
+
+
 
 
 def init():
@@ -34,7 +34,7 @@ def get_realtime_data_sina(code):
     股票名称、今日开盘价、昨日收盘价、当前价格、今日最高价、今日最低价、竞买价、竞卖价、成交股数、成交金额、买1手、买1报价、买2手、买2报价、…、买5报价、…、卖5报价、日期、时间
     var hq_str_sz300502="新易盛,48.000,47.500,48.210,48.400,47.530,48.210,48.220,4009118,192785421.290,3312,48.210,500,48.140,7500,48.130,2000,48.100,400,48.090,23800,48.220,40900,48.250,200,48.260,3900,48.280,400,48.290,2021-05-31,11:30:03,00";
     """
-    url = 'http://hq.sinajs.cn/list={code}'
+    url = url_config.xl_realtime_quote_url
     symbol = '{}{}'.format('sh' if code.startswith('6') else 'sz', code)
     url = url.format(code=symbol)
     try:
@@ -66,9 +66,10 @@ def get_realtime_data_sina(code):
 
 def get_kline_data_sina(code, period='day', count=250):
     """
-    新浪返回数据格式: [{"day":"2021-05-31 11:00:00","open":"48.310","high":"48.320","low":"47.960","close":"48.290","volume":"305220"}]
+    新浪返回数据格式:
+    [{"day":"2021-05-31 11:00:00","open":"48.310","high":"48.320","low":"47.960","close":"48.290","volume":"305220"}]
     """
-    url_temp = 'https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData?symbol={code}&scale={period}&ma=no&datalen={count}'
+    url_temp = url_config.xl_min_quote_url
     symbol = '{}{}'.format('sh' if code.startswith('6') else 'sz', code)
     is_minute_data = period.startswith('m')
     if is_minute_data:
@@ -127,12 +128,12 @@ def get_kline_data_tx(code, period='day', count=250):
     symbol = '{}{}'.format('sh' if code.startswith('6') else 'sz', code)
     is_minute_data = period.startswith('m')
     if is_minute_data:
-        url = url_min.format(code=symbol, period=period, count=count)
+        url = url_config.tx_min_url.format(code=symbol, period=period, count=count)
     else:
         # week 无法复权
         # start_date = datetime.date.today() - datetime.timedelta(count + count//7 * 2 if period == 'day' else count * 7)
         start_date = quote_db.query_date(code, count)
-        url = url_day.format(code=symbol, period=period, start_date=start_date.strftime('%Y-%m-%d'), count=count)
+        url = url_config.tx_day_url.format(code=symbol, period=period, start_date=start_date.strftime('%Y-%m-%d'), count=count)
 
     try:
         ret = requests.get(url)
@@ -179,7 +180,7 @@ def get_kline_data(code, period='day', count=250):
 
 
 def _download_quote_xls():
-    _dataUrl = url
+    _dataUrl = url_config.tx_latest_day_quote_url
     trade_date = str(datetime.date.today())
     _xls = 'data/xls/{0}.xls'.format(trade_date)
 
