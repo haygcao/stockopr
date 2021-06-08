@@ -6,7 +6,8 @@ import os
 cwd = os.getcwd()
 # ch = ConfigHandler(os.path.join(os.getcwd(), 'config', 'config.ini'), 'db')
 
-config_dir = '../config' if 'test' in os.getcwd() else 'config'
+# config_dir = '../config' if 'test' in os.getcwd() else 'config'
+config_dir = os.path.dirname(__file__)
 
 ch = ConfigHandler(os.path.join(config_dir, 'config.ini'), 'db')
 

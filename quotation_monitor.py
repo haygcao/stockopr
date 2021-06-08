@@ -23,14 +23,16 @@ from util.log import logger
 @dataclass
 class TradeSignal:
     code: str
+    price: float
     date: datetime.datetime = datetime.datetime.now()
     command: str = ''
     policy: Policy = Policy.DEFAULT
     period: str = ''
     last: bool = False
 
-    def __init__(self, code: str, date: datetime.datetime, command: str, category: Policy, period: str, last: bool):
+    def __init__(self, code: str, price: float, date: datetime.datetime, command: str, category: Policy, period: str, last: bool):
         self.code = code
+        self.price = price
         self.date = date
         self.command = command
         self.policy = category
@@ -104,6 +106,7 @@ def get_day_data(code, period='day', count=250):
 
 def update_status_old(code, data, period):
     data_index_ = data.index[-1]
+    price = data['close'][-1]
 
     # if period_status:
     #     if period.startswith('m') and (data_index_ - period_status[-1].date).seconds < int(period[1:])*60:
@@ -122,16 +125,16 @@ def update_status_old(code, data, period):
         command = 'B' if 'bull' in column_name else 'S'
         if data_sub.any(skipna=True):
             data_index_ = data_sub[data_sub.notnull()].index[0]
-            return TradeSignal(code, data_index_, command, Policy.DEVIATION, period, True)
+            return TradeSignal(code, price, data_index_, command, Policy.DEVIATION, period, True)
 
     data = signal_channel.signal_enter(data, period=period)
     data = signal_channel.signal_exit(data, period=period)
 
     if not numpy.isnan(data['channel_signal_enter'][-1]):
-        return TradeSignal(code, data_index_, 'B', Policy.CHANNEL, period, True)
+        return TradeSignal(code, price, data_index_, 'B', Policy.CHANNEL, period, True)
 
     if not numpy.isnan(data['channel_signal_exit'][-1]):
-        return TradeSignal(code, data_index_, 'S', Policy.CHANNEL, period, True)
+        return TradeSignal(code, price, data_index_, 'S', Policy.CHANNEL, period, True)
 
     # long period do not check dynamical system signal
     if period in ['m30']:
@@ -142,10 +145,10 @@ def update_status_old(code, data, period):
     data = signal_dynamical_system.signal_exit(data, period=period)
 
     if data['dynamical_system_signal_enter'][-1] > 0:
-        return TradeSignal(code, data_index_, 'B', Policy.DYNAMICAL_SYSTEM, period, True)
+        return TradeSignal(code, price, data_index_, 'B', Policy.DYNAMICAL_SYSTEM, period, True)
 
     if not numpy.isnan(data['dynamical_system_signal_exit'][-1]):
-        return TradeSignal(code, data_index_, 'S', Policy.DYNAMICAL_SYSTEM, period, True)
+        return TradeSignal(code, price, data_index_, 'S', Policy.DYNAMICAL_SYSTEM, period, True)
     # if not status_map[code][str(m)] or data['dlxt'][-1] != status_map[code][str(m)][-1]:
     #     status_map[code][str(m)].append((datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), data['dlxt'][-1]))
     #     return True
@@ -161,27 +164,28 @@ def check_trade_order_stop_loss(code, data):
 
 def update_status(code, data, period):
     data_index_: datetime.datetime = data.index[-1]
+    price = data['close'][-1]
 
     if check_trade_order_stop_loss(code, data):
-        return TradeSignal(code, data_index_, 'S', Policy.STOP_LOSS, period, True)
+        return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
     data = signal.compute_signal(data, period)
 
     if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
         minute = int(period[1:])
         if data_index_.minute % minute == minute - 1:  # and data_index_.second > 45:
-            return TradeSignal(code, data_index_, 'S', Policy.STOP_LOSS, period, True)
+            return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
     for deviation in signal_deviation:
         if not numpy.isnan(data[deviation][-2]):
             direct = 'B' if 'bull' in deviation else 'S'
-            return TradeSignal(code, data_index_, direct, Policy.DEVIATION, period, True)
+            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
 
     if not numpy.isnan(data['signal_exit'][-1]):
-        return TradeSignal(code, data_index_, 'S', Policy.DEFAULT, period, True)
+        return TradeSignal(code, price, data_index_, 'S', Policy.DEFAULT, period, True)
 
     if not numpy.isnan(data['signal_enter'][-1]):
-        return TradeSignal(code, data_index_, 'B', Policy.DEFAULT, period, True)
+        return TradeSignal(code, price, data_index_, 'B', Policy.DEFAULT, period, True)
 
 
 def check(code, period):
@@ -189,7 +193,7 @@ def check(code, period):
     data30 = get_min_data(code, long_period)
     if not isinstance(data30, pandas.DataFrame) or data30.empty:
         return
-    logger.info('now check {} {} status'.format(code, long_period))
+    logger.debug('now check {} {} status'.format(code, long_period))
     trade_signal = update_status(code, data30, long_period)
     if trade_signal:
         return trade_signal
@@ -197,7 +201,7 @@ def check(code, period):
     data5 = get_min_data(code, period)
     if not isinstance(data5, pandas.DataFrame) or data5.empty:
         return
-    logger.info('now check {} {} status'.format(code, period))
+    logger.debug('now check {} {} status'.format(code, period))
     trade_signal = update_status(code, data5, period)
     if trade_signal:
         return trade_signal
@@ -206,9 +210,9 @@ def check(code, period):
 def order(trade_singal: TradeSignal):
     logger.info('{} {}'.format(trade_singal.command, trade_singal.code))
     if trade_singal.command == 'B':
-        trade_manager.buy(trade_singal.code, policy=trade_singal.policy)
+        trade_manager.buy(trade_singal.code, close=trade_singal.price, policy=trade_singal.policy)
     else:
-        trade_manager.sell(trade_singal.code)
+        trade_manager.sell(trade_singal.code, close=trade_singal.price)
 
 
 def notify(trade_singal: TradeSignal):
@@ -240,6 +244,9 @@ def monitor_today():
         if now.hour == 12 or (now.hour == 11 and now.minute > 30):
             time.sleep(60)
             continue
+
+        if now.second > 50:
+            logger.info('quotation monitor is running')
 
         for code in TradeSignalManager.trade_order_map.keys():
             time.sleep(random.randint(3, 10))

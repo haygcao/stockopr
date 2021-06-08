@@ -152,7 +152,7 @@ def get_kline_data_sina(code, period='day', count=250):
         count = count * 5 if period == 'week' else count
         quote = quote_db.get_price_info_df_db(code, count, period_type='D')
         now = datetime.datetime.now()
-        if quote.index[-1] == datetime.date.today() or now.hour < 9 or (now.hour == 9 and now.hour < 30):
+        if quote.index[-1] == datetime.date.today() or now.hour < 9 or (now.hour == 9 and now.minute < 30):
             return quote
         quote_today = get_realtime_data_sina(code)
         quote = quote.append(quote_today)
@@ -256,7 +256,8 @@ def get_kline_data_tx(code, period='day', count=250, start_date=None, end_date=N
 
 def get_kline_data(code, period='day', count=250):
     func_list = [get_kline_data_tx, get_kline_data_sina]
-    func_list = [get_kline_data_tx]
+    # func_list = [get_kline_data_tx]
+    # func_list = [get_kline_data_sina]
     index = random.randint(0, len(func_list) - 1)
     quote = func_list[index](code, period, count)
     if quote is None:

@@ -56,7 +56,7 @@ def check_quota(code, direction):
     return True
 
 
-def buy(code, count=0, price=0, policy: Policy = None):
+def buy(code, close, count=0, price=0, policy: Policy = None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -96,7 +96,7 @@ def buy(code, count=0, price=0, policy: Policy = None):
     order('B', code, count, price, auto=auto)
 
 
-def sell(code, count=0, price=0):
+def sell(code, close, count=0, price=0):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
