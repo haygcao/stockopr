@@ -6,3 +6,10 @@ tx_day_url = 'http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqf
 xl_min_quote_url = 'https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData?symbol={code}&scale={period}&ma=no&datalen={count}'
 xl_realtime_quote_url = 'http://hq.sinajs.cn/list={code}'
 xl_day_price_url = 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?num=80&sort=code&asc=0&node=%s&symbol=&_s_r_a=page&page=%s'
+
+fh_day_url = 'http://api.finance.ifeng.com/akdaily/?code=sh600000&type=last'
+fh_min_url = 'http://api.finance.ifeng.com/akmin?scode=sh000300&type=30'
+
+fh_page_url = 'http://app.finance.ifeng.com/list/stock.php?t=hs&f=chg_pct&o=desc&p=1'
+
+tx_last_url = 'https://qt.gtimg.cn/q=sh688131,sh688319,sz300502&r=449365993'
