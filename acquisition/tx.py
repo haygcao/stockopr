@@ -89,7 +89,7 @@ def get_today_all():
                    ignore_index=True)
 
     df.rename(columns={'trade': 'close'}, inplace=True)
-    columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'turnover']
+    columns = ['code', 'name', 'open', 'close', 'high', 'low', 'volume', 'turnover']
     for column in df.columns:
         if column in columns:
             continue

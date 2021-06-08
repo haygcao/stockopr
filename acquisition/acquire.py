@@ -37,7 +37,7 @@ def update_stock_basic_info(xlsfile):
     # http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr
     stock_list = tx.get_stock_list(xlsfile)
     stock_list = sorted(stock_list)
-    basic.update_stock_list_into_db(stock_list)
+    basic.upsert_stock_list_into_db(stock_list)
 
 
 # 指数
@@ -127,6 +127,13 @@ def save_quote_xl():
             print('duplicated...')
             df_quote = df_quote[~df_quote['code'].duplicated(keep='first')]
 
+        # df_basic = df_quote.loc[:, ['code', 'name']]
+        stock_list = list(zip(df_quote['code'], df_quote['name']))
+        # basic.save_stock_list_into_db(stock_list)
+        # stock_list = stock_list[:10]
+        basic.upsert_stock_list_into_db(stock_list)
+
+        df_quote = df_quote.drop('name', axis=1)
         # Do not insert the row number (index=False)
         df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
         # df_quote.to_csv('2021-06-07.csv')
