@@ -4,6 +4,7 @@ import os, sys
 import time, datetime
 
 import pandas
+import pandas as pd
 import xlrd
 import urllib.request
 import json
@@ -187,7 +188,29 @@ def save_quote(trade_date=None, xls=None):
     # save_sh_index_trade_info()
 
 
+def fix_price_divisor():
+    code = '300502'
+    df_quote = tx.get_kline_data(code, period='m30', count=250)
+    df_tmp: pd.Series = pd.Series(df_quote.iloc[-1], name=datetime.datetime(2021, 6, 9))
+    df_tmp['close'] = 50
+    df_quote = df_quote.append(df_tmp)
+    divisor_date = datetime.datetime(2021, 6, 8)
+    df_quote = quote_db.compute_price_divisor(df_quote, divisor_date=divisor_date)
+    try:
+        # MySql connection in sqlAlchemy
+        engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
+
+        df_quote.loc[:, 'trade_date'] = df_quote.index
+
+        # Do not insert the row number (index=False)
+        df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
+    except Exception as e:
+        print(e)
+
+
 if __name__ == '__main__':
+    fix_price_divisor()
+    exit(0)
     if not dt.istradeday():
         pass
         # exit(0)

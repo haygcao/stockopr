@@ -7,6 +7,7 @@ import time
 from datetime import date
 import datetime
 
+import pandas
 import pymysql
 
 import util.mysqlcli as mysqlcli

@@ -262,6 +262,9 @@ def get_kline_data(code, period='day', count=250):
     quote = func_list[index](code, period, count)
     if quote is None:
         quote = get_kline_data_sina(code, period, count)
+    if code == '300502':
+        divisor_date = datetime.datetime(2021, 6, 8)
+        quote = quote_db.compute_price_divisor(quote, divisor_date=divisor_date)
     return quote
 
 
