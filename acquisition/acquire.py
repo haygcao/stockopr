@@ -11,7 +11,7 @@ import json
 
 import socket
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 sys.path.append(".")
 
@@ -116,10 +116,35 @@ def save_quote_wy():
 
 
 def save_quote_xl():
+    same_day = True
     df_quote = tx.get_today_all()
     try:
         # MySql connection in sqlAlchemy
         engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
+        with engine.connect() as con:
+            trade_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+            data = []
+            for i in range(2):
+                data.append({"code": df_quote.iloc[i]['code'], 'trade_date': trade_date})
+
+            statement = text("""SELECT close, high, low, open FROM quote WHERE code = :code AND trade_date = :trade_date""")
+
+            for idx, line in enumerate(data):
+                r = con.execute(statement, **line)
+                key_list = ['close', 'open', 'high', 'low']
+                for row in r:
+                    for key in key_list:
+                        if row[key] != df_quote.iloc[idx][key]:
+                            same_day = False
+                            break
+                    else:
+                        continue
+                    break
+                if not same_day:
+                    break
+
+        if same_day:
+            return
 
         df_quote.loc[:, 'trade_date'] = df_quote.index
 
@@ -188,30 +213,7 @@ def save_quote(trade_date=None, xls=None):
     # save_sh_index_trade_info()
 
 
-def fix_price_divisor():
-    code = '300502'
-    df_quote = tx.get_kline_data(code, period='m30', count=250)
-    df_tmp: pd.Series = pd.Series(df_quote.iloc[-1], name=datetime.datetime(2021, 6, 9))
-    df_tmp['close'] = 50
-    df_quote = df_quote.append(df_tmp)
-    divisor_date = datetime.datetime(2021, 6, 8)
-    yest_close_adjust = 34.34
-    df_quote = quote_db.compute_price_divisor(df_quote, divisor_date=divisor_date, yest_close_adjust=yest_close_adjust)
-    try:
-        # MySql connection in sqlAlchemy
-        engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
-
-        df_quote.loc[:, 'trade_date'] = df_quote.index
-
-        # Do not insert the row number (index=False)
-        df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
-    except Exception as e:
-        print(e)
-
-
 if __name__ == '__main__':
-    fix_price_divisor()
-    exit(0)
     if not dt.istradeday():
         pass
         # exit(0)
