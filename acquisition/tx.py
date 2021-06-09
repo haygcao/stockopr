@@ -11,7 +11,7 @@ import pandas
 import requests
 import xlrd
 
-from acquisition import quote_db
+from acquisition import quote_db, basic
 from config import url as url_config
 from config.config import period_map
 
@@ -21,8 +21,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 # logging.Logger.manager.loggerDict
 
-
-
+g_price_divisor_cache = {}
 
 
 def init():
@@ -103,10 +102,6 @@ def get_today_all():
 
 
 def get_realtime_data_sina(code):
-    """
-    股票名称、今日开盘价、昨日收盘价、当前价格、今日最高价、今日最低价、竞买价、竞卖价、成交股数、成交金额、买1手、买1报价、买2手、买2报价、…、买5报价、…、卖5报价、日期、时间
-    var hq_str_sz300502="新易盛,48.000,47.500,48.210,48.400,47.530,48.210,48.220,4009118,192785421.290,3312,48.210,500,48.140,7500,48.130,2000,48.100,400,48.090,23800,48.220,40900,48.250,200,48.260,3900,48.280,400,48.290,2021-05-31,11:30:03,00";
-    """
     url = url_config.xl_realtime_quote_url
     symbol = '{}{}'.format('sh' if code.startswith('6') else 'sz', code)
     url = url.format(code=symbol)
@@ -257,14 +252,20 @@ def get_kline_data_tx(code, period='day', count=250, start_date=None, end_date=N
 def get_kline_data(code, period='day', count=250):
     func_list = [get_kline_data_tx, get_kline_data_sina]
     # func_list = [get_kline_data_tx]
-    # func_list = [get_kline_data_sina]
+    func_list = [get_kline_data_sina]
     index = random.randint(0, len(func_list) - 1)
     quote = func_list[index](code, period, count)
     if quote is None:
         quote = get_kline_data_sina(code, period, count)
-    if code == '300502':
-        divisor_date = datetime.datetime(2021, 6, 8)
-        yest_close_adjust = 34.34
+
+    if code not in g_price_divisor_cache:
+        price_divisor = basic.get_stock_price_divisor(code)
+        g_price_divisor_cache[code] = price_divisor
+    price_divisor = g_price_divisor_cache[code]
+
+    if price_divisor:
+        divisor_date = price_divisor['price_divisor_date']
+        yest_close_adjust = float(price_divisor['price_divisor_adj_price'])
         quote = quote_db.compute_price_divisor(quote, divisor_date=divisor_date, yest_close_adjust=yest_close_adjust)
     return quote
 

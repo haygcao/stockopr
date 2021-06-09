@@ -13,7 +13,9 @@ class QuoteDBTestCase(unittest.TestCase):
 
     def test_compute_price_divisor(self):
         code = '300502'
-        # quote = tx.get_kline_data_sina(code, period='m30', count=250)
+        quote = tx.get_kline_data(code, period='m30', count=250)
+        code = '002739'
+        quote = tx.get_kline_data(code, period='m30', count=250)
         quote = quote_db.get_price_info_df_db(code)
         divisor_date = datetime.datetime(2021, 6, 8)
         yest_close_adjust = 34.34

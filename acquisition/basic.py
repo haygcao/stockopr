@@ -25,6 +25,17 @@ def get_all_stock_code():
         return [code['code'] for code in stock_code_list]
 
 
+def get_stock_price_divisor(code):
+    with mysqlcli.get_cursor() as c:
+        # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
+        sql = "SELECT price_divisor_date, price_divisor_adj_price FROM {0} where code = '{1}'".format(config.sql_tab_basic_info, code)
+        c.execute(sql)
+        price_divisor_info = c.fetchone()
+        if not price_divisor_info['price_divisor_date']:
+            return None
+        return price_divisor_info
+
+
 # insert new row
 # stock_list[(code, name), ...]
 def save_stock_list_into_db(stock_list):

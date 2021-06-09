@@ -17,6 +17,8 @@ use stock;
 create table if not exists basic_info(
     code varchar(8),
     name varchar(16),
+    price_divisor_date date,
+    price_divisor_adj_price decimal(10, 3),
     type varchar(8) default 'A');
 
 CREATE TABLE future_variety (
