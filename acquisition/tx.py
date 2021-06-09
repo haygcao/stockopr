@@ -44,6 +44,28 @@ def url_to_list():
     return allCodeList
 
 
+def get_realtime_quote_sina(code):
+    url = url_config.xl_realtime_quote_url
+    symbol = '{}{}'.format('sh' if code.startswith('6') else 'sz', code)
+    url = url.format(code=symbol)
+    try:
+        ret = requests.get(url)
+    except Exception as e:
+        return
+
+    data = str(ret.content).split('"')[1]
+    data_arr = data.split(',')
+
+    return data_arr
+
+
+def get_yest_close_sina(code):
+    data_arr = get_realtime_quote_sina(code)
+    yest_close = float(data_arr[2])
+
+    return yest_close
+
+
 def _parsing_dayprice_json(types=None, page=1):
     """
            处理当日行情分页数据，格式为json
@@ -102,16 +124,7 @@ def get_today_all():
 
 
 def get_realtime_data_sina(code):
-    url = url_config.xl_realtime_quote_url
-    symbol = '{}{}'.format('sh' if code.startswith('6') else 'sz', code)
-    url = url.format(code=symbol)
-    try:
-        ret = requests.get(url)
-    except Exception as e:
-        return
-
-    data = str(ret.content).split('"')[1]
-    data_arr = data.split(',')
+    data_arr = get_realtime_quote_sina(code)
     open = float(data_arr[1])
     close = float(data_arr[3])
     high = float(data_arr[4])

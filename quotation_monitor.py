@@ -10,7 +10,7 @@ import numpy
 import pandas
 
 from chart import open_graph
-from config.config import period_map, signal_deviation, Policy
+from config.config import period_map, signal_deviation, Policy, signal_enter_deviation, signal_exit_deviation
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
@@ -171,15 +171,21 @@ def update_status(code, data, period):
 
     data = signal.compute_signal(data, period)
 
-    if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
-        minute = int(period[1:])
-        if data_index_.minute % minute == minute - 1:  # and data_index_.second > 45:
+    minute = int(period[1:])
+    # 周期最 3 分钟
+    if data_index_.minute % minute >= minute - 3:
+        if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
             return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
-    for deviation in signal_deviation:
-        if not numpy.isnan(data[deviation][-2]):
-            direct = 'B' if 'bull' in deviation else 'S'
-            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
+        for deviation in signal_exit_deviation:
+            if not numpy.isnan(data[deviation][-2]):
+                direct = 'S'
+                return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
+
+        for deviation in signal_enter_deviation:
+            if not numpy.isnan(data[deviation][-2]):
+                direct = 'B'
+                return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
 
     if not numpy.isnan(data['signal_exit'][-1]):
         return TradeSignal(code, price, data_index_, 'S', Policy.DEFAULT, period, True)

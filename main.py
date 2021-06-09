@@ -6,6 +6,8 @@ import time
 import util.macd
 # import acquisition.wy as wy
 
+from util.log import logger
+
 
 def test_save_quote():
     import acquisition.acquire as acquire
@@ -41,8 +43,8 @@ def test_select_mp():
     strategy_name_list = ['hot_strong', 'ema_value']
     code_list = selector.select(strategy_name_list)
     for code in code_list:
-        print(code, basic.get_stock_name(code))
-    print('+++ {0} +++'.format(len(code_list)))
+        logger.info(code, basic.get_stock_name(code))
+    logger.info('+++ {0} +++'.format(len(code_list)))
 
 
 def test_trend_recognition():
@@ -73,7 +75,7 @@ def test_signal():
 
 
 if __name__ == '__main__':
-    print('{} start scan...'.format(datetime.datetime.now()))
+    logger.info('{} start scan...'.format(datetime.datetime.now()))
 
     t1 = time.time()
     # test_save_quote()
@@ -83,6 +85,6 @@ if __name__ == '__main__':
     # test_signal()
 
     t2 = time.time()
-    print('cost: [{}]   {} - {}'.format(round(t2 - t1, 2),
+    logger.info('cost: [{}]   {} - {}'.format(round(t2 - t1, 2),
                                       datetime.datetime.fromtimestamp(t1).strftime('%H:%M:%S'),
                                       datetime.datetime.fromtimestamp(t2).strftime('%H:%M:%S')))

@@ -56,7 +56,7 @@ def signal_enter(quote, period=None):
 
     quote = compute_index(quote, period)
 
-    column = 'force_index13' if is_long_period(period) else 'force_index'
+    column = 'force_index13' if period == 'week' else 'force_index'
     quote_copy = quote.copy()
     quote_copy.loc[:, 'force_index_shift'] = quote[column].shift(periods=1)
     quote_copy.loc[:, 'force_index_signal_enter'] = quote_copy.apply(
