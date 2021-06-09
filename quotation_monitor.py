@@ -10,6 +10,7 @@ import numpy
 import pandas
 
 from chart import open_graph
+from config import config
 from config.config import period_map, signal_deviation, Policy, signal_enter_deviation, signal_exit_deviation
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
@@ -104,6 +105,20 @@ def get_day_data(code, period='day', count=250):
     return data
 
 
+def write_supplemental_signal(supplemental_signal_path, trade_signal: TradeSignal):
+    import csv
+    with open(supplemental_signal_path, 'a', newline='') as csvfile:
+        fieldnames = ['code', 'name', 'date', 'command', 'price']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        # writer.writeheader()
+        writer.writerow({'code': trade_signal.code,
+                         'date': trade_signal.date.strftime('%Y-%m-%d %H:%M'),
+                         'command': trade_signal.command,
+                         'price': trade_signal.price
+                         })
+
+
 def update_status_old(code, data, period):
     data_index_ = data.index[-1]
     price = data['close'][-1]
@@ -171,9 +186,9 @@ def update_status(code, data, period):
 
     data = signal.compute_signal(data, period)
 
-    minute = int(period[1:])
+    minute = 0 if period == 'day' else int(period[1:])
     # 周期最 3 分钟
-    if data_index_.minute % minute >= minute - 3:
+    if period == 'day' or data_index_.minute % minute >= minute - 3:
         if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
             return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
@@ -195,6 +210,14 @@ def update_status(code, data, period):
 
 
 def check(code, period):
+    data_day = get_min_data(code, 'day')
+    if not isinstance(data_day, pandas.DataFrame) or data_day.empty:
+        return
+    logger.debug('now check {} {} status'.format(code, 'day'))
+    trade_signal = update_status(code, data_day, 'day')
+    if trade_signal:
+        return trade_signal
+
     long_period = period_map[period]['kline_long_period']
     data30 = get_min_data(code, long_period)
     if not isinstance(data30, pandas.DataFrame) or data30.empty:
@@ -263,6 +286,12 @@ def monitor_today():
             if not TradeSignalManager.need_signal(trade_signal):
                 continue
 
+            # write to log
+            # supplemental_signal: [(code, date, 'B/S', price), (code, date, 'B/S', price), ...]
+
+            supplemental_signal_path = config.supplemental_signal_path
+            write_supplemental_signal(supplemental_signal_path)
+
             logger.info(TradeSignalManager.signal_map)
             p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period,))
             p.start()
@@ -271,7 +300,3 @@ def monitor_today():
             notify(trade_signal)
 
             p.join(timeout=1)
-
-
-if __name__ == '__main__':
-    monitor_today()
