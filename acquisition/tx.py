@@ -264,7 +264,8 @@ def get_kline_data(code, period='day', count=250):
         quote = get_kline_data_sina(code, period, count)
     if code == '300502':
         divisor_date = datetime.datetime(2021, 6, 8)
-        quote = quote_db.compute_price_divisor(quote, divisor_date=divisor_date)
+        yest_close_adjust = 34.34
+        quote = quote_db.compute_price_divisor(quote, divisor_date=divisor_date, yest_close_adjust=yest_close_adjust)
     return quote
 
 

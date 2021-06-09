@@ -195,7 +195,8 @@ def fix_price_divisor():
     df_tmp['close'] = 50
     df_quote = df_quote.append(df_tmp)
     divisor_date = datetime.datetime(2021, 6, 8)
-    df_quote = quote_db.compute_price_divisor(df_quote, divisor_date=divisor_date)
+    yest_close_adjust = 34.34
+    df_quote = quote_db.compute_price_divisor(df_quote, divisor_date=divisor_date, yest_close_adjust=yest_close_adjust)
     try:
         # MySql connection in sqlAlchemy
         engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))

@@ -251,43 +251,19 @@ def get_latest_trade_date():
         return list(r.values())[0]
 
 
-def compute_price_divisor(quote: pd.DataFrame, divisor_date):
-    # df.drop_duplicates(subset=['trade_date'], inplace=True)
-    # df = df[['trade_date', 'code', 'open', 'close', 'ad']]   # ad 为英文的涨跌幅
-    # df.columns = ['date', 'code', 'open', 'close', 'ad']
-    # df.sort_values(by=['date'], inplace=True)
-    # df.reset_index(inplace=True, drop=True)
-
-    # 开始复权:计算复权因子
-    # df['复权因子'] = (df['涨跌幅'] + 1).cumprod()
-    # apd（复权价）:after price divisor
-    # df['apd'] = (df['ad']+1).cumprod()
-
+def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust=34.34):
     df = quote.loc[:divisor_date]
     if df.index[-1] != divisor_date:
         df_tmp: pd.Series = pd.Series(quote.iloc[len(df)], name=quote.index[len(df)])
         df = df.append(df_tmp)
+
     close_shift = df.loc[:, 'close'].shift(periods=1)
-    # ad = (df['close'] / df['close'][-1]) - 1
     ad = (df['close'] / close_shift) - 1
-
-    # 获取当日收盘价 df['close']
-    # 前复权因子：(1/(1+今日涨跌幅)) ==> 1/(1+df['ad'])
-    # 昨日收盘价 = 当日收盘价 * 复权因子
-
-    # df.sort_index(ascending=0, inplace=True)
-    # close_shift = df.loc[:, 'close'].shift(periods=1)
-    # ad = (df['close'] / close_shift) - 1
-    # # ad.sort_index(ascending=0, inplace=True)
-    # apd = (1 / (1 + ad)).cumprod() * df.iloc[0]['close']
-
-    df.sort_index(ascending=1, inplace=True)
-    # df.sort_values(by=['trade_date'], ascending=0)  # 倒序处理，因为找不到累除函数
-    # df['apd'] = (1 / (1 + df['ad'])).cumprod() * df.iloc[0]['close']  # 前复权
+    ad[-1] = df.iloc[-1]['close'] / yest_close_adjust - 1
     apd_factor = (1 + ad).cumprod()
-    apd = apd_factor * (df.iloc[-1]['close'])
+    apd = apd_factor * (df.iloc[-1]['close'] / apd_factor[-1])
 
-    apd[-1] = df['close'][-1]
+    # apd[-1] = df['close'][-1]
     for column in ['open', 'high', 'low']:
         df[column] = df[column] / df['close'] * apd
     df['close'] = apd
