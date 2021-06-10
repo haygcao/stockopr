@@ -108,13 +108,14 @@ def get_day_data(code, period='day', count=250):
 def write_supplemental_signal(supplemental_signal_path, trade_signal: TradeSignal):
     import csv
     with open(supplemental_signal_path, 'a', newline='') as csvfile:
-        fieldnames = ['code', 'name', 'date', 'command', 'price']
+        fieldnames = ['code', 'name', 'date', 'command', 'period', 'price']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         # writer.writeheader()
         writer.writerow({'code': trade_signal.code,
                          'date': trade_signal.date.strftime('%Y-%m-%d %H:%M'),
                          'command': trade_signal.command,
+                         'period': trade_signal.period,
                          'price': trade_signal.price
                          })
 
@@ -209,30 +210,21 @@ def update_status(code, data, period):
         return TradeSignal(code, price, data_index_, 'B', Policy.DEFAULT, period, True)
 
 
-def check(code, period):
-    data_day = get_min_data(code, 'day')
-    if not isinstance(data_day, pandas.DataFrame) or data_day.empty:
-        return
-    logger.debug('now check {} {} status'.format(code, 'day'))
-    trade_signal = update_status(code, data_day, 'day')
-    if trade_signal:
-        return trade_signal
-
-    long_period = period_map[period]['kline_long_period']
-    data30 = get_min_data(code, long_period)
-    if not isinstance(data30, pandas.DataFrame) or data30.empty:
-        return
-    logger.debug('now check {} {} status'.format(code, long_period))
-    trade_signal = update_status(code, data30, long_period)
-    if trade_signal:
-        return trade_signal
-
-    data5 = get_min_data(code, period)
-    if not isinstance(data5, pandas.DataFrame) or data5.empty:
+def check_period(code, period):
+    data = get_min_data(code, period)
+    if not isinstance(data, pandas.DataFrame) or data.empty:
         return
     logger.debug('now check {} {} status'.format(code, period))
-    trade_signal = update_status(code, data5, period)
+    trade_signal = update_status(code, data, period)
     if trade_signal:
+        return trade_signal
+
+
+def check(code, periods):
+    for period in periods:
+        trade_signal = check_period(code, period)
+        if not trade_signal:
+            continue
         return trade_signal
 
 
@@ -245,7 +237,6 @@ def order(trade_singal: TradeSignal):
 
 
 def notify(trade_singal: TradeSignal):
-
     # log
     command = '买入' if trade_singal.command == 'B' else '卖出'
     # tts
@@ -261,7 +252,8 @@ def query_trade_order_code_list():
 
 
 def monitor_today():
-    period = 'm5'
+    periods = ['day', 'm30', 'm5']
+    periods = ['day', 'm30']
 
     logger.info(TradeSignalManager.signal_map)
     while True:
@@ -274,12 +266,13 @@ def monitor_today():
             time.sleep(60)
             continue
 
-        if now.second > 50:
+        if now.minute < 50:
             logger.info('quotation monitor is running')
+            time.sleep(random.randint(3, 6) * 60)
 
         for code in TradeSignalManager.trade_order_map.keys():
             time.sleep(random.randint(3, 10))
-            trade_signal = check(code, period)
+            trade_signal = check(code, periods)
             if not trade_signal:
                 continue
 

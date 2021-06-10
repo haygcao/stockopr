@@ -19,7 +19,8 @@ class FileOpTestCase(unittest.TestCase):
         write_supplemental_signal(config.supplemental_signal_path, trade_signal)
 
     def test_read(self):
-        r = get_supplemental_signal(config.supplemental_signal_path)
+        period = 'day'
+        r = get_supplemental_signal(config.supplemental_signal_path, period)
         print(len(r))
         print(r)
 

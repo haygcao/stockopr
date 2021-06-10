@@ -76,7 +76,7 @@ class Panel(QWidget):
         btn_load.clicked.connect(self.load)
 
         combo_period = QComboBox(self)
-        for period in ['m1', 'm5', 'm30', 'day', 'week']:
+        for period in ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']:
             combo_period.addItem(period)
 
         # comboPeriod.move(50, 50)

@@ -48,13 +48,15 @@ def function_tune_enter_signal_by_stop_loss(signal_enter, high, low, close, stop
 
 
 # supplemental_signal: [(code, date, 'B/S', price), (code, date, 'B/S', price), ...]
-def get_supplemental_signal(supplemental_signal_path):
+def get_supplemental_signal(supplemental_signal_path, period):
     import csv
     with open(supplemental_signal_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
 
         signal_list = []
         for row in reader:
+            if row['period'] != period:
+                continue
             row['date'] = datetime.datetime.strptime(row['date'], '%Y-%m-%d %H:%M')
             if row['code'].startswith('#'):
                 continue
@@ -99,7 +101,7 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     # 处理系统外交易信号
     supplemental_signal_path = config.supplemental_signal_path
-    supplemental_signal = get_supplemental_signal(supplemental_signal_path)
+    supplemental_signal = get_supplemental_signal(supplemental_signal_path, period)
     code = str(quote['code'][0])
     for signal_dict in supplemental_signal:
         if code != signal_dict['code']:

@@ -1,2 +1,4 @@
-code,name,date,command,price
-# 601633,,2020-08-31 0:0,B,
+code,name,date,command,period,price
+# 601633,,2020-08-31 0:0,B,day,
+002739,,2021-06-10 10:25,S,day,16.0
+

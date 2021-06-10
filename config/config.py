@@ -287,7 +287,9 @@ signal_deviation.extend(signal_exit_deviation)
 period_map = {
         'm1': {'period': '1min', 'long_period': '5min', 'kline_long_period': 'm5'},
         'm5': {'period': '5min', 'long_period': '30min', 'kline_long_period': 'm30'},
+        'm15': {'period': '15min', 'long_period': '30min', 'kline_long_period': 'm30'},
         'm30': {'period': '30min', 'long_period': 'D', 'kline_long_period': 'day'},
+        'm60': {'period': '60min', 'long_period': 'D', 'kline_long_period': 'day'},
         'day': {'period': 'D', 'long_period': 'W', 'kline_long_period': 'week'},
         'week': {'period': 'W', 'long_period': 'M', 'kline_long_period': 'month'},
     }
@@ -295,7 +297,9 @@ period_map = {
 period_price_diff_ratio_deviation_map = {
     'm1': 0.998,
     'm5': 0.995,
+    'm15': 0.995,
     'm30': 0.99,
+    'm60': 0.99,
     'day': 0.98,
     'week': 0.96
 }
@@ -303,7 +307,9 @@ period_price_diff_ratio_deviation_map = {
 period_price_diff_ratio_atr_map = {
     'm1': 5,
     'm5': 4,
+    'm15': 4,
     'm30': 4,
+    'm60': 4,
     'day': 3,
     'week': 3
 }
