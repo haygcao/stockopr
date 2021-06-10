@@ -352,12 +352,21 @@ supplemental_signal_path = os.path.join(config_dir, '..', 'data/trade.csv')
 # 振荡阈值
 oscillation_threshold = 1.05
 
+stamp_duty = 0.001   # 印花税 卖方
+commission = 0.0002   # 佣金 - 中信证券 双向
+transfer_fee = 0.00002   # 过户费 上海证券交易所收取 双向
+
+charge_sell_sz = 1 + commission + stamp_duty
+charge_sell_sh = 1 + commission + stamp_duty + transfer_fee
+charge_buy_sz = 1 + commission
+charge_buy_sh = 1 + commission + transfer_fee
+
 
 class Policy(Enum):
-    DEFAULT = 0
-    DEVIATION = 1
-    EMA_VALUE = 2
-    CHANNEL = 3
-    FORCE_INDEX = 4
-    DYNAMICAL_SYSTEM = 5
-    STOP_LOSS = 6
+    DEFAULT = ''
+    DEVIATION = 'deviation'
+    EMA_VALUE = 'ema value'
+    CHANNEL = 'channel'
+    FORCE_INDEX = 'force index'
+    DYNAMICAL_SYSTEM = 'dynamical system'
+    STOP_LOSS = 'stop loss'

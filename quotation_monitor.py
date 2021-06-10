@@ -250,7 +250,7 @@ def notify(trade_singal: TradeSignal):
     command = '买入' if trade_singal.command == 'B' else '卖出'
     # tts
     from toolkit import tts
-    txt = '注意, {1}信号, {2}, {0}'.format(' '.join(trade_singal.code), command, trade_singal.policy.name)
+    txt = '注意, {1}信号, {2}, {0}'.format(' '.join(trade_singal.code), command, trade_singal.policy.value)
     logger.info(txt)
     tts.say(txt)
 
@@ -290,7 +290,7 @@ def monitor_today():
             # supplemental_signal: [(code, date, 'B/S', price), (code, date, 'B/S', price), ...]
 
             supplemental_signal_path = config.supplemental_signal_path
-            write_supplemental_signal(supplemental_signal_path)
+            write_supplemental_signal(supplemental_signal_path, trade_signal)
 
             logger.info(TradeSignalManager.signal_map)
             p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period,))
@@ -300,3 +300,7 @@ def monitor_today():
             notify(trade_signal)
 
             p.join(timeout=1)
+
+
+if __name__ == '__main__':
+    monitor_today()

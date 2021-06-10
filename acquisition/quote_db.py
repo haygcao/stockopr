@@ -264,10 +264,12 @@ def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust=3
     apd = apd_factor * (df.iloc[-1]['close'] / apd_factor[-1])
 
     # apd[-1] = df['close'][-1]
+    df_copy = df.copy()
     for column in ['open', 'high', 'low']:
-        df[column] = df[column] / df['close'] * apd
-    df['close'] = apd
+        v = df.loc[:, column] / df.loc[:, 'close'] * apd
+        df_copy.loc[:, column] = v
+    df_copy.loc[:, 'close'] = apd
 
-    quote.loc[:divisor_date] = df
+    quote.loc[:divisor_date] = df_copy
 
     return quote

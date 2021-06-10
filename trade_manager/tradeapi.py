@@ -34,8 +34,12 @@ def query_position(code):
     if not json_str:
         return None
 
-    d = json.loads(json_str)
-    position = trade_data.Position(code, d['current_position'], d['avail_position'])
+    try:
+        d = json.loads(json_str)
+        position = trade_data.Position(code, d['current_position'], d['avail_position'])
+    except Exception as e:
+        print(e, json_str)
+        return None
 
     return position
 
