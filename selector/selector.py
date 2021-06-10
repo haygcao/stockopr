@@ -22,7 +22,7 @@ import selector.plugin.d as d
 import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
-from selector.plugin import market_deviation, hot_strong
+from selector.plugin import market_deviation, hot_strong, bull_at_bottom
 from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
@@ -30,6 +30,8 @@ import indicator.force_index as force_index
 import selector.selected as selected
 
 # 横盘 第二波 突破 涨 跌 大涨 大跌
+from util.log import logger
+
 selector = {
     'hp': hp.hp,
     'hp_p': hp.hp_p,
@@ -48,6 +50,7 @@ selector = {
     'nsbl': market_deviation.market_deviation,   # 牛市背离
     'ema_value': ema_value.ema_value,   # 价值回归
     'hot_strong': hot_strong.hot_strong,
+    'bull_at_bottom': bull_at_bottom.bull_at_bottom,
     'dlxt_green': dynamical_system.dynamical_system_green,
     'dlxt_red': dynamical_system.dynamical_system_red,
     'dlxt_blue': dynamical_system.dynamical_system_blue,
@@ -72,6 +75,9 @@ def _select(strategy_name, code):
     _conn = mysqlcli.get_connection()
 
     df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
+    if df.empty:
+        logger.info(code, 'no quote')
+        return
 
     ret = None
     if is_match(df, strategy_name):
@@ -95,7 +101,7 @@ def select_one_strategy(code_list, strategy_name):
     Note that a queue created using a manager does not have this issue.
     """
 
-    print('{} [{}] to check {}...'.format(datetime.datetime.now(), len(code_list), strategy_name))
+    logger.info('{} [{}] to check {}...'.format(datetime.datetime.now(), len(code_list), strategy_name))
 
     select_func = functools.partial(_select, strategy_name)
 
@@ -115,7 +121,7 @@ def select_one_strategy(code_list, strategy_name):
 
         code_list = [code for code in r if code]
 
-    print('{} {}: {}'.format(datetime.datetime.now(), strategy_name, len(code_list)))
+    logger.info('{} {}: {}'.format(datetime.datetime.now(), strategy_name, len(code_list)))
 
     return code_list
 
@@ -124,9 +130,10 @@ def select(strategy_name_list):
     code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
     # code_list = ['300502']
-
+    code_list = [code for code in code_list if int(code[:2]) <= 60]
     for strategy_name in strategy_name_list:
         code_list = select_one_strategy(code_list, strategy_name)
+        logger.info(strategy_name, code_list)
 
     code_list.sort()
 

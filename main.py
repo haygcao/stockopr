@@ -27,9 +27,11 @@ def test_select():
     # code = '600588'
     # code = '300312'
     # code = '300946'
+    code = '000982'
     df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
     df = df.sort_index()
-    ret = selector.is_match(df, 'hot_strong')
+    ret = selector.is_match(df, 'bull_at_bottom')
+    # ret = selector.is_match(df, 'hot_strong')
     # ret = selector.is_match(df, 'nsbl')
     # ret = selector.is_match(df, 'dlxt_blue')
     # ret = selector.is_match(df, 'qlzs_p')
@@ -41,6 +43,7 @@ def test_select_mp():
     import acquisition.basic as basic
     strategy_name_list = ['ema_value']
     strategy_name_list = ['hot_strong', 'ema_value']
+    strategy_name_list = ['bull_at_bottom']
     code_list = selector.select(strategy_name_list)
     for code in code_list:
         logger.info(code, basic.get_stock_name(code))

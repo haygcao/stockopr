@@ -266,9 +266,10 @@ def monitor_today():
             time.sleep(60)
             continue
 
-        if now.minute < 50:
-            logger.info('quotation monitor is running')
-            time.sleep(random.randint(3, 6) * 60)
+        sleep = random.randint(3, 6) * 60 if now.minute < 50 else random.randint(1, 3) * 60
+
+        time.sleep(sleep)
+        logger.info('quotation monitor is running')
 
         for code in TradeSignalManager.trade_order_map.keys():
             time.sleep(random.randint(3, 10))

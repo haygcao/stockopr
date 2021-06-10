@@ -23,6 +23,9 @@ def gen_ma(quote, n=config.MA_NUM, l=config.MAS):
 
 
 def filter_quote(quote):
+    if quote.empty:
+        return True
+
     name = basic.get_stock_name(quote['code'][-1])
     if 'ST' in name or '退市' in name:
         return True

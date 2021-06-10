@@ -118,6 +118,13 @@ def save_quote_wy():
 def save_quote_xl():
     same_day = True
     df_quote = tx.get_today_all()
+    df_quote = df_quote[df_quote.volume > 0]
+    # # define values
+    # values = [value1, value2, value3, ...]
+    #
+    # # drop rows that contain any value in the list
+    # df = df[df.column_name.isin(values) == False]
+
     try:
         # MySql connection in sqlAlchemy
         engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
