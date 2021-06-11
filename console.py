@@ -179,17 +179,19 @@ class Panel(QWidget):
 
     def load(self):
         self.combo_code.clear()
-        with open('data/portfolio.txt', encoding='utf8') as fp:
-            for code_name in fp:
-                if not code_name.strip():
-                    continue
-                # name = basic.get_stock_name(code)
-                self.combo_code.addItem(code_name)
 
         code_name_map = quote_db.query_trade_order_map()
         for code, order in code_name_map.items():
             name = basic.get_stock_name(code)
             self.combo_code.addItem('{} {}'.format(code, name))
+
+        with open('data/portfolio.txt', encoding='utf8') as fp:
+            for code_name in fp:
+                code_name = code_name.strip()
+                if not code_name:
+                    continue
+                # name = basic.get_stock_name(code)
+                self.combo_code.addItem(code_name)
 
     def on_activated_period(self, text):
         self.period = text

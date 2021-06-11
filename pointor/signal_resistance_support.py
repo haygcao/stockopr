@@ -40,7 +40,7 @@ def function_exit(high, close, support, dlxt_long_period, dlxt, dlxt_ema13, ema1
 def compute_index(quote, period=None):
     quote = ema.compute_ema(quote)
     quote.loc[:, 'resistance_origin'] = quote.loc[:, 'high'].rolling(20, min_periods=1).max()
-    quote.loc[:, 'support_origin'] = quote.loc[:, 'low'].rolling(20, min_periods=1).min()
+    quote.loc[:, 'support_origin'] = quote.loc[:, 'low'].rolling(10, min_periods=1).min()
 
     return quote
 

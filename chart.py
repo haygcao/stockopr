@@ -22,6 +22,7 @@ from pointor import signal_dynamical_system, signal_channel, signal_market_devia
 from indicator import force_index
 
 import logging
+
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 # http://www.cjzzc.com/web_color.html
 
@@ -84,8 +85,9 @@ def import_csv(path):
 
 
 def get_window(data):
+    return data
     # if isinstance(data) 'pandas.core.series.Series' 'numpy.ndarray' 'pandas.core.frame.DataFrame'
-    return data[-250:]
+    # return data[-250:]
 
 
 def tune_deviation(data_in):
@@ -148,7 +150,7 @@ class DataFinanceDraw(object):
         # volume:成交量直方图的颜色
         # inherit:是否继承，选填
         mc = mpf.make_marketcolors(
-            up='white', #'dimgray',
+            up='white',  # 'dimgray',
             down=grey,
             edge=grey,
             wick=grey,
@@ -184,7 +186,7 @@ class DataFinanceDraw(object):
 
     def fetch_data(self, code, count=250):
         if not is_long_period(self.period):
-            count *= 1   # 5
+            count *= 1  # 5
         self.data_origin = tx.get_kline_data(code, self.period, count)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
         self.load_data_timestamp = datetime.datetime.now().timestamp()
@@ -199,7 +201,7 @@ class DataFinanceDraw(object):
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
     def more_panel_draw(self):
-        data = self.data_origin   # .iloc[-100:]
+        data = self.data_origin  # .iloc[-100:]
         data = signal.compute_signal(data, self.period)
 
         exp13 = data['close'].ewm(span=13, adjust=False).mean()
@@ -263,17 +265,25 @@ class DataFinanceDraw(object):
 
         force_index_color = [lightgrey if v >= 0 else grey for v in get_window(data["force_index"])]
         force_index_color = [
-            dark_olive_green3 if v == force_index_abs_avg * 5 else light_coral if v == -force_index_abs_avg * 5 else force_index_color[i]
+            dark_olive_green3 if v == force_index_abs_avg * 5 else light_coral if v == -force_index_abs_avg * 5 else
+            force_index_color[i]
             for (i,), v in numpy.ndenumerate(get_window(data_force_index).values)]
 
         data_atr = data['atr']
+        width = 0.2
+        color = grey
         self.add_plot.extend([
-            mpf.make_addplot(get_window(data_atr + exp), type='line', width=1, panel=0, color=lightgrey, linestyle='dotted'),
-            mpf.make_addplot(get_window(data_atr * 2 + exp), type='line', width=1, panel=0, color=grey, linestyle='dashdot'),
-            mpf.make_addplot(get_window(data_atr * 3 + exp), type='line', width=1, panel=0, color=dimgrey),
-            mpf.make_addplot(get_window(-data_atr + exp), type='line', width=1, panel=0, color=lightgrey, linestyle='dotted'),
-            mpf.make_addplot(get_window(-data_atr * 2 + exp), type='line', width=1, panel=0, color=grey, linestyle='dashdot'),
-            mpf.make_addplot(get_window(-data_atr * 3 + exp), type='line', width=1, panel=0, color=dimgrey),
+            mpf.make_addplot(get_window(data_atr + exp), type='line', width=width, panel=0, color=lightgrey,
+                             linestyle='dotted'),
+            mpf.make_addplot(get_window(data_atr * 2 + exp), type='line', width=width, panel=0, color=color,
+                             linestyle='dashdot'),
+            mpf.make_addplot(get_window(data_atr * 3 + exp), type='line', width=width, panel=0, color=color),
+
+            mpf.make_addplot(get_window(-data_atr + exp), type='line', width=width, panel=0, color=lightgrey,
+                             linestyle='dotted'),
+            mpf.make_addplot(get_window(-data_atr * 2 + exp), type='line', width=width, panel=0, color=color,
+                             linestyle='dashdot'),
+            mpf.make_addplot(get_window(-data_atr * 3 + exp), type='line', width=width, panel=0, color=color),
         ])
 
         data_stop_loss = self.data[:]['stop_loss'].copy()
@@ -286,10 +296,11 @@ class DataFinanceDraw(object):
 
         data_resistance_20 = self.data['resistance']
         data_resistance_20 = data_resistance_20.mask(data_resistance_20.index < data_resistance_20.index[-60], numpy.nan)
-        data_resistance_20 = data_resistance_20.mask(data_resistance_20 > 0, data_resistance_20[-1])
+        # data_resistance_20 = data_resistance_20.mask(data_resistance_20 > 0, data_resistance_20[-1])
+
         data_support_20 = self.data['support']
         data_support_20 = data_support_20.mask(data_support_20.index < data_support_20.index[-60], numpy.nan)
-        data_support_20 = data_support_20.mask(data_support_20 > 0, data_support_20[-1])
+        # data_support_20 = data_support_20.mask(data_support_20 > 0, data_support_20[-1])
 
         dlxt.values[:] = 1
         # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
@@ -298,8 +309,9 @@ class DataFinanceDraw(object):
 
         if not is_long_period(self.period):
             self.add_plot.extend([
-                mpf.make_addplot(get_window(dlxt_long_period), type='bar', width=1, panel=0, color=dlxt_long_period_color,
-                                 alpha=0.1),
+                mpf.make_addplot(get_window(dlxt_long_period), type='bar', width=1, panel=0,
+                                 color=dlxt_long_period_color,
+                                 alpha=0.05),
                 mpf.make_addplot(get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt_long_period,
                                  color=dlxt_long_period_color)])
             # mpf.make_addplot(get_window(dlxt, type='bar', width=1, panel=0, color=dlxt_color, alpha=0.1)),
@@ -335,33 +347,44 @@ class DataFinanceDraw(object):
         data_force_index_bear_deviation_single_point = tune_deviation(data_force_index_bear_deviation)
 
         force_index_color = [dark_olive_green3 if not numpy.isnan(v) else force_index_color[i]
-                  for (i,), v in numpy.ndenumerate(get_window(force_index_bull_market_deviation).values)]
+                             for (i,), v in numpy.ndenumerate(get_window(force_index_bull_market_deviation).values)]
         force_index_color = [light_coral if not numpy.isnan(v) else force_index_color[i]
-                  for (i,), v in numpy.ndenumerate(get_window(force_index_bear_market_deviation).values)]
+                             for (i,), v in numpy.ndenumerate(get_window(force_index_bear_market_deviation).values)]
 
+        width = 0.5
+        color = dimgrey
         self.add_plot.extend([
-            mpf.make_addplot(get_window(data_resistance), type='line', color=grey),
-            mpf.make_addplot(get_window(data_support), type='line', color=grey),
-            mpf.make_addplot(get_window(data_resistance_20), type='line', color=green),
-            mpf.make_addplot(get_window(data_support_20), type='line', color=red),
-            mpf.make_addplot(get_window(exp13), type='line', color=dimgrey),
-            mpf.make_addplot(get_window(exp26), type='line', color=black),
-            mpf.make_addplot(get_window(data_force_index), type='bar', panel=self.panel_force_index, color=force_index_color),
-            mpf.make_addplot(get_window(data_force_index), type='line', width=1, panel=self.panel_force_index, color=dimgrey),
+            mpf.make_addplot(get_window(data_resistance), type='line', width=width+0.3, color=grey),
+            mpf.make_addplot(get_window(data_support), type='line', width=width+0.3, color=grey),
+            mpf.make_addplot(get_window(data_resistance_20), type='line', width=width, color=color),
+            mpf.make_addplot(get_window(data_support_20), type='line', width=width, color=color),
+
+            mpf.make_addplot(get_window(exp13), type='line', width=width+0.2, color=dimgrey),
+            mpf.make_addplot(get_window(exp26), type='line', width=width+0.1, color=black),
+            mpf.make_addplot(get_window(data_force_index), type='bar', panel=self.panel_force_index,
+                             color=force_index_color),
+            mpf.make_addplot(get_window(data_force_index), type='line', width=1, panel=self.panel_force_index,
+                             color=dimgrey),
             # mpf.make_addplot(get_window(data_force_index_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_force_index, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
             # mpf.make_addplot(get_window(data_force_index_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_force_index, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
             mpf.make_addplot(get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
         ])
 
         if get_window(data['signal_enter']).any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(get_window(data['signal_enter']), type='scatter', width=1, color=dark_olive_green3, markersize=50, marker=marker_up))
+            self.add_plot.append(
+                mpf.make_addplot(get_window(data['signal_enter']), type='scatter', width=1, color=dark_olive_green3,
+                                 markersize=50, marker=marker_up))
         if get_window(data['signal_exit']).any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(get_window(data['signal_exit']), type='scatter', width=1, color=light_coral, markersize=50, marker=marker_down))
+            self.add_plot.append(
+                mpf.make_addplot(get_window(data['signal_exit']), type='scatter', width=1, color=light_coral,
+                                 markersize=50, marker=marker_down))
 
         if get_window(data_stop_loss).any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss), type='line', color=light_coral))
+            self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss), type='line', width=0.5, color=light_coral))
         if get_window(data['stop_loss_signal_exit']).any(skipna=True):
-            self.add_plot.append(mpf.make_addplot(get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple, markersize=50, marker=marker_down))
+            self.add_plot.append(
+                mpf.make_addplot(get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple,
+                                 markersize=50, marker=marker_down))
         # if get_window(data['ema_value_signal_enter']).any(skipna=True):
         #     self.add_plot.append(mpf.make_addplot(get_window(data['ema_value_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
 
@@ -375,13 +398,19 @@ class DataFinanceDraw(object):
         #     self.add_plot.append(mpf.make_addplot(get_window(data['dynamical_system_signal_exit']), type='scatter', width=1, panel=0, color=light_coral, markersize=50, marker=marker_down))
 
         if get_window(data['macd_bull_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(get_window(macd_bull_market_deviation_single_point), type='scatter', width=1, panel=0, color=green, markersize=50, marker=marker_up),])
+            self.add_plot.extend([mpf.make_addplot(get_window(macd_bull_market_deviation_single_point), type='scatter',
+                                                   width=1, panel=0, color=green, markersize=50, marker=marker_up), ])
         if get_window(data['macd_bear_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(get_window(macd_bear_market_deviation_single_point), type='scatter', width=1, panel=0, color=red, markersize=50, marker=marker_down),])
+            self.add_plot.extend([mpf.make_addplot(get_window(macd_bear_market_deviation_single_point), type='scatter',
+                                                   width=1, panel=0, color=red, markersize=50, marker=marker_down), ])
         if get_window(data['force_index_bull_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(get_window(force_index_bull_market_deviation_single_point), type='scatter', width=1, panel=0, color=green, markersize=50, marker=marker_up),])
+            self.add_plot.extend([mpf.make_addplot(get_window(force_index_bull_market_deviation_single_point),
+                                                   type='scatter', width=1, panel=0, color=green, markersize=50,
+                                                   marker=marker_up), ])
         if get_window(data['force_index_bear_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(get_window(force_index_bear_market_deviation_single_point), type='scatter', width=1, panel=0, color=red, markersize=50, marker=marker_down),])
+            self.add_plot.extend([mpf.make_addplot(get_window(force_index_bear_market_deviation_single_point),
+                                                   type='scatter', width=1, panel=0, color=red, markersize=50,
+                                                   marker=marker_down), ])
 
         if self.show_macd:
             self.n_panels += 1
@@ -406,7 +435,8 @@ class DataFinanceDraw(object):
                     # mpf.make_addplot(get_window(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia')),
                     # mpf.make_addplot(get_window(macd, panel=self.panel_macd, color=lightgrey)),
                     # mpf.make_addplot(get_window(signal, panel=self.panel_macd, color=dimgrey)),
-                    mpf.make_addplot(get_window(histogram), type='bar', panel=self.panel_macd, color=colors),  # ), secondary_y=True)
+                    mpf.make_addplot(get_window(histogram), type='bar', panel=self.panel_macd, color=colors),
+                    # ), secondary_y=True)
                     # mpf.make_addplot(get_window(data_macd_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
                     # mpf.make_addplot(get_window(data_macd_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
                 ])
@@ -447,7 +477,7 @@ class DataFinanceDraw(object):
                                     main_panel=0,
                                     volume_panel=self.panel_volume,
                                     returnfig=True,
-                                    #panel_ratios=(8, 0.2, 1.8),
+                                    # panel_ratios=(8, 0.2, 1.8),
                                     panel_ratios=panel_ratios[self.n_panels]
                                     )
 
@@ -466,7 +496,9 @@ class DataFinanceDraw(object):
         yminor_unit_origin = round((high - low) / 12, 2)
         yminor_unit_origin = max(yminor_unit_origin, 0.01)
 
-        yminor_unit = functools.reduce(min, map(lambda x: abs(x - yminor_unit_origin), filter(lambda x: x > (yminor_unit_origin-yminor_unit_origin/4), standard_unit)))
+        yminor_unit = functools.reduce(min, map(lambda x: abs(x - yminor_unit_origin),
+                                                filter(lambda x: x > (yminor_unit_origin - yminor_unit_origin / 4),
+                                                       standard_unit)))
         yminor_unit = yminor_unit_origin + yminor_unit if yminor_unit_origin + yminor_unit in standard_unit else yminor_unit_origin - yminor_unit
 
         # 修改主刻度
@@ -514,10 +546,14 @@ class DataFinanceDraw(object):
 
         # 带箭头的线
         map_index = {
-            'macd_bull_market_deviation': {'data': self.histogram_macd, 'ax': axlist[6] if is_long_period(self.period) else axlist[8]},
-            'macd_bear_market_deviation': {'data': self.histogram_macd, 'ax': axlist[6] if is_long_period(self.period) else axlist[8]},
-            'force_index_bull_market_deviation': {'data': self.histogram_force_index, 'ax': axlist[4] if is_long_period(self.period) else axlist[6]},
-            'force_index_bear_market_deviation': {'data': self.histogram_force_index, 'ax': axlist[4] if is_long_period(self.period) else axlist[6]},
+            'macd_bull_market_deviation': {'data': self.histogram_macd,
+                                           'ax': axlist[6] if is_long_period(self.period) else axlist[8]},
+            'macd_bear_market_deviation': {'data': self.histogram_macd,
+                                           'ax': axlist[6] if is_long_period(self.period) else axlist[8]},
+            'force_index_bull_market_deviation': {'data': self.histogram_force_index,
+                                                  'ax': axlist[4] if is_long_period(self.period) else axlist[6]},
+            'force_index_bear_market_deviation': {'data': self.histogram_force_index,
+                                                  'ax': axlist[4] if is_long_period(self.period) else axlist[6]},
         }
 
         def draw_deviation_line(data, ax, ax2, data1, data2, unit1, unit2, color, will):
@@ -544,30 +580,34 @@ class DataFinanceDraw(object):
             points2 = points2[points2.notnull()]
 
             value = data.min() if will == 1 else data.max()
-            shape = 'left' if will == 1 else 'right'   # full
+            shape = 'left' if will == 1 else 'right'  # full
             for index in range(0, len(points), 2):
                 index_first = numpy.where(data1.index == points.index[index])[0][0]
                 index_second = numpy.where(data1.index == points.index[index + 1])[0][0]
+
+                width = unit1 / 10
                 ax.arrow(index_first, points.values[index], index_second - index_first,
                          (points.values[index + 1] - points.values[index]), shape=shape, color=color,
-                         length_includes_head=True, width=unit1, head_width=0, head_length=0)
+                         length_includes_head=True, width=width, head_width=0, head_length=0)
 
                 ax.arrow(index_second, points.values[index + 1], 0,
                          (value - points.values[index + 1]), shape=shape, linestyle='-', color=color,
-                         length_includes_head=True, width=unit1, head_width=0, head_length=0)
+                         length_includes_head=True, width=width, head_width=0, head_length=0)
 
+                width = unit2 / 10
                 ax2.arrow(index_first, points2.values[index], index_second - index_first,
                           (points2.values[index + 1] - points2.values[index]), shape=shape, color=color,
-                          length_includes_head=True, width=unit2, head_width=0, head_length=0)
+                          length_includes_head=True, width=width, head_width=0, head_length=0)
 
         ax = axlist[0] if is_long_period(self.period) else axlist[0]
-        deviation_list = ['macd_bull_market_deviation', 'macd_bear_market_deviation', 'force_index_bull_market_deviation', 'force_index_bear_market_deviation']
+        deviation_list = ['macd_bull_market_deviation', 'macd_bear_market_deviation',
+                          'force_index_bull_market_deviation', 'force_index_bear_market_deviation']
         # deviation_list = ['force_index_bull_market_deviation']
         for column_name in deviation_list:
             data = get_window(self.data[column_name])
             data2 = get_window(map_index[column_name]['data'])
 
-            unit1 = yminor_unit*0.01
+            unit1 = yminor_unit * 0.01
             # unit1 = 0
 
             high = get_window(data2).max()
@@ -575,7 +615,7 @@ class DataFinanceDraw(object):
             yminor_unit2 = round((high - low) / 10, 2)
             yminor_unit2 = max(yminor_unit2, 0.01)
 
-            unit2 = yminor_unit2*0.1
+            unit2 = yminor_unit2 * 0.1
             # unit2 = 0
 
             # print(unit1, unit2)
@@ -585,9 +625,9 @@ class DataFinanceDraw(object):
                 color = dark_green  # if 'macd' in column_name else dark_green
             else:
                 will = -1
-                color = red   # if 'macd' in column_name else dark_red
-            draw_deviation_line(self.data['close'], ax, map_index[column_name]['ax'], data, data2, unit1, unit2, color, will)
-
+                color = red  # if 'macd' in column_name else dark_red
+            draw_deviation_line(self.data['close'], ax, map_index[column_name]['ax'], data, data2, unit1, unit2, color,
+                                will)
 
         # l = matplotlib.lines.Line2D([points.index[0], points.index[1]], [points.values[1], points.values[0]], color=red, marker=marker_up)
         # axlist[0].add_line(l)
@@ -625,14 +665,23 @@ def open_graph(code, peroid, path=None):
     update(candle)
     show(candle)
 
-    # print(candle.init_timestamp)
-    # print(candle.load_data_timestamp)
-    # print(candle.compute_timestamp)
-    # print(candle.plot_timestamp)
-    # print(candle.add_line_timestamp)
-    # print(candle.show_timestamp)
+    info = [
+        'init',
+        'load',
+        'compute',
+        'plot',
+        'addline',
+        'show']
+    timestamp = [
+        candle.init_timestamp,
+        candle.load_data_timestamp,
+        candle.compute_timestamp,
+        candle.plot_timestamp,
+        candle.add_line_timestamp,
+        candle.show_timestamp]
 
-    print('show candle cost [{}]'.format(round(candle.add_line_timestamp - candle.init_timestamp, 2)))
+    for i, t in enumerate(timestamp):
+        print('{}\t[{}]\t[{}]'.format(info[i], round(timestamp[-2] - t, 2), round(t - timestamp[max(0, i-1)], 2)))
 
 
 if __name__ == "__main__":
@@ -642,9 +691,9 @@ if __name__ == "__main__":
     # code = '000625'
     # code = '600588'
     code = '601633'
-    period = 'day'   # m5 m30 day week
-    # open_graph(code, period, 'data/csv/' + code + '.csv')
-    open_graph(code, period)
+    period = 'day'  # m5 m30 day week
+    open_graph(code, period, 'data/csv/' + code + '.csv')
+    # open_graph(code, period)
 
     # code = '000001'
     # candle = DataFinanceDraw(code)
