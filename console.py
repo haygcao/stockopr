@@ -181,6 +181,8 @@ class Panel(QWidget):
         self.combo_code.clear()
         with open('data/portfolio.txt', encoding='utf8') as fp:
             for code_name in fp:
+                if not code_name.strip():
+                    continue
                 # name = basic.get_stock_name(code)
                 self.combo_code.addItem(code_name)
 
