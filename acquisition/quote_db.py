@@ -6,6 +6,7 @@ import pandas as pd
 
 import util.mysqlcli as mysqlcli
 import config.config as config
+from acquisition import basic
 from data_structure import trade_data
 
 
@@ -146,6 +147,13 @@ def get_price_info_df_db(code, days=0, end_date=None, period_type='D', conn=None
         df = get_price_info_df_file_day(code, days, end_date, from_file)
     else:
         df = get_price_info_df_db_day(code, days, end_date, conn)
+
+    price_divisor = basic.get_stock_price_divisor(code)
+    if price_divisor:
+        divisor_date = price_divisor['price_divisor_date']
+        yest_close_adjust = float(price_divisor['price_divisor_adj_price'])
+        df = compute_price_divisor(df, divisor_date=divisor_date, yest_close_adjust=yest_close_adjust)
+
     if period_type == 'D':
         return df
 

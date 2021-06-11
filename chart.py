@@ -29,7 +29,7 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 panel_ratios = {
     3: (8, 0.2, 1.8),
     4: [7.1, 0.1, 1.4, 1.4],
-    5: [7, 0.1, 0.1, 1.4, 1.4]
+    5: [7.05, 0.075, 0.075, 1.4, 1.4]
 }
 
 yellow = '#FFFF00'
@@ -680,8 +680,10 @@ def open_graph(code, peroid, path=None):
         candle.add_line_timestamp,
         candle.show_timestamp]
 
+    print('='*10)
     for i, t in enumerate(timestamp):
         print('{}\t[{}]\t[{}]'.format(info[i], round(timestamp[-2] - t, 2), round(t - timestamp[max(0, i-1)], 2)))
+    print('=' * 10)
 
 
 if __name__ == "__main__":
