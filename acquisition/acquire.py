@@ -1,23 +1,14 @@
-#-*- encoding:utf-8 -*-
+# -*- encoding:utf-8 -*-
 
-import os, sys
-import time, datetime
+import datetime
 
 import pandas
-import pandas as pd
-import xlrd
-import urllib.request
-import json
-
 import socket
 
 from sqlalchemy import create_engine, text
 
-sys.path.append(".")
-
 import config.config as config
 import util.mysqlcli as mysqlcli
-import util.dt as dt
 import acquisition.basic as basic
 import acquisition.tx as tx
 import acquisition.wy as wy
@@ -27,6 +18,7 @@ import acquisition.quote_www as quote_www
 # timeout in seconds
 timeout = 5
 socket.setdefaulttimeout(timeout)
+
 
 def save_stock_basic_info(xlsfile):
     stock_list = tx.get_stock_list(xlsfile)
@@ -221,12 +213,7 @@ def save_quote(trade_date=None, xls=None):
 
 
 if __name__ == '__main__':
-    if not dt.istradeday():
-        pass
-        # exit(0)
-    xls = None
-    # xls = 'data/xls/2021-05-24.xls'
-    save_quote(xls)
+    pass
     # trade_date = datetime.date(2021, 6, 4)
     # # trade_date = datetime.date.today()
     # save_quote_tx_one_day(trade_date)
