@@ -1,3 +1,4 @@
+import datetime
 import multiprocessing
 import os
 import signal
@@ -18,6 +19,8 @@ import win32api
 import chart
 import watch_dog
 from acquisition import acquire, basic, quote_db
+from config import config
+from pointor.signal import write_supplemental_signal
 from trade_manager import trade_manager
 from util import util
 from util.pywinauto_util import max_window
@@ -59,7 +62,7 @@ class Panel(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.lbl = QLabel("", self)
+        self.lbl = QLabel('{} {}'.format(self.code, self.period), self)
         self.log = QLabel("this for log", self)
 
         self.combo_code = QComboBox(self)
@@ -148,7 +151,7 @@ class Panel(QWidget):
         if len(text) > 1 and text[0] not in '036' and text[-1] == ';':
             text = basic.get_stock_code(text[:-1])
         self.code = text
-        self.lbl.setText('open {} {}'.format(self.code, self.period))
+        self.lbl.setText('{} {}'.format(self.code, self.period))
         self.lbl.adjustSize()
 
     def on_count_changed(self, text):
@@ -158,7 +161,7 @@ class Panel(QWidget):
 
     def on_activated_code(self, text):
         self.code = text.split()[0]
-        self.lbl.setText('open {} {}'.format(self.code, self.period))
+        self.lbl.setText('{} {}'.format(self.code, self.period))
         self.lbl.adjustSize()
 
     def open_tdx(self):
@@ -195,11 +198,11 @@ class Panel(QWidget):
 
     def on_activated_period(self, text):
         self.period = text
-        self.lbl.setText('open {} {}'.format(self.code, self.period))
+        self.lbl.setText('{} {}'.format(self.code, self.period))
         self.lbl.adjustSize()
 
     def show_chart(self):
-        print('open {} {}'.format(self.code, self.period))
+        print('{} {}'.format(self.code, self.period))
         p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period,))
         p.start()
         p.join(timeout=1)
@@ -234,9 +237,13 @@ class Panel(QWidget):
         p.start()
 
     def buy(self):
+        supplemental_signal_path = config.supplemental_signal_path
+        write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'B', self.period, '')
         trade_manager.buy(self.code, int(self.count))
 
     def sell(self):
+        supplemental_signal_path = config.supplemental_signal_path
+        write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, '')
         trade_manager.sell(self.code, int(self.count))
 
     def check_watch_dog(self):
