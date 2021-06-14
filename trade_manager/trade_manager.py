@@ -119,7 +119,8 @@ def sell(code, close, count=0, price=0, auto=None):
     # count = min(to_position, count)
 
     # count = to_position
-    count = avail_position
+    if count == 0:
+        count = avail_position
     # operation = TradeManager.get_operation()
     # operation.__sell(code, count, price, auto=auto)
     order('S', code, count, price, auto=auto)

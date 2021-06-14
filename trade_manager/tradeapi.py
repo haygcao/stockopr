@@ -57,7 +57,7 @@ def get_operation_detail():
 
 def order(direct, code, count, price=0, auto=False):
     url = 'http://{}/order'.format(base_url)
-    data = {'code': code, 'direct': direct, 'count': count}
+    data = {'code': code, 'direct': direct, 'count': count, 'auto': auto}
 
     response = requests.post(url, data=json.dumps(data), headers=headers)
 

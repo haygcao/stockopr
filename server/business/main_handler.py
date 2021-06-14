@@ -45,8 +45,9 @@ class OrderHandler(BaseHandler):
         code = param['code']
         direct = param['direct']
         count = param['count']
+        auto = param['auto']
 
-        tradeapi.order(direct, code, count)
+        tradeapi.order(direct, code, count, auto=auto)
 
         self.write("Hello, world")
 
