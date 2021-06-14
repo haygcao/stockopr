@@ -56,7 +56,7 @@ def check_quota(code, direction):
     return True
 
 
-def buy(code, close, count=0, price=0, policy: Policy = None):
+def buy(code, close, count=0, price=0, policy: Policy = None, auto=None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -85,7 +85,8 @@ def buy(code, close, count=0, price=0, policy: Policy = None):
     max_position = money.avail_money / (price if price > 0 else quote['close'].iloc[-1] * 1.01) // 100 * 100
 
     trade = config.get_trade_config(code)
-    auto = trade['auto_buy']
+    if not auto:
+        auto = trade['auto_buy']
     # if count == 0:
     #     count = trade['count']
     # avail_position = min(avail_position, count)
@@ -96,7 +97,7 @@ def buy(code, close, count=0, price=0, policy: Policy = None):
     order('B', code, count, price, auto=auto)
 
 
-def sell(code, close, count=0, price=0):
+def sell(code, close, count=0, price=0, auto=None):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
@@ -110,7 +111,8 @@ def sell(code, close, count=0, price=0):
     to_position = min(avail_position, to_position)
 
     trade = config.get_trade_config(code)
-    auto = trade['auto_sell']
+    if not auto:
+        auto = trade['auto_sell']
 
     # if count == 0:
     #     count = trade['count']

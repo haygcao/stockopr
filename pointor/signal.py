@@ -65,6 +65,21 @@ def get_supplemental_signal(supplemental_signal_path, period):
     return signal_list
 
 
+def write_supplemental_signal(supplemental_signal_path, code, date, command, period, price):
+    import csv
+    with open(supplemental_signal_path, 'a', newline='') as csvfile:
+        fieldnames = ['code', 'name', 'date', 'command', 'period', 'price']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        # writer.writeheader()
+        writer.writerow({'code': code,
+                         'date': date.strftime('%Y-%m-%d %H:%M'),
+                         'command': command,
+                         'period': period,
+                         'price': price
+                         })
+
+
 def get_date_period(date, period, quote_date_index):
     ret = quote_date_index[quote_date_index >= date]
     return quote_date_index[-1] if ret.empty else ret[0]

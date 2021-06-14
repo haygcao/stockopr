@@ -239,12 +239,12 @@ class Panel(QWidget):
     def buy(self):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'B', self.period, '')
-        trade_manager.buy(self.code, int(self.count))
+        trade_manager.buy(self.code, int(self.count), auto=True)
 
     def sell(self):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, '')
-        trade_manager.sell(self.code, int(self.count))
+        trade_manager.sell(self.code, int(self.count), auto=True)
 
     def check_watch_dog(self):
         pid_prev_check = -1

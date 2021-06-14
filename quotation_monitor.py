@@ -105,21 +105,6 @@ def get_day_data(code, period='day', count=250):
     return data
 
 
-def write_supplemental_signal(supplemental_signal_path, trade_signal: TradeSignal):
-    import csv
-    with open(supplemental_signal_path, 'a', newline='') as csvfile:
-        fieldnames = ['code', 'name', 'date', 'command', 'period', 'price']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-        # writer.writeheader()
-        writer.writerow({'code': trade_signal.code,
-                         'date': trade_signal.date.strftime('%Y-%m-%d %H:%M'),
-                         'command': trade_signal.command,
-                         'period': trade_signal.period,
-                         'price': trade_signal.price
-                         })
-
-
 def update_status_old(code, data, period):
     data_index_ = data.index[-1]
     price = data['close'][-1]
@@ -233,7 +218,7 @@ def order(trade_singal: TradeSignal):
     if trade_singal.command == 'B':
         trade_manager.buy(trade_singal.code, close=trade_singal.price, policy=trade_singal.policy)
     else:
-        trade_manager.sell(trade_singal.code, close=trade_singal.price)
+        trade_manager.sell(trade_singal.code, close=trade_singal.price, auto=True)
 
 
 def notify(trade_singal: TradeSignal):
@@ -284,7 +269,8 @@ def monitor_today():
             # supplemental_signal: [(code, date, 'B/S', price), (code, date, 'B/S', price), ...]
 
             supplemental_signal_path = config.supplemental_signal_path
-            write_supplemental_signal(supplemental_signal_path, trade_signal)
+            signal.write_supplemental_signal(supplemental_signal_path, code, trade_signal.date, trade_signal.command,
+                                      trade_signal.period, trade_signal.price)
 
             logger.info(TradeSignalManager.signal_map)
             p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period,))
