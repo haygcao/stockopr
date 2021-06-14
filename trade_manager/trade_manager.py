@@ -84,9 +84,9 @@ def buy(code, close, count=0, price=0, policy: Policy = None, auto=None):
     money = query_money()
     max_position = money.avail_money / (price if price > 0 else quote['close'].iloc[-1] * 1.01) // 100 * 100
 
-    trade = config.get_trade_config(code)
+    trade_config = config.get_trade_config(code)
     if not auto:
-        auto = trade['auto_buy']
+        auto = trade_config['auto_buy']
     # if count == 0:
     #     count = trade['count']
     # avail_position = min(avail_position, count)
@@ -110,16 +110,16 @@ def sell(code, close, count=0, price=0, auto=None):
     to_position = ((current_position / 2) // 100) * 100
     to_position = min(avail_position, to_position)
 
-    trade = config.get_trade_config(code)
+    trade_config = config.get_trade_config(code)
     if not auto:
-        auto = trade['auto_sell']
+        auto = trade_config['auto_sell']
 
     # if count == 0:
     #     count = trade['count']
     # count = min(to_position, count)
 
     # count = to_position
-    if count == 0:
+    if count <= 0:
         count = avail_position
     # operation = TradeManager.get_operation()
     # operation.__sell(code, count, price, auto=auto)
@@ -128,6 +128,7 @@ def sell(code, close, count=0, price=0, auto=None):
 
 def order(direct, code, count, price=0, auto=False):
     try:
+        count = count // 100 * 100
         tradeapi.order(direct, code, count, price, auto)
     except Exception as e:
         print(e)
@@ -160,16 +161,20 @@ def create_trade_order(code):
     stop_loss = quote['stop_loss_full'].iloc[-1]
 
     money = query_money()
-    total_money = money.total_money
+    # total money, begin of month
+    # total_money = money.total_money
+    trade_config = config.get_trade_config(code)
+    total_money = trade_config['total_money']
+    avail_money = money.avail_money
 
     loss = total_money * config.one_risk_rate
     total_loss_used = quote_db.query_total_risk_amount()
     total_loss_remain = total_money * config.total_risk_rate - total_loss_used
 
     loss = min(loss, total_loss_remain)
-    loss = min(loss, money.avail_money)
+    loss = min(loss, avail_money)
     position = loss / (price - stop_loss) // 100 * 100
-    position = min(position, money.avail_money / price // 100 * 100)
+    position = min(position, avail_money / price // 100 * 100)
     if position < 100:
         return
 
