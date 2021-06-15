@@ -24,6 +24,8 @@ sql_tab_cleared = ch.sql_table_cleared
 sql_tab_trade_detail=ch.sql_table_trade_detail
 sql_tab_trade_detail_history=ch.sql_table_trade_detail_history
 sql_tab_trade_order = ch.sql_table_trade_order
+sql_tab_asset = ch.sql_table_asset
+sql_tab_position = ch.sql_table_position
 
 charg = ConfigHandler(os.path.join(config_dir, 'config.ini'), 'arg')
 check_per_sec = charg.check_per_sec

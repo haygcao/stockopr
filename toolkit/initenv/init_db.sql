@@ -193,9 +193,9 @@ create table trade_order (
 
 -- 按日更新
 create table asset(
-  `date` date,
+  `date` timestamp,
   total decimal(10, 3),
-  idle decimal(10, 3),
+  avail decimal(10, 3),
   market_value decimal(10, 3),
   total_profit decimal(10, 3),
   today_profit decimal(10, 3)
@@ -204,7 +204,7 @@ create table asset(
 
 -- 按日更新
 create table `position` (
-  `date` date,
+  `date` timestamp,
   code varchar(8),
   `position` int,
   cost_price decimal(10, 3),
