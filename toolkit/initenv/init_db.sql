@@ -193,7 +193,7 @@ create table trade_order (
 
 -- 按日更新
 create table asset(
-  `date` timestamp,
+  `date` date,
   total decimal(10, 3),
   avail decimal(10, 3),
   market_value decimal(10, 3),
@@ -204,7 +204,7 @@ create table asset(
 
 -- 按日更新
 create table `position` (
-  `date` timestamp,
+  `date` date,
   code varchar(8),
   total int,
   avail int,
@@ -238,8 +238,8 @@ drop table asset;
 drop table trade_order;
 drop table position;
 drop table operation_detail;
-create index asset_date on asset(date);
-create index trade_order_code_date on trade_order(code, date);
-create index position_code_date on `position`(code, date);
+create unique index asset_date on asset(date);
+create unique index trade_order_code_date on trade_order(code, date);
+create unique index position_code_date on `position`(code, date);
 create unique index operation_detail_code_date on operation_detail(code, time);
 create index operation_detail_order_id on operation_detail(order_id);

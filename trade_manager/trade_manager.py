@@ -7,9 +7,10 @@ from PyQt5.QtWidgets import QMessageBox, QApplication
 from acquisition import tx, quote_db
 from config import config
 from config.config import Policy
+from data_structure import trade_data
 from indicator import atr, ema, dynamical_system
 from pointor import signal
-from trade_manager import tradeapi
+from trade_manager import tradeapi, db_handler
 from util import mysqlcli
 
 from util.log import logger
@@ -35,24 +36,90 @@ def query_position(code):
     可以卖的股数
     还可以买的股数
     """
-    position = tradeapi.query_position(code)
+    position = db_handler.query_position(code)
+    new_position_in_operation_detail = query_new_position_in_operation_detail(code)
+    position.avail_position -= new_position_in_operation_detail
 
     return position
 
 
-def query_money():
-    money = tradeapi.get_asset()
-    return money
-
-
-def query_operation_detail(code):
+def query_current_position():
     """
     可以卖的股数
     还可以买的股数
     """
-    detail_list = tradeapi.query_operation_detail(code)
+    position_list = db_handler.query_current_position()
+    for position in position_list:
+        new_position_in_operation_detail = query_new_position_in_operation_detail(position.code)
+        position.avail_position -= new_position_in_operation_detail
+
+    return position_list
+
+
+def query_money():
+    money = db_handler.query_money()
+    money_in_operation_detail = query_money_in_operation_detail()
+    money.avail_money -= money_in_operation_detail
+
+    return money
+
+
+def query_operation_detail(code=None):
+    """
+    可以卖的股数
+    还可以买的股数
+    """
+    detail_list = db_handler.query_operation_detail(code)
 
     return detail_list
+
+
+def query_money_in_operation_detail(code=None, trade_date=None):
+    if not trade_date:
+        trade_date = datetime.date.today()
+    detail_list = db_handler.query_operation_details(trade_date)
+
+    money = 0
+    for detail in detail_list:
+        money += detail.price * detail.count
+
+    return money
+
+
+def query_new_position_in_operation_detail(code=None, trade_date=None):
+    if not trade_date:
+        trade_date = datetime.date.today()
+    detail_list = db_handler.query_operation_details(code, trade_date)
+
+    position = 0
+    for detail in detail_list:
+        if detail.count > 0:
+            position += detail.count
+
+    return position
+
+
+def sync():
+    """
+    run at 9:00 on trade day
+    """
+    # now = datetime.datetime.now()
+    # if now.hour >= 9:
+    #     return
+
+    # money
+    money = tradeapi.get_asset()
+    db_handler.save_money(money)
+
+    # position
+    position_list = tradeapi.query_position()
+    db_handler.save_positions(position_list)
+
+    # operation detail
+    operation_detail = tradeapi.query_operation_detail()
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+    operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == yesterday]
+    db_handler.save_operation_details(operation_detail)
 
 
 def check_quota(code, direction):
@@ -64,6 +131,10 @@ def check_quota(code, direction):
     if current_position.current_position > quota_position:
         return False
     return True
+
+
+def update_operation_detail(detail):
+    db_handler.save_operation_details([detail])
 
 
 def buy(code, close, count=0, price=0, policy: Policy = None, auto=None):
@@ -140,6 +211,8 @@ def order(direct, code, count, price=0, auto=False):
     try:
         count = count // 100 * 100
         tradeapi.order(direct, code, count, price, auto)
+        detail = trade_data.OperationDetail(datetime.datetime.now(), code, price, count * (1 if direct == 'B' else -1))
+        update_operation_detail(detail)
     except Exception as e:
         print(e)
 

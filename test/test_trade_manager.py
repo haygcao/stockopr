@@ -12,30 +12,41 @@ class TradeManagerTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_get_position(self):
-        code = '300502'
+    def test_sync(self):
+        trade_manager.sync()
 
-        detail_list = trade_manager.query_operation_detail(code)
-        print(detail_list)
-        db_handler.save_operation_details(detail_list)
-        detail_list = db_handler.query_operation_details(code, datetime.date(2021, 6, 8))
-        print(detail_list)
-        return
-
-        pre_position = trade_manager.query_position(code)
-        db_handler.save_position(pre_position)
-        position = db_handler.query_position(code)
-        print(position)
-
+    def test_query_money(self):
         menoy = trade_manager.query_money()
         print(menoy)
         db_handler.save_money(menoy)
         money = db_handler.query_money()
         print(money)
 
+    def test_get_position(self):
+        code = '300502'
+
+        pre_position = trade_manager.query_position(code)
+        db_handler.save_positions([pre_position])
+        position = db_handler.query_position(code)
+        print(position)
+
+
+
         # detail = trade_manager.query_operation_detail()
         # print(detail)
         # pre_position = cur_position
+
+    def test_query_operation_detail(self):
+        code = '300502'
+
+        detail_list = trade_manager.query_operation_detail()
+        detail_list = trade_manager.query_operation_detail(code)
+        print(detail_list)
+        db_handler.save_operation_details(detail_list)
+        detail_list = db_handler.query_operation_details(code, datetime.date(2021, 6, 8))
+        print(detail_list)
+        detail_list = db_handler.query_operation_details()
+        print(detail_list)
 
     def test_order(self):
         code = '300502'

@@ -106,7 +106,16 @@ def get_asset():
     copy_to_clipboard()
 
     data = pywinauto.clipboard.GetData()
-    for row in clean_clipboard_data(data, cols=len(columns)):
+    data = pywinauto.clipboard.GetData()
+    end_pos = data.find('\n')
+    columns = data[:end_pos].split()
+    # val_1st_row = data[end_pos + 1: end_pos + 1 + data[end_pos + 1:].find('\n')].split()
+
+    detail_list = []
+    for i, row_str in enumerate(data.split('\n')):
+        if i == 0:
+            continue
+        row = row_str.split('\t')
         return {'total_money': float(row[columns.index('总资产')]), 'avail_money': float(row[columns.index('可用资金')])}
 
 
@@ -126,7 +135,15 @@ def get_positions():
 
     position_list = []
     data = pywinauto.clipboard.GetData()
-    for row in clean_clipboard_data(data, cols=len(columns)):
+    end_pos = data.find('\n')
+    columns = data[:end_pos].split()
+    # val_1st_row = data[end_pos + 1: end_pos + 1 + data[end_pos + 1:].find('\n')].split()
+
+    detail_list = []
+    for i, row_str in enumerate(data.split('\n')):
+        if i == 0:
+            continue
+        row = row_str.split('\t')
         current_position = int(float(row[columns.index('股份余额')]))
         avail_position = int(float(row[columns.index('可用股份')]))
 
@@ -146,10 +163,13 @@ def query_position(code):
     active_window()
     
     position_list = get_positions()
+    if not code:
+        return position_list
+        
     for position in position_list:
         if position['code'] != code:
             continue
-        return position
+        return [position]
 
 
 def get_operation_detail(code_in=None):

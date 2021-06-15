@@ -22,7 +22,7 @@ def get_asset():
     return asset
 
 
-def query_position(code):
+def query_position(code=None):
     """
     可以卖的股数
     还可以买的股数
@@ -34,17 +34,20 @@ def query_position(code):
     if not json_str:
         return None
 
+    position_list = []
     try:
         d = json.loads(json_str)
-        position = trade_data.Position(code, d['current_position'], d['avail_position'])
+        for row in d:
+            position = trade_data.Position(row['code'], row['current_position'], row['avail_position'])
+            position_list.append(position)
     except Exception as e:
         print(e, json_str)
         return None
 
-    return position
+    return position_list
 
 
-def query_operation_detail(code):
+def query_operation_detail(code=None):
     """
     获取对账单
     """

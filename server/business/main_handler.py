@@ -70,10 +70,14 @@ class QueryPositionHandler(BaseHandler):
         param = self.request.body.decode('utf-8')
         print(param)
         param = json.loads(param)
-        code = param['code']
+        if 'code' in param and param['code']:
+            code = param['code']
+        else:
+            code = None
+            
         position = tradeapi.query_position(code)
         print(position)
-        self.write(position)
+        self.write(json.dumps(position))
 
 
 class QueryOperationDetailHandler(BaseHandler):
@@ -84,7 +88,7 @@ class QueryOperationDetailHandler(BaseHandler):
         param = self.request.body.decode('utf-8')
         print(param)
         param = json.loads(param)
-        if 'code' in param:
+        if 'code' in param and param['code']:
             code = param['code']
         else:
             code = None
