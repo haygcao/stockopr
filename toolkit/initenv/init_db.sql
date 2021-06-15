@@ -222,7 +222,7 @@ create table `position` (
 
 -- 逐次更新
 create table operation_detail(
-  order_id int,
+  order_id int NOT NULL AUTO_INCREMENT,
   `time` timestamp,
   code varchar(8),
   operation varchar(16),
@@ -241,5 +241,5 @@ drop table operation_detail;
 create index asset_date on asset(date);
 create index trade_order_code_date on trade_order(code, date);
 create index position_code_date on `position`(code, date);
-create index operation_detail_code_date on operation_detail(code, time);
+create unique index operation_detail_code_date on operation_detail(code, time);
 create index operation_detail_order_id on operation_detail(order_id);

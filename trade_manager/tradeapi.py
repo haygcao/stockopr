@@ -44,15 +44,20 @@ def query_position(code):
     return position
 
 
-def get_operation_detail():
+def query_operation_detail(code):
     """
     获取对账单
     """
     url = 'http://{}/query_operation_detail'.format(base_url)
-    data = {}
+    data = {'code': code}
     response = requests.post(url, data=json.dumps(data), headers=headers)
 
-    return json.loads(response.content)
+    detail_list = []
+    for row in json.loads(response.content):
+        detail = trade_data.OperationDetail(row['trade_time'], row['code'], row['price'], row['count'])
+        detail_list.append(detail)
+
+    return detail_list
 
 
 def order(direct, code, count, price=0, auto=False):

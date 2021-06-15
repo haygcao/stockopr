@@ -81,5 +81,13 @@ class QueryOperationDetailHandler(BaseHandler):
         self.write("Hello, world")
         
     def post(self):
-        r = tradeapi.get_operation_detail()
-        self.write("Hello, world")
+        param = self.request.body.decode('utf-8')
+        print(param)
+        param = json.loads(param)
+        if 'code' in param:
+            code = param['code']
+        else:
+            code = None
+
+        detail_list = tradeapi.get_operation_detail(code)
+        self.write(json.dumps(detail_list))

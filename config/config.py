@@ -21,8 +21,8 @@ sql_tab_selected = ch.sql_table_selected
 sql_tab_selected_history = ch.sql_table_selected_history
 sql_tab_bought = ch.sql_table_bought
 sql_tab_cleared = ch.sql_table_cleared
-sql_tab_trade_detail=ch.sql_table_trade_detail
-sql_tab_trade_detail_history=ch.sql_table_trade_detail_history
+sql_tab_operation_detail = ch.sql_table_operation_detail
+sql_tab_operation_detail_history = ch.sql_table_operation_detail_history
 sql_tab_trade_order = ch.sql_table_trade_order
 sql_tab_asset = ch.sql_table_asset
 sql_tab_position = ch.sql_table_position
@@ -364,10 +364,10 @@ stamp_duty = 0.001   # 印花税 卖方
 commission = 0.0002   # 佣金 - 中信证券 双向
 transfer_fee = 0.00002   # 过户费 上海证券交易所收取 双向
 
-charge_sell_sz = 1 + commission + stamp_duty
-charge_sell_sh = 1 + commission + stamp_duty + transfer_fee
-charge_buy_sz = 1 + commission
-charge_buy_sh = 1 + commission + transfer_fee
+charge_sell_sz = commission + stamp_duty
+charge_sell_sh = commission + stamp_duty + transfer_fee
+charge_buy_sz = commission
+charge_buy_sh = commission + transfer_fee
 
 
 class Policy(Enum):

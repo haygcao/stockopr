@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 import psutil
 import win32api
 
@@ -150,21 +152,52 @@ def query_position(code):
         return position
 
 
-def get_operation_detail():
+def get_operation_detail(code_in=None):
     """
     获取对账单
     """
     active_window()
     
-    column = ['成交时间', '发生日期', '证券代码', '证券名称', '业务名称', '发生金额', '资金本次余额', '股份余额', '成交数量', '成交价格', '成交金额', '手续费', '印花税', '附加费', '委托编号', '股东代码', '币种', '过户费', '交易所清算费', '资金帐号', '备注']
-
+    columns = ['成交时间', '发生日期', '证券代码', '证券名称', '业务名称', '发生金额', '资金本次余额', '股份余额', '成交数量', '成交价格', '成交金额', '手续费', '印花税', '附加费', '委托编号', '股东代码', '币种', '过户费', '交易所清算费', '资金帐号', '备注', '费用备注']
     pywinauto.mouse.click(coords=pos_detail)
     # pywinauto.mouse.release(coords=pos_detail)
     time.sleep(0.2)
     copy_to_clipboard()
 
     data = pywinauto.clipboard.GetData()
-    return clean_clipboard_data(data, cols=21)
+    end_pos = data.find('\n')
+    columns = data[:end_pos].split()
+    # val_1st_row = data[end_pos + 1: end_pos + 1 + data[end_pos + 1:].find('\n')].split()
+
+    detail_list = []
+    for i, row_str in enumerate(data.split('\n')):
+        if i == 0:
+            continue
+        row = row_str.split('\t')
+        code = row[columns.index('证券代码')]
+        if not code:
+            continue
+
+        if code_in and code_in != code:
+            continue
+        trade_time = row[columns.index('成交时间')]
+        trade_date = row[columns.index('发生日期')]
+        trade_time = datetime.datetime.strptime('{} {}'.format(trade_date, trade_time), '%Y%m%d %H:%M:%S')
+        price = float(row[columns.index('成交价格')])
+        count = int(float(row[columns.index('成交数量')]))
+
+        detail = {
+            'trade_time': trade_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'code': code,
+            'price': price,
+            'count': count
+        }
+
+        detail_list.append(detail)
+    for row in data.split('\n'):
+        val_list = row.split('\t')
+
+    return detail_list
 
 
 def order(direct, code, count, price=0, auto=False):

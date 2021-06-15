@@ -65,3 +65,49 @@ def save_position(position: trade_data.Position):
             c.execute(sql, val)
         except Exception as e:
             print(e)
+
+
+def query_operation_details(code, date: datetime.date = None):
+    sql = "select time, price, count from {} where".format(config.sql_tab_operation_detail)
+    if code:
+        sql += " code = '{}'".format(code)
+    if date:
+        if not sql.endswith('where'):
+            sql += ' and'
+        sql += " date(time) = '{}'".format(date)
+    if sql.endswith('where'):
+        sql = sql[:-5]
+
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.execute(sql)
+            r = c.fetchall()
+        except Exception as e:
+            print(e)
+
+    details = []
+    for row in r:
+        detail = trade_data.OperationDetail(row['time'], code, float(row['price']), int(row['count']))
+        details.append(detail)
+
+    return details
+
+
+def save_operation_details(details: list[trade_data.OperationDetail]):
+    keys = ['time', 'code', 'operation', 'price', 'count', 'amount', 'cost']
+
+    key = ', '.join(keys)
+    fmt_list = ['%s' for i in keys]
+    fmt = ', '.join(fmt_list)
+
+    val_list = []
+    for detail in details:
+        val = (detail.trade_time, detail.code, detail.operation, detail.price, detail.count, detail.amount, detail.cost)
+        val_list.append(val)
+
+    sql = "insert ignore into {} ({}) values ({})".format(config.sql_tab_operation_detail, key, fmt)
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.executemany(sql, val_list)
+        except Exception as e:
+            print(e)

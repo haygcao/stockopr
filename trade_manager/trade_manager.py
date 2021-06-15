@@ -45,6 +45,16 @@ def query_money():
     return money
 
 
+def query_operation_detail(code):
+    """
+    可以卖的股数
+    还可以买的股数
+    """
+    detail_list = tradeapi.query_operation_detail(code)
+
+    return detail_list
+
+
 def check_quota(code, direction):
     """
     巡检, 周期巡检超出配额的已有仓位

@@ -1,4 +1,7 @@
+import datetime
 from dataclasses import dataclass
+
+from config import config
 
 
 @dataclass
@@ -27,6 +30,43 @@ class Position:
 
     def __str__(self):
         return 'code: {}, current_position: {}, avail_position: {}'.format(self.code, self.current_position, self.avail_position)
+
+
+@dataclass
+class OperationDetail:
+    trade_time: datetime.datetime
+    code: str
+    operation: str
+    price: float
+    count: int
+    amount: float
+    cost: float
+
+    def __init__(self, trade_time, code, price, count):
+        if isinstance(trade_time, str):
+            self.trade_time = datetime.datetime.strptime(trade_time, '%Y-%m-%d %H:%M:%S')
+        else:
+            self.trade_time = trade_time
+        self.code = code
+        self.operation = 'B' if count > 0 else 'S'
+        self.price = price
+        self.count = count
+        self.amount = price * count
+
+        market = 'sz' if int(code[:2]) < 60 else 'sh'
+        direct = 'buy' if self.operation == 'B' else 'sell'
+
+        charge = 'config.charge_{}_{}'.format(direct, market)
+        self.cost = self.amount * eval(charge)
+
+    def __str__(self):
+        ret = ''
+        for i in self.__dir__():
+            if i.startswith('__'):
+                continue
+            ret += i + ': ' + str(eval('self.{}'.format(i)))
+            ret += ' '
+        return ret
 
 
 @dataclass
