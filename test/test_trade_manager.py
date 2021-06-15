@@ -1,7 +1,7 @@
 import unittest
 
 from acquisition import tx
-from trade_manager import trade_manager
+from trade_manager import trade_manager, db_handler
 
 
 class TradeManagerTestCase(unittest.TestCase):
@@ -12,18 +12,18 @@ class TradeManagerTestCase(unittest.TestCase):
         pass
 
     def test_get_position(self):
-        pos_detail = (36, 456)
-        pos_asset = (45, 354)
-        pos_buy_and_sell = (25, 159)
-
         code = '300502'
         pre_position = trade_manager.query_position(code)
-        print(pre_position)
-
-        cur_position = trade_manager.query_position(code)
+        db_handler.save_position(pre_position)
+        position = db_handler.query_position(code)
+        print(position)
+        return
 
         menoy = trade_manager.query_money()
         print(menoy)
+        db_handler.save_money(menoy)
+        money = db_handler.query_money()
+        print(money)
 
         # detail = trade_manager.query_operation_detail()
         # print(detail)

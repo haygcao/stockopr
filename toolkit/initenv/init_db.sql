@@ -206,7 +206,8 @@ create table asset(
 create table `position` (
   `date` timestamp,
   code varchar(8),
-  `position` int,
+  total int,
+  avail int,
   cost_price decimal(10, 3),
   price decimal(10, 3),
   cost decimal(10, 3),
