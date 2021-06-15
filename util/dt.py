@@ -1,22 +1,19 @@
 #-*- encoding: utf-8 -*-
-
+import re
 import time
 import datetime
 from datetime import datetime as date
 
+holiday_str = '''
+2021
+一、元旦：2021年1月1日至3日放假，共3天。
+二、春节：2月11日至17日放假调休，共7天。2月7日（星期日）、2月20日（星期六）上班。
+三、清明节：4月3日至5日放假调休，共3天。
+四、劳动节：5月1日至5日放假调休，共5天。4月25日（星期日）、5月8日（星期六）上班。
+五、端午节：6月12日至14日放假，共3天。
+六、中秋节：9月19日至21日放假调休，共3天。9月18日（星期六）上班。
+七、国庆节：10月1日至7日放假调休，共7天。9月26日（星期日）、10月9日（星期六）上班。
 '''
-一、休市安排
-　　（一）元旦：1月1日（星期五）至1月3日（星期日）休市，1月4日（星期一）起照常开市。
-　　（二）春节：2月7日（星期日）至2月13日（星期六）休市，2月15日（星期一）起照常开市。另外，2月6日（星期六）、2月14日（星期日）为周末休市。
-　　（三）清明节：4月2日（星期六）至4月4日（星期一）休市，4月5日（星期二）起照常开市。
-　　（四）劳动节：4月30日（星期六）至5月2日（星期一）休市，5月3日（星期二）起照常开市。
-　　（五）端午节：6月9日（星期四）至6月11日（星期六）休市，6月13日（星期一）起照常开市。另外，6月12日（星期日）为周末休市。
-　　（六）中秋节：9月15日（星期四）至9月17日（星期六）休市，9月19日（星期一）起照常开市。另外，9月18日（星期日）为周末休市。
-　　（七）国庆节：10月1日（星期六）至10月7日（星期五）休市，10月10日（星期一）起照常开市。另外，10月8日（星期六）、10月9日（星期日）为周末休
-'''
-
-holiday_str=["1-1", "2-8", "2-9", "2-10", "2-11", "2-12", "4-4", "5-2", "6-9", "6-10", "9-15", "9-16", "10-3", "10-4", "10-5", "10-6", "10-7",]
-holiday_str="1-1, 2-8, 2-9, 2-10, 2-11, 2-12, 4-4, 5-2, 6-9, 6-10, 9-15, 9-16, 10-3, 10-4, 10-5, 10-6, 10-7,"
 lastday = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 def mktime(_datetime):
@@ -42,26 +39,46 @@ def set_trade_time():
 
 
 #day_str: 2016-1-17
-def isholiday(day=None) :
+def isholiday(day=None):
     if not day:
         day = today
-    day_str = '%d-%d,' % (day.month, day.day)
-    if holiday_str.find(day_str) >= 0:
-        return True
+
+    '''
+    [('1', '1', '3'),
+     ('2', '11', '17'),
+     ('4', '3', '5'),
+     ('5', '1', '5'),
+     ('6', '12', '14'),
+     ('9', '19', '21'),
+     ('0', '1', '7')]
+     '''
+    p = '.*([0-9]+)月([0-9]+)日至([0-9]+)日.*'   # ('0', '1', '7')
+    p = '.*?([0-9]+)月([0-9]+)日至([0-9]+)日.*'   # ('10', '1', '7')
+    prog = re.compile(p)
+    r = prog.findall(holiday_str)
+    for month, day_start, day_end in r:
+        month = int(month)
+        day_start = int(day_start)
+        day_end = int(day_end)
+
+        if month == day.month:
+            if day_start <= day.day <= day_end:
+                return True
+
     return False
+
 
 def isweedend(day=None):
     if not day:
         day = today
 
-    #weekday = date.isoweekday(date.today()) #weekday is not ok...
-    weekday = date.isoweekday(day) #date.isoweekday(datetime.date(2015, 4, 16))
-    if weekday % 7 == 0 or weekday == 6: #Sunday is 7...
+    # date.weekday(), Return the day of the week as an integer, where Monday is 0 and Sunday is 6
+    # date.isoweekday(), Return the day of the week as an integer, where Monday is 1 and Sunday is 7
+    weekday = date.isoweekday(day)
+    if weekday > 5:
         return True
     return False
-    #if tm_day.tm_wday == 0 or tm_day.tm_wday == 6: #why? why? Mon. -> Sun.
-    #    return True
-    #return False
+
 
 def istradeday(day=None):
     if not day:
