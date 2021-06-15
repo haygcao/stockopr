@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import multiprocessing
+import time
 
 from PyQt5.QtWidgets import QMessageBox, QApplication
 
@@ -216,11 +217,29 @@ def sell(code, close, count=0, price=0, auto=None):
     order('S', code, count, price, auto=auto)
 
 
+def wait_finish(code, count, trade_time):
+    count_ed = 0
+    for i in range(10):
+        details = query_operation_detail(code)
+        for detail in details:
+            if detail.trade_time < trade_time:
+                continue
+            count_ed += detail.count
+        if abs(count_ed) == count:
+            break
+        time.sleep(5)
+
+
 def order(direct, code, count, price=0, auto=False):
     try:
         count = count // 100 * 100
         tradeapi.order(direct, code, count, price, auto)
-        detail = trade_data.OperationDetail(datetime.datetime.now(), code, price, count * (1 if direct == 'B' else -1))
+        now = datetime.datetime.now()
+        detail = trade_data.OperationDetail(now, code, price, count * (1 if direct == 'B' else -1))
+
+        # if auto:
+        #     wait_finish(code, count, now)
+
         update_operation_detail(detail)
     except Exception as e:
         print(e)

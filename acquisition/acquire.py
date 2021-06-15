@@ -16,6 +16,9 @@ import acquisition.quote_db as quote_db
 import acquisition.quote_www as quote_www
 
 # timeout in seconds
+from util import dt
+from util.log import logger
+
 timeout = 5
 socket.setdefaulttimeout(timeout)
 
@@ -123,7 +126,7 @@ def save_quote_xl():
         with engine.connect() as con:
             trade_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
             data = []
-            for i in range(2):
+            for i in range(10):
                 data.append({"code": df_quote.iloc[i]['code'], 'trade_date': trade_date})
 
             statement = text("""SELECT close, high, low, open FROM quote WHERE code = :code AND trade_date = :trade_date""")
@@ -143,6 +146,7 @@ def save_quote_xl():
                     break
 
         if same_day:
+            print('not updated...')
             return
 
         df_quote.loc[:, 'trade_date'] = df_quote.index
@@ -205,11 +209,23 @@ def save_quote_tx_one_day(trade_day):
         print(e)
 
 
-def save_quote(trade_date=None, xls=None):
+def save_quote_impl(trade_date=None, xls=None):
     # save_quote_tx(xls)
     save_quote_xl()
     # save_quote_wy()
     # save_sh_index_trade_info()
+
+
+def save_quote():
+    if not dt.istradeday():
+        pass
+        # exit(0)
+    xls = None
+    # xls = 'data/xls/2021-05-24.xls'
+    t1 = datetime.datetime.now()
+    save_quote_impl(xls)
+    now = datetime.datetime.now()
+    logger.info('save quote cost [{}]'.format((now - t1).seconds, 2))
 
 
 if __name__ == '__main__':
