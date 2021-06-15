@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from util.dt import isholiday
+from util import dt
 
 
 class UtilTestCase(unittest.TestCase):
@@ -13,8 +13,12 @@ class UtilTestCase(unittest.TestCase):
 
     def test_is_holiday(self):
         day = datetime.date(2021, 10, 1)
-        ret = isholiday(day)
+        ret = dt.isholiday(day)
         print(ret)
+
+    def test_get_prev_trade_date(self):
+        date = dt.get_pre_trade_date()
+        print(date)
 
 
 def suite():

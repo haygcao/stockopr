@@ -124,7 +124,7 @@ def save_quote_xl():
         # MySql connection in sqlAlchemy
         engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
         with engine.connect() as con:
-            trade_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+            trade_date = dt.get_pre_trade_date()
             data = []
             for i in range(10):
                 data.append({"code": df_quote.iloc[i]['code'], 'trade_date': trade_date})

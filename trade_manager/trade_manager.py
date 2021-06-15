@@ -12,7 +12,7 @@ from data_structure import trade_data
 from indicator import atr, ema, dynamical_system
 from pointor import signal
 from trade_manager import tradeapi, db_handler
-from util import mysqlcli
+from util import mysqlcli, dt
 from util.dt import istradeday
 
 from util.log import logger
@@ -101,14 +101,6 @@ def query_new_position_in_operation_detail(code=None, trade_date=None):
     return position
 
 
-def get_pre_trade_date():
-    date = datetime.date.today() - datetime.timedelta(days=1)
-
-    while not istradeday(date):
-        date = date - datetime.timedelta(days=1)
-    return date
-
-
 def sync():
     """
     run at 9:00 on trade day
@@ -127,7 +119,7 @@ def sync():
 
     # operation detail
     operation_detail = tradeapi.query_operation_detail()
-    yesterday = get_pre_trade_date()
+    yesterday = dt.get_pre_trade_date()
     operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == yesterday]
     db_handler.save_operation_details(operation_detail)
 

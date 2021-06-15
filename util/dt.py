@@ -89,6 +89,14 @@ def istradeday(day=None):
     return True
 
 
+def get_pre_trade_date():
+    date = datetime.date.today() - datetime.timedelta(days=1)
+
+    while not istradeday(date):
+        date = date - datetime.timedelta(days=1)
+    return date
+
+
 def istradetime():
     if not istradeday(today):
         return False
@@ -101,6 +109,7 @@ def istradetime():
         return False
 
     return True
+
 
 def sumofweektradeday(day):
     sum = 0
@@ -123,6 +132,7 @@ def sumofweektradeday(day):
     #tm_day.tm_mday = day #
     return sum
 
+
 def sumofmonthtradeday(day): #tm_day, is str
     sum = 0
     year = day.year
@@ -143,12 +153,14 @@ def sumofmonthtradeday(day): #tm_day, is str
     return sum
 tm_day = time.localtime()
 
+
 def sumofyeartradeday(y):
     days = 0
     for m in range(1, 13):
         day = date(y, m, 1)
         days += sumofmonthtradeday(day)
     return days
+
 
 def dt64_to_dt(dt64):
     return dt64.astype('M8[D]').astype('O')  #'M8[ms]'
