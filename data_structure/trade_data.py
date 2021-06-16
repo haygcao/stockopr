@@ -100,3 +100,34 @@ class TradeOrder:
             ret += i + ': ' + str(eval('self.{}'.format(i)))
             ret += ' '
         return ret
+
+
+@dataclass
+class WithdrawOrder:
+    trade_time: datetime.datetime
+    code: str
+    direct: str
+    count: int
+    count_ed: int
+    price: float
+    price_ed: float
+    count_withdraw: int
+
+    def __init__(self, trade_time, code, direct, count, count_ed, price, price_ed, count_withdraw):
+        self.trade_time = trade_time
+        self.code = code
+        self.direct = direct
+        self.count = count
+        self.count_ed = count_ed
+        self.price = price
+        self.price_ed = price_ed
+        self.count_withdraw = count_withdraw
+
+    def __str__(self):
+        ret = ''
+        for i in self.__dir__():
+            if i.startswith('__'):
+                continue
+            ret += i + ': ' + str(eval('self.{}'.format(i)))
+            ret += ' '
+        return ret

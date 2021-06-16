@@ -15,6 +15,11 @@ class TradeManagerTestCase(unittest.TestCase):
     def test_sync(self):
         trade_manager.sync()
 
+    def test_withdraw(self):
+        # order_list = trade_manager.query_withdraw_order()
+        # print(order_list)
+        trade_manager.withdraw()
+
     def test_query_money(self):
         menoy = trade_manager.query_money()
         print(menoy)

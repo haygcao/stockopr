@@ -33,6 +33,11 @@ class TradeManager:
         # return cls.operation
 
 
+def query_withdraw_order():
+    order_list = tradeapi.query_withdraw_order()
+    return order_list
+
+
 def query_position(code):
     """
     可以卖的股数
@@ -241,6 +246,28 @@ def order(direct, code, price_trade, price_limited=0, count=0, auto=False):
         update_operation_detail(detail)
     except Exception as e:
         print(e)
+
+
+def withdraw(direct='last'):
+    """
+    full: 全撤
+    buy: 撤买
+    sell: 撤卖
+    last: 撤最新
+    """
+    try:
+        tradeapi.withdraw(direct)
+    except Exception as e:
+        print(e)
+
+
+def re_order():
+    details = db_handler.query_operation_details(date=datetime.date.today())
+    details = [detail for detail in details if detail.price_limited == 0 and detail.count > 0]
+    for detail in details:
+        # notify()
+        # withdraw()
+        tradeapi.order(detail.operation, detail.code, count=detail.count, auto=True)
 
 
 def compute_stop_profit(quote):

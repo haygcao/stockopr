@@ -92,6 +92,40 @@ def get_cursor_pos():
     return win32api.GetCursorPos()
 
 
+def get_order():
+    """
+    获取未成交的委托
+    """
+    main_window = active_window()
+    
+    columns = ['委托时间', '证券代码', '证券名称', '买卖', '委托状态', '委托数量', '成交数量', '委托价格', '成交价格', '已撤数量', '合同编号', '交易市场', '股东代码']
+    
+    main_window.type_keys('{F3}')
+    time.sleep(0.2)
+    copy_to_clipboard()
+
+    data = pywinauto.clipboard.GetData()
+    end_pos = data.find('\n')
+    columns = data[:end_pos].split()
+
+    order_list = []
+    for i, row_str in enumerate(data.split('\n')):
+        if i == 0:
+            continue
+        row = row_str.split('\t')
+        order_list.append({
+            'trade_time': row[columns.index('委托时间')],
+            'code': row[columns.index('证券代码')],
+            'direct': row[columns.index('买卖')],
+            'count': int(row[columns.index('委托数量')]),
+            'count_ed': int(row[columns.index('成交数量')]),
+            'price': float(row[columns.index('委托价格')]),
+            'price_ed': float(row[columns.index('成交价格')]),
+            'count_withdraw': int(row[columns.index('已撤数量')]),
+        })
+    return order_list
+
+
 def get_asset():
     """
     获取资金明细
@@ -246,3 +280,30 @@ def order(direct, code, count, price=0, auto=False):
         pywinauto.keyboard.send_keys('{ENTER}')
         time.sleep(0.5)
         pywinauto.keyboard.send_keys('{ENTER}')
+
+
+def withdraw(direct):
+    command = ''
+    if direct == 'full':
+        command = 'z'
+    elif direct == 'buy':
+        command = 'x'
+    elif direct == 'sell':
+        command = 'c'
+    elif direct == 'last':
+        command = 'g'
+    else:
+        print(direct, ' is unknown')
+        return
+        
+    print('direct is - {}, command is - {}'.format(direct, command))
+    
+    main_window = active_window()
+    main_window.type_keys('{F3}')
+    
+    pywinauto.mouse.click(coords=pos_centre)
+    time.sleep(0.2)
+    main_window.type_keys(command)
+    # pywinauto.keyboard.send_keys(command)
+    time.sleep(0.5)
+    pywinauto.keyboard.send_keys('{ENTER}')

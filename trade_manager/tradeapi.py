@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 import json
 import requests
 
@@ -69,6 +70,36 @@ def query_operation_detail(code=None):
 def order(direct, code, count, price_limited=0, auto=False):
     url = 'http://{}/order'.format(base_url)
     data = {'code': code, 'direct': direct, 'count': count, 'auto': auto}
+
+    response = requests.post(url, data=json.dumps(data), headers=headers)
+
+    return response.ok
+
+
+def query_withdraw_order():
+    """
+    查询未成交的委托单
+    direct: 证券买入/证券卖出
+    """
+    url = 'http://{}/query_withdraw_order'.format(base_url)
+    data = {}
+    response = requests.post(url, data=json.dumps(data), headers=headers)
+
+    order_list = []
+    today_str = datetime.date.today().strftime('%Y-%m-%d')
+    for row in json.loads(response.content):
+        trade_time = datetime.datetime.strptime('{} {}'.format(today_str, row['trade_time']), '%Y-%m-%d %H:%M:%S')
+        direct = 'B' if '买入' in row['direct'] else 'S'
+        withdraw_order = trade_data.WithdrawOrder(trade_time, row['code'], direct, row['count'],
+                                                  row['count_ed'], row['price'], row['price_ed'], row['count_withdraw'])
+        order_list.append(withdraw_order)
+
+    return order_list
+
+
+def withdraw(direct):
+    url = 'http://{}/withdraw'.format(base_url)
+    data = {'direct': direct}
 
     response = requests.post(url, data=json.dumps(data), headers=headers)
 

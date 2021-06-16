@@ -52,6 +52,20 @@ class OrderHandler(BaseHandler):
         self.write("Hello, world")
 
 
+class WithdrawHandler(BaseHandler):
+    def get(self):
+        self.write("Hello, world")
+
+    def post(self):
+        param = self.request.body.decode('utf-8')
+        param = json.loads(param)
+        direct = param['direct']
+
+        tradeapi.withdraw(direct)
+
+        self.write("Hello, world")
+
+
 class QueryMoneyHandler(BaseHandler):
     def get(self):
         self.write("Hello, world")
@@ -95,3 +109,12 @@ class QueryOperationDetailHandler(BaseHandler):
 
         detail_list = tradeapi.get_operation_detail(code)
         self.write(json.dumps(detail_list))
+
+
+class QueryWithdrawOrderHandler(BaseHandler):
+    def get(self):
+        self.write("Hello, world")
+
+    def post(self):
+        order_list = tradeapi.get_order()
+        self.write(json.dumps(order_list))
