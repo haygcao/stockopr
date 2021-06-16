@@ -190,13 +190,20 @@ def buy(code, price_trade=0, price_limited=0, count=0, policy: Policy = None, au
     order('B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
 
-def sell(code, price_trade, price_limited=0, count=0, auto=None):
+def sell(code, price_trade, price_limited=0, count=0, policy: Policy = None, auto=None):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
     position = query_position(code)
     if not position:
         return
+    quote = tx.get_kline_data(code)
+    if not policy or (policy != Policy.DEVIATION and policy != Policy.CHANNEL):
+        quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
+        if quote['dlxt'].iloc[-1] >= 0 and quote['dlxt_long_period'].iloc[-1] >= 0:
+            popup_warning_message_box('动力系统不为红色, 禁止清仓, 请务必遵守规则!')
+            return
+
     current_position = position.current_position
     avail_position = position.avail_position
 
