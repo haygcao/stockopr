@@ -22,6 +22,10 @@ def patrol():
     trade_manager.patrol()
 
 
+def create_position_price_limited():
+    trade_manager.create_position_price_limited()
+
+
 def schedule_task():
     # schedule.every(10).seconds.do(job)
     # schedule.every(10).minutes.do(job)
@@ -32,6 +36,7 @@ def schedule_task():
     # schedule.every().monday.do(job)
     # schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":00").do(patrol)
+    schedule.every().minute.at(":00").do(create_position_price_limited)
 
     while True:
         schedule.run_pending()

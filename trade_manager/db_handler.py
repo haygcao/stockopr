@@ -1,8 +1,8 @@
 import datetime
 
-from config import config
+from config import config, config as config
 from data_structure import trade_data
-from util import mysqlcli
+from util import mysqlcli, mysqlcli as mysqlcli
 from util.log import logger
 
 
@@ -146,3 +146,52 @@ def save_operation_details(details: list[trade_data.OperationDetail], sync=False
             c.executemany(sql, val_list)
         except Exception as e:
             logger.info(e)
+
+
+def update_trade_order_status(date, code, status):
+    sql = "update {} set status = %s where date = %s and code = %s".format(config.sql_tab_trade_order)
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.execute(sql, (date, code, status))
+        except Exception as e:
+            logger.info(e)
+
+
+def query_trade_order_map(code=None, status='ING'):
+    with mysqlcli.get_cursor() as c:
+        sql = "SELECT date, code, position, open_price, stop_loss, stop_profit FROM {0} where status = '{1}'".format(config.sql_tab_trade_order, status)
+        if code:
+            sql += " and code = {}".format(code)
+
+        c.execute(sql)
+        ret = c.fetchall()
+        order_map = {}
+        for row in ret:
+            trade_order = trade_data.TradeOrder(row['date'], row['code'], int(row['position']), float(row['open_price']), float(row['stop_loss']), float(row['stop_profit']))
+            order_map.update({row['code']: trade_order})
+
+        return order_map
+
+
+def query_total_risk_amount():
+    total_loss = 0
+    with mysqlcli.get_cursor() as c:
+        sql = "SELECT code, (position * (open_price - stop_loss)) as loss FROM {0} where status = 'ING'".format(config.sql_tab_trade_order)
+
+        c.execute(sql)
+        ret = c.fetchall()
+        for row in ret:
+            code, loss = row['code'], float(row['loss'])
+            total_loss += loss
+
+        return total_loss
+
+
+def query_quota_position(code):
+    with mysqlcli.get_cursor() as c:
+        # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
+        sql = "SELECT `position` FROM {0} where code = '{1}' and status = 'ING' order by date desc limit 1".format(config.sql_tab_trade_order, code)
+        c.execute(sql)
+        postion = c.fetchone()
+
+        return int(postion['position']) if postion else 0

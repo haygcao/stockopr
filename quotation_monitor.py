@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import numpy
 import pandas
 
+import trade_manager.db_handler
 from chart import open_graph
 from config import config
 from config.config import period_map, signal_deviation, Policy, signal_enter_deviation, signal_exit_deviation
@@ -53,7 +54,7 @@ class TradeSignalManager:
 
     @classmethod
     def reload_trade_order(cls):
-        cls.trade_order_map = quote_db.query_trade_order_map()
+        cls.trade_order_map = trade_manager.db_handler.query_trade_order_map()
         for code in cls.trade_order_map.keys():
             if code in cls.signal_map:
                 continue
@@ -232,7 +233,7 @@ def notify(trade_singal: TradeSignal):
 
 
 def query_trade_order_code_list():
-    r = quote_db.query_trade_order_map()
+    r = trade_manager.db_handler.query_trade_order_map()
     return [code for code, name in r.items()]
 
 

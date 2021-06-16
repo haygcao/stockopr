@@ -6,6 +6,7 @@ import time
 
 from PyQt5.QtWidgets import QMessageBox, QApplication
 
+import trade_manager.db_handler
 from acquisition import tx, quote_db
 from config import config
 from config.config import Policy
@@ -126,6 +127,12 @@ def sync():
     db_handler.save_positions(position_list)
     logger.info('sync position')
 
+    order_map = trade_manager.db_handler.query_trade_order_map(status='ING')
+    for code, trade_order in order_map.items():
+        if code not in [position.code for position in position_list]:
+            db_handler.update_trade_order_status(trade_order.date, code, 'ED')
+    logger.info('update trade order')
+
     # operation detail
     operation_detail = tradeapi.query_operation_detail()
     yesterday = dt.get_pre_trade_date()
@@ -139,7 +146,7 @@ def check_quota(code, direction):
     巡检, 周期巡检超出配额的已有仓位
     """
     current_position = query_position(code)
-    quota_position = quote_db.query_quota_position()
+    quota_position = trade_manager.db_handler.query_quota_position()
     if current_position.current_position > quota_position:
         return False
     return True
@@ -153,7 +160,7 @@ def buy(code, price_trade=0, price_limited=0, count=0, policy: Policy = None, au
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
-    position_quota = quote_db.query_quota_position(code)
+    position_quota = trade_manager.db_handler.query_quota_position(code)
     if not position_quota:
         popup_warning_message_box('请先创建交易指令单, 请务必遵守规则!')
         return
@@ -188,6 +195,9 @@ def buy(code, price_trade=0, price_limited=0, count=0, policy: Policy = None, au
     # operation = TradeManager.get_operation()
     # operation.__buy(code, count, price, auto=auto)
     order('B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
+
+    position = position if position else trade_data.Position(code, count, 0)
+    db_handler.save_positions([position])
 
 
 def sell(code, price_trade, price_limited=0, count=0, policy: Policy = None, auto=None):
@@ -321,7 +331,7 @@ def create_trade_order(code):
     avail_money = money.avail_money
 
     loss = total_money * config.one_risk_rate
-    total_loss_used = quote_db.query_total_risk_amount()
+    total_loss_used = trade_manager.db_handler.query_total_risk_amount()
     total_loss_remain = total_money * config.total_risk_rate - total_loss_used
 
     loss = min(loss, total_loss_remain)
@@ -338,7 +348,7 @@ def create_trade_order(code):
         return
 
     val = [datetime.date.today(), code, position * price, position, price, stop_loss, stop_profit,
-           (position * price) / total_money, profitability_ratios, 'ING']
+           (position * price) / total_money, profitability_ratios, 'TO']
 
     val = tuple(val)
 
@@ -376,15 +386,25 @@ def popup_warning_message_box(msg):
 
 
 def patrol():
-    position_list = tradeapi.get_position()
+    position_list = query_current_position()
     for position in position_list:
-        quota = quote_db.query_quota_position(position.code)
+        quota = trade_manager.db_handler.query_quota_position(position.code)
         if not quota:
             handle_illegal_position(position, quota)
             continue
         if position.current_position > quota:
             handle_illegal_position(position, quota)
             continue
+
+
+def create_position_price_limited():
+    order_map = trade_manager.db_handler.query_trade_order_map(status='TO')
+    for code, trade_order in order_map.items():
+        quote = tx.get_realtime_data_sina(code)
+        close = quote['close'][-1]
+        if close > trade_order.open_price:
+            buy(code, price_trade=close, price_limited=close, auto=True)
+            db_handler.update_trade_order_status(trade_order.date, code, 'ING')
 
 
 if __name__ == '__main__':

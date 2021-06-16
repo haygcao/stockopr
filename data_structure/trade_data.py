@@ -75,6 +75,7 @@ class OperationDetail:
 
 @dataclass
 class TradeOrder:
+    date = None
     code = ''
     position = 0
     open_price = 0
@@ -83,7 +84,8 @@ class TradeOrder:
     risk_rate = 0
     profitability_ratios = 0
 
-    def __init__(self, code, position, open_price, stop_loss, stop_profit):
+    def __init__(self, date, code, position, open_price, stop_loss, stop_profit):
+        self.date = date
         self.code = code
         self.position = position
         self.open_price = open_price

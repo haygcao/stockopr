@@ -7,7 +7,6 @@ import pandas as pd
 import util.mysqlcli as mysqlcli
 import config.config as config
 from acquisition import basic
-from data_structure import trade_data
 
 
 def query_date(code, count):
@@ -18,46 +17,6 @@ def query_date(code, count):
         date = c.fetchone()
 
         return date['min_date'] if date else None
-
-
-def query_quota_position(code):
-    with mysqlcli.get_cursor() as c:
-        # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT `position` FROM {0} where code = '{1}' and status = 'ING' order by date desc limit 1".format(config.sql_tab_trade_order, code)
-        c.execute(sql)
-        postion = c.fetchone()
-
-        return int(postion['position']) if postion else 0
-
-
-def query_trade_order_map(code=None):
-    with mysqlcli.get_cursor() as c:
-        sql = "SELECT code, position, open_price, stop_loss, stop_profit FROM {0} where status = 'ING'".format(config.sql_tab_trade_order)
-        if code:
-            sql += " and code = {}".format(code)
-
-        c.execute(sql)
-        ret = c.fetchall()
-        order_map = {}
-        for row in ret:
-            trade_order = trade_data.TradeOrder(row['code'], int(row['position']), float(row['open_price']), float(row['stop_loss']), float(row['stop_profit']))
-            order_map.update({row['code']: trade_order})
-
-        return order_map
-
-
-def query_total_risk_amount():
-    total_loss = 0
-    with mysqlcli.get_cursor() as c:
-        sql = "SELECT code, (position * (open_price - stop_loss)) as loss FROM {0} where status = 'ING'".format(config.sql_tab_trade_order)
-
-        c.execute(sql)
-        ret = c.fetchall()
-        for row in ret:
-            code, loss = row['code'], float(row['loss'])
-            total_loss += loss
-
-        return total_loss
 
 
 # quote

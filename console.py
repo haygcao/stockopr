@@ -17,6 +17,7 @@ import pywinauto
 import win32api
 
 import chart
+import trade_manager.db_handler
 import watch_dog
 from acquisition import acquire, basic, quote_db, tx
 from config import config
@@ -187,7 +188,7 @@ class Panel(QWidget):
     def load(self):
         self.combo_code.clear()
 
-        code_name_map = quote_db.query_trade_order_map()
+        code_name_map = trade_manager.db_handler.query_trade_order_map()
         for code, order in code_name_map.items():
             name = basic.get_stock_name(code)
             self.combo_code.addItem('{} {}'.format(code, name))
