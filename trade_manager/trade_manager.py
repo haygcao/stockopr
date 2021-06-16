@@ -39,8 +39,8 @@ def query_position(code):
     还可以买的股数
     """
     position = db_handler.query_position(code)
-    new_position_in_operation_detail = query_new_position_in_operation_detail(code)
-    position.avail_position -= new_position_in_operation_detail
+    sold_position_in_operation_detail = query_sold_position_in_operation_detail(code)
+    position.avail_position -= sold_position_in_operation_detail
 
     return position
 
@@ -52,8 +52,8 @@ def query_current_position():
     """
     position_list = db_handler.query_current_position()
     for position in position_list:
-        new_position_in_operation_detail = query_new_position_in_operation_detail(position.code)
-        position.avail_position -= new_position_in_operation_detail
+        sold_position_in_operation_detail = query_sold_position_in_operation_detail(position.code)
+        position.avail_position -= sold_position_in_operation_detail
 
     return position_list
 
@@ -71,7 +71,7 @@ def query_operation_detail(code=None):
     可以卖的股数
     还可以买的股数
     """
-    detail_list = db_handler.query_operation_detail(code)
+    detail_list = db_handler.query_operation_details(code)
 
     return detail_list
 
@@ -83,26 +83,27 @@ def query_money_in_operation_detail(code=None, trade_date=None):
 
     money = 0
     for detail in detail_list:
-        money += detail.price * detail.count
+        money += detail.price_trade * detail.count
 
     return money
 
 
-def query_new_position_in_operation_detail(code=None, trade_date=None):
+def query_sold_position_in_operation_detail(code=None, trade_date=None):
     if not trade_date:
         trade_date = datetime.date.today()
     detail_list = db_handler.query_operation_details(code, trade_date)
 
     position = 0
     for detail in detail_list:
-        if detail.count > 0:
-            position += detail.count
+        if detail.count < 0:
+            position += abs(detail.count)
 
     return position
 
 
 def sync():
     """
+    sync previous trade date's data
     run at 9:00 on trade day
     """
     now = datetime.datetime.now()
@@ -112,16 +113,19 @@ def sync():
     # money
     money = tradeapi.get_asset()
     db_handler.save_money(money)
+    logger.info('sync money')
 
     # position
     position_list = tradeapi.query_position()
     db_handler.save_positions(position_list)
+    logger.info('sync position')
 
     # operation detail
     operation_detail = tradeapi.query_operation_detail()
     yesterday = dt.get_pre_trade_date()
     operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == yesterday]
     db_handler.save_operation_details(operation_detail)
+    logger.info('sync operation detail')
 
 
 def check_quota(code, direction):
@@ -139,7 +143,7 @@ def update_operation_detail(detail):
     db_handler.save_operation_details([detail])
 
 
-def buy(code, close, count=0, price=0, policy: Policy = None, auto=None):
+def buy(code, price_trade=0, price_limited=0, count=0, policy: Policy = None, auto=None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -165,7 +169,7 @@ def buy(code, close, count=0, price=0, policy: Policy = None, auto=None):
 
     # quote = tx.get_realtime_data_sina(code)
     money = query_money()
-    max_position = money.avail_money / (price if price > 0 else quote['close'].iloc[-1] * 1.01) // 100 * 100
+    max_position = money.avail_money / (price_limited if price_limited > 0 else quote['close'].iloc[-1] * 1.01) // 100 * 100
 
     trade_config = config.get_trade_config(code)
     if not auto:
@@ -177,10 +181,10 @@ def buy(code, close, count=0, price=0, policy: Policy = None, auto=None):
     count = min(max_position, avail_position)
     # operation = TradeManager.get_operation()
     # operation.__buy(code, count, price, auto=auto)
-    order('B', code, count, price, auto=auto)
+    order('B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
 
-def sell(code, close, count=0, price=0, auto=None):
+def sell(code, price_trade, price_limited=0, count=0, auto=None):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
@@ -206,7 +210,7 @@ def sell(code, close, count=0, price=0, auto=None):
         count = avail_position
     # operation = TradeManager.get_operation()
     # operation.__sell(code, count, price, auto=auto)
-    order('S', code, count, price, auto=auto)
+    order('S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
 
 def wait_finish(code, count, trade_time):
@@ -222,12 +226,14 @@ def wait_finish(code, count, trade_time):
         time.sleep(5)
 
 
-def order(direct, code, count, price=0, auto=False):
+def order(direct, code, price_trade, price_limited=0, count=0, auto=False):
     try:
         count = count // 100 * 100
-        tradeapi.order(direct, code, count, price, auto)
+        tradeapi.order(direct, code, count, price_limited, auto)
         now = datetime.datetime.now()
-        detail = trade_data.OperationDetail(now, code, price, count * (1 if direct == 'B' else -1))
+        price = 0   # 成交的价格
+        count = count * (1 if direct == 'B' else -1)
+        detail = trade_data.OperationDetail(now, code, price, price_trade, price_limited, count)
 
         # if auto:
         #     wait_finish(code, count, now)

@@ -38,11 +38,13 @@ class OperationDetail:
     code: str
     operation: str
     price: float
+    price_trade: float   # 用于当天交易时段计算可用资金和可用仓位
+    price_limited: float   # 非限价委托未成交时, 进行重新委托
     count: int
     amount: float
     cost: float
 
-    def __init__(self, trade_time, code, price, count):
+    def __init__(self, trade_time, code, price, price_trade, price_limited, count):
         if isinstance(trade_time, str):
             self.trade_time = datetime.datetime.strptime(trade_time, '%Y-%m-%d %H:%M:%S')
         else:
@@ -50,8 +52,10 @@ class OperationDetail:
         self.code = code
         self.operation = 'B' if count > 0 else 'S'
         self.price = price
+        self.price_trade = price_trade
+        self.price_limited = price_limited
         self.count = count
-        self.amount = round(price * count, 3)
+        self.amount = round(price_limited * count, 3)
 
         market = 'sz' if int(code[:2]) < 60 else 'sh'
         direct = 'buy' if self.operation == 'B' else 'sell'

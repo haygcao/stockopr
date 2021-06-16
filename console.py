@@ -18,7 +18,7 @@ import win32api
 
 import chart
 import watch_dog
-from acquisition import acquire, basic, quote_db
+from acquisition import acquire, basic, quote_db, tx
 from config import config
 from pointor.signal import write_supplemental_signal
 from trade_manager import trade_manager
@@ -113,6 +113,9 @@ class Panel(QWidget):
         btn_update_quote = QPushButton('update quote', self)
         btn_update_quote.clicked.connect(self.update_quote)
 
+        btn_sync = QPushButton('sync', self)
+        btn_sync.clicked.connect(self.sync)
+
         qle_count = QLineEdit(self.count, self)
         qle_count.textChanged[str].connect(self.on_count_changed)
 
@@ -133,6 +136,7 @@ class Panel(QWidget):
         grid.addWidget(btn_load, 2, 4)
         grid.addWidget(self.btn_monitor, 1, 1)
         grid.addWidget(btn_update_quote, 1, 2)
+        grid.addWidget(btn_sync, 1, 3)
 
         grid.addWidget(qle_code, 3, 0)
         grid.addWidget(qle_count, 3, 1)
@@ -236,15 +240,22 @@ class Panel(QWidget):
         p = multiprocessing.Process(target=acquire.save_quote, args=())
         p.start()
 
+    def sync(self):
+        p = multiprocessing.Process(target=trade_manager.sync, args=())
+        p.start()
+        print('sync started')
+
     def buy(self):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'B', self.period, '')
-        trade_manager.buy(self.code, int(self.count), auto=True)
+        quote = tx.get_realtime_data_sina(self.code)
+        trade_manager.buy(self.code, price_trade=quote['close'][-1], count=int(self.count), auto=True)
 
     def sell(self):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, '')
-        trade_manager.sell(self.code, int(self.count), auto=True)
+        quote = tx.get_realtime_data_sina(self.code)
+        trade_manager.sell(self.code, price_trade=quote['close'][-1], count=int(self.count), auto=True)
 
     def check_watch_dog(self):
         pid_prev_check = -1

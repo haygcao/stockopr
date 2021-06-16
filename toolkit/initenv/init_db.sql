@@ -227,6 +227,8 @@ create table operation_detail(
   code varchar(8),
   operation varchar(16),
   price decimal(10, 3),
+  price_trade decimal(10, 3),
+  price_limited decimal(10, 3),
   `count` int,
   amount int,
   cost decimal(10, 3),

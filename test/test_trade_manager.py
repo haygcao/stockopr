@@ -40,7 +40,7 @@ class TradeManagerTestCase(unittest.TestCase):
         code = '300502'
 
         detail_list = trade_manager.query_operation_detail()
-        detail_list = trade_manager.query_operation_detail(code)
+        # detail_list = trade_manager.query_operation_detail(code)
         print(detail_list)
         db_handler.save_operation_details(detail_list)
         detail_list = db_handler.query_operation_details(code, datetime.date(2021, 6, 8))

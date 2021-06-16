@@ -3,6 +3,7 @@ import datetime
 from config import config
 from data_structure import trade_data
 from util import mysqlcli
+from util.log import logger
 
 
 def query_money():
@@ -94,7 +95,7 @@ def save_positions(position_list: list[trade_data.Position]):
 
 
 def query_operation_details(code=None, date: datetime.date = None):
-    sql = "select time, price, count from {} where".format(config.sql_tab_operation_detail)
+    sql = "select code, time, price, price_trade, price_limited, count from {} where".format(config.sql_tab_operation_detail)
     if code:
         sql += " code = '{}'".format(code)
     if date:
@@ -113,7 +114,8 @@ def query_operation_details(code=None, date: datetime.date = None):
 
     details = []
     for row in r:
-        detail = trade_data.OperationDetail(row['time'], row['code'], float(row['price']), int(row['count']))
+        detail = trade_data.OperationDetail(row['time'], row['code'], float(row['price']), float(row['price_trade']),
+                                            float(row['price_limited']), int(row['count']))
         details.append(detail)
 
     return details
@@ -123,7 +125,7 @@ def save_operation_details(details: list[trade_data.OperationDetail], sync=False
     if not details:
         return
 
-    keys = ['time', 'code', 'operation', 'price', 'count', 'amount', 'cost']
+    keys = ['time', 'code', 'operation', 'price', 'price_trade', 'price_limited', 'count', 'amount', 'cost']
 
     key = ', '.join(keys)
     fmt_list = ['%s' for i in keys]
@@ -131,7 +133,8 @@ def save_operation_details(details: list[trade_data.OperationDetail], sync=False
 
     val_list = []
     for detail in details:
-        val = (detail.trade_time, detail.code, detail.operation, detail.price, detail.count, detail.amount, detail.cost)
+        val = (detail.trade_time, detail.code, detail.operation, detail.price, detail.price_trade, detail.price_limited,
+               detail.count, detail.amount, detail.cost)
         val_list.append(val)
 
     sql = "insert ignore into {} ({}) values ({})".format(config.sql_tab_operation_detail, key, fmt)
@@ -142,4 +145,4 @@ def save_operation_details(details: list[trade_data.OperationDetail], sync=False
                 c.execute("delete from {} where date(time) = {}".format(config.sql_tab_operation_detail, trade_date))
             c.executemany(sql, val_list)
         except Exception as e:
-            print(e)
+            logger.info(e)

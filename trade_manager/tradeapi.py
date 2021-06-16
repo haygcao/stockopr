@@ -56,14 +56,17 @@ def query_operation_detail(code=None):
     response = requests.post(url, data=json.dumps(data), headers=headers)
 
     detail_list = []
+    price_trade = 0
+    price_limited = 0
     for row in json.loads(response.content):
-        detail = trade_data.OperationDetail(row['trade_time'], row['code'], row['price'], row['count'])
+        detail = trade_data.OperationDetail(row['trade_time'], row['code'], row['price'], price_trade, price_limited,
+                                            row['count'])
         detail_list.append(detail)
 
     return detail_list
 
 
-def order(direct, code, count, price=0, auto=False):
+def order(direct, code, count, price_limited=0, auto=False):
     url = 'http://{}/order'.format(base_url)
     data = {'code': code, 'direct': direct, 'count': count, 'auto': auto}
 
