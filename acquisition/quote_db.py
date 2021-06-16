@@ -27,7 +27,7 @@ def query_quota_position(code):
         c.execute(sql)
         postion = c.fetchone()
 
-        return int(postion['position']) if postion else None
+        return int(postion['position']) if postion else 0
 
 
 def query_trade_order_map(code=None):

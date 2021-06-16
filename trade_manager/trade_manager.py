@@ -355,10 +355,14 @@ def create_trade_order(code):
             print(e)
 
 
-def handle_illegal_position(code):
+def handle_illegal_position(position: trade_data.Position, quota):
+    code = position.code
     logger.warning('{} excess...'.format(code))
 
     popup_warning_message_box('[{}]违规仓位, 请务必遵守规则, '.format(code))
+
+    quote = tx.get_realtime_data_sina(code)
+    sell(code, price_trade=quote['close'][-1], count=(position.avail_position - quota), auto=True)
 
 
 def _popup_warning_message_box(msg):
@@ -376,10 +380,10 @@ def patrol():
     for position in position_list:
         quota = quote_db.query_quota_position(position.code)
         if not quota:
-            handle_illegal_position(position.code)
+            handle_illegal_position(position, quota)
             continue
         if position.current_position > quota:
-            handle_illegal_position(position.code)
+            handle_illegal_position(position, quota)
             continue
 
 
