@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import multiprocessing
+import threading
 import time
 
 from PyQt5.QtWidgets import QMessageBox, QApplication
@@ -218,19 +219,6 @@ def sell(code, price_trade, price_limited=0, count=0, auto=None):
     order('S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
 
-def wait_finish(code, count, trade_time):
-    count_ed = 0
-    for i in range(10):
-        details = query_operation_detail(code)
-        for detail in details:
-            if detail.trade_time < trade_time:
-                continue
-            count_ed += detail.count
-        if abs(count_ed) == count:
-            break
-        time.sleep(5)
-
-
 def order(direct, code, price_trade, price_limited=0, count=0, auto=False):
     try:
         count = count // 100 * 100
@@ -240,12 +228,34 @@ def order(direct, code, price_trade, price_limited=0, count=0, auto=False):
         count = count * (1 if direct == 'B' else -1)
         detail = trade_data.OperationDetail(now, code, price, price_trade, price_limited, count)
 
-        # if auto:
-        #     wait_finish(code, count, now)
+        if auto and price_limited == 0:
+            threading.Thread(target=assure_finish, args=(code, count, now)).start()
 
         update_operation_detail(detail)
     except Exception as e:
         print(e)
+
+
+def assure_finish(direct, code, count, trade_time):
+    for i in range(10):
+        time.sleep(5)
+        count_to = wait_finish(direct, code, count, trade_time)
+        if count_to == 0:
+            return
+        re_order(direct, code, count)
+    logger.warning(direct, code, count, trade_time, 'unfinished')
+
+
+def wait_finish(direct, code, count, trade_time):
+    count_to = 0
+
+    orders: [trade_data.WithdrawOrder] = query_withdraw_order()
+    for row in orders:
+        if row.direct != direct or row.code != code or row.trade_time < trade_time:
+            continue
+        count_to += row.count - row.count_ed - row.count_withdraw
+
+    return count_to
 
 
 def withdraw(direct='last'):
@@ -261,13 +271,13 @@ def withdraw(direct='last'):
         print(e)
 
 
-def re_order():
-    details = db_handler.query_operation_details(date=datetime.date.today())
-    details = [detail for detail in details if detail.price_limited == 0 and detail.count > 0]
-    for detail in details:
-        # notify()
-        # withdraw()
-        tradeapi.order(detail.operation, detail.code, count=detail.count, auto=True)
+def re_order(direct, code, count):
+    # details = db_handler.query_operation_details(date=datetime.date.today())
+    # details = [detail for detail in details if detail.price_limited == 0 and detail.count > 0]
+
+    # notify()
+    withdraw()
+    tradeapi.order(direct, code, count=count, auto=True)
 
 
 def compute_stop_profit(quote):

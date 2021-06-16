@@ -278,6 +278,8 @@ def get_kline_data(code, period='day', count=250):
 
     if price_divisor:
         divisor_date = price_divisor['price_divisor_date']
+        if divisor_date <= quote.index[0]:
+            return quote
         yest_close_adjust = float(price_divisor['price_divisor_adj_price'])
         quote = quote_db.compute_price_divisor(quote, divisor_date=divisor_date, yest_close_adjust=yest_close_adjust)
     return quote

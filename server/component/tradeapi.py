@@ -9,6 +9,7 @@ import pywinauto
 import pywinauto.clipboard
 import pywinauto.application
 
+from .. import config
 from ..config import pos_centre, pos_asset, pos_position, pos_detail
 
 g_main_window = None
@@ -283,15 +284,20 @@ def order(direct, code, count, price=0, auto=False):
 
 
 def withdraw(direct):
+    pos = ()
     command = ''
     if direct == 'full':
         command = 'z'
+        pos = config.pos_withdraw_all
     elif direct == 'buy':
         command = 'x'
+        pos = config.pos_withdraw_buy
     elif direct == 'sell':
         command = 'c'
+        pos = config.pos_withdraw_sell
     elif direct == 'last':
         command = 'g'
+        pos = config.pos_withdraw_last
     else:
         print(direct, ' is unknown')
         return
@@ -300,10 +306,12 @@ def withdraw(direct):
     
     main_window = active_window()
     main_window.type_keys('{F3}')
-    
-    pywinauto.mouse.click(coords=pos_centre)
+
     time.sleep(0.2)
-    main_window.type_keys(command)
+    pywinauto.mouse.click(coords=pos)
+
+    # main_window.type_keys(command)
     # pywinauto.keyboard.send_keys(command)
+
     time.sleep(0.5)
     pywinauto.keyboard.send_keys('{ENTER}')
