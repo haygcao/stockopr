@@ -241,9 +241,10 @@ def check_quote(trade_date=None):
     quote1 = quote1.loc[quote1.index.intersection(quote2.index)]
     quote2 = quote2.loc[quote2.index.intersection(quote1.index)]
 
-    if numpy.all((quote1 == quote2).all()):
-        return True
-    return False
+    r = (quote1 == quote2).all(axis=1)
+    same = r[r]
+    logger.info('stocks two trade day with same quote: \n{}'.format(same.index))
+    return numpy.all(r)
 
     same = []
     code_list = basic.get_all_stock_code()
