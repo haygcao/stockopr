@@ -2,14 +2,17 @@ import datetime
 from dataclasses import dataclass
 
 from config import config
+from util import dt
 
 
 @dataclass
 class Asset:
+    date: datetime.date
     total_money = 0
     avail_money = 0
 
-    def __init__(self, total_money, avail_money):
+    def __init__(self, total_money, avail_money, date=None):
+        self.date = dt.get_trade_date() if not date else date
         self.total_money = total_money
         self.avail_money = avail_money
 
@@ -19,11 +22,13 @@ class Asset:
 
 @dataclass
 class Position:
+    date: datetime.date
     code = ''
     current_position = 0
     avail_position = 0
 
-    def __init__(self, code, current, avail):
+    def __init__(self, code, current, avail, date=None):
+        self.date = dt.get_trade_date() if not date else date
         self.code = code
         self.current_position = current
         self.avail_position = avail

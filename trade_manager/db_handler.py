@@ -30,7 +30,7 @@ def save_money(money: trade_data.Asset):
     fmt_list = ['%s' for i in keys]
     fmt = ', '.join(fmt_list)
 
-    val = (datetime.datetime.now(), money.total_money, money.avail_money, money.total_money, money.avail_money)
+    val = (money.date, money.total_money, money.avail_money, money.total_money, money.avail_money)
 
     # sql = "insert into {} ({}) values ({})".format(config.sql_tab_asset, key, fmt)
     sql = u"INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY update total = %s, avail = %s".format(config.sql_tab_asset, key, fmt)
@@ -90,7 +90,7 @@ def save_positions(position_list: list[trade_data.Position]):
 
     with mysqlcli.get_cursor() as c:
         for position in position_list:
-            val = (datetime.datetime.now(), position.code, position.current_position, position.avail_position,
+            val = (position.date, position.code, position.current_position, position.avail_position,
                    position.current_position, position.avail_position)
 
             try:
