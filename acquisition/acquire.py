@@ -2,6 +2,7 @@
 
 import datetime
 
+import numpy
 import pandas
 import socket
 
@@ -227,6 +228,39 @@ def save_quote():
     save_quote_impl(xls)
     now = datetime.datetime.now()
     logger.info('save quote cost [{}]'.format((now - t1).seconds, 2))
+
+
+def check_quote(trade_date=None):
+    logger.info('begin check quote')
+    trade_date = trade_date if trade_date else dt.get_trade_date()
+    trade_date_prev = dt.get_pre_trade_date(trade_date)
+
+    quote1 = quote_db.query_quote(trade_date)
+    quote2 = quote_db.query_quote(trade_date_prev)
+
+    quote1 = quote1.loc[quote1.index.intersection(quote2.index)]
+    quote2 = quote2.loc[quote2.index.intersection(quote1.index)]
+
+    if numpy.all((quote1 == quote2).all()):
+        return True
+    return False
+
+    same = []
+    code_list = basic.get_all_stock_code()
+    for code in code_list:
+        quote = quote_db.get_price_info_df_db_day(code, days=2)
+        if len(quote) < 2:
+            logger.info('{} - length of quote [{}]'.format(code, len(quote)))
+            continue
+        if numpy.all(quote.iloc[0] == quote.iloc[1]):
+            same.append(code)
+    logger.info('[{}] stocks, quote of two trade day are same'.format(len(same)))
+
+    if not same or len(same) / len(code_list) < 0.001:
+        if same:
+            logger.info('stocks two trade day with same quote: \n{}'.format(same))
+        return True
+    return False
 
 
 if __name__ == '__main__':

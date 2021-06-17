@@ -100,8 +100,9 @@ def get_trade_date():
     return get_pre_trade_date()
 
 
-def get_pre_trade_date():
-    date = datetime.date.today() - datetime.timedelta(days=1)
+def get_pre_trade_date(date=None):
+    date = date if date else datetime.date.today()
+    date = date - datetime.timedelta(days=1)
 
     while not istradeday(date):
         date = date - datetime.timedelta(days=1)

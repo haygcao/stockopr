@@ -19,6 +19,27 @@ def query_date(code, count):
         return date['min_date'] if date else None
 
 
+def query_quote(trade_date, conn=None):
+    if conn == None:
+        _conn = mysqlcli.get_connection()
+    else:
+        _conn = conn
+
+    key_list = ['code', 'open', 'high', 'low', 'close', 'volume', 'turnover', 'lb', 'wb', 'zf']
+    table = [config.sql_tab_basic_info, config.sql_tab_quote]
+    where = ' trade_date = "{}"'.format(trade_date)
+    sql = 'SELECT {0} FROM {1} WHERE {2}'.format(', '.join(key_list), table[1], where)
+
+    df = pd.read_sql(sql, con=_conn, index_col=['code'])
+
+    if conn == None:
+        _conn.close()
+
+    df.sort_index(inplace=True)
+
+    return df
+
+
 # quote
 # insert ignore into
 def insert_into_quote(val_list):
