@@ -114,8 +114,8 @@ def sync():
     run at 9:00 on trade day
     """
     now = datetime.datetime.now()
-    if now.hour > 9 or (now.hour == 9 and now.minute > 14):
-        return
+    # if now.hour > 9 or (now.hour == 9 and now.minute > 14):
+    #     return
 
     # money
     money = tradeapi.get_asset()
@@ -311,7 +311,7 @@ def compute_stop_profit(quote):
     return stop_profit
 
 
-def create_trade_order(code):
+def create_trade_order(code, price_limited=0):
     """
     单个股持仓交易风险率 <= 1%
     总持仓风险率 <= 6%
@@ -320,7 +320,8 @@ def create_trade_order(code):
     quote_week = quote_db.get_price_info_df_db_week(quote, period_type=config.period_map['day']['long_period'])
 
     quote = signal.compute_signal(quote, 'day')
-    price = quote['close'].iloc[-1]
+
+    price = quote['close'].iloc[-1] if price_limited == 0 else price_limited
     stop_loss = quote['stop_loss_full'].iloc[-1]
 
     money = query_money()
@@ -372,7 +373,12 @@ def handle_illegal_position(position: trade_data.Position, quota):
     popup_warning_message_box('[{}]违规仓位, 请务必遵守规则, '.format(code))
 
     quote = tx.get_realtime_data_sina(code)
-    sell(code, price_trade=quote['close'][-1], count=(position.avail_position - quota), auto=True)
+
+    price_trade = quote['close'][-1]
+    count = position.avail_position - quota
+    logger.warning('[{}]违规仓位, 请务必遵守规则, 持仓[{}]配额[{}], 卖出 {}x{}'.format(
+        code, position.current_position, quota, price_trade, count))
+    # sell(code, price_trade=price_trade, count=count, auto=True)
 
 
 def _popup_warning_message_box(msg):
@@ -402,8 +408,11 @@ def create_position_price_limited():
     for code, trade_order in order_map.items():
         quote = tx.get_realtime_data_sina(code)
         close = quote['close'][-1]
+        count = trade_order.position
+        date = trade_order.date
         if close > trade_order.open_price:
-            buy(code, price_trade=close, price_limited=close, auto=True)
+            logger.info('建仓 限价交易单[{} {}] {}x{}'.format(date, code, close, count))
+            buy(code, price_trade=close, price_limited=close, count=count, auto=True)
             db_handler.update_trade_order_status(trade_order.date, code, 'ING')
 
 

@@ -31,6 +31,10 @@ warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
 
 
+def list_to_str(list_: list):
+    return '|'.join([str(i) for i in list_])
+
+
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -58,12 +62,14 @@ class Panel(QWidget):
         self.check_thread = None
         self.rlock = threading.RLock()
         self.running = True
-        self.count = '0'
+        self.count_or_price = [0, 0]   # [price, count]
+
+        self.qle_count_or_price = QLineEdit('price|count', self)
 
         self.initUI()
 
     def initUI(self):
-        self.lbl = QLabel('{} {}'.format(self.code, self.period), self)
+        self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)), self)
         self.log = QLabel("this for log", self)
 
         self.combo_code = QComboBox(self)
@@ -117,14 +123,16 @@ class Panel(QWidget):
         btn_sync = QPushButton('sync', self)
         btn_sync.clicked.connect(self.sync)
 
-        qle_count = QLineEdit(self.count, self)
-        qle_count.textChanged[str].connect(self.on_count_changed)
+        self.qle_count_or_price.textChanged[str].connect(self.on_count_or_price_changed)
 
         btn_buy = QPushButton('Buy', self)
         btn_buy.clicked.connect(self.buy)
 
         btn_sell = QPushButton('Sell', self)
         btn_sell.clicked.connect(self.sell)
+
+        btn_new_order = QPushButton('New Order', self)
+        btn_new_order.clicked.connect(self.new_trade_order)
 
         grid = QGridLayout()
 
@@ -140,9 +148,10 @@ class Panel(QWidget):
         grid.addWidget(btn_sync, 1, 3)
 
         grid.addWidget(qle_code, 3, 0)
-        grid.addWidget(qle_count, 3, 1)
+        grid.addWidget(self.qle_count_or_price, 3, 1)
         grid.addWidget(btn_buy, 3, 2)
         grid.addWidget(btn_sell, 3, 3)
+        grid.addWidget(btn_new_order, 3, 4)
 
         grid.addWidget(self.log, 4, 0)
 
@@ -156,18 +165,33 @@ class Panel(QWidget):
         if len(text) > 1 and text[0] not in '036' and text[-1] == ';':
             text = basic.get_stock_code(text[:-1])
         self.code = text
-        self.lbl.setText('{} {}'.format(self.code, self.period))
+
+        self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
         self.lbl.adjustSize()
 
-    def on_count_changed(self, text):
-        self.count = text
-        self.lbl.setText('order {} {}'.format(self.code, self.count))
+        if len(text) < 6:
+            return
+
+        quote = tx.get_realtime_data_sina(self.code)
+
+        self.count_or_price[0] = quote['close'][-1]
+        self.qle_count_or_price.setText(list_to_str(self.count_or_price))
+
+    def on_count_or_price_changed(self, text):
+        self.count_or_price = text.split('|')
+        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
         self.lbl.adjustSize()
 
     def on_activated_code(self, text):
         self.code = text.split()[0]
-        self.lbl.setText('{} {}'.format(self.code, self.period))
+
+        quote = tx.get_realtime_data_sina(self.code)
+        self.count_or_price[0] = quote['close'][-1]
+
+        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
         self.lbl.adjustSize()
+
+        self.qle_count_or_price.setText(list_to_str(self.count_or_price))
 
     def open_tdx(self):
         pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
@@ -203,7 +227,7 @@ class Panel(QWidget):
 
     def on_activated_period(self, text):
         self.period = text
-        self.lbl.setText('{} {}'.format(self.code, self.period))
+        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
         self.lbl.adjustSize()
 
     def show_chart(self):
@@ -250,13 +274,16 @@ class Panel(QWidget):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'B', self.period, '')
         quote = tx.get_realtime_data_sina(self.code)
-        trade_manager.buy(self.code, price_trade=quote['close'][-1], count=int(self.count), auto=True)
+        trade_manager.buy(self.code, price_trade=quote['close'][-1], count=int(self.count_or_price[1]), auto=True)
 
     def sell(self):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, '')
         quote = tx.get_realtime_data_sina(self.code)
-        trade_manager.sell(self.code, price_trade=quote['close'][-1], count=int(self.count), auto=True)
+        trade_manager.sell(self.code, price_trade=quote['close'][-1], count=int(self.count_or_price[1]), auto=True)
+
+    def new_trade_order(self):
+        trade_manager.create_trade_order(self.code, price_limited=self.count_or_price[0])
 
     def check_watch_dog(self):
         pid_prev_check = -1

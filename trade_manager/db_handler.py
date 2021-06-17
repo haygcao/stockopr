@@ -30,14 +30,17 @@ def save_money(money: trade_data.Asset):
     fmt_list = ['%s' for i in keys]
     fmt = ', '.join(fmt_list)
 
-    val = (datetime.datetime.now(), money.total_money, money.avail_money)
+    val = (datetime.datetime.now(), money.total_money, money.avail_money, money.total_money, money.avail_money)
 
-    sql = "insert into {} ({}) values ({})".format(config.sql_tab_asset, key, fmt)
+    # sql = "insert into {} ({}) values ({})".format(config.sql_tab_asset, key, fmt)
+    sql = u"INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY update total = %s, avail = %s".format(config.sql_tab_asset, key, fmt)
+    logger.debug(sql)
+
     with mysqlcli.get_cursor() as c:
         try:
             c.execute(sql, val)
         except Exception as e:
-            print(e)
+            print('save money failed -', e)
 
 
 def query_position(code):
@@ -81,17 +84,20 @@ def save_positions(position_list: list[trade_data.Position]):
     fmt_list = ['%s' for i in keys]
     fmt = ', '.join(fmt_list)
 
-    val_list = []
-    for position in position_list:
-        val = (datetime.datetime.now(), position.code, position.current_position, position.avail_position)
-        val_list.append(val)
+    sql = u"INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY update total = %s, avail = %s".format(
+        config.sql_tab_position, key, fmt)
+    logger.debug(sql)
 
-    sql = "insert ignore into {} ({}) values ({})".format(config.sql_tab_position, key, fmt)
     with mysqlcli.get_cursor() as c:
-        try:
-            c.executemany(sql, val_list)
-        except Exception as e:
-            print(e)
+        for position in position_list:
+            val = (datetime.datetime.now(), position.code, position.current_position, position.avail_position,
+                   position.current_position, position.avail_position)
+
+            try:
+                c.execute(sql, val)
+            except Exception as e:
+                # executemany failed, not all arguments converted during string formatting
+                print('save position failed -', e)
 
 
 def query_operation_details(code=None, date: datetime.date = None):

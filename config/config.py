@@ -332,10 +332,11 @@ def get_trade_config(code):
 
     fp.close()
 
+    d: dict = trade['global']
     if code in trade:
-        return trade[code]
+        d.update(trade[code])
 
-    return trade['global']
+    return d
 
 
 def get_tradeapi_server():
