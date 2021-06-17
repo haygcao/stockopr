@@ -16,6 +16,7 @@ import dealer.bought as basic
 from config import config
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
     signal_stop_loss, signal_ema_value, signal_resistance_support
+from util.log import logger
 
 
 def mktime(_datetime):
@@ -138,6 +139,10 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     # 'force_index_bull_market_deviation']
 
     for column in column_list:
+        n = 20
+        data = quote_copy.iloc[-n:][column]
+        if numpy.any(data > 0):
+            logger.info('[{}] in last {} day: {}'.format(column, n, data[data > 0]))
         quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
 
@@ -151,6 +156,10 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     # quote_copy = quote  # .copy()
     for column in column_list:
+        n = 20
+        data = quote_copy.iloc[-n:][column]
+        if numpy.any(data > 0):
+            logger.info('[{}] in last {} day: {}'.format(column, n, data[data > 0]))
         quote_copy.loc[:, 'signal_exit'] = quote_copy.apply(
             lambda x: function(x.high, x.signal_exit, eval('x.{}'.format(column)), column), axis=1)
 
