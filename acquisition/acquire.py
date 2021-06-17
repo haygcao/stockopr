@@ -217,6 +217,7 @@ def save_quote_impl(trade_date=None, xls=None):
 
 
 def save_quote():
+    logger.info('update quote')
     if not dt.istradeday():
         pass
         # exit(0)

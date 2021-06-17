@@ -264,6 +264,7 @@ class Panel(QWidget):
     def update_quote(self):
         p = multiprocessing.Process(target=acquire.save_quote, args=())
         p.start()
+        print('update quote started')
 
     def sync(self):
         p = multiprocessing.Process(target=trade_manager.sync, args=())
