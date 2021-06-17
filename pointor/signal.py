@@ -92,8 +92,8 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     quote = signal_dynamical_system.signal_exit(quote, period=period)
 
     # 通道
-    # quote = signal_channel.signal_enter(quote, period=period)
-    # quote = signal_channel.signal_exit(quote, period=period)
+    quote = signal_channel.signal_enter(quote, period=period)
+    quote = signal_channel.signal_exit(quote, period=period)
 
     # 背离
     quote = signal_market_deviation.signal_enter(quote, period)

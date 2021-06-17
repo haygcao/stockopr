@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 import numpy
 
@@ -63,24 +64,45 @@ def compute_index(quote, period):
     return quote
 
 
+def compute_signal(quote, exit_signal):
+    greater_than_3atr = quote['close'] * exit_signal > (quote['ema'] + 3 * quote['atr'] * exit_signal) * exit_signal
+    greater_than_2atr = quote['close'] * exit_signal > (quote['ema'] + 2 * quote['atr'] * exit_signal) * exit_signal
+
+    column = 'channel_signal_exit' if exit_signal == 1 else 'channel_signal_enter'
+    price = 'high' if exit_signal == 1 else 'low'
+    # quote = quote.assign(channel_signal_exit=numpy.nan)
+    quote.insert(len(quote.columns), column, numpy.nan)
+
+    index3 = 0
+    while True:
+        r = numpy.where(greater_than_3atr[index3:])[0]
+        if not numpy.any(r):
+            break
+        index2 = r[0] + index3
+
+        r = numpy.where(~greater_than_2atr[index2:])[0]
+        if not numpy.any(r):
+            break
+        index = index2 + r[0]
+        # signal_exit_series.iloc[index] = quote.iloc[index]['high']
+        # quote.iloc[index]['channel_signal_exit'] = quote.iloc[index]['high']
+        # A value is trying to be set on a copy of a slice from a DataFrame
+        quote[column].iat[index] = quote.iloc[index][price]
+        # quote_copy[column][index] = quote.iloc[index]['high']
+        index3 = index + 1
+
+    return quote
+
+
 @computed(column_name='channel_signal_enter')
 def signal_enter(quote, period):
     quote = compute_index(quote, period)
 
-    quote_copy = quote.copy()
-    quote_copy.loc[:, 'channel_signal_enter'] = quote_copy.apply(
-        lambda x: function_enter(x.low, x.dlxt_long_period, x.dlxt, x.ema, x.atr, period, x.name), axis=1)
-
-    return quote_copy
+    return compute_signal(quote, exit_signal=-1)
 
 
 @computed(column_name='channel_signal_exit')
 def signal_exit(quote, period):
     quote = compute_index(quote, period)
 
-    quote_copy = quote.copy()
-    quote_copy.loc[:, 'channel_signal_exit'] = quote_copy.apply(
-        lambda x: function_exit(x.high, x.dlxt_long_period, x.dlxt, x.ema, x.atr, period), axis=1)
-
-    return quote_copy
-
+    return compute_signal(quote, exit_signal=1)

@@ -245,7 +245,7 @@ N = ''
 
 signal_enter_list = [
     'dynamical_system_signal_enter',
-    # 'channel_signal_enter',
+    'channel_signal_enter',
     'force_index_signal_enter',
     'ema_value_signal_enter',
     'resistance_support_signal_enter',
@@ -264,7 +264,7 @@ signal_enter_deviation = [
 
 signal_exit_list = [
     'dynamical_system_signal_exit',
-    # 'channel_signal_exit',
+    'channel_signal_exit',
     'force_index_signal_exit',
     'resistance_support_signal_exit',
     'force_index_bear_market_deviation_signal_exit',
@@ -306,12 +306,22 @@ period_price_diff_ratio_deviation_map = {
     'week': 0.96
 }
 
+# period_price_diff_ratio_atr_map = {
+#     'm1': 5,
+#     'm5': 4,
+#     'm15': 4,
+#     'm30': 4,
+#     'm60': 4,
+#     'day': 3,
+#     'week': 3
+# }
+
 period_price_diff_ratio_atr_map = {
-    'm1': 5,
-    'm5': 4,
-    'm15': 4,
-    'm30': 4,
-    'm60': 4,
+    'm1': 3,
+    'm5': 3,
+    'm15': 3,
+    'm30': 3,
+    'm60': 3,
     'day': 3,
     'week': 3
 }
