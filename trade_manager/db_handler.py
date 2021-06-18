@@ -7,7 +7,7 @@ from util.log import logger
 
 
 def query_money():
-    sql = "select total, avail from {} order by date desc limit 1".format(config.sql_tab_asset)
+    sql = "select date, total, avail from {} order by date desc limit 1".format(config.sql_tab_asset)
     with mysqlcli.get_cursor() as c:
         try:
             c.execute(sql)
@@ -15,7 +15,7 @@ def query_money():
         except Exception as e:
             print(e)
 
-    asset = trade_data.Asset(r['total'], r['avail'])
+    asset = trade_data.Asset(r['total'], r['avail'], date=r['date'])
 
     return asset
 

@@ -243,7 +243,7 @@ def check_quote(trade_date=None):
 
     r = (quote1 == quote2).all(axis=1)
     same = r[r]
-    logger.info('stocks two trade day with same quote: \n{}'.format(same.index))
+    logger.info('[{}] stocks - two trade day with same quote: \n{}'.format(len(quote1), same.index))
     return numpy.all(r)
 
     same = []

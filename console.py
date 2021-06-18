@@ -23,7 +23,7 @@ from acquisition import acquire, basic, quote_db, tx
 from config import config
 from pointor.signal import write_supplemental_signal
 from trade_manager import trade_manager
-from util import util
+from util import util, dt
 from util.pywinauto_util import max_window
 
 
@@ -115,13 +115,13 @@ class Panel(QWidget):
         self.btn_monitor.setStyleSheet("background-color : {}".format(color))
         self.btn_monitor.clicked.connect(self.control_watch_dog)
 
-        threading.Thread(target=self.check_watch_dog, args=()).start()
+        threading.Thread(target=self.check, args=()).start()
 
-        btn_update_quote = QPushButton('update quote', self)
-        btn_update_quote.clicked.connect(self.update_quote)
+        self.btn_update_quote = QPushButton('update quote', self)
+        self.btn_update_quote.clicked.connect(self.update_quote)
 
-        btn_sync = QPushButton('sync', self)
-        btn_sync.clicked.connect(self.sync)
+        self.btn_sync = QPushButton('sync', self)
+        self.btn_sync.clicked.connect(self.sync)
 
         self.qle_count_or_price.textChanged[str].connect(self.on_count_or_price_changed)
 
@@ -144,8 +144,8 @@ class Panel(QWidget):
         grid.addWidget(btn_tdx, 2, 3)
         grid.addWidget(btn_load, 2, 4)
         grid.addWidget(self.btn_monitor, 1, 1)
-        grid.addWidget(btn_update_quote, 1, 2)
-        grid.addWidget(btn_sync, 1, 3)
+        grid.addWidget(self.btn_update_quote, 1, 2)
+        grid.addWidget(self.btn_sync, 1, 3)
 
         grid.addWidget(qle_code, 3, 0)
         grid.addWidget(self.qle_count_or_price, 3, 1)
@@ -286,9 +286,22 @@ class Panel(QWidget):
     def new_trade_order(self):
         trade_manager.create_trade_order(self.code, price_limited=self.count_or_price[0])
 
-    def check_watch_dog(self):
+    def check(self):
         pid_prev_check = -1
+        update_time = datetime.datetime(2021, 6, 18, 0, 0, 0)
         while self.running:
+            now = datetime.datetime.now()
+            if now - update_time > datetime.timedelta(seconds=60):
+                latest_trade_date = quote_db.get_latest_trade_date()
+                latest_sync_date = trade_manager.db_handler.query_money().date
+                self.log.setText('latest quote:\t{}\nlatest sync:\t{}'.format(latest_trade_date.date(), latest_sync_date))
+                if latest_sync_date != dt.get_trade_date():
+                    # self.log.setStyleSheet("color : red")
+                    self.btn_sync.setStyleSheet("color : red")
+                    self.btn_update_quote.setStyleSheet("color : red")
+
+                update_time = now
+
             pid = util.get_pid_of_python_proc('watch_dog')
             if pid == pid_prev_check:
                 time.sleep(3)
