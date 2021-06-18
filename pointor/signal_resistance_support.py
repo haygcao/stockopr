@@ -15,7 +15,7 @@ def function_enter_origin(low, close, resistance, dlxt_long_period, dlxt, dlxt_e
 
     # ema13 向上, close 回归 ema13 ~ ema26 价值区间
     # if ema26 >= ema26_shift and (close - resistance) / resistance > config.resistance_over_rate:
-    if (close - resistance) / resistance > config.resistance_over_rate:
+    if (close - resistance) / resistance > config.period_price_diff_ratio_resistance_support_map[period]:
         return low
 
     return numpy.nan
@@ -31,7 +31,7 @@ def function_exit(high, close, support, dlxt_long_period, dlxt, dlxt_ema13, ema1
     if close > support:
         return numpy.nan
 
-    if (support - close) / support > config.support_under_rate:
+    if (support - close) / support > config.period_price_diff_ratio_resistance_support_map[period]:
         return high
 
     return numpy.nan

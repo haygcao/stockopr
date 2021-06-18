@@ -68,7 +68,7 @@ def signal_enter(quote, period=None):
     ema26_rolling_min = quote_copy.loc[:, 'ema26'].rolling(20, min_periods=1).min()
     force_index_signal_enter = quote_copy.loc[:, 'force_index_signal_enter']
     quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
-        force_index_signal_enter / ema26_rolling_min < config.oscillation_threshold, numpy.nan)
+        force_index_signal_enter / ema26_rolling_min < config.period_oscillation_threshold_map[period], numpy.nan)
 
     # remove temp data
     quote_copy.drop(['force_index_shift'], axis=1)

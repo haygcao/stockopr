@@ -295,11 +295,11 @@ class DataFinanceDraw(object):
         data_support[:] = self.data[-60:]['low'].min()
 
         data_resistance_20 = self.data['resistance']
-        data_resistance_20 = data_resistance_20.mask(data_resistance_20.index < data_resistance_20.index[-60], numpy.nan)
+        # data_resistance_20 = data_resistance_20.mask(data_resistance_20.index < data_resistance_20.index[-60], numpy.nan)
         # data_resistance_20 = data_resistance_20.mask(data_resistance_20 > 0, data_resistance_20[-1])
 
         data_support_20 = self.data['support']
-        data_support_20 = data_support_20.mask(data_support_20.index < data_support_20.index[-60], numpy.nan)
+        # data_support_20 = data_support_20.mask(data_support_20.index < data_support_20.index[-60], numpy.nan)
         # data_support_20 = data_support_20.mask(data_support_20 > 0, data_support_20[-1])
 
         dlxt.values[:] = 1

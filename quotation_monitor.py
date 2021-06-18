@@ -187,18 +187,18 @@ def update_status(code, data, period):
 
     if index == -1 and now.minute < 55:
         signal_exit_deviation_tmp = ['macd_bear_market_deviation_signal_exit']
-        signal_enter_deviation_tmp = ['macd_bear_market_deviation_signal_enter']
+        signal_enter_deviation_tmp = ['macd_bull_market_deviation_signal_enter']
     else:
         signal_exit_deviation_tmp = signal_exit_deviation
         signal_enter_deviation_tmp = signal_enter_deviation
 
     for deviation in signal_exit_deviation_tmp:
-        if not numpy.isnan(data[deviation][index]):
+        if not numpy.isnan(data[deviation][index -1]):
             direct = 'S'
             return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
 
     for deviation in signal_enter_deviation_tmp:
-        if not numpy.isnan(data[deviation][index]):
+        if not numpy.isnan(data[deviation][index - 1]):
             direct = 'B'
             return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
 

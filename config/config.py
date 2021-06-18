@@ -363,13 +363,31 @@ total_risk_rate = 1   # 0.06   # 6%
 one_risk_rate = 0.1   # 0.01   # 1%
 
 #
+period_price_diff_ratio_resistance_support_map = {
+    'm1': 0.005,
+    'm5': 0.005,
+    'm15': 0.01,
+    'm30': 0.02,
+    'm60': 0.02,
+    'day': 0.02,
+    'week': 0.04
+}
+
 resistance_over_rate = 0.02
 support_under_rate = 0.02
 resistance_support_backdays = 1
 
 supplemental_signal_path = os.path.join(config_dir, '..', 'data/trade.csv')
 # 振荡阈值
-oscillation_threshold = 1.05
+period_oscillation_threshold_map = {
+    'm1': 1.0125,
+    'm5': 1.025,
+    'm15': 1.025,
+    'm30': 1.05,
+    'm60': 1.05,
+    'day': 1.05,
+    'week': 1.1
+}
 
 stamp_duty = 0.001   # 印花税 卖方
 commission = 0.0002   # 佣金 - 中信证券 双向
