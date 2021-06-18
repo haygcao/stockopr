@@ -364,8 +364,8 @@ one_risk_rate = 0.1   # 0.01   # 1%
 
 #
 period_price_diff_ratio_resistance_support_map = {
-    'm1': 0.005,
-    'm5': 0.005,
+    'm1': 0.01,
+    'm5': 0.01,
     'm15': 0.01,
     'm30': 0.02,
     'm60': 0.02,
@@ -380,7 +380,7 @@ resistance_support_backdays = 1
 supplemental_signal_path = os.path.join(config_dir, '..', 'data/trade.csv')
 # 振荡阈值
 period_oscillation_threshold_map = {
-    'm1': 1.0125,
+    'm1': 1.025,
     'm5': 1.025,
     'm15': 1.025,
     'm30': 1.05,
