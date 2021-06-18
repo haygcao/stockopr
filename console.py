@@ -293,12 +293,17 @@ class Panel(QWidget):
             if now - update_time > datetime.timedelta(seconds=60):
                 latest_quote_date = quote_db.get_latest_trade_date()
                 latest_sync_date = trade_manager.db_handler.query_money().date
-                self.log.setText('latest quote:\t{}\nlatest sync:\t{}'.format(latest_quote_date.date(), latest_sync_date))
+                self.log.setText('latest quote:\t{}\nlatest sync:\t{}'.format(latest_quote_date, latest_sync_date))
                 if latest_sync_date != dt.get_trade_date():
                     # self.log.setStyleSheet("color : red")
                     self.btn_sync.setStyleSheet("color : red")
+                else:
+                    self.btn_sync.setStyleSheet("color : black")
+
                 if latest_quote_date != dt.get_trade_date():
                     self.btn_update_quote.setStyleSheet("color : red")
+                else:
+                    self.btn_update_quote.setStyleSheet("color : black")
 
                 update_time = now
 

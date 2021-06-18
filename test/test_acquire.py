@@ -1,6 +1,8 @@
+import datetime
 import unittest
 
-from acquisition import acquire
+from acquisition import acquire, quote_db
+from util import dt
 
 
 class AcquireTestCase(unittest.TestCase):
@@ -11,7 +13,13 @@ class AcquireTestCase(unittest.TestCase):
         pass
 
     def test_check_quote(self):
-        ret = acquire.check_quote()
+        trade_date = dt.get_trade_date()
+        trade_date = datetime.date(2021, 6, 17)
+        trade_date_prev = dt.get_pre_trade_date(trade_date)
+
+        quote1 = quote_db.query_quote(trade_date)
+        quote2 = quote_db.query_quote(trade_date_prev)
+        ret = acquire.check_quote(quote1, quote2)
         print(ret)
 
 

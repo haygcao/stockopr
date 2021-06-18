@@ -25,7 +25,7 @@ def query_quote(trade_date, conn=None):
     else:
         _conn = conn
 
-    key_list = ['code', 'open', 'high', 'low', 'close', 'volume', 'turnover', 'lb', 'wb', 'zf']
+    key_list = ['code', 'open', 'high', 'low', 'close', 'volume', 'turnover']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     where = ' trade_date = "{}"'.format(trade_date)
     sql = 'SELECT {0} FROM {1} WHERE {2}'.format(', '.join(key_list), table[1], where)
@@ -236,7 +236,7 @@ def get_latest_trade_date():
         sql = 'select max(trade_date) from quote'
         c.execute(sql)
         r = c.fetchone()
-        return list(r.values())[0]
+        return list(r.values())[0].date()
 
 
 def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust=34.34):

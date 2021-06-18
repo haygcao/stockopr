@@ -111,7 +111,7 @@ def save_quote_wy():
             print(e)
 
 
-def save_quote_xl():
+def save_quote_xl(ignore=True):
     same_day = True
     df_quote = tx.get_today_all()
     df_quote = df_quote[df_quote.volume > 0]
@@ -161,9 +161,17 @@ def save_quote_xl():
         stock_list = list(zip(df_quote['code'], df_quote['name']))
         # basic.save_stock_list_into_db(stock_list)
         # stock_list = stock_list[:10]
-        basic.upsert_stock_list_into_db(stock_list)
 
         df_quote = df_quote.drop('name', axis=1)
+
+        trade_date_prev = dt.get_pre_trade_date()
+        quote2 = quote_db.query_quote(trade_date_prev)
+
+        if not check_quote(df_quote, quote2):
+            if not ignore:
+                return
+
+        basic.upsert_stock_list_into_db(stock_list)
         # Do not insert the row number (index=False)
         df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
         # df_quote.to_csv('2021-06-07.csv')
@@ -230,13 +238,8 @@ def save_quote():
     logger.info('save quote cost [{}]'.format((now - t1).seconds, 2))
 
 
-def check_quote(trade_date=None):
+def check_quote(quote1, quote2):
     logger.info('begin check quote')
-    trade_date = trade_date if trade_date else dt.get_trade_date()
-    trade_date_prev = dt.get_pre_trade_date(trade_date)
-
-    quote1 = quote_db.query_quote(trade_date)
-    quote2 = quote_db.query_quote(trade_date_prev)
 
     quote1 = quote1.loc[quote1.index.intersection(quote2.index)]
     quote2 = quote2.loc[quote2.index.intersection(quote1.index)]
@@ -244,7 +247,7 @@ def check_quote(trade_date=None):
     r = (quote1 == quote2).all(axis=1)
     same = r[r]
     logger.info('[{}] stocks - two trade day with same quote: \n{}'.format(len(quote1), same.index))
-    return numpy.all(r)
+    return not numpy.any(r)
 
     same = []
     code_list = basic.get_all_stock_code()
