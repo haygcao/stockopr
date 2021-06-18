@@ -2,7 +2,6 @@ import datetime
 import multiprocessing
 import os
 import signal
-import subprocess
 import sys
 import threading
 import time
@@ -13,12 +12,10 @@ from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow)
-import pywinauto
 import win32api
 
 import chart
 import trade_manager.db_handler
-import watch_dog
 from acquisition import acquire, basic, quote_db, tx
 from config import config
 from pointor.signal import write_supplemental_signal
@@ -26,9 +23,11 @@ from trade_manager import trade_manager
 from util import util, dt
 from util.pywinauto_util import max_window
 
-
+# pywinauto
+# QWindowsContext: OleInitialize() failed: "COM error 0xffffffff80010106 RPC_E_CHANGED_MODE (Unknown error 0x080010106)"
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
+import pywinauto
 
 
 def list_to_str(list_: list):
