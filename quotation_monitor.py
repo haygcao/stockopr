@@ -74,6 +74,8 @@ class TradeSignalManager:
 
     @classmethod
     def need_signal(cls, trade_signal: TradeSignal) -> bool:
+        return True
+
         last_signal = cls.get_last_trade_signal(trade_signal.code)
         cls.append_trade_siganl(trade_signal)
         if last_signal and last_signal.command == trade_signal.command:
@@ -173,26 +175,37 @@ def update_status(code, data, period):
 
     data = signal.compute_signal(data, period)
 
+    now = datetime.datetime.now()
+    index = -1 if now.minute > 55 or period == 'day' else -2
+
     minute = 0 if period == 'day' else int(period[1:])
     # 周期最 3 分钟
-    if period == 'day' or data_index_.minute % minute >= minute - 3:
-        if not numpy.isnan(data['stop_loss_signal_exit'][-1]):
-            return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
+    # if period == 'day' or data_index_.minute % minute >= minute - 3:
 
-        for deviation in signal_exit_deviation:
-            if not numpy.isnan(data[deviation][-2]):
-                direct = 'S'
-                return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
+    if not numpy.isnan(data['stop_loss_signal_exit'][index]):
+        return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
-        for deviation in signal_enter_deviation:
-            if not numpy.isnan(data[deviation][-2]):
-                direct = 'B'
-                return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
+    if index == -1 and now.minute < 55:
+        signal_exit_deviation_tmp = ['macd_bear_market_deviation_signal_exit']
+        signal_enter_deviation_tmp = ['macd_bear_market_deviation_signal_enter']
+    else:
+        signal_exit_deviation_tmp = signal_exit_deviation
+        signal_enter_deviation_tmp = signal_enter_deviation
 
-    if not numpy.isnan(data['signal_exit'][-1]):
+    for deviation in signal_exit_deviation_tmp:
+        if not numpy.isnan(data[deviation][index]):
+            direct = 'S'
+            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
+
+    for deviation in signal_enter_deviation_tmp:
+        if not numpy.isnan(data[deviation][index]):
+            direct = 'B'
+            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
+
+    if not numpy.isnan(data['signal_exit'][index]):
         return TradeSignal(code, price, data_index_, 'S', Policy.DEFAULT, period, True)
 
-    if not numpy.isnan(data['signal_enter'][-1]):
+    if not numpy.isnan(data['signal_enter'][index]):
         return TradeSignal(code, price, data_index_, 'B', Policy.DEFAULT, period, True)
 
 
@@ -219,7 +232,7 @@ def order(trade_singal: TradeSignal):
     if trade_singal.command == 'B':
         trade_manager.buy(trade_singal.code, price_trade=trade_singal.price, policy=trade_singal.policy)
     else:
-        trade_manager.sell(trade_singal.code, price_trade=trade_singal.price, auto=True)
+        trade_manager.sell(trade_singal.code, price_trade=trade_singal.price, auto=False)
 
 
 def notify(trade_singal: TradeSignal):
@@ -238,8 +251,7 @@ def query_trade_order_code_list():
 
 
 def monitor_today():
-    periods = ['day', 'm30', 'm5']
-    periods = ['day', 'm30']
+    periods = []
 
     logger.info(TradeSignalManager.signal_map)
     while True:
@@ -247,18 +259,35 @@ def monitor_today():
 
         now = datetime.datetime.now()
         if now.hour == 15:
+            logger.info("today's market close, return")
             return
         if now.hour == 12 or (now.hour == 11 and now.minute > 30):
             time.sleep(60)
             continue
 
-        sleep = random.randint(3, 6) * 60 if now.minute < 50 else random.randint(1, 3) * 60
+        periods.clear()
+        if now.minute % 5 < 1:
+            periods.append('m5')
+        if now.minute % 30 < 1:
+            periods.append('m30')
+        if now.minute % 60 < 1:
+            periods.append('day')
 
-        time.sleep(sleep)
+        # 最后5分钟
+        if now.hour == 14 and now.minute in [56, 57]:
+            if 'day' not in periods:
+                periods.append('day')
+            if 'm30' not in periods:
+                periods.append('m30')
+
+        if not periods:
+            # sleep = random.randint(3, 6) * 60 if now.minute < 50 else random.randint(1, 3) * 60
+            time.sleep(30)
+            continue
+
         logger.info('quotation monitor is running')
 
         for code in TradeSignalManager.trade_order_map.keys():
-            time.sleep(random.randint(3, 10))
             trade_signal = check(code, periods)
             if not trade_signal:
                 continue
@@ -266,12 +295,9 @@ def monitor_today():
             if not TradeSignalManager.need_signal(trade_signal):
                 continue
 
-            # write to log
-            # supplemental_signal: [(code, date, 'B/S', price), (code, date, 'B/S', price), ...]
-
             supplemental_signal_path = config.supplemental_signal_path
             signal.write_supplemental_signal(supplemental_signal_path, code, trade_signal.date, trade_signal.command,
-                                      trade_signal.period, trade_signal.price)
+                                             trade_signal.period, trade_signal.price)
 
             logger.info(TradeSignalManager.signal_map)
             p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period,))
@@ -281,6 +307,8 @@ def monitor_today():
             notify(trade_signal)
 
             p.join(timeout=1)
+
+        time.sleep(60)
 
 
 if __name__ == '__main__':
