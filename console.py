@@ -78,7 +78,7 @@ class Panel(QWidget):
 
         self.combo_code.activated[str].connect(self.on_activated_code)
 
-        btn_tdx = QPushButton('通达信', self)
+        btn_tdx = QPushButton('tdx', self)
         btn_tdx.clicked.connect(self.open_tdx)
 
         btn_load = QPushButton('load', self)
@@ -124,13 +124,13 @@ class Panel(QWidget):
 
         self.qle_count_or_price.textChanged[str].connect(self.on_count_or_price_changed)
 
-        btn_buy = QPushButton('Buy', self)
+        btn_buy = QPushButton('buy', self)
         btn_buy.clicked.connect(self.buy)
 
-        btn_sell = QPushButton('Sell', self)
+        btn_sell = QPushButton('sell', self)
         btn_sell.clicked.connect(self.sell)
 
-        btn_new_order = QPushButton('New Order', self)
+        btn_new_order = QPushButton('new order', self)
         btn_new_order.clicked.connect(self.new_trade_order)
 
         grid = QGridLayout()
