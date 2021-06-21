@@ -3,7 +3,7 @@ import numpy
 
 from config import config
 from indicator import ema
-from indicator.decorator import computed, ignore_long_period
+from indicator.decorator import computed, ignore_long_period, dynamic_system_filter
 
 
 def function_enter_origin(low, close, resistance, dlxt_long_period, dlxt, dlxt_ema13, ema13, ema26, ema26_shift, period, date):
@@ -46,6 +46,7 @@ def compute_index(quote, period=None):
 
 
 @computed(column_name='resistance_support_signal_enter')
+@dynamic_system_filter(column_name='resistance_support_signal_enter')
 def signal_enter(quote, period=None):
     quote = compute_index(quote, period)
 

@@ -8,3 +8,4 @@ def compute_atr(quote):
     quote['atr'] = atr(quote)
 
     return quote
+

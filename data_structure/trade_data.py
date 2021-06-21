@@ -44,10 +44,16 @@ class Position:
 
         self.cost = round(self.price_cost * self.current_position, 3)
         self.market_value = round(self.price * self.current_position, 3)
-        self.profit_total_percent = round(self.profit_total / self.cost, 3)
+        self.profit_total_percent = round(100 * self.profit_total / self.cost, 3)
 
     def __str__(self):
-        return 'code: {}, current_position: {}, avail_position: {}'.format(self.code, self.current_position, self.avail_position)
+        ret = ''
+        for i in self.__dir__():
+            if i.startswith('__'):
+                continue
+            ret += i + ': ' + str(eval('self.{}'.format(i)))
+            ret += ' '
+        return ret
 
 
 @dataclass
