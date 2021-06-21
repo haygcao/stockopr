@@ -45,11 +45,10 @@ def signal_enter(quote, period=None):
         axis=1)
 
     # 利用 dmi 过滤掉振荡走势中的信号
-    ema_value_signal_enter = quote_copy.loc[:, 'ema_value_signal_enter']
-    quote_copy.loc[:, 'ema_value_signal_enter'] = ema_value_signal_enter.mask(
-        quote_copy['adx'] < quote_copy['pdi'], numpy.nan)
-    quote_copy.loc[:, 'ema_value_signal_enter'] = ema_value_signal_enter.mask(
-        quote_copy['adx'] < quote_copy['mdi'], numpy.nan)
+    mask1 = quote_copy['adx'] < quote_copy['pdi']
+    mask2 = quote_copy['adx'] < quote_copy['mdi']
+    mask = mask1 & mask2
+    quote_copy['ema_value_signal_enter'] = quote_copy['ema_value_signal_enter'].mask(mask, numpy.nan)
 
     # 利用 dmi 过滤掉振荡走势中的信号
     # ema26_rolling_min = quote_copy.loc[:, 'ema26'].rolling(20, min_periods=1).min()

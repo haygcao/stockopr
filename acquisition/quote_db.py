@@ -25,12 +25,13 @@ def query_quote(trade_date, conn=None):
     else:
         _conn = conn
 
-    key_list = ['code', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+    key_list = ['trade_date', 'code', 'open', 'high', 'low', 'close', 'volume', 'turnover']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     where = ' trade_date = "{}"'.format(trade_date)
     sql = 'SELECT {0} FROM {1} WHERE {2}'.format(', '.join(key_list), table[1], where)
 
-    df = pd.read_sql(sql, con=_conn, index_col=['code'])
+    # df = pd.read_sql(sql, con=_conn, index_col=['trade_date'])
+    df = pd.read_sql(sql, con=_conn)
 
     if conn == None:
         _conn.close()

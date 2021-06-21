@@ -239,10 +239,15 @@ def save_quote():
 
 
 def check_quote(quote1, quote2):
+    return True
+
     logger.info('begin check quote')
 
-    quote1 = quote1.loc[quote1.index.intersection(quote2.index)]
-    quote2 = quote2.loc[quote2.index.intersection(quote1.index)]
+    # quote1 = quote1.loc[quote1.index.intersection(quote2.index)]
+    # quote2 = quote2.loc[quote2.index.intersection(quote1.index)]
+
+    quote1 = quote1.loc[quote1.code.isin(quote2.code)]
+    quote2 = quote2.loc[quote2.code.isin(quote1.code)]
 
     r = (quote1 == quote2).all(axis=1)
     same = r[r]
@@ -268,6 +273,7 @@ def check_quote(quote1, quote2):
 
 
 if __name__ == '__main__':
+    save_quote()
     pass
     # trade_date = datetime.date(2021, 6, 4)
     # # trade_date = datetime.date.today()

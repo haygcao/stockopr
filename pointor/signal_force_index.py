@@ -86,11 +86,10 @@ def signal_enter(quote, period=None):
 
     # 过滤掉振荡走势中的信号
     # 利用 dmi 过滤掉振荡走势中的信号
-    force_index_signal_enter = quote_copy.loc[:, 'force_index_signal_enter']
-    quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
-        quote_copy['adx'] < quote_copy['pdi'], numpy.nan)
-    quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
-        quote_copy['adx'] < quote_copy['mdi'], numpy.nan)
+    mask1 = quote_copy['adx'] < quote_copy['pdi']
+    mask2 = quote_copy['adx'] < quote_copy['mdi']
+    mask = mask1 & mask2
+    quote_copy['force_index_signal_enter'] = quote_copy['force_index_signal_enter'].mask(mask, numpy.nan)
 
     # quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
     #     quote_copy['dlxt_long_period'] < 0, numpy.nan)

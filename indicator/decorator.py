@@ -28,7 +28,6 @@ def dynamic_system_filter(column_name=None):
     def decorate(func):
         def inner(*args, **kwargs):
             quote = func(*args, **kwargs)
-            print('dynamic_system_filter')
             quote.loc[:, column_name] = quote[column_name].mask(quote['dlxt_long_period'] < 0, numpy.nan)
             quote.loc[:, column_name] = quote[column_name].mask(quote['dlxt'] < 0, numpy.nan)
             return quote
