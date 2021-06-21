@@ -181,9 +181,19 @@ def get_positions():
         row = row_str.split('\t')
         current_position = int(float(row[columns.index('股份余额')]))
         avail_position = int(float(row[columns.index('可用股份')]))
+        price = float(row[columns.index('当前价')])
+        price_cost = float(row[columns.index('成本价1')])
+        profit_total = float(row[columns.index('浮动盈亏')])
 
         # position = n.Position(row[0], current_position, avail_position)
-        position = {'code': row[0], 'current_position': current_position, 'avail_position': avail_position}
+        position = {
+            'code': row[0],
+            'current_position': current_position,
+            'avail_position': avail_position,
+            'price': price,
+            'price_cost': price_cost,
+            'profit_total': profit_total
+        }
 
         position_list.append(position)
 

@@ -78,7 +78,7 @@ def save_positions(position_list: list[trade_data.Position]):
     if not position_list:
         return
 
-    keys = ['date', 'code', 'total', 'avail']
+    keys = ['date', 'code', 'total', 'avail', 'cost_price', 'price', 'cost', 'market_value', 'total_profit', 'total_profit_percent']
 
     key = ', '.join(keys)
     fmt_list = ['%s' for i in keys]
@@ -91,6 +91,8 @@ def save_positions(position_list: list[trade_data.Position]):
     with mysqlcli.get_cursor() as c:
         for position in position_list:
             val = (position.date, position.code, position.current_position, position.avail_position,
+                   position.price_cost, position.price, position.cost, position.market_value,
+                   position.profit_total, position.profit_total_percent,
                    position.current_position, position.avail_position)
 
             try:

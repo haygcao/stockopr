@@ -1,4 +1,4 @@
-#-*- encoding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 
 from talib.abstract import MACD, MACDEXT, MACDFIX
 from talib.abstract import CCI
@@ -24,6 +24,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 #import util.quote_db as price
+
+# talib.get_functions()   # 158 functions
 
 '''
 MACD: (12-day EMA - 26-day EMA)

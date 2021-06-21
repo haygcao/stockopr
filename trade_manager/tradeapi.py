@@ -39,7 +39,8 @@ def query_position(code=None):
     try:
         d = json.loads(json_str)
         for row in d:
-            position = trade_data.Position(row['code'], row['current_position'], row['avail_position'])
+            position = trade_data.Position(row['code'], row['current_position'], row['avail_position'],
+                                           row['price_cost'], row['price'], row['profit_total'])
             position_list.append(position)
     except Exception as e:
         print(e, json_str)

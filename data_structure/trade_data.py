@@ -26,12 +26,25 @@ class Position:
     code = ''
     current_position = 0
     avail_position = 0
+    price = 0
+    price_cost = 0
+    profit_total = 0
+    cost = 0
+    market_value = 0
+    profit_total_percent = 0
 
-    def __init__(self, code, current, avail, date=None):
+    def __init__(self, code, current, avail, price_cost, price, profit_total, date=None):
         self.date = dt.get_trade_date() if not date else date
         self.code = code
         self.current_position = current
         self.avail_position = avail
+        self.price = price
+        self.price_cost = price_cost
+        self.profit_total = profit_total
+
+        self.cost = round(self.price_cost * self.current_position, 3)
+        self.market_value = round(self.price * self.current_position, 3)
+        self.profit_total_percent = round(self.profit_total / self.cost, 3)
 
     def __str__(self):
         return 'code: {}, current_position: {}, avail_position: {}'.format(self.code, self.current_position, self.avail_position)
