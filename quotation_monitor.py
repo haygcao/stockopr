@@ -232,7 +232,7 @@ def order(trade_singal: TradeSignal):
     if trade_singal.command == 'B':
         trade_manager.buy(trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period, policy=trade_singal.policy)
     else:
-        trade_manager.sell(trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period, auto=False)
+        trade_manager.sell(trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period)
 
 
 def notify(trade_singal: TradeSignal):
