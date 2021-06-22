@@ -88,7 +88,8 @@ def signal_enter(quote, period=None):
     # 利用 dmi 过滤掉振荡走势中的信号
     mask1 = quote_copy['adx'] < quote_copy['pdi']
     mask2 = quote_copy['adx'] < quote_copy['mdi']
-    mask = mask1 & mask2
+    mask3 = quote_copy['pdi'] < quote_copy['mdi']
+    mask = (mask1 & mask2) | mask3
     quote_copy['force_index_signal_enter'] = quote_copy['force_index_signal_enter'].mask(mask, numpy.nan)
 
     # quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
