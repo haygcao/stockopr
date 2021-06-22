@@ -230,9 +230,9 @@ def check(code, periods):
 def order(trade_singal: TradeSignal):
     logger.info('{} {}'.format(trade_singal.command, trade_singal.code))
     if trade_singal.command == 'B':
-        trade_manager.buy(trade_singal.code, price_trade=trade_singal.price, policy=trade_singal.policy)
+        trade_manager.buy(trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period, policy=trade_singal.policy)
     else:
-        trade_manager.sell(trade_singal.code, price_trade=trade_singal.price, auto=False)
+        trade_manager.sell(trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period, auto=False)
 
 
 def notify(trade_singal: TradeSignal):

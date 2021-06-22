@@ -156,7 +156,7 @@ def update_operation_detail(detail):
     db_handler.save_operation_details([detail])
 
 
-def buy(code, price_trade=0, price_limited=0, count=0, policy: Policy = None, auto=None):
+def buy(code, price_trade=0, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -166,7 +166,7 @@ def buy(code, price_trade=0, price_limited=0, count=0, policy: Policy = None, au
         return
 
     quote = tx.get_kline_data(code)
-    if policy != Policy.DEVIATION:
+    if period == 'day' and policy != Policy.DEVIATION:
         quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
         if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
             popup_warning_message_box('动力系统为红色, 禁止买入, 请务必遵守规则!')
@@ -182,25 +182,28 @@ def buy(code, price_trade=0, price_limited=0, count=0, policy: Policy = None, au
 
     # quote = tx.get_realtime_data_sina(code)
     money = query_money()
-    max_position = money.avail_money / (price_limited if price_limited > 0 else quote['close'].iloc[-1] * 1.01) // 100 * 100
+    max_position = money.avail_money / (price_limited if price_limited > 0 else price_trade * 1.01) // 100 * 100
 
     trade_config = config.get_trade_config(code)
+    position_unit = trade_config['position_unit']
+    max_position = min(max_position, (position_unit / price_trade) // 100 * 100)
     if not auto:
         auto = trade_config['auto_buy']
-    # if count == 0:
-    #     count = trade['count']
+
+    if count == 0:
+        count = trade_config['count']
     # avail_position = min(avail_position, count)
 
-    count = min(max_position, avail_position)
-    # operation = TradeManager.get_operation()
-    # operation.__buy(code, count, price, auto=auto)
+    if count <= 0:
+        count = min(max_position, avail_position)
+
     order('B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
     position = position if position else trade_data.Position(code, count, 0)
     db_handler.save_positions([position])
 
 
-def sell(code, price_trade, price_limited=0, count=0, policy: Policy = None, auto=None):
+def sell(code, price_trade, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
@@ -208,7 +211,7 @@ def sell(code, price_trade, price_limited=0, count=0, policy: Policy = None, aut
     if not position:
         return
     quote = tx.get_kline_data(code)
-    if not policy or (policy != Policy.DEVIATION and policy != Policy.CHANNEL):
+    if period == 'day' and (not policy or (policy != Policy.DEVIATION and policy != Policy.CHANNEL)):
         quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
         if quote['dlxt'].iloc[-1] >= 0 and quote['dlxt_long_period'].iloc[-1] >= 0:
             popup_warning_message_box('动力系统不为红色, 禁止清仓, 请务必遵守规则!')
@@ -217,20 +220,23 @@ def sell(code, price_trade, price_limited=0, count=0, policy: Policy = None, aut
     current_position = position.current_position
     avail_position = position.avail_position
 
-    to_position = ((current_position / 2) // 100) * 100
+    trade_config = config.get_trade_config(code)
+    position_unit = trade_config['position_unit']
+
+    # to_position = ((current_position / 2) // 100) * 100
+    to_position = ((position_unit / price_trade) // 100) * 100
     to_position = min(avail_position, to_position)
 
-    trade_config = config.get_trade_config(code)
     if not auto:
         auto = trade_config['auto_sell']
 
-    # if count == 0:
-    #     count = trade['count']
+    if count == 0:
+        count = trade_config['count']
     # count = min(to_position, count)
 
     # count = to_position
     if count <= 0:
-        count = avail_position
+        count = to_position
     # operation = TradeManager.get_operation()
     # operation.__sell(code, count, price, auto=auto)
     order('S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
@@ -412,7 +418,7 @@ def create_position_price_limited():
         date = trade_order.date
         if close > trade_order.open_price:
             logger.info('建仓 限价交易单[{} {}] {}x{}'.format(date, code, close, count))
-            buy(code, price_trade=close, price_limited=close, count=count, auto=True)
+            buy(code, price_trade=close, price_limited=close, count=count, period='day', auto=True)
             db_handler.update_trade_order_status(trade_order.date, code, 'ING')
 
 

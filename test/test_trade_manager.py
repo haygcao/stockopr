@@ -57,12 +57,12 @@ class TradeManagerTestCase(unittest.TestCase):
         code = '300502'
         count = 0
         # tradeapi.order('B', code, count, auto=False)
-        trade_manager.buy(code, count)
+        trade_manager.buy(code, count, period='day')
 
         code = '300501'
         count = 100
         # tradeapi.order('B', code, count, auto=False)
-        trade_manager.buy(code, count)
+        trade_manager.buy(code, count, period='day')
 
         # trade_manager.buy('300502')
         trade_manager.order('B', '300502', 1500)

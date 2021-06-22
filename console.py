@@ -276,13 +276,21 @@ class Panel(QWidget):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'B', self.period, '')
         quote = tx.get_realtime_data_sina(self.code)
-        trade_manager.buy(self.code, price_trade=quote['close'][-1], count=int(self.count_or_price[1]), auto=True)
+        trade_manager.buy(self.code,
+                          price_trade=quote['close'][-1],
+                          count=int(self.count_or_price[1]),
+                          period=self.period,
+                          auto=True)
 
     def sell(self):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, '')
         quote = tx.get_realtime_data_sina(self.code)
-        trade_manager.sell(self.code, price_trade=quote['close'][-1], count=int(self.count_or_price[1]), auto=True)
+        trade_manager.sell(self.code,
+                           price_trade=quote['close'][-1],
+                           count=int(self.count_or_price[1]),
+                           period=self.period,
+                           auto=True)
 
     def new_trade_order(self):
         trade_manager.create_trade_order(self.code, price_limited=self.count_or_price[0])
