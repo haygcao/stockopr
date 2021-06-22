@@ -119,7 +119,7 @@ def sync():
 
     # money
     money = tradeapi.get_asset()
-    db_handler.save_money(money)
+    db_handler.save_money(money, sync=True)
     logger.info('sync money')
 
     # position

@@ -3,7 +3,7 @@ import numpy
 
 from config.config import is_long_period
 from indicator import force_index, dynamical_system
-from indicator.decorator import computed, ignore_long_period
+from indicator.decorator import computed, ignore_long_period, dynamic_system_filter
 
 
 def function_enter(low, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shift, dlxt_ema13, period, date):
@@ -47,15 +47,18 @@ def function_exit(high, dlxt_long_period, dlxt_long_period_shift, dlxt, dlxt_shi
 def compute_index(quote, period=None):
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
-    quote_copy = quote.copy()
-    quote_copy.loc[:, 'dlxt_long_period_shift'] = quote['dlxt_long_period'].loc[:].shift(periods=1)
-    quote_copy.loc[:, 'dlxt_shift'] = quote['dlxt'].shift(periods=1)
+    quote_copy = quote  # .copy()
+    if 'dlxt_long_period_shift' not in quote_copy.columns:
+        quote_copy.loc[:, 'dlxt_long_period_shift'] = quote['dlxt_long_period'].loc[:].shift(periods=1)
+    if 'dlxt_shift' not in quote_copy.columns:
+        quote_copy.loc[:, 'dlxt_shift'] = quote['dlxt'].shift(periods=1)
 
     return quote_copy
 
 
 @computed(column_name='dynamical_system_signal_enter')
-@ignore_long_period(column_name='dynamical_system_signal_enter')
+# @ignore_long_period(column_name='dynamical_system_signal_enter')
+@dynamic_system_filter(column_name='dynamical_system_signal_enter')
 def signal_enter(quote, period=None):
     # if is_long_period(period):
     #     quote = quote.assign(dynamical_system_signal_enter=numpy.nan)
@@ -63,13 +66,20 @@ def signal_enter(quote, period=None):
 
     quote = compute_index(quote, period)
 
-    quote_copy = quote.copy()
-    quote_copy.loc[:, 'dynamical_system_signal_enter'] = quote_copy.apply(
-        lambda x: function_enter(
-            x.low, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift, x.dlxt_ema13, period, x.name), axis=1)
+    quote_copy = quote  # .copy()
+
+    signal_column = 'dynamical_system_signal_enter'
+    quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
+    if is_long_period(period):
+        mask1 = (quote_copy.dlxt_shift < quote_copy.dlxt) & (quote_copy.dlxt_shift < 0)
+    else:
+        mask1 = (quote_copy.dlxt_long_period_shift < quote_copy.dlxt_long_period) & (quote_copy.dlxt_long_period_shift < 0)
+
+    mask = mask1
+    quote_copy[signal_column] = quote_copy[signal_column].mask(mask, quote_copy['low'])
 
     # remove temp data
-    quote_copy.drop(['dlxt_long_period_shift', 'dlxt_shift'], axis=1)
+    quote_copy.drop(['dlxt_long_period_shift', 'dlxt_shift'], axis=1, inplace=True)
 
     return quote_copy
 
@@ -84,13 +94,19 @@ def signal_exit(quote, period=None):
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
     quote = compute_index(quote, period)
 
-    quote_copy = quote.copy()
-    quote_copy.loc[:, 'dynamical_system_signal_exit'] = quote.apply(
-        lambda x: function_exit(x.high, x.dlxt_long_period, x.dlxt_long_period_shift, x.dlxt, x.dlxt_shift, period),
-        axis=1)
+    quote_copy = quote  # .copy()
+
+    signal_column = 'dynamical_system_signal_exit'
+    quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
+    if is_long_period(period):
+        mask1 = (quote_copy.dlxt_shift > quote_copy.dlxt) & (quote_copy.dlxt < 0)
+    else:
+        mask1 = (quote_copy.dlxt_long_period_shift > quote_copy.dlxt_long_period) & (quote_copy.dlxt_long_period < 0)
+    mask = mask1
+    quote_copy[signal_column] = quote_copy[signal_column].mask(mask, quote_copy['high'])
 
     # remove temp data
-    quote_copy.drop(['dlxt_long_period_shift', 'dlxt_shift'], axis=1)
+    quote_copy.drop(['dlxt_long_period_shift', 'dlxt_shift'], axis=1, inplace=True)
 
     return quote_copy
 

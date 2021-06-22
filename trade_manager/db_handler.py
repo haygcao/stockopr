@@ -42,7 +42,7 @@ def save_money(money: trade_data.Asset, sync=False):
     with mysqlcli.get_cursor() as c:
         if sync:
             trade_date = money.date
-            c.execute("delete from {} where date = {}".format(config.sql_tab_asset, trade_date))
+            c.execute("delete from {} where date = %s".format(config.sql_tab_asset), trade_date)
         try:
             c.execute(sql, val)
         except Exception as e:
@@ -97,7 +97,7 @@ def save_positions(position_list: list[trade_data.Position], sync=False):
     with mysqlcli.get_cursor() as c:
         if sync:
             trade_date = position_list[0].date
-            c.execute("delete from {} where date = {}".format(config.sql_tab_position, trade_date))
+            c.execute("delete from {} where date = %s".format(config.sql_tab_position), trade_date)
 
         for position in position_list:
             val = (position.date, position.code, position.current_position, position.avail_position,
@@ -160,7 +160,7 @@ def save_operation_details(details: list[trade_data.OperationDetail], sync=False
         try:
             if sync:
                 trade_date = details[0].trade_time.date()
-                c.execute("delete from {} where date(time) = {}".format(config.sql_tab_operation_detail, trade_date))
+                c.execute("delete from {} where date(time) = %s".format(config.sql_tab_operation_detail), trade_date)
             c.executemany(sql, val_list)
         except Exception as e:
             logger.info(e)

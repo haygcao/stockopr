@@ -51,6 +51,6 @@ def signal_enter(quote, period=None):
     quote_copy['ema_value_signal_enter'] = quote_copy['ema_value_signal_enter'].mask(mask, numpy.nan)
 
     # remove temp data
-    quote_copy.drop(['ema26_shift'], axis=1)
+    quote_copy.drop(['ema26_shift'], axis=1, inplace=True)
 
     return quote_copy

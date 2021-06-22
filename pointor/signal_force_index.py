@@ -77,12 +77,13 @@ def signal_enter(quote, period=None):
 
     # quote_copy = quote_copy.drop(['force_index_signal_enter'], axis=1)
     # dlxt_ema13 > 0 and force_index_shift < 0 and force_index > force_index_shift:
-    quote_copy.insert(len(quote_copy.columns), 'force_index_signal_enter', numpy.nan)
+    signal_column = 'force_index_signal_enter'
+    quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
     mask1 = quote_copy.dlxt_ema13 > 0
     mask2 = quote_copy.force_index_shift < 0
     mask3 = quote_copy.force_index > quote_copy.force_index_shift
     mask = mask1 & mask2 & mask3
-    quote_copy['force_index_signal_enter'] = quote_copy['force_index_signal_enter'].mask(mask, quote_copy['low'])
+    quote_copy[signal_column] = quote_copy[signal_column].mask(mask, quote_copy['low'])
 
     # 过滤掉振荡走势中的信号
     # 利用 dmi 过滤掉振荡走势中的信号
@@ -90,7 +91,7 @@ def signal_enter(quote, period=None):
     mask2 = quote_copy['adx'] < quote_copy['mdi']
     mask3 = quote_copy['pdi'] < quote_copy['mdi']
     mask = (mask1 & mask2) | mask3
-    quote_copy['force_index_signal_enter'] = quote_copy['force_index_signal_enter'].mask(mask, numpy.nan)
+    quote_copy[signal_column] = quote_copy[signal_column].mask(mask, numpy.nan)
 
     # quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
     #     quote_copy['dlxt_long_period'] < 0, numpy.nan)
@@ -103,7 +104,7 @@ def signal_enter(quote, period=None):
     #     force_index_signal_enter / ema26_rolling_min < config.period_oscillation_threshold_map[period], numpy.nan)
 
     # remove temp data
-    quote_copy.drop(['force_index_shift'], axis=1)
+    quote_copy.drop(['force_index_shift'], axis=1, inplace=True)
 
     return quote_copy
 
@@ -118,12 +119,13 @@ def signal_exit(quote, period=None):
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
     quote = compute_index(quote, period)
 
-    quote_copy = quote.copy()
-    quote_copy.loc[:, 'force_index_signal_exit'] = quote.apply(
-        lambda x: function_exit(x.high, x.dlxt_long_period, x.dlxt, x.force_index, x.force_index_shift, period), axis=1)
+    quote_copy = quote  # .copy()
+
+    signal_column = 'force_index_signal_exit'
+    quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
 
     # remove temp data
-    quote_copy.drop(['force_index_shift'], axis=1)
+    # quote_copy.drop(['force_index_shift'], axis=1, inplace=True)
 
     return quote_copy
 
