@@ -56,7 +56,7 @@ class Panel(QWidget):
 
         self.dict = {}
         self.code = '300502'
-        self.period = 'day'
+        self.period = 'week'
         self.monitor_proc = None
         self.check_thread = None
         self.rlock = threading.RLock()
@@ -85,7 +85,9 @@ class Panel(QWidget):
         btn_load.clicked.connect(self.load)
 
         combo_period = QComboBox(self)
-        for period in ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']:
+        periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
+        periods.reverse()
+        for period in periods:
             combo_period.addItem(period)
 
         # comboPeriod.move(50, 50)
