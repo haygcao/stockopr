@@ -5,23 +5,44 @@ from config import config
 from util import dt
 
 
+class TradeData:
+    def __str__(self):
+        ret = ''
+        for i in self.__dir__():
+            if i.startswith('__'):
+                continue
+            ret += i + ': ' + str(eval('self.{}'.format(i)))
+            ret += ' '
+        return ret
+
+
 @dataclass
-class Asset:
+class Asset(TradeData):
     date: datetime.date
+    period: datetime.date
+    origin = 0
     total_money = 0
     avail_money = 0
+    market_value = 0
+    position_percent = 0
+    profit = 0
+    profit_percent = 0
 
     def __init__(self, total_money, avail_money, date=None):
         self.date = dt.get_trade_date() if not date else date
+        trade_config = config.get_trade_config()
+        self.period = datetime.datetime.strptime(trade_config['period'], '%Y-%m-%d').date()
+        self.origin = trade_config['total_money']
         self.total_money = total_money
         self.avail_money = avail_money
-
-    def __str__(self):
-        return 'total_money: {}, avail_money: {}'.format(self.total_money, self.avail_money)
+        self.market_value = self.total_money - self.avail_money
+        self.position_percent = round(100 * self.market_value / self.total_money, 3)
+        self.profit = self.total_money - self.origin
+        self.profit_percent = round(100 * self.profit / self.origin, 3)
 
 
 @dataclass
-class Position:
+class Position(TradeData):
     date: datetime.date
     code = ''
     current_position = 0
@@ -46,18 +67,9 @@ class Position:
         self.market_value = round(self.price * self.current_position, 3)
         self.profit_total_percent = round(100 * self.profit_total / self.cost, 3)
 
-    def __str__(self):
-        ret = ''
-        for i in self.__dir__():
-            if i.startswith('__'):
-                continue
-            ret += i + ': ' + str(eval('self.{}'.format(i)))
-            ret += ' '
-        return ret
-
 
 @dataclass
-class OperationDetail:
+class OperationDetail(TradeData):
     trade_time: datetime.datetime
     code: str
     operation: str
@@ -87,18 +99,9 @@ class OperationDetail:
         charge = 'config.charge_{}_{}'.format(direct, market)
         self.cost = round(self.amount * eval(charge), 3)
 
-    def __str__(self):
-        ret = ''
-        for i in self.__dir__():
-            if i.startswith('__'):
-                continue
-            ret += i + ': ' + str(eval('self.{}'.format(i)))
-            ret += ' '
-        return ret
-
 
 @dataclass
-class TradeOrder:
+class TradeOrder(TradeData):
     date = None
     code = ''
     position = 0
@@ -118,18 +121,9 @@ class TradeOrder:
         self.risk_rate = (open_price - stop_loss) / open_price
         self.profitability_ratios = (stop_profit - open_price) / (open_price - stop_loss)
 
-    def __str__(self):
-        ret = ''
-        for i in self.__dir__():
-            if i.startswith('__'):
-                continue
-            ret += i + ': ' + str(eval('self.{}'.format(i)))
-            ret += ' '
-        return ret
-
 
 @dataclass
-class WithdrawOrder:
+class WithdrawOrder(TradeData):
     trade_time: datetime.datetime
     code: str
     direct: str
@@ -148,12 +142,3 @@ class WithdrawOrder:
         self.price = price
         self.price_ed = price_ed
         self.count_withdraw = count_withdraw
-
-    def __str__(self):
-        ret = ''
-        for i in self.__dir__():
-            if i.startswith('__'):
-                continue
-            ret += i + ': ' + str(eval('self.{}'.format(i)))
-            ret += ' '
-        return ret

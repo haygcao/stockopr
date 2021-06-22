@@ -20,23 +20,29 @@ def query_money():
     return asset
 
 
-def save_money(money: trade_data.Asset):
+def save_money(money: trade_data.Asset, sync=False):
     if not money:
         return
 
-    keys = ['date', 'total', 'avail']
+    keys = ['date', 'period', 'origin', 'total', 'avail', 'market_value', 'position_percent',
+            'total_profit', 'total_profit_percent']
 
     key = ', '.join(keys)
     fmt_list = ['%s' for i in keys]
     fmt = ', '.join(fmt_list)
 
-    val = (money.date, money.total_money, money.avail_money, money.total_money, money.avail_money)
+    val = (money.date, money.period, money.origin, money.total_money, money.avail_money,
+           money.market_value, money.position_percent, money.profit, money.profit_percent,
+           money.total_money, money.avail_money)
 
     # sql = "insert into {} ({}) values ({})".format(config.sql_tab_asset, key, fmt)
     sql = u"INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY update total = %s, avail = %s".format(config.sql_tab_asset, key, fmt)
     logger.debug(sql)
 
     with mysqlcli.get_cursor() as c:
+        if sync:
+            trade_date = money.date
+            c.execute("delete from {} where date = {}".format(config.sql_tab_asset, trade_date))
         try:
             c.execute(sql, val)
         except Exception as e:
@@ -74,7 +80,7 @@ def query_current_position():
     return position_list
 
 
-def save_positions(position_list: list[trade_data.Position]):
+def save_positions(position_list: list[trade_data.Position], sync=False):
     if not position_list:
         return
 
@@ -89,6 +95,10 @@ def save_positions(position_list: list[trade_data.Position]):
     logger.debug(sql)
 
     with mysqlcli.get_cursor() as c:
+        if sync:
+            trade_date = position_list[0].date
+            c.execute("delete from {} where date = {}".format(config.sql_tab_position, trade_date))
+
         for position in position_list:
             val = (position.date, position.code, position.current_position, position.avail_position,
                    position.price_cost, position.price, position.cost, position.market_value,

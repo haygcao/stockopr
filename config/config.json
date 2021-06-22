@@ -1,5 +1,5 @@
 {
-  "global": {"auto_buy": false, "auto_sell": false, "total_money":  500000, "position_unit": 20000},
+  "global": {"auto_buy": false, "auto_sell": false, "period": "2021-06-30", "total_money":  500000, "position_unit": 20000},
   "300502": {"auto_buy": false, "auto_sell": false, "count": 1500},
   "002739": {"auto_buy": false, "auto_sell": false, "count": 1500},
   "tradeapi_server": {"base_url": "127.0.0.1:8080/api"}

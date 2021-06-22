@@ -124,7 +124,7 @@ def sync():
 
     # position
     position_list = tradeapi.query_position()
-    db_handler.save_positions(position_list)
+    db_handler.save_positions(position_list, sync=True)
     logger.info('sync position')
 
     order_map = trade_manager.db_handler.query_trade_order_map(status='ING')
@@ -137,7 +137,7 @@ def sync():
     operation_detail = tradeapi.query_operation_detail()
     yesterday = dt.get_pre_trade_date()
     operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == yesterday]
-    db_handler.save_operation_details(operation_detail)
+    db_handler.save_operation_details(operation_detail, sync=True)
     logger.info('sync operation detail')
 
 

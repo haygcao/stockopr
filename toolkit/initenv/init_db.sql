@@ -194,10 +194,14 @@ create table trade_order (
 -- 按日更新
 create table asset(
   `date` date,
+  period date,
+  origin decimal(10, 3),
   total decimal(10, 3),
   avail decimal(10, 3),
   market_value decimal(10, 3),
+  position_percent decimal(6, 3),
   total_profit decimal(10, 3),
+  total_profit_percent decimal(6, 3),
   today_profit decimal(10, 3)
 );
 
