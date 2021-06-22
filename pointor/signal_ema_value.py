@@ -31,18 +31,17 @@ def compute_index(quote, period=None):
 @ignore_long_period(column_name='ema_value_signal_enter')
 @dynamic_system_filter(column_name='ema_value_signal_enter')
 def signal_enter(quote, period=None):
-    # if is_long_period(period):
-    #     quote = quote.assign(force_index_signal_enter=numpy.nan)
-    #     return quote
-
     quote = compute_index(quote, period)
 
-    quote_copy = quote.copy()
+    quote_copy = quote  # .copy()
     quote_copy.loc[:, 'ema26_shift'] = quote['ema26'].shift(periods=1)
-    quote_copy.loc[:, 'ema_value_signal_enter'] = quote_copy.apply(
-        lambda x: function_enter(
-            x.low, x.close, x.dlxt_long_period, x.dlxt, x.dlxt_ema13, x.ema13, x.ema26, x.ema26_shift, period, x.name),
-        axis=1)
+
+    quote_copy.insert(len(quote_copy.columns), 'ema_value_signal_enter', numpy.nan)
+    mask1 = quote_copy.ema26 >= quote_copy.ema26_shift
+    mask2 = quote_copy.ema26 <= quote_copy.ema13
+    mask3 = quote_copy.ema13 >= quote_copy.low
+    mask = mask1 & mask2 & mask3
+    quote_copy['ema_value_signal_enter'] = quote_copy['ema_value_signal_enter'].mask(mask, quote_copy['low'])
 
     # 利用 dmi 过滤掉振荡走势中的信号
     mask1 = quote_copy['adx'] < quote_copy['pdi']
@@ -50,12 +49,6 @@ def signal_enter(quote, period=None):
     mask3 = quote_copy['pdi'] < quote_copy['mdi']
     mask = (mask1 & mask2) | mask3
     quote_copy['ema_value_signal_enter'] = quote_copy['ema_value_signal_enter'].mask(mask, numpy.nan)
-
-    # 利用 dmi 过滤掉振荡走势中的信号
-    # ema26_rolling_min = quote_copy.loc[:, 'ema26'].rolling(20, min_periods=1).min()
-    # ema_value_signal_enter = quote_copy.loc[:, 'ema_value_signal_enter']
-    # quote_copy.loc[:, 'ema_value_signal_enter'] = ema_value_signal_enter.mask(
-    #     ema_value_signal_enter / ema26_rolling_min < config.period_oscillation_threshold_map[period], numpy.nan)
 
     # remove temp data
     quote_copy.drop(['ema26_shift'], axis=1)
