@@ -85,6 +85,7 @@ if __name__ == '__main__':
         if '300502' in t[0]:
             print(t)
     print(infos)
+    exit(0)
 
     path = 'C:/new_tdx/vipdoc/sh/lday/'
     file_list = os.listdir('C:/new_tdx/vipdoc/sh/lday/')

@@ -269,7 +269,7 @@ signal_exit_list = [
     'resistance_support_signal_exit',
     'force_index_bear_market_deviation_signal_exit',
     'macd_bear_market_deviation_signal_exit',
-    # 'stop_loss_signal_exit'
+    'stop_loss_signal_exit'
 ]
 
 # signal_exit_list = [
