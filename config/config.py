@@ -378,6 +378,7 @@ support_under_rate = 0.02
 resistance_support_backdays = 1
 
 supplemental_signal_path = os.path.join(config_dir, '..', 'data/trade.csv')
+signal_log_path = os.path.join(config_dir, '..', 'log/signal.log')
 # 振荡阈值
 period_oscillation_threshold_map = {
     'm1': 1.025,
