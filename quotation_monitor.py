@@ -4,6 +4,7 @@ import datetime
 import multiprocessing
 import random
 import time
+import weakref
 from dataclasses import dataclass
 
 import numpy
@@ -90,7 +91,7 @@ class TradeSignalManager:
         return -1
 
 
-@atexit.register
+# @atexit.register(weakref.ref(proc))
 def goodbye():
     logger.info("monitor stopped")
 
@@ -251,6 +252,7 @@ def query_trade_order_code_list():
 
 
 def monitor_today():
+    atexit.register(goodbye)
     periods = []
 
     logger.info(TradeSignalManager.signal_map)
@@ -282,7 +284,7 @@ def monitor_today():
 
         if not periods:
             # sleep = random.randint(3, 6) * 60 if now.minute < 50 else random.randint(1, 3) * 60
-            time.sleep(30)
+            time.sleep(3)
             continue
 
         logger.info('quotation monitor is running')

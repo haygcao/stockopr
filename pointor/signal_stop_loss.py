@@ -121,6 +121,7 @@ def signal_exit(quote, period=None):
     while date:
         r = signal_enter[signal_enter.index >= date]
         date_enter = stop_loss_signal_exit.last_valid_index() if r.empty else r.first_valid_index()
+        # date_enter = None if r.empty else r.first_valid_index()
 
         # while date_enter and (not numpy.isnan(quote_copy.loc[date_enter, 'macd_bull_market_deviation'])\
         #         or not numpy.isnan(quote_copy.loc[date_enter, 'force_index_bull_market_deviation'])):

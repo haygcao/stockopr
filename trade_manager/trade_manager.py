@@ -40,14 +40,22 @@ def query_withdraw_order():
     return order_list
 
 
+def compute_unsync(position: trade_data.Position):
+    sold_position_in_operation_detail = query_position_in_operation_detail(position.code)
+    position.avail_position -= sold_position_in_operation_detail
+    position.current_position -= sold_position_in_operation_detail
+
+    sold_position_in_operation_detail = query_position_in_operation_detail(position.code, direct='B')
+    position.current_position += sold_position_in_operation_detail
+
+
 def query_position(code):
     """
     可以卖的股数
     还可以买的股数
     """
     position = db_handler.query_position(code)
-    sold_position_in_operation_detail = query_sold_position_in_operation_detail(code)
-    position.avail_position -= sold_position_in_operation_detail
+    compute_unsync(position)
 
     return position
 
@@ -59,8 +67,7 @@ def query_current_position():
     """
     position_list = db_handler.query_current_position()
     for position in position_list:
-        sold_position_in_operation_detail = query_sold_position_in_operation_detail(position.code)
-        position.avail_position -= sold_position_in_operation_detail
+        compute_unsync(position)
 
     return position_list
 
@@ -95,14 +102,20 @@ def query_money_in_operation_detail(code=None, trade_date=None):
     return money
 
 
-def query_sold_position_in_operation_detail(code=None, trade_date=None):
+def query_position_in_operation_detail(code=None, trade_date=None, direct='S'):
     if not trade_date:
         trade_date = datetime.date.today()
     detail_list = db_handler.query_operation_details(code, trade_date)
 
     position = 0
     for detail in detail_list:
-        if detail.count < 0:
+        if direct == 'S':
+            if detail.count > 0:
+                continue
+            position += abs(detail.count)
+        else:
+            if detail.count < 0:
+                continue
             position += abs(detail.count)
 
     return position
