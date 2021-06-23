@@ -20,6 +20,7 @@ from pointor import signal_channel
 
 from acquisition import tx, quote_db
 from trade_manager import trade_manager
+from util import dt
 from util.log import logger
 
 
@@ -256,16 +257,19 @@ def monitor_today():
     periods = []
 
     logger.info(TradeSignalManager.signal_map)
-    while True:
-        TradeSignalManager.reload_trade_order()
 
+    while True:
         now = datetime.datetime.now()
-        if now.hour == 15:
-            logger.info("today's market close, return")
-            return
-        if now.hour == 12 or (now.hour == 11 and now.minute > 30):
+        begin1 = datetime.datetime(now.year, now.month, now.day, 9, 30, 0)
+        end1 = datetime.datetime(now.year, now.month, now.day, 11, 30, 0)
+        begin2 = datetime.datetime(now.year, now.month, now.day, 13, 0, 0)
+        end2 = datetime.datetime(now.year, now.month, now.day, 15, 0, 0)
+
+        if not dt.istradeday() or now < begin1 or (end1 < now < begin2) or now > end2:
             time.sleep(60)
             continue
+
+        TradeSignalManager.reload_trade_order()
 
         periods.clear()
         if now.minute % 5 < 1:
