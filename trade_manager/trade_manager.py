@@ -20,6 +20,9 @@ from util.dt import istradeday
 from util.log import logger
 
 
+g_q_application = None
+
+
 class TradeManager:
     # operation: tradeapi.OperationThs = None
 
@@ -175,14 +178,14 @@ def buy(code, price_trade=0, price_limited=0, count=0, period='day', policy: Pol
     """
     position_quota = trade_manager.db_handler.query_quota_position(code)
     if not position_quota:
-        popup_warning_message_box('请先创建交易指令单, 请务必遵守规则!')
+        popup_warning_message_box_mp('请先创建交易指令单, 请务必遵守规则!')
         return
 
     quote = tx.get_kline_data(code)
     if period == 'day' and policy != Policy.DEVIATION:
         quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
         if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
-            popup_warning_message_box('动力系统为红色, 禁止买入, 请务必遵守规则!')
+            popup_warning_message_box_mp('动力系统为红色, 禁止买入, 请务必遵守规则!')
             return
 
     position = query_position(code)
@@ -190,7 +193,7 @@ def buy(code, price_trade=0, price_limited=0, count=0, period='day', policy: Pol
 
     avail_position = position_quota - current_position
     if avail_position < 100:
-        popup_warning_message_box('配额已用完, 请务必遵守规则!')
+        popup_warning_message_box_mp('配额已用完, 请务必遵守规则!')
         return
 
     # quote = tx.get_realtime_data_sina(code)
@@ -227,7 +230,7 @@ def sell(code, price_trade, price_limited=0, count=0, period='day', policy: Poli
     if period == 'day' and (not policy or (policy != Policy.DEVIATION and policy != Policy.CHANNEL)):
         quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
         if quote['dlxt'].iloc[-1] >= 0 and quote['dlxt_long_period'].iloc[-1] >= 0:
-            popup_warning_message_box('动力系统不为红色, 禁止清仓, 请务必遵守规则!')
+            popup_warning_message_box_mp('动力系统不为红色, 禁止清仓, 请务必遵守规则!')
             return
 
     current_position = position.current_position
@@ -266,8 +269,9 @@ def order(direct, code, price_trade, price_limited=0, count=0, auto=False):
 
         if auto and price_limited == 0:
             threading.Thread(target=assure_finish, args=(code, count, now)).start()
-
-        update_operation_detail(detail)
+        if not auto:
+            popup_warning_message_box_mp('更新 operation detail?', update_operation_detail, detail)
+        # update_operation_detail(detail)
     except Exception as e:
         print(e)
 
@@ -389,7 +393,7 @@ def handle_illegal_position(position: trade_data.Position, quota):
     code = position.code
     logger.warning('{} excess...'.format(code))
 
-    popup_warning_message_box('[{}]违规仓位, 请务必遵守规则, '.format(code))
+    popup_warning_message_box_mp('[{}]违规仓位, 请务必遵守规则, '.format(code))
 
     quote = tx.get_realtime_data_sina(code)
 
@@ -400,14 +404,25 @@ def handle_illegal_position(position: trade_data.Position, quota):
     # sell(code, price_trade=price_trade, count=count, auto=True)
 
 
-def _popup_warning_message_box(msg):
-    app = QApplication([])
-    msg_box = QMessageBox(QMessageBox.Warning, '警告', msg)
-    msg_box.exec_()
+def popup_warning_message_box(msg, callback, *args):
+    global g_q_application
+    if not g_q_application:
+        g_q_application = QApplication([])
+    # msg_box = QMessageBox(QMessageBox.Warning, '警告', msg)
+    # msg_box.exec_()
+    r = QMessageBox.warning(None, '警告', msg, QMessageBox.Yes|QMessageBox.No)
+    if callback:
+        if r == QMessageBox.Yes:
+            callback(*args)
+        # elif r == QMessageBox.No:
+        #     callback(*args)
+        # elif r == QMessageBox.Ok:
+        #     callback(*args)
 
 
-def popup_warning_message_box(msg):
-    multiprocessing.Process(target=_popup_warning_message_box, args=(msg,)).start()
+def popup_warning_message_box_mp(msg, callback=None, *args):
+    # popup_warning_message_box(msg, callback, *args)
+    multiprocessing.Process(target=popup_warning_message_box, args=(msg, callback, *args)).start()
 
 
 def patrol():

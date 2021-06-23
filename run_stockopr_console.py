@@ -4,7 +4,10 @@ import subprocess
 
 if __name__ == "__main__":
     root_dir = os.path.dirname(__file__)
-    script = 'security_account_server.py'
+    # script = 'security_account_server.py'
+
+    # root_dir = r'D:\workspace\stockopr'
+    script = 'console.py'
 
     py = str(os.path.join(root_dir, 'venv', 'Scripts', 'python.exe'))
     script_path = os.path.join(root_dir, script)

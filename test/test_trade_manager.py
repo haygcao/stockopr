@@ -1,4 +1,5 @@
 import datetime
+import time
 import unittest
 
 from acquisition import tx
@@ -78,6 +79,11 @@ class TradeManagerTestCase(unittest.TestCase):
 
     def test_patrol(self):
         trade_manager.patrol()
+
+    def test_message_box(self):
+        trade_manager.popup_warning_message_box_mp('hello', print, 'xxx')
+        trade_manager.popup_warning_message_box_mp('hello')
+        # trade_manager.popup_warning_message_box('hello')
 
 
 def suite():

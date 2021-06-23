@@ -5,6 +5,7 @@ import time
 #import toolkit.wy_save_history_multiprocess
 import util.macd
 # import acquisition.wy as wy
+from trade_manager import trade_manager
 
 from util.log import logger
 
@@ -77,7 +78,16 @@ def test_signal():
     # if now < end_time_pm and now > start_time_am and basic.istradeday(today):
 
 
+def test():
+    return
+    trade_manager.popup_warning_message_box('hello')
+    trade_manager.popup_warning_message_box('hello')
+    time.sleep(3)
+    exit(0)
+
+
 if __name__ == '__main__':
+    test()
     logger.info('{} start scan...'.format(datetime.datetime.now()))
 
     t1 = time.time()
