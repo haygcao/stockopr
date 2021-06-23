@@ -50,7 +50,7 @@ def save_money(money: trade_data.Asset, sync=False):
 
 
 def query_position(code):
-    sql = "select total, avail from {} where code = %s order by date desc limit 1".format(config.sql_tab_position)
+    sql = "select total, avail, cost_price, price, total_profit from {} where code = %s order by date desc limit 1".format(config.sql_tab_position)
     with mysqlcli.get_cursor() as c:
         try:
             c.execute(sql, (code,))
@@ -58,7 +58,7 @@ def query_position(code):
         except Exception as e:
             print(e)
 
-    position = trade_data.Position(code, r['total'], r['avail'])
+    position = trade_data.Position(code, r['total'], r['avail'], r['cost_price'], r['price'], r['total_profit'])
 
     return position
 
