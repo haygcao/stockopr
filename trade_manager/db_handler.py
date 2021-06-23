@@ -49,6 +49,10 @@ def save_money(money: trade_data.Asset, sync=False):
             print('save money failed -', e)
 
 
+def new_position(row):
+    return trade_data.Position(row['code'], row['total'], row['avail'], r['cost_price'], r['price'], r['total_profit'])
+
+
 def query_position(code):
     sql = "select total, avail, cost_price, price, total_profit from {} where code = %s order by date desc limit 1".format(config.sql_tab_position)
     with mysqlcli.get_cursor() as c:
@@ -58,13 +62,13 @@ def query_position(code):
         except Exception as e:
             print(e)
 
-    position = trade_data.Position(code, r['total'], r['avail'], r['cost_price'], r['price'], r['total_profit'])
+    position = new_position(r)
 
     return position
 
 
 def query_current_position():
-    sql = "select code, total, avail from {} where `date` = (select max(`date`) from `position`)".format(config.sql_tab_position)
+    sql = "select code, total, avail, cost_price, price, total_profit from {} where `date` = (select max(`date`) from `position`)".format(config.sql_tab_position)
     with mysqlcli.get_cursor() as c:
         try:
             c.execute(sql)
@@ -74,7 +78,7 @@ def query_current_position():
 
     position_list = []
     for row in r:
-        position = trade_data.Position(row['code'], row['total'], row['avail'])
+        position = new_position(row)
         position_list.append(position)
 
     return position_list
