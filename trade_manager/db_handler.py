@@ -49,8 +49,8 @@ def save_money(money: trade_data.Asset, sync=False):
             print('save money failed -', e)
 
 
-def new_position(row):
-    return trade_data.Position(row['code'], row['total'], row['avail'], r['cost_price'], r['price'], r['total_profit'])
+def new_position(d):
+    return trade_data.Position(d['code'], d['total'], d['avail'], d['cost_price'], d['price'], d['total_profit'])
 
 
 def query_position(code):

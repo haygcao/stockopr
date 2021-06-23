@@ -433,8 +433,3 @@ def create_position_price_limited():
             logger.info('建仓 限价交易单[{} {}] {}x{}'.format(date, code, close, count))
             buy(code, price_trade=close, price_limited=close, count=count, period='day', auto=True)
             db_handler.update_trade_order_status(trade_order.date, code, 'ING')
-
-
-if __name__ == '__main__':
-    # patrol()
-    handle_illegal_position('300502')
