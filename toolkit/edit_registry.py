@@ -16,11 +16,19 @@ def add_to_registry():
     key_value = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
     opened_key = reg.OpenKey(key, key_value, 0, reg.KEY_ALL_ACCESS)
-
     reg.SetValueEx(opened_key, "any_name", 0, reg.REG_SZ, cmd)
+    reg.CloseKey(opened_key)
 
+
+def modify_mysqld_exec_path():
+    key = reg.HKEY_LOCAL_MACHINE
+    key_value = r"SYSTEM\CurrentControlSet\Services\MySQL"
+
+    opened_key = reg.OpenKey(key, key_value, 0, reg.KEY_ALL_ACCESS)
+    reg.SetValueEx(opened_key, "ImagePath", 0, reg.REG_SZ, r'"C:\Program Files\MySQL\bin\mysqld" MySQL')
     reg.CloseKey(opened_key)
 
 
 if __name__ == "__main__":
-    add_to_registry()
+    # add_to_registry()
+    modify_mysqld_exec_path()
