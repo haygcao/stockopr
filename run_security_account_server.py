@@ -3,8 +3,6 @@ import subprocess
 
 
 if __name__ == "__main__":
-    with open('C:/server/xxx.log', 'a') as f:
-        f.write('running')
     script = 'security_account_server.py'
     root_dir = os.path.dirname(__file__)
     monitor_path = os.path.join(root_dir, script)
