@@ -34,13 +34,13 @@ def signal(quote, column_list, period, back_days=125):
 
 
 def signal_enter(quote, period='day', back_days=125):
-    column_list = ['force_index_bull_market_deviation', 'macd_bull_market_deviation']
+    column_list = ['force_index_bull_market_deviation', 'macd_bull_market_deviation', 'volume_ad_bull_market_deviation']
 
     return signal(quote, column_list, period, back_days)
 
 
 def signal_exit(quote, period='day', back_days=125):
-    column_list = ['force_index_bear_market_deviation', 'macd_bear_market_deviation']
+    column_list = ['force_index_bear_market_deviation', 'macd_bear_market_deviation', 'volume_ad_bear_market_deviation']
 
     return signal(quote, column_list, period, back_days)
 
@@ -50,7 +50,9 @@ def signal_enter_and_exit(quote, period, back_days=125):
 
     column_list = ['force_index_bull_market_deviation',
                    'macd_bull_market_deviation',
+                   'volume_ad_bull_market_deviation',
                    'force_index_bear_market_deviation',
-                   'macd_bear_market_deviation']
+                   'macd_bear_market_deviation',
+                   'volume_ad_bear_market_deviation']
 
     return signal(quote, column_list, period, back_days)

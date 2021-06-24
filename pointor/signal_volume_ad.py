@@ -12,7 +12,7 @@ def compute_index(quote, period=None):
 
 
 def signal(quote, direct=1):
-    signal_column = 'volume_signal_enter' if direct == 1 else 'volume_signal_exit'
+    signal_column = 'volume_ad_signal_enter' if direct == 1 else 'volume_ad_signal_exit'
     price_column = 'low' if direct == 1 else 'high'
     quote.insert(len(quote.columns), signal_column, numpy.nan)
 
@@ -32,7 +32,7 @@ def signal(quote, direct=1):
     return quote
 
 
-@computed(column_name='volume_signal_enter')
+@computed(column_name='volume_ad_signal_enter')
 # @ignore_long_period(column_name='force_index_signal_enter')
 # @dynamic_system_filter(column_name='force_index_signal_enter')
 def signal_enter(quote, period=None):
@@ -44,7 +44,7 @@ def signal_enter(quote, period=None):
 
     quote = signal(quote, direct=1)
 
-    signal_column = 'volume_signal_enter'
+    signal_column = 'volume_ad_signal_enter'
     # 利用 dmi 过滤掉振荡走势中的信号
     mask1 = quote['adx'] < quote['pdi']
     mask2 = quote['adx'] < quote['mdi']
@@ -55,7 +55,7 @@ def signal_enter(quote, period=None):
     return quote
 
 
-@computed(column_name='volume_signal_exit')
+@computed(column_name='volume_ad_signal_exit')
 # @ignore_long_period(column_name='force_index_signal_exit')
 def signal_exit(quote, period=None):
     quote = compute_index(quote, period)

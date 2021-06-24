@@ -2,7 +2,7 @@
 import numpy.ma
 
 from config.config import is_long_period, period_price_diff_ratio_deviation_map
-from indicator import force_index
+from indicator import force_index, ad
 from indicator.decorator import computed
 from util.macd import macd
 
@@ -203,9 +203,17 @@ def market_deviation_force_index(quote, back, period, will, strict=True):
     return market_deviation(quote, period, quote['force_index'], back, column_name, will, strict=strict)
 
 
+def market_deviation_volume_ad(quote, back, period, will, strict=True):
+    quote = ad.compute_ad(quote)
+
+    column_name = 'volume_ad_bull_market_deviation' if will == 1 else 'volume_ad_bear_market_deviation'
+
+    return market_deviation(quote, period, quote['adosc'], back, column_name, will, strict=strict)
+
+
 @computed(column_name='macd_bull_market_deviation')
 def compute_index(quote, period, back_days):
-    for func in [market_deviation_force_index, market_deviation_macd]:
+    for func in [market_deviation_force_index, market_deviation_macd, market_deviation_volume_ad]:
         for will in [1, -1]:
             back_day = 0
             while back_day <= back_days:

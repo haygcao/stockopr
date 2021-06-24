@@ -16,7 +16,7 @@ import dealer.bought as basic
 from config import config
 from indicator import dynamical_system
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
-    signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume
+    signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume_ad
 from util.log import logger
 
 
@@ -115,8 +115,8 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     quote = signal_resistance_support.signal_exit(quote, period)
 
     # 量价
-    quote = signal_volume.signal_enter(quote, period)
-    quote = signal_volume.signal_exit(quote, period)
+    quote = signal_volume_ad.signal_enter(quote, period)
+    quote = signal_volume_ad.signal_exit(quote, period)
 
     if 'signal_enter' not in quote.columns:
         quote.insert(len(quote.columns), 'signal_enter', numpy.nan)

@@ -282,9 +282,10 @@ signal_enter_list = [
     'channel_signal_enter',
     'force_index_signal_enter',
     'ema_value_signal_enter',
-    'volume_signal_enter',
+    'volume_ad_signal_enter',
     'resistance_support_signal_enter',
     'force_index_bull_market_deviation_signal_enter',
+    'volume_ad_bull_market_deviation_signal_enter',
     'macd_bull_market_deviation_signal_enter',
 ]
 
@@ -301,9 +302,10 @@ signal_exit_list = [
     'dynamical_system_signal_exit',
     'channel_signal_exit',
     'force_index_signal_exit',
-    'volume_signal_exit',
+    'volume_ad_signal_exit',
     'resistance_support_signal_exit',
     'force_index_bear_market_deviation_signal_exit',
+    'volume_ad_bear_market_deviation_signal_exit',
     'macd_bear_market_deviation_signal_exit',
     'stop_loss_signal_exit'
 ]
