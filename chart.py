@@ -291,20 +291,70 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(data_support_20), type='line', width=width, color=color),
         ])
 
+    def add_macd(self, data):
+        exp12 = data['close'].ewm(span=12, adjust=False).mean()
+        exp26 = data['close'].ewm(span=26, adjust=False).mean()
+        macd = exp12 - exp26
+        macd_signal = macd.ewm(span=9, adjust=False).mean()
+
+        # 添加macd子图
+        histogram = macd - macd_signal
+        self.histogram_macd = histogram
+
+        macd_bull_market_deviation = data['macd_bull_market_deviation']
+        data_macd_bull_deviation = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values,
+                                                                   histogram * 1.2).values
+
+        macd_bear_market_deviation = data['macd_bear_market_deviation']
+        data_macd_bear_deviation = macd_bear_market_deviation.mask(macd_bear_market_deviation.notnull().values,
+                                                                   histogram * 1.2).values
+
+        macd_bull_market_deviation_single_point = tune_deviation(macd_bull_market_deviation)
+        macd_bear_market_deviation_single_point = tune_deviation(macd_bear_market_deviation)
+        data_macd_bull_deviation_single_point = tune_deviation(data_macd_bull_deviation)
+        data_macd_bear_deviation_single_point = tune_deviation(data_macd_bear_deviation)
+
+        if self.get_window(data['macd_bull_market_deviation']).any(skipna=True):
+            self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bull_market_deviation_single_point), type='scatter',
+                                                   width=1, panel=0, color=green, markersize=50, marker=marker_up), ])
+        if self.get_window(data['macd_bear_market_deviation']).any(skipna=True):
+            self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bear_market_deviation_single_point), type='scatter',
+                                                   width=1, panel=0, color=red, markersize=50, marker=marker_down), ])
+
+        self.n_panels += 1
+        # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
+        # 如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
+
+        # histogram[histogram < 0] = None
+        # histogram_positive = histogram
+        # histogram = macd - signal
+        # histogram[histogram >= 0] = None
+        # histogram_negative = histogram
+
+        # macd panel
+        colors = [lightgrey if v >= 0 else grey for v in self.get_window(histogram)]
+        colors = [dark_olive_green3 if not numpy.isnan(v) else colors[i]
+                  for (i,), v in numpy.ndenumerate(self.get_window(macd_bull_market_deviation).values)]
+        colors = [light_coral if not numpy.isnan(v) else colors[i]
+                  for (i,), v in numpy.ndenumerate(self.get_window(macd_bear_market_deviation).values)]
+        self.add_plot.extend(
+            [
+                # mpf.make_addplot(self.get_window(histogram_positive, type='bar', width=0.7, panel=2, color='b')),
+                # mpf.make_addplot(self.get_window(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia')),
+                # mpf.make_addplot(self.get_window(macd, panel=self.panel_macd, color=lightgrey)),
+                # mpf.make_addplot(self.get_window(signal, panel=self.panel_macd, color=dimgrey)),
+                mpf.make_addplot(self.get_window(histogram), type='bar', panel=self.panel_macd, color=colors),
+                # ), secondary_y=True)
+                # mpf.make_addplot(self.get_window(data_macd_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
+                # mpf.make_addplot(self.get_window(data_macd_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
+            ])
+
     def more_panel_draw(self):
         data = self.data_origin  # .iloc[-100:]
         data = signal.compute_signal(data, self.period)
 
         exp13 = data['close'].ewm(span=13, adjust=False).mean()
-        """
-        make_addplot 绘制多个图，这里添加macd指标为例
-        """
-        exp12 = data['close'].ewm(span=12, adjust=False).mean()
-        exp26 = data['close'].ewm(span=26, adjust=False).mean()
-        macd = exp12 - exp26
-        macd_signal = macd.ewm(span=9, adjust=False).mean()
-        # 添加macd子图
-        histogram = macd - macd_signal
+
 
         data = signal_stop_loss.signal_exit(data)
         # data = dynamical_system.dynamical_system(data)
@@ -332,6 +382,7 @@ class DataFinanceDraw(object):
 
         # 以交易为生中，采用的是 exp21
         # exp = data['close'].ewm(span=21, adjust=False).mean()
+        exp26 = data['close'].ewm(span=26, adjust=False).mean()
         exp = exp26
         data = compute_atr(data)
 
@@ -339,7 +390,6 @@ class DataFinanceDraw(object):
 
         #
         self.data = data
-        self.histogram_macd = histogram
 
         self.add_force_index(data)
         self.add_resistance_support(data)
@@ -390,18 +440,7 @@ class DataFinanceDraw(object):
         else:
             dlxt_long_period_color = ['white' for i in dlxt_long_period_color]
 
-        macd_bull_market_deviation = data['macd_bull_market_deviation']
-        data_macd_bull_deviation = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values,
-                                                                   histogram * 1.2).values
 
-        macd_bear_market_deviation = data['macd_bear_market_deviation']
-        data_macd_bear_deviation = macd_bear_market_deviation.mask(macd_bear_market_deviation.notnull().values,
-                                                                   histogram * 1.2).values
-
-        macd_bull_market_deviation_single_point = tune_deviation(macd_bull_market_deviation)
-        macd_bear_market_deviation_single_point = tune_deviation(macd_bear_market_deviation)
-        data_macd_bull_deviation_single_point = tune_deviation(data_macd_bull_deviation)
-        data_macd_bear_deviation_single_point = tune_deviation(data_macd_bear_deviation)
 
         width = 0.5
         color = dimgrey
@@ -438,41 +477,9 @@ class DataFinanceDraw(object):
         # if self.get_window(data['dynamical_system_signal_exit']).any(skipna=True):
         #     self.add_plot.append(mpf.make_addplot(self.get_window(data['dynamical_system_signal_exit']), type='scatter', width=1, panel=0, color=light_coral, markersize=50, marker=marker_down))
 
-        if self.get_window(data['macd_bull_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bull_market_deviation_single_point), type='scatter',
-                                                   width=1, panel=0, color=green, markersize=50, marker=marker_up), ])
-        if self.get_window(data['macd_bear_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bear_market_deviation_single_point), type='scatter',
-                                                   width=1, panel=0, color=red, markersize=50, marker=marker_down), ])
 
         if self.show_macd:
-            self.n_panels += 1
-            # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
-            # 如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
-
-            # histogram[histogram < 0] = None
-            # histogram_positive = histogram
-            # histogram = macd - signal
-            # histogram[histogram >= 0] = None
-            # histogram_negative = histogram
-
-            # macd panel
-            colors = [lightgrey if v >= 0 else grey for v in self.get_window(histogram)]
-            colors = [dark_olive_green3 if not numpy.isnan(v) else colors[i]
-                      for (i,), v in numpy.ndenumerate(self.get_window(macd_bull_market_deviation).values)]
-            colors = [light_coral if not numpy.isnan(v) else colors[i]
-                      for (i,), v in numpy.ndenumerate(self.get_window(macd_bear_market_deviation).values)]
-            self.add_plot.extend(
-                [
-                    # mpf.make_addplot(self.get_window(histogram_positive, type='bar', width=0.7, panel=2, color='b')),
-                    # mpf.make_addplot(self.get_window(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia')),
-                    # mpf.make_addplot(self.get_window(macd, panel=self.panel_macd, color=lightgrey)),
-                    # mpf.make_addplot(self.get_window(signal, panel=self.panel_macd, color=dimgrey)),
-                    mpf.make_addplot(self.get_window(histogram), type='bar', panel=self.panel_macd, color=colors),
-                    # ), secondary_y=True)
-                    # mpf.make_addplot(self.get_window(data_macd_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
-                    # mpf.make_addplot(self.get_window(data_macd_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
-                ])
+            self.add_macd(data)
 
         # fig = mpf.figure(figsize=(10, 7), style=self.style)  # pass in the self defined style to the whole canvas
         # ax = fig.add_subplot(2, 1, 1)  # main candle stick chart subplot, you can also pass in the self defined style here only for this subplot
