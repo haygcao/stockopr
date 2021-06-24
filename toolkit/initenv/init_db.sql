@@ -240,10 +240,6 @@ create table operation_detail(
   profit decimal(10, 3)
 );
 
-drop table asset;
-drop table trade_order;
-drop table position;
-drop table operation_detail;
 create unique index asset_date on asset(date);
 create unique index trade_order_code_date on trade_order(code, date);
 create unique index position_code_date on `position`(code, date);

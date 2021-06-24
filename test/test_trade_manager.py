@@ -2,6 +2,7 @@ import datetime
 import time
 import unittest
 
+import util.qt_util
 from acquisition import tx
 from trade_manager import trade_manager, db_handler
 
@@ -81,8 +82,8 @@ class TradeManagerTestCase(unittest.TestCase):
         trade_manager.patrol()
 
     def test_message_box(self):
-        trade_manager.popup_warning_message_box_mp('hello', print, 'xxx')
-        trade_manager.popup_warning_message_box_mp('hello')
+        util.qt_util.popup_warning_message_box_mp('hello', print, 'xxx')
+        util.qt_util.popup_warning_message_box_mp('hello')
         # trade_manager.popup_warning_message_box('hello')
 
 

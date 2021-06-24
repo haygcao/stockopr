@@ -5,6 +5,7 @@ import time
 #import toolkit.wy_save_history_multiprocess
 import util.macd
 # import acquisition.wy as wy
+import util.qt_util
 from trade_manager import trade_manager
 
 from util.log import logger
@@ -80,8 +81,8 @@ def test_signal():
 
 def test():
     return
-    trade_manager.popup_warning_message_box('hello')
-    trade_manager.popup_warning_message_box('hello')
+    util.qt_util.popup_warning_message_box('hello')
+    util.qt_util.popup_warning_message_box('hello')
     time.sleep(3)
     exit(0)
 

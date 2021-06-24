@@ -148,6 +148,8 @@ def compute_signal(quote, period, supplemental_signal_path=None):
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
 
     # 计算止损数据
+    if 'stop_loss_signal_exit' in quote_copy.columns:
+        quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
     quote_copy = signal_stop_loss.signal_exit(quote_copy)
 
     # 处理合并看空信号
@@ -285,7 +287,8 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     #         quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
 
     # # 重新计算止损
-    # quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
+    # if 'stop_loss_signal_exit' in quote_copy.columns:
+    #     quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
     # quote_copy = signal_stop_loss.signal_exit(quote_copy)
 
     return quote_copy
@@ -293,15 +296,15 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
 def recognize(price_info_df):
     price_info_df_last = price_info_df[-1:]
-    #price = price_info_df_last.get_values()
+    # price = price_info_df_last.get_values()
     r = signal_gd.gold_dead(price_info_df)
     if r == 'B':
-        #trade_signal_indicator(None, 0)
+        # trade_signal_indicator(None, 0)
         # add to bought
         basic.add_bought(price_info_df_last['code'][0])
         basic.add_trading_detail(price_info_df_last['code'][0], 'B', price_info_df_last['close'][0], 100, 'ZXZQ')
     elif r == 'S':
-        #trade_signal_indicator(None, 0)
+        # trade_signal_indicator(None, 0)
         # add to cleared
         basic.add_cleared(price_info_df_last['code'][0], price_info_df_last['close'][0], 100, 'ZXZQ')
         basic.add_trading_detail(price_info_df_last['code'][0], 'S', price_info_df_last['close'][0], 100, 'ZXZQ')
@@ -312,7 +315,7 @@ def recognize(price_info_df):
 # 交易日14:45执行, 确定需要交易的股票
 def check_signal(code):
     price_rt = quote_www.getChinaStockIndividualPriceInfoWy(code)
-    #key_list = ['code', 'trading_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+    # key_list = ['code', 'trading_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
     key_list = ['code', 'open', 'high', 'low', 'close', 'volume', 'turnover']
 
     duration = 60

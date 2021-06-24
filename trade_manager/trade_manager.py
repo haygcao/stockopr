@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
-import multiprocessing
 import threading
 import time
-
-from PyQt5.QtWidgets import QMessageBox, QApplication
 
 import trade_manager.db_handler
 from acquisition import tx, quote_db
@@ -15,12 +12,9 @@ from indicator import atr, ema, dynamical_system
 from pointor import signal
 from trade_manager import tradeapi, db_handler
 from util import mysqlcli, dt
-from util.dt import istradeday
 
 from util.log import logger
-
-
-g_q_application = None
+from util.qt_util import popup_warning_message_box_mp
 
 
 class TradeManager:
@@ -402,27 +396,6 @@ def handle_illegal_position(position: trade_data.Position, quota):
     logger.warning('[{}]违规仓位, 请务必遵守规则, 持仓[{}]配额[{}], 卖出 {}x{}'.format(
         code, position.current_position, quota, price_trade, count))
     # sell(code, price_trade=price_trade, count=count, auto=True)
-
-
-def popup_warning_message_box(msg, callback, *args):
-    global g_q_application
-    if not g_q_application:
-        g_q_application = QApplication([])
-    # msg_box = QMessageBox(QMessageBox.Warning, '警告', msg)
-    # msg_box.exec_()
-    r = QMessageBox.warning(None, '警告', msg, QMessageBox.Yes|QMessageBox.No)
-    if callback:
-        if r == QMessageBox.Yes:
-            callback(*args)
-        # elif r == QMessageBox.No:
-        #     callback(*args)
-        # elif r == QMessageBox.Ok:
-        #     callback(*args)
-
-
-def popup_warning_message_box_mp(msg, callback=None, *args):
-    # popup_warning_message_box(msg, callback, *args)
-    multiprocessing.Process(target=popup_warning_message_box, args=(msg, callback, *args)).start()
 
 
 def patrol():
