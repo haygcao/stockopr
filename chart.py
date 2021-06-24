@@ -33,7 +33,9 @@ panel_ratios = {
 }
 
 oscillatior = 'force_index'
+# oscillatior = 'volume_ad'
 show_long_period_dynamical_system = False
+show_signal_detail = False
 
 yellow = '#FFFF00'
 orange = '#FFA500'
@@ -128,7 +130,7 @@ class DataFinanceDraw(object):
         self.data_origin = pandas.DataFrame()
         self.data = None
         self.histogram_macd = None
-        self.histogram_force_index = None
+        self.histogram_oscillation = None
 
         self.need_update = False
         self.style = None
@@ -205,65 +207,74 @@ class DataFinanceDraw(object):
         self.data_origin = data.iloc[-count:]
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
-    def add_force_index(self, data):
-        data_oscillation = data['force_index']
-        force_index_abs_avg = data_oscillation.abs().mean()
-        # force_index_positive_avg = data_oscillation[data_oscillation > 0].mean()
+    def add_oscillation(self, data):
+        data_column = 'adosc' if oscillatior == 'volume_ad' else oscillatior
+        data_oscillation = data[data_column]
 
-        if oscillatior == 'force_index':
+        oscillation_color = [lightgrey if v >= 0 else grey for v in self.get_window(data[data_column])]
+
+        if oscillatior in ['force_index', 'volume_ad']:
+            force_index_abs_avg = data_oscillation.abs().mean()
+            # force_index_positive_avg = data_oscillation[data_oscillation > 0].mean()
             data_oscillation = data_oscillation.mask(data_oscillation > force_index_abs_avg * 5,
                                                      force_index_abs_avg * 5)
             data_oscillation = data_oscillation.mask(data_oscillation < -force_index_abs_avg * 5,
                                                      -force_index_abs_avg * 5)
+            oscillation_color = [
+                dark_olive_green3 if v == force_index_abs_avg * 5 else light_coral if v == -force_index_abs_avg * 5 else
+                oscillation_color[i]
+                for (i,), v in numpy.ndenumerate(self.get_window(data_oscillation).values)]
 
-        self.histogram_force_index = data_oscillation
+        self.histogram_oscillation = data_oscillation
 
-        force_index_bull_market_deviation = data['force_index_bull_market_deviation']
-        data_oscillation_bull_deviation = force_index_bull_market_deviation.mask(
-            force_index_bull_market_deviation.notnull().values,
+        # A value is trying to be set on a copy of a slice from a DataFrame
+        # mask1 = data_oscillation.loc[data_oscillation > oscillation_abs_avg * 5] = oscillation_abs_avg * 5
+        # mask1 = data_oscillation.loc[:] > oscillation_abs_avg * 5
+        # data_oscillation[mask1] = oscillation_abs_avg * 5
+        # mask2 = data_oscillation.loc[:] < -oscillation_abs_avg * 5
+        # data_oscillation[mask2] = -oscillation_abs_avg * 5
+        bull_deviation_column = '{}_bull_market_deviation'.format(oscillatior)
+        oscillation_bull_market_deviation = data[bull_deviation_column]
+        data_oscillation_bull_deviation = oscillation_bull_market_deviation.mask(
+            oscillation_bull_market_deviation.notnull().values,
             data_oscillation * 1.2).values
 
-        force_index_color = [lightgrey if v >= 0 else grey for v in self.get_window(data["force_index"])]
-        force_index_color = [
-            dark_olive_green3 if v == force_index_abs_avg * 5 else light_coral if v == -force_index_abs_avg * 5 else
-            force_index_color[i]
-            for (i,), v in numpy.ndenumerate(self.get_window(data_oscillation).values)]
-
-        force_index_bear_market_deviation = data['force_index_bear_market_deviation']
-        data_oscillation_bear_deviation = force_index_bear_market_deviation.mask(
-            force_index_bear_market_deviation.notnull().values,
+        bear_deviation_column = '{}_bear_market_deviation'.format(oscillatior)
+        oscillation_bear_market_deviation = data[bear_deviation_column]
+        data_oscillation_bear_deviation = oscillation_bear_market_deviation.mask(
+            oscillation_bear_market_deviation.notnull().values,
             data_oscillation * 1.2).values
 
-        force_index_bull_market_deviation_single_point = tune_deviation(force_index_bull_market_deviation)
-        force_index_bear_market_deviation_single_point = tune_deviation(force_index_bear_market_deviation)
+        oscillation_bull_market_deviation_single_point = tune_deviation(oscillation_bull_market_deviation)
+        oscillation_bear_market_deviation_single_point = tune_deviation(oscillation_bear_market_deviation)
         data_oscillation_bull_deviation_single_point = tune_deviation(data_oscillation_bull_deviation)
         data_oscillation_bear_deviation_single_point = tune_deviation(data_oscillation_bear_deviation)
 
-        force_index_color = [dark_olive_green3 if not numpy.isnan(v) else force_index_color[i]
-                             for (i,), v in numpy.ndenumerate(self.get_window(force_index_bull_market_deviation).values)]
-        force_index_color = [light_coral if not numpy.isnan(v) else force_index_color[i]
-                             for (i,), v in numpy.ndenumerate(self.get_window(force_index_bear_market_deviation).values)]
+        oscillation_color = [dark_olive_green3 if not numpy.isnan(v) else oscillation_color[i]
+                             for (i,), v in numpy.ndenumerate(self.get_window(oscillation_bull_market_deviation).values)]
+        oscillation_color = [light_coral if not numpy.isnan(v) else oscillation_color[i]
+                             for (i,), v in numpy.ndenumerate(self.get_window(oscillation_bear_market_deviation).values)]
 
 
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(data_oscillation), type='bar', panel=self.panel_oscillation,
-                             color=force_index_color),
+                             color=oscillation_color),
             mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=self.panel_oscillation,
                              color=dimgrey),
             # mpf.make_addplot(self.get_window(data_oscillation), type='bar', panel=self.panel_oscillation,
-            #                  color=force_index_color),
+            #                  color=oscillation_color),
             # mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=self.panel_oscillation,
             #                  color=dimgrey),
             # mpf.make_addplot(self.get_window(data_oscillation_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_oscillation, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
             # mpf.make_addplot(self.get_window(data_oscillation_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_oscillation, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
             ])
 
-        if self.get_window(data['force_index_bull_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(self.get_window(force_index_bull_market_deviation_single_point),
+        if self.get_window(data[bull_deviation_column]).any(skipna=True):
+            self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bull_market_deviation_single_point),
                                                    type='scatter', width=1, panel=0, color=green, markersize=50,
                                                    marker=marker_up), ])
-        if self.get_window(data['force_index_bear_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(self.get_window(force_index_bear_market_deviation_single_point),
+        if self.get_window(data[bear_deviation_column]).any(skipna=True):
+            self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bear_market_deviation_single_point),
                                                    type='scatter', width=1, panel=0, color=red, markersize=50,
                                                    marker=marker_down), ])
 
@@ -419,6 +430,22 @@ class DataFinanceDraw(object):
                 mpf.make_addplot(self.get_window(data['signal_exit']), type='scatter', width=1, color=light_coral,
                                  markersize=50, marker=marker_down))
 
+        if show_signal_detail:
+            if self.get_window(data['ema_value_signal_enter']).any(skipna=True):
+                self.add_plot.append(mpf.make_addplot(self.get_window(data['ema_value_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
+
+            if self.get_window(data['channel_signal_enter']).any(skipna=True):
+                self.add_plot.append(mpf.make_addplot(self.get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
+
+            if self.get_window(data['channel_signal_exit']).any(skipna=True):
+                self.add_plot.append( mpf.make_addplot(self.get_window(data['channel_signal_exit']), type='scatter', width=1, panel=0, color=dimgrey, markersize=50, marker=marker_down))
+
+            if self.get_window(data['dynamical_system_signal_enter']).any(skipna=True):
+                self.add_plot.append(mpf.make_addplot(self.get_window(data['dynamical_system_signal_enter']), type='scatter', width=1, panel=0, color=dark_olive_green3, markersize=50, marker=marker_up))
+
+            if self.get_window(data['dynamical_system_signal_exit']).any(skipna=True):
+                self.add_plot.append(mpf.make_addplot(self.get_window(data['dynamical_system_signal_exit']), type='scatter', width=1, panel=0, color=light_coral, markersize=50, marker=marker_down))
+
     def more_panel_draw(self):
         data = self.data_origin  # .iloc[-100:]
         data = signal.compute_signal(data, self.period)
@@ -433,13 +460,6 @@ class DataFinanceDraw(object):
 
         data = signal_channel.signal_enter(data, period=self.period)
         data = signal_channel.signal_exit(data, period=self.period)
-
-        # A value is trying to be set on a copy of a slice from a DataFrame
-        # mask1 = data_oscillation.loc[data_oscillation > force_index_abs_avg * 5] = force_index_abs_avg * 5
-        # mask1 = data_oscillation.loc[:] > force_index_abs_avg * 5
-        # data_oscillation[mask1] = force_index_abs_avg * 5
-        # mask2 = data_oscillation.loc[:] < -force_index_abs_avg * 5
-        # data_oscillation[mask2] = -force_index_abs_avg * 5
 
         data = signal_market_deviation.signal_enter(data, self.period)
         data = signal_market_deviation.signal_exit(data, self.period)
@@ -457,12 +477,12 @@ class DataFinanceDraw(object):
         #
         self.data = data
 
-        self.add_force_index(data)
+        self.add_signal(data)
+        self.add_oscillation(data)
         self.add_resistance_support(data)
         self.add_dynamical_system(data)
         self.add_channel(data)
         self.add_stop_loss(data)
-        self.add_signal(data)
 
         # data = data.iloc[-100:]
 
@@ -473,26 +493,8 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(exp26), type='line', width=width+0.1, color=black),
         ])
 
-        # if self.get_window(data['ema_value_signal_enter']).any(skipna=True):
-        #     self.add_plot.append(mpf.make_addplot(self.get_window(data['ema_value_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
-
-        # if self.get_window(data['channel_signal_enter']).any(skipna=True):
-        #     self.add_plot.append(mpf.make_addplot(self.get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
-        # if self.get_window(data['channel_signal_exit']).any(skipna=True):
-        #     self.add_plot.append( mpf.make_addplot(self.get_window(data['channel_signal_exit']), type='scatter', width=1, panel=0, color=dimgrey, markersize=50, marker=marker_down))
-        # if self.get_window(data['dynamical_system_signal_enter']).any(skipna=True):
-        #     self.add_plot.append(mpf.make_addplot(self.get_window(data['dynamical_system_signal_enter']), type='scatter', width=1, panel=0, color=dark_olive_green3, markersize=50, marker=marker_up))
-        # if self.get_window(data['dynamical_system_signal_exit']).any(skipna=True):
-        #     self.add_plot.append(mpf.make_addplot(self.get_window(data['dynamical_system_signal_exit']), type='scatter', width=1, panel=0, color=light_coral, markersize=50, marker=marker_down))
-
-
         if self.show_macd:
             self.add_macd(data)
-
-        # fig = mpf.figure(figsize=(10, 7), style=self.style)  # pass in the self defined style to the whole canvas
-        # ax = fig.add_subplot(2, 1, 1)  # main candle stick chart subplot, you can also pass in the self defined style here only for this subplot
-        # av = fig.add_subplot(2, 1, 2, sharex=ax)  # volume chart subplot
-        # mpf.plot(self.data, type='candle', ax=ax, volume=av)
 
         self.compute_timestamp = datetime.datetime.now().timestamp()
 
@@ -598,9 +600,9 @@ class DataFinanceDraw(object):
                                            'ax': axlist[6] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[8]},
             'macd_bear_market_deviation': {'data': self.histogram_macd,
                                            'ax': axlist[6] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[8]},
-            'force_index_bull_market_deviation': {'data': self.histogram_force_index,
+            '{}_bull_market_deviation'.format(oscillatior): {'data': self.histogram_oscillation,
                                                   'ax': axlist[4] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6]},
-            'force_index_bear_market_deviation': {'data': self.histogram_force_index,
+            '{}_bear_market_deviation'.format(oscillatior): {'data': self.histogram_oscillation,
                                                   'ax': axlist[4] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6]},
         }
 
@@ -642,14 +644,17 @@ class DataFinanceDraw(object):
                          (value - points.values[index + 1]), shape=shape, linestyle='-', color=color,
                          length_includes_head=True, width=width, head_width=0, head_length=0)
 
+                # continue
                 width = unit2 / 10
                 ax2.arrow(index_first, points2.values[index], index_second - index_first,
-                          (points2.values[index + 1] - points2.values[index]), shape=shape, color=color,
-                          length_includes_head=True, width=width, head_width=0, head_length=0)
+                          (points2.values[index + 1] - points2.values[index]), shape=shape, color=color,)
+                          # length_includes_head=True, width=width, head_width=0, head_length=0)
 
         ax = axlist[0] if is_long_period(self.period) else axlist[0]
-        deviation_list = ['macd_bull_market_deviation', 'macd_bear_market_deviation',
-                          'force_index_bull_market_deviation', 'force_index_bear_market_deviation']
+        deviation_list = [
+            'macd_bull_market_deviation', 'macd_bear_market_deviation',
+            '{}_bull_market_deviation'.format(oscillatior), '{}_bear_market_deviation'.format(oscillatior)
+        ]
         # deviation_list = ['force_index_bull_market_deviation']
         for column_name in deviation_list:
             data = self.get_window(self.data[column_name])
