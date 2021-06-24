@@ -377,8 +377,8 @@ def atr(prices, timeperiod=14):
 def ad(prices, timeperiod=30):
     df = pd.DataFrame()
     df['ad'] = AD(prices)
-    # df['ad_ema'] = EMA(df['ad'], timeperiod=timeperiod)
+    df['ad_ema'] = EMA(df['ad'], timeperiod=timeperiod)
     # # df['obv'] = OBV(prices)
-    # df['adosc'] = ADOSC(prices, fastperiod=3, slowperiod=10)
+    df['adosc'] = ADOSC(prices, fastperiod=3, slowperiod=10)
 
     return df

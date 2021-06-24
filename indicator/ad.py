@@ -7,7 +7,8 @@ from util.macd import ad, ema
 def compute_ad(quote):
     df = ad(quote)
     quote['ad'] = df['ad']
-    quote['ad_ema'] = ema(df['ad'], 26)
-    # quote['adosc'] = df['adosc']
+    # quote['ad_ema'] = ema(df['ad'], 26)
+    quote['ad_ema'] = df['ad_ema']
+    quote['adosc'] = df['adosc']
 
     return quote
