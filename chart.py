@@ -34,6 +34,7 @@ panel_ratios = {
 
 oscillatior = 'force_index'
 # oscillatior = 'volume_ad'
+oscillatior_list = ['force_index', 'volume_ad']
 show_long_period_dynamical_system = False
 show_signal_detail = False
 
@@ -130,7 +131,8 @@ class DataFinanceDraw(object):
         self.data_origin = pandas.DataFrame()
         self.data = None
         self.histogram_macd = None
-        self.histogram_oscillation = None
+        self.histogram_volume_ad = None
+        self.histogram_force_index = None
 
         self.need_update = False
         self.style = None
@@ -207,13 +209,13 @@ class DataFinanceDraw(object):
         self.data_origin = data.iloc[-count:]
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
-    def add_oscillation(self, data):
-        data_column = 'adosc' if oscillatior == 'volume_ad' else oscillatior
+    def add_oscillation(self, data, osc):
+        data_column = 'adosc' if osc == 'volume_ad' else osc
         data_oscillation = data[data_column]
 
         oscillation_color = [lightgrey if v >= 0 else grey for v in self.get_window(data[data_column])]
 
-        if oscillatior in ['force_index', 'volume_ad']:
+        if osc in ['force_index', 'volume_ad']:
             force_index_abs_avg = data_oscillation.abs().mean()
             # force_index_positive_avg = data_oscillation[data_oscillation > 0].mean()
             data_oscillation = data_oscillation.mask(data_oscillation > force_index_abs_avg * 5,
@@ -225,7 +227,12 @@ class DataFinanceDraw(object):
                 oscillation_color[i]
                 for (i,), v in numpy.ndenumerate(self.get_window(data_oscillation).values)]
 
-        self.histogram_oscillation = data_oscillation
+        # eval('self.histogram_{} = data_oscillation'.format(osc))
+        if osc == 'force_index':
+            self.histogram_force_index = data_oscillation
+        else:
+            self.histogram_volume_ad = data_oscillation
+           # self.histogram_oscillation = self.data['adosc' if oscillatior == 'volume_ad' else oscillatior]
 
         # A value is trying to be set on a copy of a slice from a DataFrame
         # mask1 = data_oscillation.loc[data_oscillation > oscillation_abs_avg * 5] = oscillation_abs_avg * 5
@@ -233,13 +240,13 @@ class DataFinanceDraw(object):
         # data_oscillation[mask1] = oscillation_abs_avg * 5
         # mask2 = data_oscillation.loc[:] < -oscillation_abs_avg * 5
         # data_oscillation[mask2] = -oscillation_abs_avg * 5
-        bull_deviation_column = '{}_bull_market_deviation'.format(oscillatior)
+        bull_deviation_column = '{}_bull_market_deviation'.format(osc)
         oscillation_bull_market_deviation = data[bull_deviation_column]
         data_oscillation_bull_deviation = oscillation_bull_market_deviation.mask(
             oscillation_bull_market_deviation.notnull().values,
             data_oscillation * 1.2).values
 
-        bear_deviation_column = '{}_bear_market_deviation'.format(oscillatior)
+        bear_deviation_column = '{}_bear_market_deviation'.format(osc)
         oscillation_bear_market_deviation = data[bear_deviation_column]
         data_oscillation_bear_deviation = oscillation_bear_market_deviation.mask(
             oscillation_bear_market_deviation.notnull().values,
@@ -277,6 +284,10 @@ class DataFinanceDraw(object):
             self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bear_market_deviation_single_point),
                                                    type='scatter', width=1, panel=0, color=red, markersize=50,
                                                    marker=marker_down), ])
+
+    def add_oscillations(self, data):
+        for osc in oscillatior_list:
+            self.add_oscillation(data, osc)
 
     def add_resistance_support(self, data):
         data_support = self.data[:]['low'].copy()
@@ -478,7 +489,7 @@ class DataFinanceDraw(object):
         self.data = data
 
         self.add_signal(data)
-        self.add_oscillation(data)
+        self.add_oscillations(data)
         self.add_resistance_support(data)
         self.add_dynamical_system(data)
         self.add_channel(data)
@@ -600,13 +611,18 @@ class DataFinanceDraw(object):
                                            'ax': axlist[6] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[8]},
             'macd_bear_market_deviation': {'data': self.histogram_macd,
                                            'ax': axlist[6] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[8]},
-            '{}_bull_market_deviation'.format(oscillatior): {'data': self.histogram_oscillation,
-                                                  'ax': axlist[4] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6]},
-            '{}_bear_market_deviation'.format(oscillatior): {'data': self.histogram_oscillation,
-                                                  'ax': axlist[4] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6]},
         }
+        for osc in oscillatior_list:
+            map_index.update({
+                '{}_bull_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
+                                                                 'ax': axlist[
+                                                                     4] if not show_long_period_dynamical_system or is_long_period(
+                                                                     self.period) else axlist[6]}
+            })
+            map_index.update({'{}_bear_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
+                                                  'ax': axlist[4] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6]}})
 
-        def draw_deviation_line(data, ax, ax2, data1, data2, unit1, unit2, color, will):
+        def draw_deviation_line(data, ax, ax2, data1, data2, unit1, unit2, color, will, draw_minor):
             """
             width: float, default: 0.001
             Width of full arrow tail.
@@ -644,7 +660,9 @@ class DataFinanceDraw(object):
                          (value - points.values[index + 1]), shape=shape, linestyle='-', color=color,
                          length_includes_head=True, width=width, head_width=0, head_length=0)
 
-                # continue
+                if not draw_minor:
+                    continue
+
                 width = unit2 / 10
                 ax2.arrow(index_first, points2.values[index], index_second - index_first,
                           (points2.values[index + 1] - points2.values[index]), shape=shape, color=color,)
@@ -655,6 +673,9 @@ class DataFinanceDraw(object):
             'macd_bull_market_deviation', 'macd_bear_market_deviation',
             '{}_bull_market_deviation'.format(oscillatior), '{}_bear_market_deviation'.format(oscillatior)
         ]
+        # deviation_list.extend(['{}_bull_market_deviation'.format(osc) for osc in oscillatior_list])
+        # deviation_list.extend(['{}_bear_market_deviation'.format(osc) for osc in oscillatior_list])
+
         # deviation_list = ['force_index_bull_market_deviation']
         for column_name in deviation_list:
             data = self.get_window(self.data[column_name])
@@ -679,8 +700,10 @@ class DataFinanceDraw(object):
             else:
                 will = -1
                 color = red  # if 'macd' in column_name else dark_red
+            draw_minor = True if 'macd' in column_name else False
+            draw_minor = True
             draw_deviation_line(self.data['close'], ax, map_index[column_name]['ax'], data, data2, unit1, unit2, color,
-                                will)
+                                will, draw_minor)
 
         # l = matplotlib.lines.Line2D([points.index[0], points.index[1]], [points.values[1], points.values[0]], color=red, marker=marker_up)
         # axlist[0].add_line(l)
