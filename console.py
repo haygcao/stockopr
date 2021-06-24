@@ -19,6 +19,7 @@ import trade_manager.db_handler
 from acquisition import acquire, basic, quote_db, tx
 from config import config
 from pointor.signal import write_supplemental_signal
+from selector import selector
 from trade_manager import trade_manager
 from util import util, dt
 from util.pywinauto_util import max_window
@@ -124,6 +125,9 @@ class Panel(QWidget):
         self.btn_sync = QPushButton('sync', self)
         self.btn_sync.clicked.connect(self.sync)
 
+        self.btn_scan = QPushButton('scan', self)
+        self.btn_scan.clicked.connect(self.scan)
+
         self.qle_count_or_price.textChanged[str].connect(self.on_count_or_price_changed)
 
         btn_buy = QPushButton('buy', self)
@@ -147,6 +151,7 @@ class Panel(QWidget):
         grid.addWidget(self.btn_monitor, 1, 1)
         grid.addWidget(self.btn_update_quote, 1, 2)
         grid.addWidget(self.btn_sync, 1, 3)
+        grid.addWidget(self.btn_scan, 1, 4)
 
         grid.addWidget(qle_code, 3, 0)
         grid.addWidget(self.qle_count_or_price, 3, 1)
@@ -271,6 +276,25 @@ class Panel(QWidget):
         p = multiprocessing.Process(target=trade_manager.sync, args=())
         p.start()
         print('sync started')
+
+    def scan(self):
+        print('scan started')
+        begin = datetime.datetime.now()
+        strategy_name_list = ['bull_at_bottom']
+        with multiprocessing.Manager() as manager:
+            l = manager.list()
+            p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, l))
+            p.start()
+            p.join()
+
+            end = datetime.datetime.now()
+
+            log = '\n'.join([' '.join(t) for t in l])
+            with open('log/scan.log', 'a') as f:
+                f.writelines('[{}] cost [{}s]'.format(begin, round((end - begin).microseconds / 1000, 3)))
+                f.writelines('\n')
+                f.writelines(log)
+                f.writelines('\n\n')
 
     def buy(self):
         supplemental_signal_path = config.supplemental_signal_path

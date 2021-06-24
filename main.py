@@ -45,10 +45,10 @@ def test_select_mp():
     strategy_name_list = ['ema_value']
     strategy_name_list = ['hot_strong', 'ema_value']
     strategy_name_list = ['bull_at_bottom']
-    code_list = selector.select(strategy_name_list)
-    for code in code_list:
-        logger.info(code, basic.get_stock_name(code))
-    logger.info('+++ {0} +++'.format(len(code_list)))
+    stock_list = selector.select(strategy_name_list)
+    for code, name in stock_list:
+        logger.info(code, name)
+    logger.info('+++ {0} +++'.format(len(stock_list)))
 
 
 def test_trend_recognition():

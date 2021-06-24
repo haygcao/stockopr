@@ -116,7 +116,7 @@ def select_one_strategy(code_list, strategy_name):
         #     if i % 100 == 0:
         #         sys.stderr.write('\rdone {0:%}'.format(i/len(code_list)))
         for _ in tqdm.tqdm(p.imap_unordered(select_func, [code for code in code_list]),
-                           total=len(code_list), ncols=120):
+                           total=len(code_list), ncols=64):
             r.append(_)
 
         code_list = [code for code in r if code]
@@ -126,15 +126,17 @@ def select_one_strategy(code_list, strategy_name):
     return code_list
 
 
-def select(strategy_name_list):
+def select(strategy_name_list, stock_list: list[tuple]):
     code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
-    # code_list = ['300502']
     code_list = [code for code in code_list if int(code[:2]) <= 60]
+    code_list = ['300502']
     for strategy_name in strategy_name_list:
         code_list = select_one_strategy(code_list, strategy_name)
         logger.info(strategy_name, code_list)
 
+    code_list.append('300502')
     code_list.sort()
 
-    return code_list
+    for code in code_list:
+        stock_list.append((code, basic.get_stock_name(code)))

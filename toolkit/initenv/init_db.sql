@@ -94,7 +94,7 @@ create table selected(
 create table selected_history(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    class varchar(8),
+    class varchar(32),
     `rank` int
     );
 
