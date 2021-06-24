@@ -29,7 +29,8 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 panel_ratios = {
     3: (8, 0.2, 1.8),
     4: [7.1, 0.1, 1.4, 1.4],
-    5: [7.05, 0.075, 0.075, 1.4, 1.4]
+    # 5: [7.05, 0.075, 0.075, 1.4, 1.4]
+    5: [6.9, 0.1, 1.0, 1.0, 1.0]
 }
 
 oscillatior = 'force_index'
@@ -117,7 +118,7 @@ class DataFinanceDraw(object):
         self.show_volume = False
         self.show_macd = True
         self.panel_volume = 1 if self.show_volume else 0
-        self.n_panels = 4 if self.show_volume else 3
+        self.n_panels = 5 if self.show_volume else 4
         if show_long_period_dynamical_system and not is_long_period(self.period):
             self.n_panels += 1
             self.panel_dlxt_long_period = self.panel_volume + 1
@@ -125,7 +126,7 @@ class DataFinanceDraw(object):
         else:
             self.panel_dlxt = self.panel_volume + 1
         self.panel_oscillation = self.panel_dlxt + 1
-        self.panel_macd = self.panel_oscillation + 1
+        self.panel_macd = self.panel_oscillation + 2
 
         self.data_long_period_origin = pandas.DataFrame()
         self.data_origin = pandas.DataFrame()
@@ -215,17 +216,25 @@ class DataFinanceDraw(object):
 
         oscillation_color = [lightgrey if v >= 0 else grey for v in self.get_window(data[data_column])]
 
-        if osc in ['force_index', 'volume_ad']:
-            force_index_abs_avg = data_oscillation.abs().mean()
-            # force_index_positive_avg = data_oscillation[data_oscillation > 0].mean()
-            data_oscillation = data_oscillation.mask(data_oscillation > force_index_abs_avg * 5,
-                                                     force_index_abs_avg * 5)
-            data_oscillation = data_oscillation.mask(data_oscillation < -force_index_abs_avg * 5,
-                                                     -force_index_abs_avg * 5)
-            oscillation_color = [
-                dark_olive_green3 if v == force_index_abs_avg * 5 else light_coral if v == -force_index_abs_avg * 5 else
-                oscillation_color[i]
-                for (i,), v in numpy.ndenumerate(self.get_window(data_oscillation).values)]
+        force_index_abs_avg = data_oscillation.abs().mean()
+        mask = (data_oscillation < force_index_abs_avg * 5) & (data_oscillation > force_index_abs_avg * -5)
+        data_oscillation_bar = data_oscillation.mask(mask, numpy.nan)
+
+        oscillation_color = [
+            dark_olive_green3 if v >= force_index_abs_avg * 5 else light_coral if v <= -force_index_abs_avg * 5 else
+            oscillation_color[i]
+            for (i,), v in numpy.ndenumerate(self.get_window(data_oscillation).values)]
+
+        # force_index_positive_avg = data_oscillation[data_oscillation > 0].mean()
+        data_oscillation = data_oscillation.mask(data_oscillation > force_index_abs_avg * 5,
+                                                 force_index_abs_avg * 3)
+        data_oscillation = data_oscillation.mask(data_oscillation < -force_index_abs_avg * 5,
+                                                 -force_index_abs_avg * 3)
+        data_oscillation_bar = data_oscillation_bar.mask(data_oscillation_bar > force_index_abs_avg * 5,
+                                                 force_index_abs_avg * 3)
+        data_oscillation_bar = data_oscillation_bar.mask(data_oscillation_bar < -force_index_abs_avg * 5,
+                                                     -force_index_abs_avg * 3)
+
 
         # eval('self.histogram_{} = data_oscillation'.format(osc))
         if osc == 'force_index':
@@ -263,19 +272,19 @@ class DataFinanceDraw(object):
                              for (i,), v in numpy.ndenumerate(self.get_window(oscillation_bear_market_deviation).values)]
 
 
+        panel = self.panel_oscillation + oscillatior_list.index(osc)
         self.add_plot.extend([
-            mpf.make_addplot(self.get_window(data_oscillation), type='bar', panel=self.panel_oscillation,
-                             color=oscillation_color),
-            mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=self.panel_oscillation,
-                             color=dimgrey),
-            # mpf.make_addplot(self.get_window(data_oscillation), type='bar', panel=self.panel_oscillation,
-            #                  color=oscillation_color),
-            # mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=self.panel_oscillation,
-            #                  color=dimgrey),
+            mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey),
+            # mpf.make_addplot(self.get_window(data_oscillation), type='bar', panel=panel, color=oscillation_color),
+            # mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey),
             # mpf.make_addplot(self.get_window(data_oscillation_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_oscillation, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
             # mpf.make_addplot(self.get_window(data_oscillation_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_oscillation, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
             ])
 
+        if self.get_window(data_oscillation_bar).any(skipna=True):
+            self.add_plot.extend([
+                mpf.make_addplot(self.get_window(data_oscillation_bar), type='bar', panel=panel,
+                                 color=oscillation_color)])
         if self.get_window(data[bull_deviation_column]).any(skipna=True):
             self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bull_market_deviation_single_point),
                                                    type='scatter', width=1, panel=0, color=green, markersize=50,
@@ -385,16 +394,20 @@ class DataFinanceDraw(object):
         dlxt_long_period.values[:] = self.data_origin['low']
         # dlxt.values[:] = self.data_origin['low']
 
-        if show_long_period_dynamical_system and not is_long_period(self.period):
+        if is_long_period(self.period):
+            dlxt_long_period_color = dlxt_color
+            dlxt_long_period = dlxt
+
+        self.add_plot.extend([
+            mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
+                             color=dlxt_long_period_color,
+                             alpha=0.05)])
+
+        if show_long_period_dynamical_system:
             self.add_plot.extend([
                 mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
                                  color=dlxt_long_period_color,
-                                 alpha=0.05),
-                mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt_long_period,
-                                 color=dlxt_long_period_color)])
-            # mpf.make_addplot(self.get_window(dlxt, type='bar', width=1, panel=0, color=dlxt_color, alpha=0.1)),
-        else:
-            dlxt_long_period_color = ['white' for i in dlxt_long_period_color]
+                                 alpha=0.05)])
 
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color)
@@ -608,19 +621,19 @@ class DataFinanceDraw(object):
         # 带箭头的线
         map_index = {
             'macd_bull_market_deviation': {'data': self.histogram_macd,
-                                           'ax': axlist[6] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[8]},
+                                           'ax': axlist[8] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[10]},
             'macd_bear_market_deviation': {'data': self.histogram_macd,
-                                           'ax': axlist[6] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[8]},
+                                           'ax': axlist[8] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[10]},
         }
-        for osc in oscillatior_list:
+        for i, osc in enumerate(oscillatior_list):
             map_index.update({
                 '{}_bull_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
                                                                  'ax': axlist[
-                                                                     4] if not show_long_period_dynamical_system or is_long_period(
-                                                                     self.period) else axlist[6]}
+                                                                     4 + i*2] if not show_long_period_dynamical_system or is_long_period(
+                                                                     self.period) else axlist[6 + i*2]}
             })
             map_index.update({'{}_bear_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
-                                                  'ax': axlist[4] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6]}})
+                                                  'ax': axlist[4 + i*2] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + i*2]}})
 
         def draw_deviation_line(data, ax, ax2, data1, data2, unit1, unit2, color, will, draw_minor):
             """
@@ -671,10 +684,10 @@ class DataFinanceDraw(object):
         ax = axlist[0] if is_long_period(self.period) else axlist[0]
         deviation_list = [
             'macd_bull_market_deviation', 'macd_bear_market_deviation',
-            '{}_bull_market_deviation'.format(oscillatior), '{}_bear_market_deviation'.format(oscillatior)
+            # '{}_bull_market_deviation'.format(oscillatior), '{}_bear_market_deviation'.format(oscillatior)
         ]
-        # deviation_list.extend(['{}_bull_market_deviation'.format(osc) for osc in oscillatior_list])
-        # deviation_list.extend(['{}_bear_market_deviation'.format(osc) for osc in oscillatior_list])
+        deviation_list.extend(['{}_bull_market_deviation'.format(osc) for osc in oscillatior_list])
+        deviation_list.extend(['{}_bear_market_deviation'.format(osc) for osc in oscillatior_list])
 
         # deviation_list = ['force_index_bull_market_deviation']
         for column_name in deviation_list:
