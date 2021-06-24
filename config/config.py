@@ -294,6 +294,7 @@ signal_enter_list = [
 # ]
 
 signal_enter_deviation = [
+    'volume_ad_bear_market_deviation_signal_enter',
     'force_index_bull_market_deviation_signal_enter',
     'macd_bull_market_deviation_signal_enter'
 ]
@@ -316,6 +317,7 @@ signal_exit_list = [
 # ]
 
 signal_exit_deviation = [
+    'volume_ad_bear_market_deviation_signal_exit',
     'force_index_bear_market_deviation_signal_exit',
     'macd_bear_market_deviation_signal_exit',
 ]
