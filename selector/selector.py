@@ -7,6 +7,7 @@ import sys
 
 import tqdm
 
+from config import config
 from selector import util
 
 import acquisition.basic as basic
@@ -27,7 +28,7 @@ from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
 
-import selector.selected as selected
+from . import selected
 
 # 横盘 第二波 突破 涨 跌 大涨 大跌
 from util.log import logger
@@ -127,16 +128,30 @@ def select_one_strategy(code_list, strategy_name):
 
 
 def select(strategy_name_list, stock_list: list[tuple]):
+    begin = datetime.datetime.now()
+
     code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
     code_list = [code for code in code_list if int(code[:2]) <= 60]
-    code_list = ['300502']
+    # code_list = ['300502']
+
+    strategy_name_list = config.get_scan_strategy_name_list() if not strategy_name_list else strategy_name_list
     for strategy_name in strategy_name_list:
         code_list = select_one_strategy(code_list, strategy_name)
         logger.info(strategy_name, code_list)
 
-    code_list.append('300502')
+    # code_list.append('300502')
     code_list.sort()
 
+    stock_list = [] if not isinstance(stock_list, list) else stock_list
     for code in code_list:
         stock_list.append((code, basic.get_stock_name(code)))
+
+    end = datetime.datetime.now()
+
+    log = '\n'.join([' '.join(t) for t in stock_list])
+    with open(config.scan_log_path, 'a') as f:
+        f.writelines('[{}] cost [{}s]'.format(begin, (end - begin).seconds))
+        f.writelines('\n')
+        f.writelines(log)
+        f.writelines('\n\n')

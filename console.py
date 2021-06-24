@@ -279,22 +279,15 @@ class Panel(QWidget):
 
     def scan(self):
         print('scan started')
-        begin = datetime.datetime.now()
         strategy_name_list = ['bull_at_bottom']
-        with multiprocessing.Manager() as manager:
-            l = manager.list()
-            p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, l))
-            p.start()
-            p.join()
-
-            end = datetime.datetime.now()
-
-            log = '\n'.join([' '.join(t) for t in l])
-            with open('log/scan.log', 'a') as f:
-                f.writelines('[{}] cost [{}s]'.format(begin, round((end - begin).microseconds / 1000, 3)))
-                f.writelines('\n')
-                f.writelines(log)
-                f.writelines('\n\n')
+        strategy_name_list = []
+        # with multiprocessing.Manager() as manager:
+        #     l = manager.list()
+        #     p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, l))
+        #     p.start()
+        #     p.join()
+        p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None))
+        p.start()
 
     def buy(self):
         supplemental_signal_path = config.supplemental_signal_path
