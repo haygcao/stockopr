@@ -408,6 +408,17 @@ class DataFinanceDraw(object):
                 mpf.make_addplot(self.get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple,
                                  markersize=50, marker=marker_down))
 
+    def add_signal(self, data):
+        if self.get_window(data['signal_enter']).any(skipna=True):
+            self.add_plot.append(
+                mpf.make_addplot(self.get_window(data['signal_enter']), type='scatter', width=1,
+                                 color=dark_olive_green3,
+                                 markersize=50, marker=marker_up))
+        if self.get_window(data['signal_exit']).any(skipna=True):
+            self.add_plot.append(
+                mpf.make_addplot(self.get_window(data['signal_exit']), type='scatter', width=1, color=light_coral,
+                                 markersize=50, marker=marker_down))
+
     def more_panel_draw(self):
         data = self.data_origin  # .iloc[-100:]
         data = signal.compute_signal(data, self.period)
@@ -451,6 +462,7 @@ class DataFinanceDraw(object):
         self.add_dynamical_system(data)
         self.add_channel(data)
         self.add_stop_loss(data)
+        self.add_signal(data)
 
         # data = data.iloc[-100:]
 
@@ -460,15 +472,6 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(exp13), type='line', width=width+0.2, color=dimgrey),
             mpf.make_addplot(self.get_window(exp26), type='line', width=width+0.1, color=black),
         ])
-
-        if self.get_window(data['signal_enter']).any(skipna=True):
-            self.add_plot.append(
-                mpf.make_addplot(self.get_window(data['signal_enter']), type='scatter', width=1, color=dark_olive_green3,
-                                 markersize=50, marker=marker_up))
-        if self.get_window(data['signal_exit']).any(skipna=True):
-            self.add_plot.append(
-                mpf.make_addplot(self.get_window(data['signal_exit']), type='scatter', width=1, color=light_coral,
-                                 markersize=50, marker=marker_down))
 
         # if self.get_window(data['ema_value_signal_enter']).any(skipna=True):
         #     self.add_plot.append(mpf.make_addplot(self.get_window(data['ema_value_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
