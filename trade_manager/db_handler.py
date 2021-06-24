@@ -54,7 +54,7 @@ def new_position(d):
 
 
 def query_position(code):
-    sql = "select total, avail, cost_price, price, total_profit from {} where code = %s order by date desc limit 1".format(config.sql_tab_position)
+    sql = "select code, total, avail, cost_price, price, total_profit from {} where code = %s order by date desc limit 1".format(config.sql_tab_position)
     with mysqlcli.get_cursor() as c:
         try:
             c.execute(sql, (code,))

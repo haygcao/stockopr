@@ -27,9 +27,14 @@ def goodbye():
     if g_quotation_monitor_pid > 0:
         psutil.Process(g_quotation_monitor_pid).terminate()
         print('terminate quotation monitor')
+    if g_scheduler_pid > 0:
+        psutil.Process(g_scheduler_pid).terminate()
+        print('terminate scheduler')
 
 
 def monitor():
+    atexit.register(goodbye)
+
     # Set the signal handler and a 5-second alarm
     signal.signal(signal.SIGTERM, handler)
     # signal.alarm(signal.SIGTERM)

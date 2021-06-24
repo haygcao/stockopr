@@ -1,6 +1,7 @@
 import datetime
 import multiprocessing
 import os
+import re
 import signal
 import sys
 import threading
@@ -11,7 +12,7 @@ import psutil
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QWidget, QLabel,
-                             QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow)
+                             QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow, QDesktopWidget)
 import win32api
 
 import chart
@@ -54,6 +55,8 @@ class Panel(QWidget):
         self.setWindowIcon(QIcon('data/icon11.png'))
 
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+
+        self.setFixedSize(600, 200)
 
         self.dict = {}
         self.code = '300502'
@@ -170,6 +173,10 @@ class Panel(QWidget):
     def on_code_changed(self, text):
         if len(text) > 1 and text[0] not in '036' and text[-1] == ';':
             text = basic.get_stock_code(text[:-1])
+
+        if len(text) < 1 or (not text.endswith(';') and not re.match('[0-9]{6}', text)):
+            return
+
         self.code = text
 
         self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
@@ -364,12 +371,24 @@ class Panel(QWidget):
             os.kill(pid, signal.CTRL_C_EVENT)
             # psutil.Process(pid).terminate()
 
+    def location_on_the_screen(self):
+        ag = QDesktopWidget().availableGeometry()
+        sg = QDesktopWidget().screenGeometry()
+
+        widget = self.geometry()
+        x = ag.width() - widget.width() - 50
+        y = 2 * ag.height() - sg.height() - widget.height() - 50
+        self.move(x, y)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # ex = Main()
     ex = Panel()
+    ex.location_on_the_screen()
+    print('width: {}\theight: {}'.format(ex.width(), ex.height()))
+
     rc = app.exec_()
     ex.stop_check_thread()
     ex.stop_watch_dog()
