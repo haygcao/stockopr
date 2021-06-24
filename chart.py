@@ -349,12 +349,40 @@ class DataFinanceDraw(object):
                 # mpf.make_addplot(self.get_window(data_macd_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
             ])
 
+    def add_dynamical_system(self, data):
+        dlxt = data["dlxt"]
+        dlxt_long_period = data["dlxt_long_period"]
+
+        dlxt_long_period_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
+                                  self.get_window(dlxt_long_period)]
+        dlxt_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
+                      self.get_window(dlxt)]
+
+        dlxt.values[:] = 1
+        # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
+        dlxt_long_period.values[:] = self.data_origin['low']
+        # dlxt.values[:] = self.data_origin['low']
+
+        if show_long_period_dynamical_system and not is_long_period(self.period):
+            self.add_plot.extend([
+                mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
+                                 color=dlxt_long_period_color,
+                                 alpha=0.05),
+                mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt_long_period,
+                                 color=dlxt_long_period_color)])
+            # mpf.make_addplot(self.get_window(dlxt, type='bar', width=1, panel=0, color=dlxt_color, alpha=0.1)),
+        else:
+            dlxt_long_period_color = ['white' for i in dlxt_long_period_color]
+
+        self.add_plot.extend([
+            mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color)
+        ])
+
     def more_panel_draw(self):
         data = self.data_origin  # .iloc[-100:]
         data = signal.compute_signal(data, self.period)
 
         exp13 = data['close'].ewm(span=13, adjust=False).mean()
-
 
         data = signal_stop_loss.signal_exit(data)
         # data = dynamical_system.dynamical_system(data)
@@ -364,9 +392,6 @@ class DataFinanceDraw(object):
 
         data = signal_channel.signal_enter(data, period=self.period)
         data = signal_channel.signal_exit(data, period=self.period)
-
-        dlxt = data["dlxt"]
-        dlxt_long_period = data["dlxt_long_period"]
 
         # A value is trying to be set on a copy of a slice from a DataFrame
         # mask1 = data_oscillation.loc[data_oscillation > force_index_abs_avg * 5] = force_index_abs_avg * 5
@@ -393,14 +418,9 @@ class DataFinanceDraw(object):
 
         self.add_force_index(data)
         self.add_resistance_support(data)
+        self.add_dynamical_system(data)
 
         # data = data.iloc[-100:]
-
-        dlxt_long_period_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
-                                  self.get_window(dlxt_long_period)]
-        dlxt_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in self.get_window(dlxt)]
-
-
 
         data_atr = data['atr']
         width = 0.2
@@ -422,32 +442,11 @@ class DataFinanceDraw(object):
         data_stop_loss = self.data[:]['stop_loss'].copy()
         data_stop_loss_signal_exit = self.data[:]['stop_loss_signal_exit'].copy()
 
-
-
-        dlxt.values[:] = 1
-        # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
-        dlxt_long_period.values[:] = self.data_origin['low']
-        # dlxt.values[:] = self.data_origin['low']
-
-        if show_long_period_dynamical_system and not is_long_period(self.period):
-            self.add_plot.extend([
-                mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
-                                 color=dlxt_long_period_color,
-                                 alpha=0.05),
-                mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt_long_period,
-                                 color=dlxt_long_period_color)])
-            # mpf.make_addplot(self.get_window(dlxt, type='bar', width=1, panel=0, color=dlxt_color, alpha=0.1)),
-        else:
-            dlxt_long_period_color = ['white' for i in dlxt_long_period_color]
-
-
-
         width = 0.5
         color = dimgrey
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(exp13), type='line', width=width+0.2, color=dimgrey),
             mpf.make_addplot(self.get_window(exp26), type='line', width=width+0.1, color=black),
-            mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color),
         ])
 
         if self.get_window(data['signal_enter']).any(skipna=True):
