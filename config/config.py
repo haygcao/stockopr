@@ -438,6 +438,16 @@ period_oscillation_threshold_map = {
     'week': 1.1
 }
 
+period_ema26_oscillation_threshold_map = {
+    'm1': 1.025,
+    'm5': 1.025,
+    'm15': 1.025,
+    'm30': 1.05,
+    'm60': 1.05,
+    'day': 1.05,
+    'week': 1.1
+}
+
 stamp_duty = 0.001   # 印花税 卖方
 commission = 0.0002   # 佣金 - 中信证券 双向
 transfer_fee = 0.00002   # 过户费 上海证券交易所收取 双向

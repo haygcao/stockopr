@@ -155,7 +155,7 @@ def get_price_info_df_file_day(code, days, end_date, path):
     return df
 
 
-def get_price_info_df_db_day(code, days=1, end_date=None, conn=None):
+def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
     end_date = end_date if end_date and len(end_date) > 0 else datetime.date.today()
 
     if conn == None:

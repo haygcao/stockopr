@@ -13,9 +13,12 @@ from talib.abstract import WMA
 from talib.abstract import BBANDS
 from talib.abstract import PLUS_DI
 from talib.abstract import MINUS_DI
+from talib.abstract import AD
+from talib.abstract import ADOSC
 from talib.abstract import ADX
 from talib.abstract import ADXR
 from talib.abstract import ATR
+from talib.abstract import OBV
 from talib.abstract import STOCH
 from talib.abstract import STOCHF
 
@@ -367,5 +370,15 @@ A gap occurs when the previous close is greater than the current high (signaling
 def atr(prices, timeperiod=14):
     df = pd.DataFrame()
     df['atr'] = ATR(prices, timeperiod=timeperiod)
+
+    return df
+
+
+def ad(prices, timeperiod=30):
+    df = pd.DataFrame()
+    df['ad'] = AD(prices)
+    # df['ad_ema'] = EMA(df['ad'], timeperiod=timeperiod)
+    # # df['obv'] = OBV(prices)
+    # df['adosc'] = ADOSC(prices, fastperiod=3, slowperiod=10)
 
     return df

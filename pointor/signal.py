@@ -14,6 +14,7 @@ import acquisition.quote_www as quote_www
 import pointor.signal_gd as signal_gd
 import dealer.bought as basic
 from config import config
+from indicator import dynamical_system
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
     signal_stop_loss, signal_ema_value, signal_resistance_support
 from util.log import logger
@@ -87,6 +88,9 @@ def get_date_period(date, period, quote_date_index):
 
 
 def compute_signal(quote, period, supplemental_signal_path=None):
+    # 基础指标 - 动力系统
+    quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
+
     # 动力系统
     quote = signal_dynamical_system.signal_enter(quote, period=period)
     quote = signal_dynamical_system.signal_exit(quote, period=period)

@@ -79,10 +79,15 @@ def signal_enter(quote, period=None):
     # dlxt_ema13 > 0 and force_index_shift < 0 and force_index > force_index_shift:
     signal_column = 'force_index_signal_enter'
     quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
+
+    ema26_shift5 = quote['ema26'].shift(periods=5)
+
     mask1 = quote_copy.dlxt_ema13 > 0
     mask2 = quote_copy.force_index_shift < 0
     mask3 = quote_copy.force_index > quote_copy.force_index_shift
-    mask = mask1 & mask2 & mask3
+    mask4 = quote_copy.ema26 / ema26_shift5 > config.period_ema26_oscillation_threshold_map[period]
+    mask = mask1 & mask2 & mask3 & mask4
+
     quote_copy[signal_column] = quote_copy[signal_column].mask(mask, quote_copy['low'])
 
     # 过滤掉振荡走势中的信号

@@ -60,9 +60,12 @@ def compute_index(quote, period=None):
 # @ignore_long_period(column_name='dynamical_system_signal_enter')
 @dynamic_system_filter(column_name='dynamical_system_signal_enter')
 def signal_enter(quote, period=None):
-    # if is_long_period(period):
-    #     quote = quote.assign(dynamical_system_signal_enter=numpy.nan)
-    #     return quote
+    """
+    dynamic system 不处理日内信号
+    """
+    if period not in ['week', 'day']:
+        quote = quote.assign(dynamical_system_signal_enter=numpy.nan)
+        return quote
 
     quote = compute_index(quote, period)
 
@@ -85,11 +88,14 @@ def signal_enter(quote, period=None):
 
 
 @computed(column_name='dynamical_system_signal_exit')
-@ignore_long_period(column_name='dynamical_system_signal_exit')
+# @ignore_long_period(column_name='dynamical_system_signal_exit')
 def signal_exit(quote, period=None):
-    # if is_long_period(period):
-    #     quote = quote.assign(dynamical_system_signal_exit=numpy.nan)
-    #     return quote
+    """
+        dynamic system 不处理日内信号
+        """
+    if period not in ['week', 'day']:
+        quote = quote.assign(dynamical_system_signal_exit=numpy.nan)
+        return quote
 
     # 长中周期动力系统中，波段操作时只要有一个变为红色，短线则任一变为蓝色
     quote = compute_index(quote, period)
