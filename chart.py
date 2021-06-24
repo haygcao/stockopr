@@ -378,6 +378,26 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color)
         ])
 
+    def add_channel(self, data):
+        data_atr = data['atr']
+        exp = data['close'].ewm(span=26, adjust=False).mean()
+
+        width = 0.2
+        color = grey
+        self.add_plot.extend([
+            mpf.make_addplot(self.get_window(data_atr + exp), type='line', width=width, panel=0, color=lightgrey,
+                             linestyle='dotted'),
+            mpf.make_addplot(self.get_window(data_atr * 2 + exp), type='line', width=width, panel=0, color=color,
+                             linestyle='dashdot'),
+            mpf.make_addplot(self.get_window(data_atr * 3 + exp), type='line', width=width, panel=0, color=color),
+
+            mpf.make_addplot(self.get_window(-data_atr + exp), type='line', width=width, panel=0, color=lightgrey,
+                             linestyle='dotted'),
+            mpf.make_addplot(self.get_window(-data_atr * 2 + exp), type='line', width=width, panel=0, color=color,
+                             linestyle='dashdot'),
+            mpf.make_addplot(self.get_window(-data_atr * 3 + exp), type='line', width=width, panel=0, color=color),
+        ])
+
     def more_panel_draw(self):
         data = self.data_origin  # .iloc[-100:]
         data = signal.compute_signal(data, self.period)
@@ -419,25 +439,11 @@ class DataFinanceDraw(object):
         self.add_force_index(data)
         self.add_resistance_support(data)
         self.add_dynamical_system(data)
+        self.add_channel(data)
 
         # data = data.iloc[-100:]
 
-        data_atr = data['atr']
-        width = 0.2
-        color = grey
-        self.add_plot.extend([
-            mpf.make_addplot(self.get_window(data_atr + exp), type='line', width=width, panel=0, color=lightgrey,
-                             linestyle='dotted'),
-            mpf.make_addplot(self.get_window(data_atr * 2 + exp), type='line', width=width, panel=0, color=color,
-                             linestyle='dashdot'),
-            mpf.make_addplot(self.get_window(data_atr * 3 + exp), type='line', width=width, panel=0, color=color),
 
-            mpf.make_addplot(self.get_window(-data_atr + exp), type='line', width=width, panel=0, color=lightgrey,
-                             linestyle='dotted'),
-            mpf.make_addplot(self.get_window(-data_atr * 2 + exp), type='line', width=width, panel=0, color=color,
-                             linestyle='dashdot'),
-            mpf.make_addplot(self.get_window(-data_atr * 3 + exp), type='line', width=width, panel=0, color=color),
-        ])
 
         data_stop_loss = self.data[:]['stop_loss'].copy()
         data_stop_loss_signal_exit = self.data[:]['stop_loss_signal_exit'].copy()
