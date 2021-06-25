@@ -235,20 +235,12 @@ class DataFinanceDraw(object):
         data_oscillation_bar = data_oscillation_bar.mask(data_oscillation_bar < -force_index_abs_avg * 5,
                                                      -force_index_abs_avg * 3)
 
-
         # eval('self.histogram_{} = data_oscillation'.format(osc))
         if osc == 'force_index':
             self.histogram_force_index = data_oscillation
         else:
             self.histogram_volume_ad = data_oscillation
-           # self.histogram_oscillation = self.data['adosc' if oscillatior == 'volume_ad' else oscillatior]
 
-        # A value is trying to be set on a copy of a slice from a DataFrame
-        # mask1 = data_oscillation.loc[data_oscillation > oscillation_abs_avg * 5] = oscillation_abs_avg * 5
-        # mask1 = data_oscillation.loc[:] > oscillation_abs_avg * 5
-        # data_oscillation[mask1] = oscillation_abs_avg * 5
-        # mask2 = data_oscillation.loc[:] < -oscillation_abs_avg * 5
-        # data_oscillation[mask2] = -oscillation_abs_avg * 5
         bull_deviation_column = '{}_bull_market_deviation'.format(osc)
         oscillation_bull_market_deviation = data[bull_deviation_column]
         data_oscillation_bull_deviation = oscillation_bull_market_deviation.mask(
@@ -261,6 +253,16 @@ class DataFinanceDraw(object):
             oscillation_bear_market_deviation.notnull().values,
             data_oscillation * 1.2).values
 
+        # draw line
+        # https://github.com/matplotlib/mplfinance/issues/42
+        # https://github.com/matplotlib/mplfinance/issues/54
+        # if self.get_window(data[bull_deviation_column]).any(skipna=True):
+        #     self.add_plot.extend([mpf.make_addplot(self.get_window(data_oscillation), aline=[
+        #         (oscillation_bull_market_deviation.index[0], oscillation_bull_market_deviation[0]),
+        #     (oscillation_bull_market_deviation.index[1], oscillation_bull_market_deviation[1])],
+        #                                            type='line', width=1, panel=0, color=green),
+        #                           ])
+
         oscillation_bull_market_deviation_single_point = tune_deviation(oscillation_bull_market_deviation)
         oscillation_bear_market_deviation_single_point = tune_deviation(oscillation_bear_market_deviation)
         data_oscillation_bull_deviation_single_point = tune_deviation(data_oscillation_bull_deviation)
@@ -271,24 +273,19 @@ class DataFinanceDraw(object):
         oscillation_color = [light_coral if not numpy.isnan(v) else oscillation_color[i]
                              for (i,), v in numpy.ndenumerate(self.get_window(oscillation_bear_market_deviation).values)]
 
-
         panel = self.panel_oscillation + oscillatior_list.index(osc)
         self.add_plot.extend([
-            mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey),
-            # mpf.make_addplot(self.get_window(data_oscillation), type='bar', panel=panel, color=oscillation_color),
-            # mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey),
-            # mpf.make_addplot(self.get_window(data_oscillation_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_oscillation, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
-            # mpf.make_addplot(self.get_window(data_oscillation_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_oscillation, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
-            ])
-
+            mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey)])
         if self.get_window(data_oscillation_bar).any(skipna=True):
             self.add_plot.extend([
                 mpf.make_addplot(self.get_window(data_oscillation_bar), type='bar', panel=panel,
-                                 color=oscillation_color)])
+                                 color=oscillation_color, secondary_y=False)])
+
         if self.get_window(data[bull_deviation_column]).any(skipna=True):
             self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bull_market_deviation_single_point),
                                                    type='scatter', width=1, panel=0, color=green, markersize=50,
-                                                   marker=marker_up), ])
+                                                   marker=marker_up),
+                                  ])
         if self.get_window(data[bear_deviation_column]).any(skipna=True):
             self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bear_market_deviation_single_point),
                                                    type='scatter', width=1, panel=0, color=red, markersize=50,
