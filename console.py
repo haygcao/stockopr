@@ -9,10 +9,12 @@ import time
 import warnings
 
 import psutil
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QWidget, QLabel,
-                             QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow, QDesktopWidget)
+                             QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow, QDesktopWidget,
+                             QHBoxLayout, QVBoxLayout)
 import win32api
 
 import chart
@@ -56,7 +58,7 @@ class Panel(QWidget):
 
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
-        self.setFixedSize(600, 160)
+        self.setFixedSize(600, 200)
 
         self.dict = {}
         self.code = '300502'
@@ -164,11 +166,47 @@ class Panel(QWidget):
 
         grid.addWidget(self.log, 4, 0)
 
-        self.setLayout(grid)
+        h_layout_enter = QHBoxLayout()
+
+        self.widget_signals = []
+        signals = config.get_all_signal_enter()
+        # h_layout_enter.addStretch(len(signals))
+        for s, enabled in signals.items():
+            w = QtWidgets.QCheckBox(s, self)
+            w.setChecked(enabled)
+            self.widget_signals.append(w)
+            w.stateChanged.connect(self.checked)
+            h_layout_enter.addWidget(w)
+
+        h_layout_exit = QHBoxLayout()
+        signals = config.get_all_signal_exit()
+        # h_layout_exit.addStretch(len(signals))
+        for s, enabled in signals.items():
+            w = QtWidgets.QCheckBox(s, self)
+            w.setChecked(enabled)
+            self.widget_signals.append(w)
+            w.stateChanged.connect(self.checked)
+            h_layout_exit.addWidget(w)
+
+        layout = QVBoxLayout()
+        layout.addStretch(2)
+        layout.addLayout(grid)
+        layout.addLayout(h_layout_enter)
+        layout.addLayout(h_layout_exit)
+
+        self.setLayout(layout)
 
         self.setGeometry(300, 300, 280, 170)
         self.setWindowTitle('K')
         self.show()
+
+    def checked(self, checked):
+        for w in self.widget_signals:
+            if self.sender() == w:
+                checked = True if checked == Qt.Checked else False
+                w.setChecked(checked)
+                s = w.text()
+                config.enable_signal(s, checked)
 
     def on_code_changed(self, text):
         if len(text) > 1 and text[0] not in '036' and text[-1] == ';':

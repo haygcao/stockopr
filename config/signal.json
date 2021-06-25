@@ -1,0 +1,34 @@
+{
+  "signal_enter": {
+    "dynamical_system_signal_enter": true,
+    "channel_signal_enter": true,
+    "force_index_signal_enter": true,
+    "ema_value_signal_enter": true,
+    "volume_ad_signal_enter": true,
+    "resistance_support_signal_enter": true,
+    "force_index_bull_market_deviation_signal_enter": true,
+    "volume_ad_bull_market_deviation_signal_enter": true,
+    "macd_bull_market_deviation_signal_enter": true
+  },
+  "signal_exit": {
+    "dynamical_system_signal_exit": true,
+    "channel_signal_exit": true,
+    "force_index_signal_exit": true,
+    "volume_ad_signal_exit": true,
+    "resistance_support_signal_exit": true,
+    "force_index_bear_market_deviation_signal_exit": true,
+    "volume_ad_bear_market_deviation_signal_exit": true,
+    "macd_bear_market_deviation_signal_exit": true,
+    "stop_loss_signal_exit": true
+  },
+  "signal_enter_deviation": {
+    "volume_ad_bull_market_deviation_signal_enter": true,
+    "force_index_bull_market_deviation_signal_enter": true,
+    "macd_bull_market_deviation_signal_enter": true
+  },
+  "signal_exit_deviation": {
+    "volume_ad_bear_market_deviation_signal_exit": true,
+    "force_index_bear_market_deviation_signal_exit": true,
+    "macd_bear_market_deviation_signal_exit": true
+  }
+}

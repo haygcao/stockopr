@@ -280,34 +280,44 @@ N = ''
 
 def get_a_signal_list(key):
     import json
-    fp = open(os.path.join(config_dir, 'config.json'))
-    trade = json.load(fp)
+    fp = open(os.path.join(config_dir, 'signal.json'))
+    signals = json.load(fp)
 
     fp.close()
 
-    l = []
-    d: dict = trade['signal'][key]
-    for s, enabled in d.items():
-        if enabled:
-            l.append(s)
+    d: dict = signals[key]
 
-    return l
+    return d
 
 
 def get_signal_enter_list():
-    return get_a_signal_list('signal_enter')
+    d = get_a_signal_list('signal_enter')
+    return [s for s, enabled in d.items() if enabled]
+
+
+def get_all_signal_enter():
+    d = get_a_signal_list('signal_enter')
+    return d
 
 
 def get_signal_enter_deviation():
-    return get_a_signal_list('signal_enter_deviation')
+    d = get_a_signal_list('signal_enter_deviation')
+    return [s for s, enabled in d.items() if enabled]
 
 
 def get_signal_exit_list():
-    return get_a_signal_list('signal_exit')
+    d = get_a_signal_list('signal_exit')
+    return [s for s, enabled in d.items() if enabled]
+
+
+def get_all_signal_exit():
+    d = get_a_signal_list('signal_exit')
+    return d
 
 
 def get_signal_exit_deviation():
-    return get_a_signal_list('signal_exit_deviation')
+    d = get_a_signal_list('signal_exit_deviation')
+    return [s for s, enabled in d.items() if enabled]
 
 
 def get_signal_list():
@@ -320,6 +330,27 @@ def get_signal_list():
 def enabled_signal(signal):
     signals = get_signal_list()
     return signal in signals
+
+
+def enable_signal(signal, enable):
+    enable = True if enable else False
+    import json
+    with open(os.path.join(config_dir, 'signal.json'), 'r+') as fp:
+        signals = json.load(fp)
+
+        key = signal[signal.index('signal'):]
+        for s, enabled in signals[key].items():
+            if s == signal:
+                signals[key][s] = enable
+                break
+
+        # next is OK
+        # fp.truncate(0)
+        # fp.seek(0)
+        # json.dump(signals, fp, indent=2)
+
+    with open(os.path.join(config_dir, 'signal.json'), 'w') as fp:
+        json.dump(signals, fp, indent=2)
 
 
 period_map = {
