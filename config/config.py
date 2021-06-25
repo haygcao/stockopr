@@ -322,8 +322,8 @@ def get_signal_exit_deviation():
 
 def get_signal_list():
     signals = []
-    signals.extend(get_a_signal_list('signal_enter'))
-    signals.extend(get_a_signal_list('signal_exit'))
+    signals.extend(get_signal_enter_list())
+    signals.extend(get_signal_exit_list())
     return signals
 
 
