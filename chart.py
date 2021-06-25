@@ -2,6 +2,7 @@
 import datetime
 import functools
 
+from config import config
 from config.config import is_long_period
 
 from acquisition import tx
@@ -442,32 +443,26 @@ class DataFinanceDraw(object):
                 mpf.make_addplot(self.get_window(data_stop_loss_signal_exit), type='scatter', width=1, color=purple,
                                  markersize=50, marker=marker_down))
 
+    def add_a_signal(self, data, s, color, up):
+        if self.get_window(data[s]).any(skipna=True):
+            self.add_plot.append(
+                mpf.make_addplot(self.get_window(data[s]), type='scatter', width=1,
+                                 panel=0, color=color, markersize=50, marker=up))
+
     def add_signal(self, data):
-        if self.get_window(data['signal_enter']).any(skipna=True):
-            self.add_plot.append(
-                mpf.make_addplot(self.get_window(data['signal_enter']), type='scatter', width=1,
-                                 color=dark_olive_green3,
-                                 markersize=50, marker=marker_up))
-        if self.get_window(data['signal_exit']).any(skipna=True):
-            self.add_plot.append(
-                mpf.make_addplot(self.get_window(data['signal_exit']), type='scatter', width=1, color=light_coral,
-                                 markersize=50, marker=marker_down))
-
         if show_signal_detail:
-            if self.get_window(data['ema_value_signal_enter']).any(skipna=True):
-                self.add_plot.append(mpf.make_addplot(self.get_window(data['ema_value_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
+            signal_list = config.get_signal_enter_list()
+            for s in signal_list:
+                self.add_a_signal(data, s, dark_olive_green3, marker_up)
 
-            if self.get_window(data['channel_signal_enter']).any(skipna=True):
-                self.add_plot.append(mpf.make_addplot(self.get_window(data['channel_signal_enter']), type='scatter', width=1, panel=0, color=grey, markersize=50, marker=marker_up))
+            signal_list = config.get_signal_exit_list()
+            for s in signal_list:
+                self.add_a_signal(data, s, light_coral, marker_down)
 
-            if self.get_window(data['channel_signal_exit']).any(skipna=True):
-                self.add_plot.append( mpf.make_addplot(self.get_window(data['channel_signal_exit']), type='scatter', width=1, panel=0, color=dimgrey, markersize=50, marker=marker_down))
+            return
 
-            if self.get_window(data['dynamical_system_signal_enter']).any(skipna=True):
-                self.add_plot.append(mpf.make_addplot(self.get_window(data['dynamical_system_signal_enter']), type='scatter', width=1, panel=0, color=dark_olive_green3, markersize=50, marker=marker_up))
-
-            if self.get_window(data['dynamical_system_signal_exit']).any(skipna=True):
-                self.add_plot.append(mpf.make_addplot(self.get_window(data['dynamical_system_signal_exit']), type='scatter', width=1, panel=0, color=light_coral, markersize=50, marker=marker_down))
+        self.add_a_signal(data, 'signal_enter', dark_olive_green3, marker_up)
+        self.add_a_signal(data, 'signal_exit', light_coral, marker_down)
 
     def more_panel_draw(self):
         data = self.data_origin  # .iloc[-100:]

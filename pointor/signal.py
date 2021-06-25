@@ -142,7 +142,7 @@ def compute_signal(quote, period, supplemental_signal_path=None):
 
     # 合并
     # 处理合并看多信号
-    column_list = config.signal_enter_list
+    column_list = config.get_signal_enter_list()
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
 
@@ -161,7 +161,7 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     quote_copy = signal_stop_loss.signal_exit(quote_copy)
 
     # 处理合并看空信号
-    column_list = config.signal_exit_list
+    column_list = config.get_signal_exit_list()
     # 'macd_bear_market_deviation',
     # 'force_index_bear_market_deviation']
 

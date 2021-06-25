@@ -13,7 +13,7 @@ import pandas
 import trade_manager.db_handler
 from chart import open_graph
 from config import config
-from config.config import period_map, signal_deviation, Policy, signal_enter_deviation, signal_exit_deviation
+from config.config import period_map, Policy
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
@@ -191,8 +191,8 @@ def update_status(code, data, period):
         signal_exit_deviation_tmp = ['macd_bear_market_deviation_signal_exit']
         signal_enter_deviation_tmp = ['macd_bull_market_deviation_signal_enter']
     else:
-        signal_exit_deviation_tmp = signal_exit_deviation
-        signal_enter_deviation_tmp = signal_enter_deviation
+        signal_exit_deviation_tmp = config.get_signal_exit_deviation()
+        signal_enter_deviation_tmp = config.get_signal_enter_deviation()
 
     for deviation in signal_exit_deviation_tmp:
         if not numpy.isnan(data[deviation][index - 1]):

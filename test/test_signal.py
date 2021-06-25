@@ -21,7 +21,7 @@ class SignalTestCase(unittest.TestCase):
         quote = signal.compute_signal(self.quote, period=self.period)
         # print(quote[:50])
         # print(quote[-50:])
-        # print(quote.columns)
+        print([column for column in quote.columns if 'signal_e' in column])
 
 
 def suite():

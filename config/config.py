@@ -277,54 +277,50 @@ B = 'B'
 S = 'S'
 N = ''
 
-signal_enter_list = [
-    'dynamical_system_signal_enter',
-    'channel_signal_enter',
-    'force_index_signal_enter',
-    'ema_value_signal_enter',
-    'volume_ad_signal_enter',
-    'resistance_support_signal_enter',
-    'force_index_bull_market_deviation_signal_enter',
-    'volume_ad_bull_market_deviation_signal_enter',
-    'macd_bull_market_deviation_signal_enter',
-]
 
-# signal_enter_list = [
-#     'resistance_support_signal_enter',
-# ]
+def get_a_signal_list(key):
+    import json
+    fp = open(os.path.join(config_dir, 'config.json'))
+    trade = json.load(fp)
 
-signal_enter_deviation = [
-    'volume_ad_bull_market_deviation_signal_enter',
-    'force_index_bull_market_deviation_signal_enter',
-    'macd_bull_market_deviation_signal_enter'
-]
+    fp.close()
 
-signal_exit_list = [
-    'dynamical_system_signal_exit',
-    'channel_signal_exit',
-    'force_index_signal_exit',
-    'volume_ad_signal_exit',
-    'resistance_support_signal_exit',
-    'force_index_bear_market_deviation_signal_exit',
-    'volume_ad_bear_market_deviation_signal_exit',
-    'macd_bear_market_deviation_signal_exit',
-    'stop_loss_signal_exit'
-]
+    l = []
+    d: dict = trade['signal'][key]
+    for s, enabled in d.items():
+        if enabled:
+            l.append(s)
 
-# signal_exit_list = [
-#     'resistance_support_signal_exit',
-#     # 'stop_loss_signal_exit'
-# ]
+    return l
 
-signal_exit_deviation = [
-    'volume_ad_bear_market_deviation_signal_exit',
-    'force_index_bear_market_deviation_signal_exit',
-    'macd_bear_market_deviation_signal_exit',
-]
 
-signal_deviation = []
-signal_deviation.extend(signal_enter_deviation)
-signal_deviation.extend(signal_exit_deviation)
+def get_signal_enter_list():
+    return get_a_signal_list('signal_enter')
+
+
+def get_signal_enter_deviation():
+    return get_a_signal_list('signal_enter_deviation')
+
+
+def get_signal_exit_list():
+    return get_a_signal_list('signal_exit')
+
+
+def get_signal_exit_deviation():
+    return get_a_signal_list('signal_exit_deviation')
+
+
+def get_signal_list():
+    signals = []
+    signals.extend(get_a_signal_list('signal_enter'))
+    signals.extend(get_a_signal_list('signal_exit'))
+    return signals
+
+
+def enabled_signal(signal):
+    signals = get_signal_list()
+    return signal in signals
+
 
 period_map = {
         'm1': {'period': '1min', 'long_period': '5min', 'kline_long_period': 'm5'},

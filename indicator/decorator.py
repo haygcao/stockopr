@@ -1,5 +1,6 @@
 import numpy
 
+from config import config
 from config.config import is_long_period
 
 
@@ -8,6 +9,10 @@ def computed(column_name=None):
         def inner(*args, **kwargs):
             if column_name in (args[0]).columns:
                 return args[0]
+            if column_name.endswith('signal_enter') or column_name.endswith('signal_exit'):
+                if not config.enabled_signal(column_name):
+                    args[0].insert(len(args[0].columns), column_name, numpy.nan)
+                    return args[0]
             return func(*args, **kwargs)
         return inner
     return decorate
