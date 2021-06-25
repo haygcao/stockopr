@@ -273,8 +273,10 @@ class DataFinanceDraw(object):
         oscillation_color = [light_coral if not numpy.isnan(v) else oscillation_color[i]
                              for (i,), v in numpy.ndenumerate(self.get_window(oscillation_bear_market_deviation).values)]
 
+        zero = data_oscillation.mask(data_oscillation.notnull(), 0)
         panel = self.panel_oscillation + oscillatior_list.index(osc)
         self.add_plot.extend([
+            mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel, color=grey, secondary_y=False),
             mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey)])
         if self.get_window(data_oscillation_bar).any(skipna=True):
             self.add_plot.extend([
