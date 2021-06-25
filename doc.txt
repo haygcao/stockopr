@@ -90,3 +90,57 @@ default-character-set=utf8mb4
 port=3306
 
 default-character-set=utf8mb4
+
+
+同花顺公式
+Chaikin A/D
+AD_ : SUM(((CLOSE-LOW)-(HIGH-CLOSE))/(HIGH-LOW)*VOL,0);
+EMA26 : EMA(AD_, 26);
+
+Chaikin A/D(ACCUMULATION/DISTRIBUTION) Oscillator
+AD_ = SUM(((CLOSE-LOW)-(HIGH-CLOSE))/(HIGH-LOW)*VOL,0);
+EMA3 = EMA(AD_, 3);
+EMA10 = EMA(AD_,10);
+ADOSC: (EMA3 - EMA10);
+Zero : 0;
+
+
+通达信公式
+AD_:=SUM(((CLOSE-LOW)-(HIGH-CLOSE))/(HIGH-LOW)*VOL,0);
+AD:AD_;
+E:EMA(AD_, 26);
+
+AD_ := SUM(((CLOSE-LOW)-(HIGH-CLOSE))/(HIGH-LOW)*VOL,0);
+EMA3 := EMA(AD_, 3);
+EMA10 := EMA(AD_,10);
+ADOSC: (EMA3 - EMA10);
+ZERO : 0;
+
+条件预警
+AD_ := SUM(((CLOSE-LOW)-(HIGH-CLOSE))/(HIGH-LOW)*VOL,0);
+EMA3 := EMA(AD_, 3);
+EMA10 := EMA(AD_,10);
+ADOSC:= (EMA3 - EMA10);
+B:CROSS(ADOSC,0);
+
+同花顺条件预警配置
+预警配置
+分析周期 [1分钟]
+指标线  [ADOSC]  满足以下条件
+[下穿]  [0]
+
+公式编辑
+参数   最小  最大  默认
+LONG   5    26   10
+SHORT  1    13    3
+
+AD := SUM(((CLOSE-LOW)-(HIGH-CLOSE))/(HIGH-LOW)*VOL,0);
+EMA3 := EMA(AD, SHORT);
+EMA10 := EMA(AD,LONG);
+ADOSC := (EMA3 - EMA10);
+CROSS(0,ADOSC);
+
+
+通达信, 同花顺对比
+1 通达信不能预警分钟周期, 同花顺可以
+2 通达信可以批量配置, 同花顺不可以
