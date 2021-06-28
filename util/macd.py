@@ -238,17 +238,30 @@ The J line represents the divergence of the %D value from the %K. The value of J
 %D = MovingAverage(%K)
 '''
 # close high low
-def kdj(prices):
-    df = pd.DataFrame(prices.loc[:,'close'])
+def skdj(prices):
+    """
+    通达信 SKDJ
+    N = 9, M = 3
+    LOWV:=LLV(LOW,N);
+    HIGHV:=HHV(HIGH,N);
+    RSV:=EMA((CLOSE-LOWV)/(HIGHV-LOWV)*100,M);
+    K:EMA(RSV,M);
+    D:MA(K,M);
+
+    from talib import MA_Type
+    e.g. slowk_matype=MA_Type.SMA, slowd_matype=MA_Type.SMA
+    """
+    df = pd.DataFrame(prices.loc[:, 'close'])
 
     # 9 3 3
-    Hn = pd.rolling_max(prices['high'], 9)
-    Ln = pd.rolling_min(prices['low'], 9)
-    rsv = (prices['close'] - Ln)/(Hn - Ln) * 100
+    Hn = df['high'].rolling(9).max()
+    Ln = df['low'].rolling(9).min()
+    rsv = (df['close'] - Ln) / (Hn - Ln) * 100
+    rsv = rsv.ewm(span=3, adjust=False).mean()
 
-    df['k'] = pd.ewma(rsv, com=2)
-    df['d'] = pd.ewma(df.k, com=2)
-    df['j'] = 3*df.k - 2*df.d
+    df['k'] = rsv.ewm(span=3, adjust=False).mean()
+    df['d'] = df.k.rolling(3).mean()
+    # df['j'] = 3*df.k - 2*df.d
 
     #k, d = STOCH(inputs, fastk_period=9, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
     #k, d = STOCH(inputs)
