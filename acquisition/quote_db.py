@@ -2,11 +2,13 @@
 
 import datetime
 
+import numpy
 import pandas as pd
 
 import util.mysqlcli as mysqlcli
 import config.config as config
 from acquisition import basic
+from util import dt
 
 
 def query_date(code, count):
@@ -39,6 +41,37 @@ def query_quote(trade_date, conn=None):
     df.sort_index(inplace=True)
 
     return df
+
+
+def add_market_avg_close():
+    begin_date = datetime.date(2010, 1, 1)
+    end_date = datetime.date.today()
+    # end_date = datetime.date(2020, 7, 1)
+    # end_date = datetime.date(2010, 1, 8)
+    ndays = (end_date - begin_date).days
+    val_list = []
+    for day in range(ndays):
+        trade_date = begin_date + datetime.timedelta(days=day)
+        if not dt.istradeday(trade_date):
+            continue
+
+        quote = query_quote(trade_date)
+        close = quote.close.mean()
+        if numpy.isnan(close):
+            print(trade_date)
+            continue
+        open = quote.open.mean()
+        high = quote.high.mean()
+        low = quote.low.mean()
+        volume = quote.volume.mean()
+        val_list.append((trade_date, 'maq', close, open, high, low, volume))
+
+    sql_str = "insert into quote (trade_date, code, close, open, high, low, volume) values (%s, %s, %s, %s, %s, %s, %s)"
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.executemany(sql_str, val_list)
+        except Exception as e:
+            print(e)
 
 
 # quote

@@ -100,8 +100,8 @@ def save_quote_wy():
             c.execute(sql_str)
             r2 = c.fetchall()
 
-            r1_sorted = sorted(r1, key = lambda x:x['code'])
-            r2_sorted = sorted(r2, key = lambda x:x['code'])
+            r1_sorted = sorted(r1, key=lambda x: x['code'])
+            r2_sorted = sorted(r2, key=lambda x: x['code'])
             if r1_sorted != r2_sorted:
                 c.execute('insert into quote select * from temp_quote;')
                 # c.execute('insert into temp_quote_test select * from temp_quote;')
@@ -111,10 +111,31 @@ def save_quote_wy():
             print(e)
 
 
+def compute_market_avg_close(quote):
+    close = round(quote.close.mean(), 3)
+    open = quote.open.mean()
+    high = quote.high.mean()
+    low = quote.low.mean()
+    volume = quote.volume.mean()
+
+    quote = quote.append([{
+        'trade_date': quote['trade_date'][0],
+        'code': 'maq',
+        'close': close,
+        'open': open,
+        'high': high,
+        'low': low,
+        'volume': volume
+    }], ignore_index=True)
+
+    return quote
+
+
 def save_quote_xl(ignore=True):
     same_day = True
     df_quote = tx.get_today_all()
     df_quote = df_quote[df_quote.volume > 0]
+    df_quote = compute_market_avg_close(df_quote)
     # # define values
     # values = [value1, value2, value3, ...]
     #
