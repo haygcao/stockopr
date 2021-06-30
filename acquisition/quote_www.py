@@ -19,8 +19,8 @@ def get_price_urllib(stock_code):
     #print(data['name'], percent, data['time'])
     #print(stock_code, percent, data['time'])
     print('{0}\t{1}\t{2}\t{3}'.format(data['symbol'], percent, data['price'], data['time']))
-    #key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover'] #mysql
-    key_list = ['trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+    #key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount'] #mysql
+    key_list = ['trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
     val_list = [stock_code]
     for key in key_list:
         if key == 'trade_date':
@@ -134,9 +134,9 @@ def getChinaStockIndividualPriceInfoWy(stockCode):
         stockRange  = stockInfo['percent']
 
         stockVol = stockInfo['volume']
-        stockTurnover = stockInfo['turnover']
+        stockTurnover = stockInfo['amount']
         stockDate = stockInfo['time'] # 2015/11/20 15:59:51 -> 2015-11-20
-        return {"name":stockName, 'trade_date':stockDate, 'code':stockCode, 'open':stockStart, 'high':stockMax, 'low':stockMin, 'close':stockCur, 'yestclose':stockLastEnd, 'volume':stockVol, 'turnover':stockTurnover, 'adj_close':0}
+        return {"name":stockName, 'trade_date':stockDate, 'code':stockCode, 'open':stockStart, 'high':stockMax, 'low':stockMin, 'close':stockCur, 'yestclose':stockLastEnd, 'volume':stockVol, 'amount':stockTurnover, 'adj_close':0}
 
     except Exception as e:
         if str(e).find('delete') >= 0:

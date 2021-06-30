@@ -75,7 +75,7 @@ def save(csv_queue):
                 with open(file_csv, 'r', encoding='gbk') as fp:
                     val_many = []
 
-                    # key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yestclose', 'updown', 'percent', 'hs', 'volume', 'turnover', 'tcap', 'mcap']
+                    # key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yestclose', 'updown', 'percent', 'hs', 'volume', 'amount', 'tcap', 'mcap']
                     key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yest_close', 'price_change', 'percent', 'quantity_relative_ratio', 'volume', 'amount', 'amplitude']
                     # 日期, 股票代码, 名称, 收盘价, 最高价, 最低价, 开盘价, 前收盘, 涨跌额, 涨跌幅, 换手率, 成交量, 成交金额, 总市值, 流通市值
                     indice = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # subscript

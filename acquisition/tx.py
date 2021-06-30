@@ -110,13 +110,13 @@ def get_today_all():
                    ignore_index=True)
 
     df.rename(columns={'trade': 'close'}, inplace=True)
-    columns = ['code', 'name', 'open', 'close', 'high', 'low', 'volume', 'turnover']
+    columns = ['code', 'name', 'open', 'close', 'high', 'low', 'volume', 'amount']
     for column in df.columns:
         if column in columns:
             continue
         df = df.drop(column, axis=1)
     #     df = df.ix[df.volume > 0]
-    df = df.assign(turnover=0)
+    df = df.assign(amount=0)
     df = df.assign(date=datetime.date.today())
     df.set_index('date', inplace=True)
 
@@ -130,7 +130,7 @@ def get_realtime_data_sina(code):
     high = float(data_arr[4])
     low = float(data_arr[5])
     volume = float(data_arr[8])
-    columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'turnover']
+    columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'amount']
 
     strftime = ''
     today = datetime.date.today()
@@ -175,7 +175,7 @@ def get_kline_data_sina(code, period='day', count=250):
 
     df = pandas.read_json(ret.content, orient='records')
     df = df.assign(code=code)
-    df = df.assign(turnover=0)
+    df = df.assign(amount=0)
     df['day'] = pandas.to_datetime(df['day'], format='%Y-%m-%d %H:%M:%S')
     df.set_index('day', inplace=True)
     # df.index = df['day']
@@ -240,7 +240,7 @@ def get_kline_data_tx(code, period='day', count=250, start_date=None, end_date=N
 
     d_3m3 = {}
 
-    columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'turnover']
+    columns = ['code', 'open', 'close', 'high', 'low', 'volume', 'amount']
     data = []
     index_list = []
     for row in quote:
@@ -452,14 +452,14 @@ def get_quote(xlsfile, dt=None):
 
         key_xls = ['代码', '名称', '最新价', '涨跌幅', '涨跌额', '买入', '卖出', '成交量', '成交额', '今开', '昨收', '最高', '最低', '日期']
         key_dict = {'代码': 'code', '名称': '', '最新价': 'close', '涨跌幅': '', '涨跌额': '',
-                    '买入': '', '卖出': '', '成交量': 'volume', '成交额': 'turnover',
+                    '买入': '', '卖出': '', '成交量': 'volume', '成交额': 'amount',
                     '今开': 'open', '昨收': '', '最高': 'high', '最低': 'low',
                     '日期': 'trade_date'}
         row.append(trade_date)
         row[0] = row[0][2:]
 
         # AttributeError: 'dict' object has no attribute 'iteritems'
-        key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+        key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
         indice = [0, 13, 9, 11, 12, 2, 7, 8]  # subscript
         fmt_list = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s']
         val_list = []

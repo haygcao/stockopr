@@ -24,7 +24,7 @@ url = 'http://quotes.money.163.com/hs/service/diyrank.php?host=http%3A%2F%2Fquot
 17:07:06","list":[{"CODE":"1300636","FIVE_MINUTE":0,"HIGH":20.84,"HS":0.00018005,"LB":1.0044630404463,"LOW":18.94,"MCAP":416800000,"MFRATIO":{"MFRATIO2":57996315.13,"MFRATIO10":250078505.36},"MFSUM":0.97,"NAME":"N\u540c\u548c","OPEN":18.94,"PE":21.484536082474,"PERCENT":0.440221,"PRICE":20.84,"SNAME":"\u540c\u548c\u836f\u4e1a","SYMBOL":"300636","TCAP":1667200000,"TURNOVER":75037.94,"UPDOWN":6.37,"VOLUME":3601,"WB":0,"YESTCLOSE":14.47,"ZF":0.13130615065653,"NO":1}]}"}]}
 '''
 
-#key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yestclose', 'updown', 'percent', 'hs', 'volume', 'turnover', 'zf']
+#key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yestclose', 'updown', 'percent', 'hs', 'volume', 'amount', 'zf']
 
 # notice: price close
 key_list = [
@@ -39,7 +39,7 @@ key_list = [
 'percent',
 'hs',
 'volume',
-'turnover',
+'amount',
 'lb',
 'wb',
 'zf',

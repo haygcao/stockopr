@@ -80,7 +80,7 @@ def import_csv(path):
             '最低价': 'low',
             '收盘价': 'close',
             '成交量': 'volume',
-            '成交金额': 'turnover'
+            '成交金额': 'amount'
         },
         inplace=True)
     # 转换为日期格式

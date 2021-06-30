@@ -184,7 +184,7 @@ stages = ['3', '35', '354', '352', '3523', '3526', '35264', '35261', '352613', '
           '4', '42', '423', '425', '4254', '4251', '42513', '42516', '425164', '425163']
 
 
-key_list = ['code', 'name', 'trading_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+key_list = ['code', 'name', 'trading_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
 
 '''
 selector

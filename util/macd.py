@@ -347,8 +347,8 @@ def rsi(prices):
 '''
 def bias(prices):
     df = pd.DataFrame(prices.loc[:,'close'])
-    #df['costs'] = pd.Series(prices['turnover']/prices['volume'])
-    df['costs'] = prices['turnover']/prices['volume']
+    #df['costs'] = pd.Series(prices['amount']/prices['volume'])
+    df['costs'] = prices['amount']/prices['volume']
 
     ma1_6 = MA(df, timeperiod=6)
     ma1_12 = MA(df, timeperiod=12)

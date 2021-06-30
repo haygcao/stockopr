@@ -27,7 +27,7 @@ def query_quote(trade_date, conn=None):
     else:
         _conn = conn
 
-    key_list = ['trade_date', 'code', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+    key_list = ['trade_date', 'code', 'open', 'high', 'low', 'close', 'volume', 'amount']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     where = ' trade_date = "{}"'.format(trade_date)
     sql = 'SELECT {0} FROM {1} WHERE {2}'.format(', '.join(key_list), table[1], where)
@@ -213,7 +213,7 @@ def compute_market(begin_date, end_date):
 # quote
 # insert ignore into
 def insert_into_quote(val_list):
-    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
     fmt_list = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s']
     key = ', '.join(key_list)
     fmt = ', '.join(fmt_list)
@@ -229,8 +229,8 @@ def insert_into_quote(val_list):
 
 def get_price_info_db(code, trade_date = None):
     with mysqlcli.get_cursor() as c:
-        key_list = ['code', 'name', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
-        key_list = ['name', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+        key_list = ['code', 'name', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
+        key_list = ['name', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
         table = [config.sql_tab_basic_info, config.sql_tab_quote]
         where = 'quote.code = {0} and trade_date = "{1}"'.format(code, trade_date)
         where = 'quote.code = {0} and trade_date = "{1}" and quote.code = basic_info.code'.format(code, trade_date)
@@ -258,7 +258,7 @@ def get_price_info_db(code, trade_date = None):
 
 def get_price_info_list_db(code, trade_date = 1):
     with mysqlcli.get_cursor() as c:
-        key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+        key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
         table = [config.sql_tab_basic_info, config.sql_tab_quote]
         on = 'quote.code = basic_info.code'.format(code, trade_date)
         where = 'quote.code = "{0}" order by trade_date desc limit {1}'.format(code, trade_date)
@@ -311,7 +311,7 @@ def get_price_info_df_db(code, days=0, end_date=None, period_type='D', conn=None
 
 
 def get_price_info_df_file_day(code, days, end_date, path):
-    labels = ['close', 'high', 'low', 'open', 'volume', 'turnover']
+    labels = ['close', 'high', 'low', 'open', 'volume', 'amount']
     # df = pd.read_csv(path, nrows=days, index_col='日期', usecols=['开盘价', '最高价', '最低价', '收盘价', '成交量', '成交金额'],
     #                  names=None)
     # df = pd.read_csv(path, nrows=days, index_col='日期', usecols=['开盘价', '最高价', '最低价', '收盘价', '成交量', '成交金额'])
@@ -338,7 +338,7 @@ def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
     #else:
     #    _code = code
     _code = code
-    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'turnover', 'lb', 'wb', 'zf']
+    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     on = '{0}.code = basic_info.code'.format(table[1])
     where = '{3}.code = "{0}" and trade_date <= "{1}" order by trade_date desc limit {2}'.format(_code, end_date, days, table[1])
@@ -380,7 +380,7 @@ def get_price_info_df_db_week(df, period_type='W'):
     period_data['low'] = df['low'].resample(period_type).min()
     period_data['close'] = df['close'].resample(period_type).last()
     period_data['volume'] = df['volume'].resample(period_type).sum()
-    period_data['turnover'] = df['turnover'].resample(period_type).sum()
+    period_data['amount'] = df['amount'].resample(period_type).sum()
 
     # period_data.set_index('trade_date', inplace=True)
     period_data = period_data[period_data['code'].notnull()]

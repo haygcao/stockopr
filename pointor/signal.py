@@ -323,8 +323,8 @@ def recognize(price_info_df):
 # 交易日14:45执行, 确定需要交易的股票
 def check_signal(code):
     price_rt = quote_www.getChinaStockIndividualPriceInfoWy(code)
-    # key_list = ['code', 'trading_date', 'open', 'high', 'low', 'close', 'volume', 'turnover']
-    key_list = ['code', 'open', 'high', 'low', 'close', 'volume', 'turnover']
+    # key_list = ['code', 'trading_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
+    key_list = ['code', 'open', 'high', 'low', 'close', 'volume', 'amount']
 
     duration = 60
     price_info_df = quote_db.get_price_info_df_db(code, duration)
