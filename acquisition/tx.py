@@ -109,14 +109,21 @@ def get_today_all():
     df = df.append(_parsing_dayprice_json('shfxjs', 1),
                    ignore_index=True)
 
-    df.rename(columns={'trade': 'close'}, inplace=True)
-    columns = ['code', 'name', 'open', 'close', 'high', 'low', 'volume', 'amount']
+    df.rename(columns={
+        'trade': 'close',
+        'pricechange': 'price_change',
+        'settlement': 'yest_close',
+        'changepercent': 'percent',
+        'turnoverratio': 'turnover_ratio'
+    }, inplace=True)
+    columns = ['code', 'name', 'open', 'close', 'high', 'low', 'volume', 'amount', 'price_change', 'yest_close', 'percent', 'turnover_ratio']
     for column in df.columns:
         if column in columns:
             continue
         df = df.drop(column, axis=1)
     #     df = df.ix[df.volume > 0]
-    df = df.assign(amount=0)
+    amplitude = round(100 * (df.high - df.low) / df.yest_close, 3)
+    df = df.assign(amplitude=amplitude)
     df = df.assign(date=datetime.date.today())
     df.set_index('date', inplace=True)
 
