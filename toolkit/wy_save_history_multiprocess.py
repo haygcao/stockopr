@@ -58,64 +58,78 @@ def gen_stock_code(symbol):
     return ex+symbol
 
 
+def save_csv(file_csv, start_date):
+    with mysqlcli.get_cursor() as c:
+        try:
+            print(file_csv)
+
+            symbol = get_symbol_from_filename(file_csv)
+            code = gen_stock_code(symbol)
+
+            with open(file_csv, 'r', encoding='gbk') as fp:
+                val_many = []
+
+                # key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yestclose', 'updown', 'percent', 'hs', 'volume', 'amount', 'tcap', 'mcap']
+                key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yest_close', 'price_change', 'percent',
+                            'turnover_ratio', 'volume', 'amount', 'amplitude']
+                # 日期, 股票代码, 名称, 收盘价, 最高价, 最低价, 开盘价, 前收盘, 涨跌额, 涨跌幅, 换手率, 成交量, 成交金额, 总市值, 流通市值
+                indice = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # subscript
+                min_columns = 12
+
+                key = ', '.join(key_list)
+                fmt = ', '.join(['%s' for i in range(len(key_list))])
+                sql_str = 'insert into quote({0}) values ({1})'.format(key, fmt)
+
+                for row in fp:
+                    if row.find('股票') >= 0:
+                        continue
+                    val_list = [code]
+                    row = row.split(',')
+
+                    if len(row) < min_columns:
+                        continue
+
+                    volume = row[11]
+                    if int(volume) <= 0:
+                        continue
+
+                    trade_date = datetime.datetime.strptime(row[0], '%Y-%m-%d')
+                    if trade_date < start_date:
+                        continue
+
+                    for idx in indice:
+                        val_list.append(row[idx] if row[idx] != 'None' else 0)
+                    if float(row[7]) == 0:
+                        val_list.append(0.0)
+                    else:
+                        val_list.append(round((float(row[4]) - float(row[5])) / float(row[7]) * 100, 2))
+                    val = tuple(val_list)
+                    val_many.append(val)
+
+                c.executemany(sql_str, val_many)
+
+            # time.sleep(1);
+        except pymysql.err.IntegrityError as e:
+            pass
+        except Exception as e:
+            print(e, file_csv)
+
+
 def save(csv_queue):
     ok = False
     start_date = datetime.datetime(2010, 1, 1)
-    start_date = datetime.datetime(2021, 4, 29)
+    start_date = datetime.datetime(2021, 5, 25)
 
     while True:
-        with mysqlcli.get_cursor() as c:
-            try:
-                file_csv = csv_queue.get_nowait()
-                print(file_csv)
+        file_csv = ''
+        try:
+            file_csv = csv_queue.get_nowait()
+            save_csv(file_csv, start_date)
+        except Empty:
+            break
+        except Exception as e:
+            print(e, file_csv)
 
-                symbol = get_symbol_from_filename(file_csv)
-                code = gen_stock_code(symbol)
-
-                with open(file_csv, 'r', encoding='gbk') as fp:
-                    val_many = []
-
-                    # key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yestclose', 'updown', 'percent', 'hs', 'volume', 'amount', 'tcap', 'mcap']
-                    key_list = ['code', 'trade_date', 'close', 'high', 'low', 'open', 'yest_close', 'price_change', 'percent', 'quantity_relative_ratio', 'volume', 'amount', 'amplitude']
-                    # 日期, 股票代码, 名称, 收盘价, 最高价, 最低价, 开盘价, 前收盘, 涨跌额, 涨跌幅, 换手率, 成交量, 成交金额, 总市值, 流通市值
-                    indice = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # subscript
-
-                    key = ', '.join(key_list)
-                    fmt = ', '.join(['%s' for i in range(len(key_list))])
-                    sql_str = 'insert into quote({0}) values ({1})'.format(key, fmt)
-
-                    for row in fp:
-                        if row.find('股票') >= 0:
-                            continue
-                        val_list = [code]
-                        row = row.split(',')
-
-                        volume = row[11]
-                        if int(volume) <= 0:
-                            continue
-
-                        trade_date = datetime.datetime.strptime(row[0], '%Y-%m-%d')
-                        if trade_date < start_date:
-                            continue
-
-                        for idx in indice:
-                            val_list.append(row[idx] if row[idx] != 'None' else 0)
-                        if float(row[7]) == 0:
-                            val_list.append(0.0)
-                        else:
-                            val_list.append(round((float(row[4])-float(row[5]))/float(row[7])*100,2))
-                        val = tuple(val_list)
-                        val_many.append(val)
-
-                    c.executemany(sql_str, val_many)
-
-                #time.sleep(1);
-            except pymysql.err.IntegrityError as e:
-                pass
-            except Empty:
-                break
-            except Exception as e:
-                print(e, file_csv)
 
 def get_stock_list_from_file():
     stock_list = []
@@ -138,10 +152,15 @@ if __name__ == '__main__':
     #print(file_list[0])
     #
     for file_csv in file_list:
+        if '001896' not in file_csv:
+            continue
         if not os.path.exists(file_csv):
             print(file_csv, 'not exist')
             continue
+        # start_date = datetime.datetime(2021, 5, 25)
+        # save_csv(file_csv, start_date=start_date)
         csv_queue.put(file_csv)
+
     #csv_queue.put('data/csv/000001.csv')
 
     nproc_max = 10
