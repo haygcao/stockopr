@@ -775,7 +775,7 @@ if __name__ == "__main__":
     # code = '000999'
     # code = '000625'
     # code = '600588'
-    code = '601633'
+    # code = '601633'
     period = 'day'  # m5 m30 day week
     open_graph(code, period, 'data/csv/' + code + '.csv')
     # open_graph(code, period)

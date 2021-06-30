@@ -111,7 +111,7 @@ def save_quote_wy():
             print(e)
 
 
-def compute_market_avg_close(quote):
+def compute_market_avg_quote(quote):
     close = round(quote.close.mean(), 3)
     open = quote.open.mean()
     high = quote.high.mean()
@@ -135,7 +135,6 @@ def save_quote_xl(ignore=True):
     same_day = True
     df_quote = tx.get_today_all()
     df_quote = df_quote[df_quote.volume > 0]
-    df_quote = compute_market_avg_close(df_quote)
     # # define values
     # values = [value1, value2, value3, ...]
     #
@@ -193,6 +192,8 @@ def save_quote_xl(ignore=True):
                 return
 
         basic.upsert_stock_list_into_db(stock_list)
+
+        df_quote = compute_market_avg_quote(df_quote)
         # Do not insert the row number (index=False)
         df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
         # df_quote.to_csv('2021-06-07.csv')

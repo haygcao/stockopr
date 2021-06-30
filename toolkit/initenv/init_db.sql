@@ -33,7 +33,7 @@ CREATE TABLE future_variety (
 -- 日期 开盘价 最高价 最低价 收盘价 成交量(手) 成交金额(万元)
 -- 昨收 涨跌额 涨跌幅(%) 振幅(%) 换手率(%) 量比
 -- create table if not exists quote (code varchar(8), trade_date date, open float, high float, low float, close float, volume bigint, turnover bigint);
-
+-- xr 即 exit right, 除权
 create table if not exists quote (
     code varchar(8),
     trade_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -41,15 +41,15 @@ create table if not exists quote (
     high float,
     low float,
     open float,
-    yestclose float,
-    updown float,
+    yest_close float,
+    xr tinyint(1) default 0,
+    price_change float,
     percent float,
-    hs float,
+    turnover_ratio float,
     volume bigint,
-    turnover bigint,
-    lb float,
-    wb float,
-    zf float,
+    amount bigint,
+    quantity_relative_ratio float,
+    amplitude float,
     five_minute float
     );
 
@@ -245,3 +245,38 @@ create unique index trade_order_code_date on trade_order(code, date);
 create unique index position_code_date on `position`(code, date);
 create unique index operation_detail_code_date on operation_detail(code, time);
 create index operation_detail_order_id on operation_detail(order_id);
+
+-- 市场数据
+create table market(
+  trade_date date,
+  count int,
+  new_high_y int,
+  new_low_y int,
+  new_high_h int,
+  new_low_h int,
+  new_high_s int,
+  new_low_s int,
+  new_high_m int,
+  new_low_m int,
+  new_high_w int,
+  new_low_w int,
+  up int,
+  down int,
+  up_ema52 int,
+  up_ema26 int,
+  up_ema13 int,
+  PRIMARY key (trade_date)
+);
+
+-- 股本
+create table equity(
+  code varchar(8),
+  date date,
+  market varchar(8),
+  category int,
+  liutong_hongli_panqian decimal(20, 9),
+  zongguben_peigujia_qian decimal(20, 9),
+  zongguben_songgu_qian decimal(20, 9),
+  zongguben_peigu_hou decimal(20, 9)
+);
+create unique index equity_code_date_category on equity(code, date, category);

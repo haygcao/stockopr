@@ -60,7 +60,7 @@ class Panel(QWidget):
 
         self.setFixedSize(600, 200)
 
-        self.dict = {}
+        self.signals = {}
         self.code = '300502'
         self.period = 'week'
         self.monitor_proc = None

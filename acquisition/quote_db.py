@@ -43,11 +43,7 @@ def query_quote(trade_date, conn=None):
     return df
 
 
-def add_market_avg_close():
-    begin_date = datetime.date(2010, 1, 1)
-    end_date = datetime.date.today()
-    # end_date = datetime.date(2020, 7, 1)
-    # end_date = datetime.date(2010, 1, 8)
+def add_market_avg_close(begin_date, end_date):
     ndays = (end_date - begin_date).days
     val_list = []
     for day in range(ndays):
@@ -67,6 +63,146 @@ def add_market_avg_close():
         val_list.append((trade_date, 'maq', close, open, high, low, volume))
 
     sql_str = "insert into quote (trade_date, code, close, open, high, low, volume) values (%s, %s, %s, %s, %s, %s, %s)"
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.executemany(sql_str, val_list)
+        except Exception as e:
+            print(e)
+
+
+def is_new_high_new_low(quote_tmp, trade_date, high, nday):
+    if len(quote_tmp) < nday:
+        return False
+    price = quote_tmp.close.max() if high else quote_tmp.close.min()
+    if price == quote_tmp.close[-1]:
+        return True
+    return False
+
+
+def is_up(quote_tmp, trade_date, up):
+    if len(quote_tmp) < 2:
+        return False
+
+    if up:
+        if quote_tmp.close[-1] > quote_tmp.close[-2]:
+            return True
+    else:
+        if quote_tmp.close[-1] < quote_tmp.close[-2]:
+            return True
+    return False
+
+
+def is_up_ema(quote_tmp, trade_date, nday):
+    if len(quote_tmp) < nday:
+        return False
+    key = 'ema{}'.format(nday)
+    if quote_tmp.close[-1] > quote_tmp[key][-1]:
+        return True
+    return False
+
+
+def compute_market(begin_date, end_date):
+    new_high_new_low = {
+        'new_high_y': 0,
+        'new_low_y': 0,
+        'new_high_h': 0,
+        'new_low_h': 0,
+        'new_high_s': 0,
+        'new_low_s': 0,
+        'new_high_m': 0,
+        'new_low_m': 0,
+        'new_high_w': 0,
+        'new_low_w': 0
+    }
+    days = {
+        'y': 250,
+        'h': 125,
+        's': 60,
+        'm': 20,
+        'w': 5
+    }
+
+    up_down = {
+        'up': 0,
+        'down': 0
+    }
+
+    ema = {
+        'up_ema52': 0,
+        'up_ema26': 0,
+        'up_ema13': 0,
+    }
+
+    ndays = (end_date - begin_date).days
+
+    stock_code_list = basic.get_all_stock_code()
+    # stock_code_list = ['300502', '002739']
+    val_list = []
+    quotes = {}
+    for code in stock_code_list:
+        quote = get_price_info_df_db(code, ndays + 250, end_date=end_date)
+        for key in ema.keys():
+            nday = int(key[-2:])
+            quote.loc[:, 'ema{}'.format(nday)] = quote.close.rolling(nday).mean()
+        quotes.update({code: quote})
+
+    key_list = ['trade_date', 'count']
+    key_list.extend(new_high_new_low.keys())
+    key_list.extend(up_down.keys())
+    key_list.extend(ema.keys())
+
+    for day in range(ndays):
+        trade_date = begin_date + datetime.timedelta(days=day)
+        # if not dt.istradeday(trade_date):
+        #     continue
+
+        count = 0
+        for key, _ in new_high_new_low.items():
+            new_high_new_low[key] = 0
+
+        for key, _ in up_down.items():
+            up_down[key] = 0
+
+        for key, _ in ema.items():
+            ema[key] = 0
+
+        ignore = True
+        for code, quote in quotes.items():
+            if trade_date not in quote.index:
+                continue
+            ignore = False
+
+            quote_tmp = quote.loc[:trade_date]
+
+            count += 1
+            for key, _ in new_high_new_low.items():
+                if is_new_high_new_low(quote_tmp, trade_date, 'high' in key, days[key[-1]]):
+                    new_high_new_low[key] += 1
+
+            for key, _ in up_down.items():
+                if is_up(quote_tmp, trade_date, 'up' in key):
+                    up_down[key] += 1
+
+            for key, _ in ema.items():
+                if is_up_ema(quote_tmp, trade_date, int(key[-2:])):
+                    ema[key] += 1
+
+        if ignore:
+            continue
+
+        val = [trade_date, count]
+        for key in key_list:
+            for m in [new_high_new_low, up_down, ema]:
+                if key in m:
+                    val.append(m[key])
+                    break
+        val_list.append(tuple(val))
+
+    fmt_list = ['%s' for _ in key_list]
+    key = ', '.join(key_list)
+    fmt = ', '.join(fmt_list)
+
+    sql_str = "insert into market ({}) values ({})".format(key, fmt)
     with mysqlcli.get_cursor() as c:
         try:
             c.executemany(sql_str, val_list)
@@ -189,7 +325,7 @@ def get_price_info_df_file_day(code, days, end_date, path):
 
 
 def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
-    end_date = end_date if end_date and len(end_date) > 0 else datetime.date.today()
+    end_date = end_date if end_date else datetime.date.today()
 
     if conn == None:
         _conn = mysqlcli.get_connection()
@@ -275,6 +411,12 @@ def get_latest_trade_date():
 
 def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust=34.34):
     df = quote.loc[:divisor_date]
+    if df.empty:
+        return quote
+
+    if df.index[-1] < divisor_date:
+        return quote
+
     if df.index[-1] != divisor_date:
         df_tmp: pd.Series = pd.Series(quote.iloc[len(df)], name=quote.index[len(df)])
         df = df.append(df_tmp)
