@@ -313,8 +313,7 @@ class Panel(QWidget):
 
     def show_market(self):
         print('{} {}'.format(self.code, self.period))
-        p = multiprocessing.Process(target=chart.show_market,
-                                    args=(self.code, self.period, relative_price_strength.relative_price_strength))
+        p = multiprocessing.Process(target=chart.show_market, args=(self.period,))
         p.start()
         p.join(timeout=1)
 

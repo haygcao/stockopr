@@ -824,10 +824,9 @@ def show_market(period):
         mpf.make_addplot(up_ema_h, panel=2, type='line', width=width, color=dimgrey, secondary_y=False),
         mpf.make_addplot(up_ema_l, panel=2, type='line', width=width, color=dimgrey, secondary_y=False),
         mpf.make_addplot(ad, panel=3, type='line', width=width, color=dimgrey),
-        mpf.make_addplot(ad_zero, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
-        # mpf.make_addplot(quote['close'], panel=0, type='line', width=width, color=grey, secondary_y=True),
+        # mpf.make_addplot(ad_zero, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
     ])
-    mpf.plot(quote[-250:], type="ohlc", addplot=add_plot, panel_ratios=[6.01, 1.33, 1.33, 1.33])  # [7, 1, 1, 1])  # [4.99, 1.67, 1.67, 1.67])
+    mpf.plot(quote[-250:], type="line", addplot=add_plot, panel_ratios=[6.01, 1.33, 1.33, 1.33])  # [7, 1, 1, 1])  # [4.99, 1.67, 1.67, 1.67])
 
 
 if __name__ == "__main__":

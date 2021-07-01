@@ -138,7 +138,7 @@ def is_up_ema(quote_tmp, trade_date, nday):
     return False
 
 
-def compute_market(begin_date, end_date):
+def compute_market(begin_date, end_date, include_end=False):
     new_high_new_low = {
         'new_high_y': 0,
         'new_low_y': 0,
@@ -171,6 +171,8 @@ def compute_market(begin_date, end_date):
     }
 
     ndays = (end_date - begin_date).days
+    if include_end:
+        ndays += 1
 
     stock_code_list = basic.get_all_stock_code()
     # stock_code_list = ['300502', '002739']

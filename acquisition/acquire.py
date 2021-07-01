@@ -264,8 +264,15 @@ def save_quote():
     # xls = 'data/xls/2021-05-24.xls'
     t1 = datetime.datetime.now()
     save_quote_impl(xls)
-    now = datetime.datetime.now()
-    logger.info('save quote cost [{}]'.format((now - t1).seconds, 2))
+    t2 = datetime.datetime.now()
+    logger.info('save quote cost [{}]'.format((t2 - t1).seconds, 2))
+
+    today = datetime.date.today()  # 2021/07/01
+    today_datetime = datetime.datetime(today.year, today.month, today.day)
+    quote_db.compute_market(today_datetime, today_datetime, include_end=True)
+
+    t3 = datetime.datetime.now()
+    logger.info('calculate and save market cost [{}]'.format((t3 - t2).seconds, 2))
 
 
 def check_quote(quote1, quote2):
