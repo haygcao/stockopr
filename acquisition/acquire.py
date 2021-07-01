@@ -117,6 +117,10 @@ def compute_market_avg_quote(quote):
     high = quote.high.mean()
     low = quote.low.mean()
     volume = quote.volume.mean()
+    yest_close = quote.yest_close.mean()
+    price_change = close - yest_close
+    percent = round(100 * price_change / yest_close, 3)
+    turnover_ratio = quote.turnover_ratio.mean()
 
     quote = quote.append([{
         'trade_date': quote['trade_date'][0],
@@ -125,7 +129,11 @@ def compute_market_avg_quote(quote):
         'open': open,
         'high': high,
         'low': low,
-        'volume': volume
+        'volume': volume,
+        'yest_close': yest_close,
+        'price_change': price_change,
+        'percent': percent,
+        'turnover_ratio': turnover_ratio
     }], ignore_index=True)
 
     return quote

@@ -33,7 +33,7 @@ def get_stock_price_divisor(code):
 
         c.execute(sql)
         price_divisor_info = c.fetchone()
-        if not price_divisor_info['price_divisor_date']:
+        if not price_divisor_info or not price_divisor_info['price_divisor_date']:
             return None
         return price_divisor_info
 

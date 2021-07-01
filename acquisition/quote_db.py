@@ -43,7 +43,7 @@ def query_quote(trade_date, conn=None):
     return df
 
 
-def add_market_avg_close(begin_date, end_date):
+def add_market_avg_quote(begin_date, end_date):
     ndays = (end_date - begin_date).days
     val_list = []
     for day in range(ndays):
@@ -60,9 +60,20 @@ def add_market_avg_close(begin_date, end_date):
         high = quote.high.mean()
         low = quote.low.mean()
         volume = quote.volume.mean()
-        val_list.append((trade_date, 'maq', close, open, high, low, volume))
+        yest_close = quote.yest_close.mean()
+        price_change = close - yest_close
+        percent = round(100 * price_change / yest_close, 3)
+        turnover_ratio = quote.turnover_ratio.mean()
+        val_list.append((trade_date, 'maq', close, open, high, low, volume, yest_close,
+                         price_change, percent, turnover_ratio))
 
-    sql_str = "insert into quote (trade_date, code, close, open, high, low, volume) values (%s, %s, %s, %s, %s, %s, %s)"
+    key_list = ['trade_date', 'code', 'close', 'open', 'high', 'low', 'volume', 'yest_close',
+                'price_change', 'percent', 'turnover_ratio']
+    fmt_list = ['%s' for _ in key_list]
+    key = ', '.join(key_list)
+    fmt = ', '.join(fmt_list)
+
+    sql_str = "insert into quote ({}) values ({})".format(key, fmt)
     with mysqlcli.get_cursor() as c:
         try:
             c.executemany(sql_str, val_list)

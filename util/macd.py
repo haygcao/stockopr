@@ -392,6 +392,7 @@ def ad(prices, timeperiod=30):
     df['ad'] = AD(prices)
     df['ad_ema'] = EMA(df['ad'], timeperiod=timeperiod)
     # # df['obv'] = OBV(prices)
+    # {2, 5}; /* short period, long period */
     df['adosc'] = ADOSC(prices, fastperiod=3, slowperiod=10)
 
     return df

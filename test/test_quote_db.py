@@ -33,11 +33,12 @@ class QuoteDBTestCase(unittest.TestCase):
         end_date = datetime.date.today()
         # end_date = datetime.date(2020, 7, 1)
         # end_date = datetime.date(2010, 1, 8)
-        quote_db.add_market_avg_close(begin_date, end_date)
+        quote_db.add_market_avg_quote(begin_date, end_date)
 
     def test_compute_market(self):
-        begin_date = datetime.datetime(2010, 1, 1)
-        today = datetime.date.today()
+        # in 1979.35s (0:32:59)
+        begin_date = datetime.datetime(2020, 1, 1)
+        today = datetime.date.today()   # 2021/07/01
         end_date = datetime.datetime(today.year, today.month, today.day)
         # end_date = datetime.date(2020, 7, 1)
         # end_date = datetime.datetime(2020, 1, 8)
