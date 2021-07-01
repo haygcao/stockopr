@@ -1,6 +1,7 @@
 import pandas
 
 from acquisition import quote_db
+from config import config
 from util.macd import ema
 
 
@@ -28,8 +29,9 @@ def compute_rps(quote, market, n):
     return quote
 
 
-def relative_price_strength(quote):
-    market = quote_db.get_price_info_df_db('maq', len(quote), end_date=quote.index[-1])
+def relative_price_strength(quote, period='day'):
+    period_type = config.period_map[period]['period']
+    market = quote_db.get_price_info_df_db('maq', len(quote), end_date=quote.index[-1], period_type=period_type)
     # q = quote[~quote.index.isin(market.index)]
 
     # window

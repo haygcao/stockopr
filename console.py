@@ -214,10 +214,17 @@ class Panel(QWidget):
                 config.enable_signal(s, checked)
 
     def on_code_changed(self, text):
-        if len(text) > 1 and text[0] not in '036' and text[-1] == ';':
-            text = basic.get_stock_code(text[:-1])
+        if not text:
+            return
 
-        if len(text) < 1 or (not text.endswith(';') and not re.match('[0-9]{6}', text)):
+        maq = 'maq'
+        if len(text) > 1 and text[0] not in '036' and text[-1] == ';':
+            if text.startswith(maq):
+                text = maq
+            else:
+                text = basic.get_stock_code(text[:-1])
+
+        if len(text) < 1 or (not text.endswith(';') and not re.match('[0-9]{6}', text) and text != maq):
             return
 
         self.code = text
@@ -225,7 +232,7 @@ class Panel(QWidget):
         self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
         self.lbl.adjustSize()
 
-        if len(text) < 6:
+        if len(text) < 6 or text == maq:
             return
 
         quote = tx.get_realtime_data_sina(self.code)

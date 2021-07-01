@@ -779,10 +779,10 @@ def open_graph(code, peroid, path=None):
     print('=' * 10)
 
 
-def show_indicator(code, peroid, indicator):
-    quote = quote_db.get_price_info_df_db(code, days=250, period_type=config.period_map[peroid]['period'])
-    quote = indicator(quote)
-    market = quote_db.get_price_info_df_db('maq', days=250, period_type=config.period_map[peroid]['period'])
+def show_indicator(code, period, indicator):
+    quote = quote_db.get_price_info_df_db(code, days=250, period_type=config.period_map[period]['period'])
+    quote = indicator(quote, period)
+    market = quote_db.get_price_info_df_db('maq', days=250, period_type=config.period_map[period]['period'])
 
     add_plot = []
     width = 0.5
@@ -803,6 +803,10 @@ def show_indicator(code, peroid, indicator):
 
 
 if __name__ == "__main__":
+    code = 'maq'
+    code = '300502'
+    show_indicator(code, 'week', relative_price_strength.relative_price_strength)
+    exit(0)
     code = '000001'
     code = '300502'
     # code = '000999'
