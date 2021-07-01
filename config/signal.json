@@ -19,7 +19,7 @@
     "force_index_bear_market_deviation_signal_exit": true,
     "volume_ad_bear_market_deviation_signal_exit": true,
     "macd_bear_market_deviation_signal_exit": true,
-    "stop_loss_signal_exit": true
+    "stop_loss_signal_exit": false
   },
   "signal_enter_deviation": {
     "volume_ad_bull_market_deviation_signal_enter": true,

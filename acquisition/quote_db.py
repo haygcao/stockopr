@@ -409,6 +409,20 @@ def get_latest_trade_date():
         return list(r.values())[0].date()
 
 
+def compute_price_after_exit_right(close, paixi, songgu):
+    """
+    paixi: 每10股派现金
+    songgu: 每10股送转股比例
+    """
+    # 2021/06/08 新易盛 300502 为例
+    # 权息变动
+    # 除权除息: 2021/06/08
+    # 每10股派现金 2.717
+    # 每10股送转股比例4.003股
+    # (yest_close - 0.2717) * 10 / (10 + 4.003)   # yest_close 为 2021/06/07 收盘价 48.35
+    return (close - paixi / 10) * 10 / (10 + songgu)
+
+
 def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust=34.34):
     df = quote.loc[:divisor_date]
     if df.empty:

@@ -27,8 +27,10 @@ def get_all_stock_code():
 
 def get_stock_price_divisor(code):
     with mysqlcli.get_cursor() as c:
-        # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT price_divisor_date, price_divisor_adj_price FROM {0} where code = '{1}'".format(config.sql_tab_basic_info, code)
+        sql = "SELECT date price_divisor_date, yest_close price_divisor_adj_price from {} e, {} q " \
+              "where category = 1 and e.code = '{}' and q.code = e.code and e.date = q.trade_date " \
+              "order by e.date desc limit 1".format(config.sql_tab_equity, config.sql_tab_quote, code)
+
         c.execute(sql)
         price_divisor_info = c.fetchone()
         if not price_divisor_info['price_divisor_date']:
