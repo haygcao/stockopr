@@ -148,6 +148,9 @@ class Panel(QWidget):
         btn_show_indicator = QPushButton('indicator', self)
         btn_show_indicator.clicked.connect(self.show_indicator)
 
+        btn_market = QPushButton('market', self)
+        btn_market.clicked.connect(self.show_market)
+
         grid = QGridLayout()
 
         grid.setSpacing(10)
@@ -170,6 +173,7 @@ class Panel(QWidget):
 
         grid.addWidget(self.log, 4, 0)
         grid.addWidget(btn_show_indicator, 4, 2)
+        grid.addWidget(btn_market, 4, 3)
 
         h_layout_enter = QHBoxLayout()
 
@@ -303,6 +307,13 @@ class Panel(QWidget):
     def show_indicator(self):
         print('{} {}'.format(self.code, self.period))
         p = multiprocessing.Process(target=chart.show_indicator,
+                                    args=(self.code, self.period, relative_price_strength.relative_price_strength))
+        p.start()
+        p.join(timeout=1)
+
+    def show_market(self):
+        print('{} {}'.format(self.code, self.period))
+        p = multiprocessing.Process(target=chart.show_market,
                                     args=(self.code, self.period, relative_price_strength.relative_price_strength))
         p.start()
         p.join(timeout=1)

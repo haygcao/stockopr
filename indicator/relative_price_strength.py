@@ -2,7 +2,6 @@ import pandas
 
 from acquisition import quote_db
 from config import config
-from util.macd import ema
 
 
 def compute_rps_using_window(quote, market, n):

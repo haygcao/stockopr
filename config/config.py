@@ -27,6 +27,7 @@ sql_tab_trade_order = ch.sql_table_trade_order
 sql_tab_asset = ch.sql_table_asset
 sql_tab_position = ch.sql_table_position
 sql_tab_equity = ch.sql_table_equity
+sql_tab_market = ch.sql_table_market
 
 charg = ConfigHandler(os.path.join(config_dir, 'config.ini'), 'arg')
 check_per_sec = charg.check_per_sec

@@ -11,6 +11,34 @@ from acquisition import basic
 from util import dt
 
 
+def get_market_df_db_day(days=250, end_date=None, period_type='D', conn=None):
+    end_date = end_date if end_date else datetime.date.today()
+
+    if conn == None:
+        _conn = mysqlcli.get_connection()
+    else:
+        _conn = conn
+
+    key_list = [
+        'trade_date', 'count',
+        'new_high_y', 'new_low_y', 'new_high_h', 'new_low_h', 'new_high_s', 'new_low_s',
+        'new_high_m', 'new_low_m', 'new_high_w', 'new_low_w',
+        'up', 'down', 'up_ema52', 'up_ema26', 'up_ema13'
+    ]
+
+    sql = 'SELECT {0} FROM {1} WHERE trade_date <= "{2}" order by trade_date desc limit {3}'.format(
+        ', '.join(key_list), config.sql_tab_market, end_date, days)
+
+    df = pd.read_sql(sql, con=_conn, index_col=['trade_date'])
+
+    if conn == None:
+        _conn.close()
+
+    df.sort_index(ascending=True, inplace=True)
+
+    return df
+
+
 def query_date(code, count):
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)

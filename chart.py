@@ -20,7 +20,7 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from matplotlib.widgets import Cursor
 
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_stop_loss, signal
-from indicator import force_index, relative_price_strength
+from indicator import force_index, relative_price_strength, new_high_new_low, advance_decline, up_ema
 
 import logging
 
@@ -802,11 +802,43 @@ def show_indicator(code, period, indicator):
     mpf.plot(quote[-250:], type="candle", addplot=add_plot)
 
 
+def show_market(period):
+    quote = quote_db.get_price_info_df_db('maq', days=250, period_type=config.period_map[period]['period'])
+    market = new_high_new_low.new_high_new_low(quote, period)
+    nh_y = 100 * market['new_high_y'] / market['count']
+    nl_y = 100 * market['new_low_y'] / market['count']
+    up_ema52 = up_ema.up_ema(quote, period)
+    up_ema_h = up_ema52.copy()
+    up_ema_h.loc[:] = 75
+    up_ema_l = up_ema52.copy()
+    up_ema_l.loc[:] = 25
+    ad = advance_decline.advance_decline(quote)
+    ad_zero = ad.copy()
+    ad_zero.loc[:] = 0
+    add_plot = []
+    width = 0.5
+    add_plot.extend([
+        mpf.make_addplot(nh_y, panel=1, type='line', width=width, color=dimgrey),
+        mpf.make_addplot(nl_y, panel=1, type='line', width=width, color=grey, linestyle='dashdot', secondary_y=False, ),
+        mpf.make_addplot(up_ema52, panel=2, type='line', width=width, color=dimgrey),
+        mpf.make_addplot(up_ema_h, panel=2, type='line', width=width, color=dimgrey, secondary_y=False),
+        mpf.make_addplot(up_ema_l, panel=2, type='line', width=width, color=dimgrey, secondary_y=False),
+        mpf.make_addplot(ad, panel=3, type='line', width=width, color=dimgrey),
+        mpf.make_addplot(ad_zero, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
+        # mpf.make_addplot(quote['close'], panel=0, type='line', width=width, color=grey, secondary_y=True),
+    ])
+    mpf.plot(quote[-250:], type="ohlc", addplot=add_plot, panel_ratios=[6.01, 1.33, 1.33, 1.33])  # [7, 1, 1, 1])  # [4.99, 1.67, 1.67, 1.67])
+
+
 if __name__ == "__main__":
+    show_market('day')
+    exit(0)
+
     code = 'maq'
     code = '300502'
     show_indicator(code, 'week', relative_price_strength.relative_price_strength)
     exit(0)
+
     code = '000001'
     code = '300502'
     # code = '000999'
