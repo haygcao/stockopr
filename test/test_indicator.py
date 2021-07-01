@@ -1,31 +1,33 @@
 import unittest
 
 from acquisition import tx, quote_db
-from indicator import ad
+from indicator import ad, relative_price_strength
 
 
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_is_holiday(self):
         code = '300502'
         period = 'm30'
         # period = 'day'
         count = 250
         # quote = tx.get_kline_data_sina(code, period, count)
-        quote = quote_db.get_price_info_df_db_day(code,  days=250)
+        self.quote = quote_db.get_price_info_df_db_day(code, days=250)
 
-        quote = ad.compute_ad(quote)
+    def tearDown(self):
+        pass
+
+    def test_ad(self):
+        quote = ad.compute_ad(self.quote)
+        print(quote[-10:])
+
+    def test_rps(self):
+        quote = relative_price_strength.relative_price_strength(self.quote)
         print(quote[-10:])
 
 
 def suite():
     suite = unittest.TestSuite()
-    suite.addTest(IndicatorTestCase('test_is_holiday'))
+    suite.addTest(IndicatorTestCase('test_ad'))
     return suite
 
 

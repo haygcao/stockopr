@@ -21,6 +21,7 @@ import chart
 import trade_manager.db_handler
 from acquisition import acquire, basic, quote_db, tx
 from config import config
+from indicator import relative_price_strength
 from pointor.signal import write_supplemental_signal
 from selector import selector
 from trade_manager import trade_manager
@@ -144,6 +145,9 @@ class Panel(QWidget):
         btn_new_order = QPushButton('new order', self)
         btn_new_order.clicked.connect(self.new_trade_order)
 
+        btn_show_indicator = QPushButton('indicator', self)
+        btn_show_indicator.clicked.connect(self.show_indicator)
+
         grid = QGridLayout()
 
         grid.setSpacing(10)
@@ -165,6 +169,7 @@ class Panel(QWidget):
         grid.addWidget(btn_new_order, 3, 4)
 
         grid.addWidget(self.log, 4, 0)
+        grid.addWidget(btn_show_indicator, 4, 2)
 
         h_layout_enter = QHBoxLayout()
 
@@ -287,6 +292,13 @@ class Panel(QWidget):
         p.start()
         p.join(timeout=1)
         # open_graph(self.code, self.period)
+
+    def show_indicator(self):
+        print('{} {}'.format(self.code, self.period))
+        p = multiprocessing.Process(target=chart.show_indicator,
+                                    args=(self.code, self.period, relative_price_strength.relative_price_strength))
+        p.start()
+        p.join(timeout=1)
 
     def control_watch_dog(self):
         with self.rlock:

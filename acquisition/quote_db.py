@@ -27,7 +27,7 @@ def query_quote(trade_date, conn=None):
     else:
         _conn = conn
 
-    key_list = ['trade_date', 'code', 'open', 'high', 'low', 'close', 'volume', 'amount']
+    key_list = ['trade_date', 'code', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'turnover_ratio']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     where = ' trade_date = "{}"'.format(trade_date)
     sql = 'SELECT {0} FROM {1} WHERE {2}'.format(', '.join(key_list), table[1], where)
@@ -48,8 +48,6 @@ def add_market_avg_quote(begin_date, end_date):
     val_list = []
     for day in range(ndays):
         trade_date = begin_date + datetime.timedelta(days=day)
-        if not dt.istradeday(trade_date):
-            continue
 
         quote = query_quote(trade_date)
         close = quote.close.mean()
@@ -349,7 +347,7 @@ def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
     #else:
     #    _code = code
     _code = code
-    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
+    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'percent']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     on = '{0}.code = basic_info.code'.format(table[1])
     where = '{3}.code = "{0}" and trade_date <= "{1}" order by trade_date desc limit {2}'.format(_code, end_date, days, table[1])

@@ -5,7 +5,7 @@ import functools
 from config import config
 from config.config import is_long_period
 
-from acquisition import tx
+from acquisition import tx, quote_db
 
 import numpy
 
@@ -20,7 +20,7 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from matplotlib.widgets import Cursor
 
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_stop_loss, signal
-from indicator import force_index
+from indicator import force_index, relative_price_strength
 
 import logging
 
@@ -115,6 +115,7 @@ class DataFinanceDraw(object):
 
         self.code = code
         self.period = period
+        self.count = 250
 
         self.show_volume = False
         self.show_macd = True
@@ -147,7 +148,7 @@ class DataFinanceDraw(object):
     def get_window(self, data):
         if self.period == 'week':
             return data[-125:]
-        return data
+        return data[-self.count:]
 
         # if isinstance(data) 'pandas.core.series.Series' 'numpy.ndarray' 'pandas.core.frame.DataFrame'
         # return data[-250:]
@@ -195,20 +196,20 @@ class DataFinanceDraw(object):
         # mpl.rcParams['interactive'] = True
         mpl.rcParams['axes.titlesize'] = 1
 
-    def fetch_data(self, code, count=250):
+    def fetch_data(self, code):
         if not is_long_period(self.period):
-            count *= 1  # 5
-        self.data_origin = tx.get_kline_data(code, self.period, count)
+            self.count *= 1  # 5
+        self.data_origin = tx.get_kline_data(code, self.period, self.count)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
-    def load_data(self, file_name='2020.csv', count=250):
+    def load_data(self, file_name='2020.csv'):
         """
         获取数据, 把数据格式化成 mplfinance 的标准格式
         :return:
         """
         data = import_csv(file_name)
-        self.data_origin = data.iloc[-count:]
+        self.data_origin = data.iloc[-self.count:]
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
     def add_oscillation(self, data, osc):
@@ -464,6 +465,14 @@ class DataFinanceDraw(object):
         self.add_a_signal(data, 'signal_enter', dark_olive_green3, marker_up)
         self.add_a_signal(data, 'signal_exit', light_coral, marker_down)
 
+    def add_market(self):
+        if self.period not in ['week', 'day']:
+            return
+        period_type = config.period_map[self.period]['period']
+        market = quote_db.get_price_info_df_db('maq', days=self.count, period_type=period_type)
+        self.add_plot.append(mpf.make_addplot(
+            self.get_window(market['close']), panel=0, type='line', width=0.5, color=light_blue, secondary_y=True))
+
     def more_panel_draw(self):
         data = self.data_origin  # .iloc[-100:]
         data = signal.compute_signal(data, self.period)
@@ -501,6 +510,7 @@ class DataFinanceDraw(object):
         self.add_dynamical_system(data)
         self.add_channel(data)
         self.add_stop_loss(data)
+        self.add_market()
 
         # data = data.iloc[-100:]
 
@@ -767,6 +777,29 @@ def open_graph(code, peroid, path=None):
     for i, t in enumerate(timestamp):
         print('{}\t[{}]\t[{}]'.format(info[i], round(timestamp[-2] - t, 2), round(t - timestamp[max(0, i-1)], 2)))
     print('=' * 10)
+
+
+def show_indicator(code, peroid, indicator):
+    quote = quote_db.get_price_info_df_db(code, days=250, period_type=config.period_map[peroid]['period'])
+    quote = indicator(quote)
+    market = quote_db.get_price_info_df_db('maq', days=250, period_type=config.period_map[peroid]['period'])
+
+    add_plot = []
+    width = 0.5
+    add_plot.extend([
+        # window
+        # mpf.make_addplot(quote['rps3'], panel=1, type='line', width=width+0.2, color=dimgrey),
+        # mpf.make_addplot(quote['rps10'], panel=1, type='line', width=width+0.2, color=grey),
+        # mpf.make_addplot(quote['rps20'], panel=1, type='line', width=width+0.2, color=grey),
+        # osc
+        # mpf.make_addplot(quote['rps'], panel=1, type='line', width=width + 0.2, color=grey),
+        # stock.close/market.close
+        mpf.make_addplot(quote['rps'], panel=1, type='line', width=width, color=dimgrey),
+        mpf.make_addplot(quote['erps'], panel=1, type='line', width=width, color=grey, linestyle='dashdot'),
+        mpf.make_addplot(quote['rps'] - quote['erps'], panel=1, type='bar', width=width, color=grey),
+        mpf.make_addplot(market['close'], panel=0, type='line', width=width, color=grey, secondary_y=True),
+    ])
+    mpf.plot(quote[-250:], type="candle", addplot=add_plot)
 
 
 if __name__ == "__main__":

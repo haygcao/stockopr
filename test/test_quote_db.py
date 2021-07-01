@@ -28,10 +28,10 @@ class QuoteDBTestCase(unittest.TestCase):
         quote = acquire.compute_market_avg_quote(quote)
         print(quote)
 
-    def test_add_market_avg_close(self):
-        begin_date = datetime.date(2010, 1, 1)
+    def test_add_market_avg_quote(self):
+        begin_date = datetime.date(2020, 1, 1)
         end_date = datetime.date.today()
-        # end_date = datetime.date(2020, 7, 1)
+        # end_date = datetime.date(2020, 9, 22)
         # end_date = datetime.date(2010, 1, 8)
         quote_db.add_market_avg_quote(begin_date, end_date)
 
