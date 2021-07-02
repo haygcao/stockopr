@@ -332,6 +332,9 @@ def get_price_info_df_db(code, days=0, end_date=None, period_type='D', conn=None
     if days == 0:
         days = 250 if period_type == 'D' else 500
 
+    if period_type == 'W':
+        days *= 5
+
     if from_file:
         df = get_price_info_df_file_day(code, days, end_date, from_file)
     else:

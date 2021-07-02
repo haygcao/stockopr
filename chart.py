@@ -151,8 +151,8 @@ class DataFinanceDraw(object):
         self.set_plot_style()
 
     def get_window(self, data):
-        if self.period == 'week':
-            return data[-125:]
+        # if self.period == 'week':
+        #     return data[-125:]
         return data[-self.count:]
 
         # if isinstance(data) 'pandas.core.series.Series' 'numpy.ndarray' 'pandas.core.frame.DataFrame'
@@ -203,8 +203,8 @@ class DataFinanceDraw(object):
 
     def fetch_data(self, code):
         if not is_long_period(self.period):
-            self.count *= 1  # 5
-        if self.period not in ['week', 'day'] or not dt.istradetime():
+            self.count *= 5
+        if self.period not in ['week', 'day'] or dt.istradetime():
             self.data_origin = tx.get_kline_data(code, self.period, self.count)
         else:
             period_type = config.period_map[self.period]['period']
@@ -475,7 +475,7 @@ class DataFinanceDraw(object):
         self.add_a_signal(data, 'signal_exit', light_coral, marker_down)
 
     def add_market(self):
-        if self.period not in ['week', 'day']:
+        if self.period not in ['day']:  # ['week', 'day']:
             return
         period_type = config.period_map[self.period]['period']
         market = quote_db.get_price_info_df_db('maq', days=self.count, period_type=period_type)

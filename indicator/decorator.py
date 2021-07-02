@@ -11,6 +11,8 @@ def computed(column_name=None):
                 return args[0]
             if column_name.endswith('signal_enter') or column_name.endswith('signal_exit'):
                 if not config.enabled_signal(column_name):
+                    if 'stop_loss' in column_name:
+                        args[0].insert(len(args[0].columns), 'stop_loss', numpy.nan)
                     args[0].insert(len(args[0].columns), column_name, numpy.nan)
                     return args[0]
             return func(*args, **kwargs)

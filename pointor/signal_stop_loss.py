@@ -94,6 +94,7 @@ def compute_index(quote, period=None):
 @computed(column_name='stop_loss_signal_exit')
 def signal_exit(quote, period=None):
     if is_long_period(period):
+        quote = quote.assign(stop_loss=numpy.nan)
         quote = quote.assign(stop_loss_signal_exit=numpy.nan)
         return quote
 

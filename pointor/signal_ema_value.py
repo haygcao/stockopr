@@ -43,15 +43,15 @@ def signal_enter(quote, period=None):
     mask1 = quote_copy.ema26 >= quote_copy.ema26_shift
     mask2 = quote_copy.ema26 <= quote_copy.ema13
     mask3 = quote_copy.ema13 >= quote_copy.low
-    mask4 = quote_copy.ema26 / ema26_shift5 > config.period_ema26_oscillation_threshold_map[period]
-    mask = mask1 & mask2 & mask3 & mask4
+    # mask4 = quote_copy.ema26 / ema26_shift5 > config.period_ema26_oscillation_threshold_map[period]
+    mask = mask1 & mask2 & mask3  # & mask4
     quote_copy['ema_value_signal_enter'] = quote_copy['ema_value_signal_enter'].mask(mask, quote_copy['low'])
 
     # 利用 dmi 过滤掉振荡走势中的信号
     mask1 = quote_copy['adx'] < quote_copy['pdi']
-    mask2 = quote_copy['adx'] < quote_copy['mdi']
-    mask3 = quote_copy['pdi'] < quote_copy['mdi']
-    mask = (mask1 & mask2) | mask3
+    mask2 = quote_copy['pdi'] < quote_copy['mdi']
+    mask3 = quote_copy['adx'] < 50
+    mask = mask1 | mask2 | mask3
     quote_copy['ema_value_signal_enter'] = quote_copy['ema_value_signal_enter'].mask(mask, numpy.nan)
 
     # remove temp data
