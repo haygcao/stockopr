@@ -10,7 +10,7 @@ import pywinauto.clipboard
 import pywinauto.application
 
 from .. import config
-from ..config import pos_centre, pos_asset, pos_position, pos_detail
+from ..config import pos_centre, pos_asset, pos_position, pos_detail, pos_detail2, pos_refresh
 
 g_main_window = None
 
@@ -93,6 +93,11 @@ def get_cursor_pos():
     return win32api.GetCursorPos()
 
 
+def refresh():
+    pywinauto.mouse.click(coords=pos_refresh)
+    time.sleep(0.5)
+
+
 def get_order():
     """
     获取未成交的委托
@@ -103,6 +108,8 @@ def get_order():
     
     main_window.type_keys('{F3}')
     time.sleep(0.2)
+    refresh()
+    
     copy_to_clipboard()
 
     data = pywinauto.clipboard.GetData()
@@ -138,6 +145,8 @@ def get_asset():
     pywinauto.mouse.click(coords=pos_asset)
     # pywinauto.mouse.release(coords=pos_asset)
     time.sleep(0.2)
+    refresh()
+    
     copy_to_clipboard()
 
     data = pywinauto.clipboard.GetData()
@@ -166,6 +175,8 @@ def get_positions():
     pywinauto.mouse.click(coords=pos_position)
     # pywinauto.mouse.release(coords=pos_asset)
     time.sleep(0.2)
+    refresh()
+    
     copy_to_clipboard()
 
     position_list = []
@@ -224,9 +235,12 @@ def get_operation_detail(code_in=None):
     active_window()
     
     columns = ['成交时间', '发生日期', '证券代码', '证券名称', '业务名称', '发生金额', '资金本次余额', '股份余额', '成交数量', '成交价格', '成交金额', '手续费', '印花税', '附加费', '委托编号', '股东代码', '币种', '过户费', '交易所清算费', '资金帐号', '备注', '费用备注']
-    pywinauto.mouse.click(coords=pos_detail)
+    columns = ['发生日期', '成交时间', '证券代码', '证券名称', '业务名称', '成交数量', '成交价格', '成交金额', '余额', '清算金额', '手续费', '印花税', '附加费', '资金本次余额', '委托编号', '股东代码', '过户费', '交易所清算费', '资金帐号', '币种', '费用备注']
+    pywinauto.mouse.click(coords=pos_detail2)
     # pywinauto.mouse.release(coords=pos_detail)
     time.sleep(0.2)
+    refresh()
+    
     copy_to_clipboard()
 
     data = pywinauto.clipboard.GetData()

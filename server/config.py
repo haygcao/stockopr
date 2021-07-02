@@ -6,6 +6,8 @@ pos_detail = (36, 456)
 pos_position = (64, 256)
 pos_asset = (64, 360)
 pos_detail = (64, 450)
+pos_detail2 = (64, 475)
+pos_refresh = (161, 32)
 
 pos_withdraw_all = (380, 80)
 pos_withdraw_buy = (440, 80)
