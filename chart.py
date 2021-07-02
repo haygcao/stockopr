@@ -24,6 +24,8 @@ from indicator import force_index, relative_price_strength, new_high_new_low, ad
 
 import logging
 
+from util import dt
+
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 # http://www.cjzzc.com/web_color.html
 
@@ -37,8 +39,11 @@ panel_ratios = {
 oscillatior = 'force_index'
 # oscillatior = 'volume_ad'
 oscillatior_list = ['force_index', 'volume_ad']
+# oscillatior_list = ['force_index']
 show_long_period_dynamical_system = False
 show_signal_detail = False
+
+alpha = 0.1
 
 yellow = '#FFFF00'
 orange = '#FFA500'
@@ -120,7 +125,7 @@ class DataFinanceDraw(object):
         self.show_volume = False
         self.show_macd = True
         self.panel_volume = 1 if self.show_volume else 0
-        self.n_panels = 5 if self.show_volume else 4
+        self.n_panels = (3 if self.show_volume else 2) + len(oscillatior_list)
         if show_long_period_dynamical_system and not is_long_period(self.period):
             self.n_panels += 1
             self.panel_dlxt_long_period = self.panel_volume + 1
@@ -128,7 +133,7 @@ class DataFinanceDraw(object):
         else:
             self.panel_dlxt = self.panel_volume + 1
         self.panel_oscillation = self.panel_dlxt + 1
-        self.panel_macd = self.panel_oscillation + 2
+        self.panel_macd = self.panel_oscillation + len(oscillatior_list)
 
         self.data_long_period_origin = pandas.DataFrame()
         self.data_origin = pandas.DataFrame()
@@ -199,7 +204,11 @@ class DataFinanceDraw(object):
     def fetch_data(self, code):
         if not is_long_period(self.period):
             self.count *= 1  # 5
-        self.data_origin = tx.get_kline_data(code, self.period, self.count)
+        if self.period not in ['week', 'day'] or not dt.istradetime():
+            self.data_origin = tx.get_kline_data(code, self.period, self.count)
+        else:
+            period_type = config.period_map[self.period]['period']
+            self.data_origin = quote_db.get_price_info_df_db(code, self.count, period_type=period_type)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
@@ -402,13 +411,13 @@ class DataFinanceDraw(object):
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
                              color=dlxt_long_period_color,
-                             alpha=0.05)])
+                             alpha=alpha)])
 
         if show_long_period_dynamical_system:
             self.add_plot.extend([
                 mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
                                  color=dlxt_long_period_color,
-                                 alpha=0.05)])
+                                 alpha=alpha)])
 
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color)
@@ -623,11 +632,12 @@ class DataFinanceDraw(object):
         # axlist[3].fill_between(self.data.index, self.data['force_index'])
 
         # 带箭头的线
+        len_osc = len(oscillatior_list)
         map_index = {
             'macd_bull_market_deviation': {'data': self.histogram_macd,
-                                           'ax': axlist[8] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[10]},
+                                           'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
             'macd_bear_market_deviation': {'data': self.histogram_macd,
-                                           'ax': axlist[8] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[10]},
+                                           'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
         }
         for i, osc in enumerate(oscillatior_list):
             map_index.update({
@@ -783,6 +793,9 @@ def show_indicator(code, period, indicator):
     quote = quote_db.get_price_info_df_db(code, days=250, period_type=config.period_map[period]['period'])
     quote = indicator(quote, period)
     market = quote_db.get_price_info_df_db('maq', days=250, period_type=config.period_map[period]['period'])
+    diff = quote['rps'] - quote['erps']
+    diff_zero = diff.copy()
+    diff_zero[:] = 0
 
     add_plot = []
     width = 0.5
@@ -794,9 +807,13 @@ def show_indicator(code, period, indicator):
         # osc
         # mpf.make_addplot(quote['rps'], panel=1, type='line', width=width + 0.2, color=grey),
         # stock.close/market.close
+
+        mpf.make_addplot(diff, panel=1, type='bar', width=1, color=lightgrey, alpha=0.5),
+        mpf.make_addplot(diff_zero, panel=1, type='line', width=0.5, color=grey, secondary_y=False),
+
         mpf.make_addplot(quote['rps'], panel=1, type='line', width=width, color=dimgrey),
         mpf.make_addplot(quote['erps'], panel=1, type='line', width=width, color=grey, linestyle='dashdot'),
-        mpf.make_addplot(quote['rps'] - quote['erps'], panel=1, type='bar', width=width, color=grey),
+
         mpf.make_addplot(market['close'], panel=0, type='line', width=width, color=grey, secondary_y=True),
     ])
     mpf.plot(quote[-250:], type="candle", addplot=add_plot)
@@ -806,25 +823,33 @@ def show_market(period):
     quote = quote_db.get_price_info_df_db('maq', days=250, period_type=config.period_map[period]['period'])
     market = new_high_new_low.new_high_new_low(quote, period)
     nh_y = 100 * market['new_high_y'] / market['count']
-    nl_y = 100 * market['new_low_y'] / market['count']
+    nl_y = -100 * market['new_low_y'] / market['count']
+    hl = nh_y + nl_y
+    hl_zero = hl.copy()
+    hl_zero.loc[:] = 0
+
     up_ema52 = up_ema.up_ema(quote, period)
     up_ema_h = up_ema52.copy()
     up_ema_h.loc[:] = 75
     up_ema_l = up_ema52.copy()
     up_ema_l.loc[:] = 25
+
     ad = advance_decline.advance_decline(quote)
-    ad_zero = ad.copy()
-    ad_zero.loc[:] = 0
+
     add_plot = []
     width = 0.5
     add_plot.extend([
-        mpf.make_addplot(nh_y, panel=1, type='line', width=width, color=dimgrey),
-        mpf.make_addplot(nl_y, panel=1, type='line', width=width, color=grey, linestyle='dashdot', secondary_y=False, ),
-        mpf.make_addplot(up_ema52, panel=2, type='line', width=width, color=dimgrey),
-        mpf.make_addplot(up_ema_h, panel=2, type='line', width=width, color=dimgrey, secondary_y=False),
-        mpf.make_addplot(up_ema_l, panel=2, type='line', width=width, color=dimgrey, secondary_y=False),
-        mpf.make_addplot(ad, panel=3, type='line', width=width, color=dimgrey),
+        mpf.make_addplot(nh_y, panel=1, type='line', linestyle='dashdot', width=width, color=grey, title='NL', y_on_right=True),
+        mpf.make_addplot(nl_y, panel=1, type='line', linestyle='dashdot', width=width, color=grey, secondary_y=False),
+        mpf.make_addplot(hl, panel=1, type='line', width=width, color=dimgrey, secondary_y=False),
+        mpf.make_addplot(hl_zero, panel=1, type='line', width=width, color=grey, secondary_y=False),
+
+        mpf.make_addplot(ad, panel=2, type='line', width=width, color=dimgrey, title='A/D', y_on_right=True),
         # mpf.make_addplot(ad_zero, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
+
+        mpf.make_addplot(up_ema52, panel=3, type='line', width=width, color=dimgrey, ylabel='EMA_OVER'),
+        mpf.make_addplot(up_ema_h, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
+        mpf.make_addplot(up_ema_l, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
     ])
     mpf.plot(quote[-250:], type="line", addplot=add_plot, panel_ratios=[6.01, 1.33, 1.33, 1.33])  # [7, 1, 1, 1])  # [4.99, 1.67, 1.67, 1.67])
 
