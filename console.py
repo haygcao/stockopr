@@ -64,6 +64,7 @@ class Panel(QWidget):
         self.signals = {}
         self.code = '300502'
         self.period = 'week'
+        self.indicator = 'force_index'
         self.monitor_proc = None
         self.check_thread = None
         self.rlock = threading.RLock()
@@ -101,6 +102,12 @@ class Panel(QWidget):
         # self.lbl.move(50, 150)
 
         combo_period.activated[str].connect(self.on_activated_period)
+
+        combo_indictor = QComboBox(self)
+        indicators = ['force_index', 'adosc', 'skdj', 'rsi',]
+        for indicator in indicators:
+            combo_indictor.addItem(indicator)
+        combo_indictor.activated[str].connect(self.on_activated_indicator)
 
         qle_code = QLineEdit('300502', self)
 
@@ -157,8 +164,8 @@ class Panel(QWidget):
         grid.addWidget(self.lbl, 1, 0)
         grid.addWidget(self.combo_code, 2, 0)
         grid.addWidget(combo_period, 2, 1)
-        grid.addWidget(btn_show_chart, 2, 2)
-        grid.addWidget(btn_tdx, 2, 3)
+        grid.addWidget(combo_indictor, 2, 2)
+        grid.addWidget(btn_show_chart, 2, 3)
         grid.addWidget(btn_load, 2, 4)
         grid.addWidget(self.btn_monitor, 1, 1)
         grid.addWidget(self.btn_update_quote, 1, 2)
@@ -174,6 +181,7 @@ class Panel(QWidget):
         grid.addWidget(self.log, 4, 0)
         grid.addWidget(btn_show_indicator, 4, 2)
         grid.addWidget(btn_market, 4, 3)
+        grid.addWidget(btn_tdx, 4, 4)
 
         h_layout_enter = QHBoxLayout()
 
@@ -297,9 +305,14 @@ class Panel(QWidget):
         self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
         self.lbl.adjustSize()
 
+    def on_activated_indicator(self, text):
+        self.indicator = text
+        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
+        self.lbl.adjustSize()
+
     def show_chart(self):
         print('{} {}'.format(self.code, self.period))
-        p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period,))
+        p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, self.indicator))
         p.start()
         p.join(timeout=1)
         # open_graph(self.code, self.period)

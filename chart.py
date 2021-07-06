@@ -142,6 +142,8 @@ class DataFinanceDraw(object):
         self.histogram_macd = None
         self.histogram_volume_ad = None
         self.histogram_force_index = None
+        self.histogram_skdj = None
+        self.histogram_rsi = None
 
         self.need_update = False
         self.style = None
@@ -251,11 +253,9 @@ class DataFinanceDraw(object):
         data_oscillation_bar = data_oscillation_bar.mask(data_oscillation_bar < -force_index_abs_avg * 5,
                                                      -force_index_abs_avg * 3)
 
+        # eval 不能赋值
         # eval('self.histogram_{} = data_oscillation'.format(osc))
-        if osc == 'force_index':
-            self.histogram_force_index = data_oscillation
-        else:
-            self.histogram_volume_ad = data_oscillation
+        exec('self.histogram_{} = data_oscillation'.format(osc))
 
         bull_deviation_column = '{}_bull_market_deviation'.format(osc)
         oscillation_bull_market_deviation = data[bull_deviation_column]
@@ -782,7 +782,11 @@ def show(candle):
     candle.show()
 
 
-def open_graph(code, peroid, path=None):
+def open_graph(code, peroid, indicator, path=None):
+    global oscillatior
+    indicator = 'volume_ad' if indicator == 'adosc' else indicator
+    oscillatior = indicator
+
     candle = DataFinanceDraw(code, peroid)
     if path:
         candle.load_data(path)
