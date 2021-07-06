@@ -8,7 +8,7 @@ from acquisition import tx, quote_db
 from config import config
 from config.config import Policy, ERROR
 from data_structure import trade_data
-from indicator import atr, ema, dynamical_system, relative_price_strength
+from indicator import atr, ema, dynamical_system, relative_price_strength, ad
 from pointor import signal
 from trade_manager import tradeapi, db_handler
 from util import mysqlcli, dt
@@ -189,6 +189,10 @@ def check_list(quote):
     quote = relative_price_strength.relative_price_strength(quote, period='day')
     if quote['rps'][-1] < quote['erps'][-1]:
         return ERROR.E_WEAKER_THAN_MARKET
+
+    quote = ad.compute_ad(quote)
+    if quote['ad'] < quote['ad_ema']:
+        return ERROR.E_AD_INC
 
     return ERROR.OK
 
