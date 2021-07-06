@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import functools
+import os
 
 from config import config
 from config.config import is_long_period
@@ -122,6 +123,16 @@ class DataFinanceDraw(object):
         self.period = period
         self.count = 250
 
+        file = self.gen_cache_path()
+        import pathlib
+        fname = pathlib.Path(file)
+        self.cache = None
+        if fname.exists():
+            if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3*60:
+                os.remove(file)
+            else:
+                self.cache = file
+
         self.show_volume = False
         self.show_macd = True
         self.panel_volume = 1 if self.show_volume else 0
@@ -225,6 +236,7 @@ class DataFinanceDraw(object):
         if not is_long_period(self.period):
             count *= 5
         data = import_csv(file_name)
+        data = data[data.close > 0]
         self.data_origin = data.iloc[-count:]
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
@@ -411,7 +423,7 @@ class DataFinanceDraw(object):
 
         dlxt.values[:] = 1
         # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
-        dlxt_long_period.values[:] = self.data_origin['low']
+        dlxt_long_period.values[:] = data['low']
         # dlxt.values[:] = self.data_origin['low']
 
         if is_long_period(self.period):
@@ -492,33 +504,65 @@ class DataFinanceDraw(object):
         self.add_plot.append(mpf.make_addplot(
             self.get_window(market['close']), panel=0, type='line', width=0.5, color=light_blue, secondary_y=True))
 
+    def gen_cache_path(self):
+        return '{}-{}-{}.csv'.format(self.code, datetime.date.today().strftime('%Y%m%d'), self.period)
+
+    def dump(self, data):
+        file = self.gen_cache_path()
+        if os.path.exists(file):
+            os.remove(file)
+
+        if 'date' not in data.columns:
+            data.insert(len(data.columns), 'date', data.index)
+        data.to_csv(file)
+
+    def load(self):
+        file = self.gen_cache_path()
+        if not os.path.exists(file):
+            return
+        data = pandas.read_csv('{}-{}-{}.csv'.format(self.code, datetime.date.today().strftime('%Y%m%d'), self.period))
+
+        data['date'] = pandas.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S')
+        # 将日期列作为行索引
+        data.set_index(['date'], inplace=True)
+        data.sort_index(ascending=True, inplace=True)
+
+        return data
+
     def more_panel_draw(self):
-        data = self.data_origin  # .iloc[-100:]
-        data = signal.compute_signal(data, self.period)
+        data = None
+        if self.cache:
+            data = self.load()
 
-        exp13 = data['close'].ewm(span=13, adjust=False).mean()
+        if not isinstance(data, pandas.DataFrame):
+            print('no cache')
+            data = self.data_origin  # .iloc[-100:]
+            data = signal.compute_signal(data, self.period)
 
-        data = signal_stop_loss.signal_exit(data)
-        # data = dynamical_system.dynamical_system(data)
-        # triple_screen signal
-        data = signal_dynamical_system.signal_enter(data, period=self.period)
-        data = signal_dynamical_system.signal_exit(data, period=self.period)
+            data = signal_stop_loss.signal_exit(data)
+            # data = dynamical_system.dynamical_system(data)
+            # triple_screen signal
+            data = signal_dynamical_system.signal_enter(data, period=self.period)
+            data = signal_dynamical_system.signal_exit(data, period=self.period)
 
-        data = signal_channel.signal_enter(data, period=self.period)
-        data = signal_channel.signal_exit(data, period=self.period)
+            data = signal_channel.signal_enter(data, period=self.period)
+            data = signal_channel.signal_exit(data, period=self.period)
 
-        data = signal_market_deviation.signal_enter(data, self.period)
-        data = signal_market_deviation.signal_exit(data, self.period)
+            data = signal_market_deviation.signal_enter(data, self.period)
+            data = signal_market_deviation.signal_exit(data, self.period)
+
+            data = compute_atr(data)
+            data = force_index.force_index(data)
+
+            self.dump(data)
 
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
 
+        exp13 = data['close'].ewm(span=13, adjust=False).mean()
         # 以交易为生中，采用的是 exp21
         # exp = data['close'].ewm(span=21, adjust=False).mean()
         exp26 = data['close'].ewm(span=26, adjust=False).mean()
         exp = exp26
-        data = compute_atr(data)
-
-        data = force_index.force_index(data)
 
         #
         self.data = data
@@ -631,8 +675,8 @@ class DataFinanceDraw(object):
         # self.fig.tight_layout()
         # print(len(axlist))   # 8
 
-        ylim_min = self.get_window(self.data_origin)['low'].min()
-        ylim_max = self.get_window(self.data_origin)['high'].max()
+        ylim_min = self.get_window(self.data)['low'].min()
+        ylim_max = self.get_window(self.data)['high'].max()
         diff = (ylim_max - ylim_min) * 0.1
         axlist[0].set_ylim(ymin=ylim_min - diff, ymax=ylim_max + diff)
         # # 没有效果
@@ -788,10 +832,12 @@ def open_graph(code, peroid, indicator, path=None):
     oscillatior = indicator
 
     candle = DataFinanceDraw(code, peroid)
-    if path:
-        candle.load_data(path)
-    else:
-        candle.fetch_data(code)
+
+    if not candle.cache:
+        if path:
+            candle.load_data(path)
+        else:
+            candle.fetch_data(code)
 
     update(candle)
     show(candle)
@@ -883,13 +929,13 @@ def show_market(period):
 
 
 if __name__ == "__main__":
-    show_market('day')
-    exit(0)
+    # show_market('day')
+    # exit(0)
 
-    code = 'maq'
-    code = '300502'
-    show_indicator(code, 'week', relative_price_strength.relative_price_strength)
-    exit(0)
+    # code = 'maq'
+    # code = '300502'
+    # show_indicator(code, 'week', relative_price_strength.relative_price_strength)
+    # exit(0)
 
     code = '000001'
     code = '300502'
@@ -898,7 +944,7 @@ if __name__ == "__main__":
     # code = '600588'
     # code = '601633'
     period = 'day'  # m5 m30 day week
-    open_graph(code, period, 'data/csv/' + code + '.csv')
+    open_graph(code, period, 'skdj', 'data/csv/' + code + '.csv')
     # open_graph(code, period)
 
     # code = '000001'
