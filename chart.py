@@ -38,7 +38,7 @@ panel_ratios = {
 
 oscillatior = 'force_index'
 # oscillatior = 'volume_ad'
-oscillatior_list = ['force_index', 'volume_ad']
+oscillatior_list = ['force_index', 'volume_ad', 'skdj', 'rsi']
 # oscillatior_list = ['force_index']
 show_long_period_dynamical_system = False
 show_signal_detail = False
@@ -125,7 +125,8 @@ class DataFinanceDraw(object):
         self.show_volume = False
         self.show_macd = True
         self.panel_volume = 1 if self.show_volume else 0
-        self.n_panels = (3 if self.show_volume else 2) + len(oscillatior_list)
+        osc_len = 1  # len(oscillatior_list)
+        self.n_panels = (3 if self.show_volume else 2) + osc_len
         if show_long_period_dynamical_system and not is_long_period(self.period):
             self.n_panels += 1
             self.panel_dlxt_long_period = self.panel_volume + 1
@@ -133,7 +134,7 @@ class DataFinanceDraw(object):
         else:
             self.panel_dlxt = self.panel_volume + 1
         self.panel_oscillation = self.panel_dlxt + 1
-        self.panel_macd = self.panel_oscillation + len(oscillatior_list)
+        self.panel_macd = self.panel_oscillation + osc_len
 
         self.data_long_period_origin = pandas.DataFrame()
         self.data_origin = pandas.DataFrame()
@@ -289,14 +290,6 @@ class DataFinanceDraw(object):
                              for (i,), v in numpy.ndenumerate(self.get_window(oscillation_bear_market_deviation).values)]
 
         zero = data_oscillation.mask(data_oscillation.notnull(), 0)
-        panel = self.panel_oscillation + oscillatior_list.index(osc)
-        self.add_plot.extend([
-            mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel, color=grey, secondary_y=False),
-            mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey)])
-        if self.get_window(data_oscillation_bar).any(skipna=True):
-            self.add_plot.extend([
-                mpf.make_addplot(self.get_window(data_oscillation_bar), type='bar', panel=panel,
-                                 color=oscillation_color, secondary_y=False)])
 
         if self.get_window(data[bull_deviation_column]).any(skipna=True):
             self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bull_market_deviation_single_point),
@@ -307,6 +300,19 @@ class DataFinanceDraw(object):
             self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bear_market_deviation_single_point),
                                                    type='scatter', width=1, panel=0, color=red, markersize=50,
                                                    marker=marker_down), ])
+
+        # 只显示一个振荡指标 panel
+        if osc != oscillatior:
+            return
+
+        panel = self.panel_oscillation  # + oscillatior_list.index(osc)
+        self.add_plot.extend([
+            mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel, color=grey, secondary_y=False),
+            mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey)])
+        if self.get_window(data_oscillation_bar).any(skipna=True):
+            self.add_plot.extend([
+                mpf.make_addplot(self.get_window(data_oscillation_bar), type='bar', panel=panel,
+                                 color=oscillation_color, secondary_y=False)])
 
     def add_oscillations(self, data):
         for osc in oscillatior_list:
@@ -637,6 +643,10 @@ class DataFinanceDraw(object):
 
         # 带箭头的线
         len_osc = len(oscillatior_list)
+
+        # 只显示一个振荡指示 panel
+        len_osc = 1
+
         map_index = {
             'macd_bull_market_deviation': {'data': self.histogram_macd,
                                            'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
@@ -644,6 +654,10 @@ class DataFinanceDraw(object):
                                            'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
         }
         for i, osc in enumerate(oscillatior_list):
+            # 只显示一个振荡指示 panel
+            if osc != oscillatior:
+                continue
+            i = 0
             map_index.update({
                 '{}_bull_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
                                                                  'ax': axlist[
@@ -652,6 +666,8 @@ class DataFinanceDraw(object):
             })
             map_index.update({'{}_bear_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
                                                   'ax': axlist[4 + i*2] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + i*2]}})
+            # 只显示一个振荡指示 panel
+            break
 
         def draw_deviation_line(data, ax, ax2, data1, data2, unit1, unit2, color, will, draw_minor):
             """
@@ -673,8 +689,11 @@ class DataFinanceDraw(object):
             mask = data1.notnull()
 
             # points2 = data2[data2.notnull()]
-            points2 = data2[mask]
-            points2 = points2[points2.notnull()]
+            if draw_minor:
+                points2 = data2[mask]
+                points2 = points2[points2.notnull()]
+            else:
+                points2 = None
 
             value = data.min() if will == 1 else data.max()
             shape = 'left' if will == 1 else 'right'  # full
@@ -710,18 +729,20 @@ class DataFinanceDraw(object):
         # deviation_list = ['force_index_bull_market_deviation']
         for column_name in deviation_list:
             data = self.get_window(self.data[column_name])
-            data2 = self.get_window(map_index[column_name]['data'])
 
             unit1 = yminor_unit * 0.01
             # unit1 = 0
 
-            high = self.get_window(data2).max()
-            low = self.get_window(data2).min()
-            yminor_unit2 = round((high - low) / 10, 2)
-            yminor_unit2 = max(yminor_unit2, 0.01)
-
-            unit2 = yminor_unit2 * 0.1
-            # unit2 = 0
+            draw_minor = 'macd' in column_name or oscillatior in column_name
+            data2 = self.get_window(map_index[column_name]['data']) if draw_minor else None
+            ax2 = map_index[column_name]['ax']  if draw_minor else -1
+            # high = self.get_window(data2).max()
+            # low = self.get_window(data2).min()
+            # yminor_unit2 = round((high - low) / 10, 2)
+            # yminor_unit2 = max(yminor_unit2, 0.01)
+            #
+            # unit2 = yminor_unit2 * 0.1
+            unit2 = 0
 
             # print(unit1, unit2)
 
@@ -731,9 +752,8 @@ class DataFinanceDraw(object):
             else:
                 will = -1
                 color = red  # if 'macd' in column_name else dark_red
-            draw_minor = True if 'macd' in column_name else False
-            draw_minor = True
-            draw_deviation_line(self.data['close'], ax, map_index[column_name]['ax'], data, data2, unit1, unit2, color,
+
+            draw_deviation_line(self.data['close'], ax, ax2, data, data2, unit1, unit2, color,
                                 will, draw_minor)
 
         # l = matplotlib.lines.Line2D([points.index[0], points.index[1]], [points.values[1], points.values[0]], color=red, marker=marker_up)
