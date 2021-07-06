@@ -35,9 +35,28 @@ def dynamic_system_filter(column_name=None):
     def decorate(func):
         def inner(*args, **kwargs):
             quote = func(*args, **kwargs)
-            quote.loc[:, column_name] = quote[column_name].mask(quote['dlxt_long_period'] < 0, numpy.nan)
-            quote.loc[:, column_name] = quote[column_name].mask(quote['dlxt'] < 0, numpy.nan)
+            mask = compute_enter_mask(quote, kwargs.get('period'))
+            quote.loc[:, column_name] = quote[column_name].mask(mask, numpy.nan)
+
             return quote
         return inner
 
     return decorate
+
+
+def compute_enter_mask(quote, period):
+    mask = quote['dlxt_long_period'] < 0
+    mask = mask | (quote['dlxt'] < 0)
+
+    # 长周期 ema26 向上, 且 close > 长周期 ema26
+    n = 26 if is_long_period(period) else 120
+    ema = quote.close.ewm(span=n).mean()
+    ema_shift = ema.shift(periods=1)
+    mask = mask | (ema <= ema_shift) | (quote.close <= ema)
+
+    ema_fast = quote.close.ewm(span=int(n / 2)).mean()
+    macd_line = ema_fast - ema
+    macd_line_shift = macd_line.shift(periods=1)
+    mask = mask | (macd_line <= macd_line_shift)
+
+    return mask
