@@ -251,12 +251,12 @@ def skdj(prices):
     from talib import MA_Type
     e.g. slowk_matype=MA_Type.SMA, slowd_matype=MA_Type.SMA
     """
-    df = pd.DataFrame(prices.loc[:, 'close'])
+    df = pd.DataFrame()
 
     # 9 3 3
-    Hn = df['high'].rolling(9).max()
-    Ln = df['low'].rolling(9).min()
-    rsv = (df['close'] - Ln) / (Hn - Ln) * 100
+    Hn = prices['high'].rolling(9).max()
+    Ln = prices['low'].rolling(9).min()
+    rsv = (prices['close'] - Ln) / (Hn - Ln) * 100
     rsv = rsv.ewm(span=3, adjust=False).mean()
 
     df['k'] = rsv.ewm(span=3, adjust=False).mean()
