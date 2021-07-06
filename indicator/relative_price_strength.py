@@ -1,3 +1,4 @@
+import numpy
 import pandas
 
 from acquisition import quote_db
@@ -23,6 +24,7 @@ def compute_rps_percent(quote, market, n):
 
 def compute_rps(quote, market, n):
     percent: pandas.Series = quote.close / market.close
+    percent[-1] = percent[-2] if numpy.isnan(percent[-1]) else percent[-1]
     quote.loc[:, 'rps'] = percent
     quote.loc[:, 'erps'] = percent.ewm(span=n, adjust=False).mean()
     return quote

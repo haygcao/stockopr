@@ -6,9 +6,9 @@ import time
 import trade_manager.db_handler
 from acquisition import tx, quote_db
 from config import config
-from config.config import Policy
+from config.config import Policy, ERROR
 from data_structure import trade_data
-from indicator import atr, ema, dynamical_system
+from indicator import atr, ema, dynamical_system, relative_price_strength
 from pointor import signal
 from trade_manager import tradeapi, db_handler
 from util import mysqlcli, dt
@@ -166,6 +166,33 @@ def update_operation_detail(detail):
     db_handler.save_operation_details([detail])
 
 
+def check_list(quote):
+    quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
+    if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
+        return ERROR.E_DYNAMICAL_SYSTEM
+    # 长周期 ema26 向上, 且 close > 长周期 ema26
+    n = 120
+    ema_slow = quote.close.ewm(span=n).mean()
+    ema_slow_shift = ema_slow.shift(periods=1)
+    if ema_slow[-1] <= ema_slow_shift[-1]:
+        return ERROR.E_LONG_PERIOD_EMA_INC
+
+    if quote.close[-1] <= ema_slow[-1]:
+        return ERROR.E_CLOSE_OVER_LONG_PERIOD_EMA
+
+    ema_fast = quote.close.ewm(span=int(n / 2)).mean()
+    macd_line = ema_fast - ema_slow
+    macd_line_shift = macd_line.shift(periods=1)
+    if macd_line[-1] <= macd_line_shift[-1]:
+        return ERROR.E_MACD_LINE_INC
+
+    quote = relative_price_strength.relative_price_strength(quote, period='day')
+    if quote['rps'][-1] < quote['erps'][-1]:
+        return ERROR.E_WEAKER_THAN_MARKET
+
+    return ERROR.OK
+
+
 def buy(code, price_trade=0, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
@@ -177,9 +204,9 @@ def buy(code, price_trade=0, price_limited=0, count=0, period='day', policy: Pol
 
     quote = tx.get_kline_data(code)
     if period == 'day' and policy != Policy.DEVIATION:
-        quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
-        if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
-            popup_warning_message_box_mp('动力系统为红色, 禁止买入, 请务必遵守规则!')
+        error = check_list(quote)
+        if error != ERROR.OK:
+            popup_warning_message_box_mp(error.value)
             return
 
     position = query_position(code)
@@ -385,7 +412,6 @@ def create_trade_order(code, price_limited=0):
 
 def handle_illegal_position(position: trade_data.Position, quota):
     code = position.code
-    logger.warning('{} excess...'.format(code))
 
     popup_warning_message_box_mp('[{}]违规仓位, 请务必遵守规则, '.format(code))
 
@@ -408,6 +434,12 @@ def patrol():
         if position.current_position > quota:
             handle_illegal_position(position, quota)
             continue
+
+        quote = tx.get_kline_data(position.code)
+        error = check_list(quote)
+        if error != ERROR.OK:
+            logger.info('{} - {}'.format(position.code, error.value))
+            handle_illegal_position(position, quota)
 
 
 def create_position_price_limited():

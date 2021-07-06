@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import numpy
 import pandas as pd
 
 from acquisition import quote_db
@@ -122,7 +122,7 @@ def dynamical_system_dual_period(quote, n=13, period=None):
 
     dlxt_long_period = dlxt_long_period[dlxt_long_period.index.isin(quote.index)]
 
-    # 中周期动力系统
+     # 中周期动力系统
     quote = dynamical_system(quote)
     # print(quote[-50:])
 
@@ -130,6 +130,9 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     quote_copy = quote.copy()
     quote_copy.loc[:, 'dlxt_long_period'] = dlxt_long_period_copy['dlxt'].loc[:]
     quote_copy.loc[:, 'dlxt'] = quote['dlxt']
+
+    if numpy.isnan(quote_copy['dlxt_long_period'][-1]):
+        quote_copy['dlxt_long_period'][-1] = quote_copy['dlxt_long_period'][-2]
 
     # for debug
     # print(quote_copy.iloc[-50:])

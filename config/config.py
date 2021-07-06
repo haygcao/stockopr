@@ -501,3 +501,12 @@ class Policy(Enum):
     FORCE_INDEX = 'force index'
     DYNAMICAL_SYSTEM = 'dynamical system'
     STOP_LOSS = 'stop loss'
+
+
+class ERROR(Enum):
+    OK = ''
+    E_DYNAMICAL_SYSTEM = '动力系统为红色, 禁止买入, 禁止持有, 请务必遵守规则!'
+    E_LONG_PERIOD_EMA_INC = '长周期EMA26向下, 禁止买入, 禁止持有, 请务必遵守规则!'
+    E_CLOSE_OVER_LONG_PERIOD_EMA = 'CLOSE低于第周期EMA26, 禁止买入, 禁止持有, 请务必遵守规则!'
+    E_MACD_LINE_INC = 'MACD线向下, 禁止买入, 禁止持有, 请务必遵守规则!'
+    E_WEAKER_THAN_MARKET = '弱于市场, 禁止买入, 禁止持有, 请务必遵守规则!'
