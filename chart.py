@@ -202,13 +202,14 @@ class DataFinanceDraw(object):
         mpl.rcParams['axes.titlesize'] = 1
 
     def fetch_data(self, code):
+        count = self.count
         if not is_long_period(self.period):
-            self.count *= 5
+            count *= 5
         if self.period not in ['week', 'day'] or dt.istradetime():
-            self.data_origin = tx.get_kline_data(code, self.period, self.count)
+            self.data_origin = tx.get_kline_data(code, self.period, count)
         else:
             period_type = config.period_map[self.period]['period']
-            self.data_origin = quote_db.get_price_info_df_db(code, self.count, period_type=period_type)
+            self.data_origin = quote_db.get_price_info_df_db(code, count, period_type=period_type)
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
@@ -217,8 +218,11 @@ class DataFinanceDraw(object):
         获取数据, 把数据格式化成 mplfinance 的标准格式
         :return:
         """
+        count = self.count
+        if not is_long_period(self.period):
+            count *= 5
         data = import_csv(file_name)
-        self.data_origin = data.iloc[-self.count:]
+        self.data_origin = data.iloc[-count:]
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
     def add_oscillation(self, data, osc):
