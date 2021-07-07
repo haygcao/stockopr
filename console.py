@@ -287,8 +287,13 @@ class Panel(QWidget):
     def load(self):
         self.combo_code.clear()
 
+        position_list = trade_manager.db_handler.query_current_position()
+        code_list = [position.code for position in position_list]
+
         code_name_map = trade_manager.db_handler.query_trade_order_map()
-        for code, order in code_name_map.items():
+        code_list.extend([code for code in code_name_map.keys() if code not in code_list])
+
+        for code in code_list:
             name = basic.get_stock_name(code)
             self.combo_code.addItem('{} {}'.format(code, name))
 
