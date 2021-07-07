@@ -25,7 +25,7 @@ from indicator import force_index, relative_price_strength, new_high_new_low, ad
 
 import logging
 
-from util import dt
+from util import dt, util
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 # http://www.cjzzc.com/web_color.html
@@ -505,7 +505,13 @@ class DataFinanceDraw(object):
             self.get_window(market['close']), panel=0, type='line', width=0.5, color=light_blue, secondary_y=True))
 
     def gen_cache_path(self):
-        return '{}-{}-{}.csv'.format(self.code, datetime.date.today().strftime('%Y%m%d'), self.period)
+        file = '{}-{}-{}.csv'.format(self.code, datetime.date.today().strftime('%Y%m%d'), self.period)
+        root_dir = util.get_root_dir()
+        dir_name = os.path.join(root_dir, 'data', 'cache')  # , file)
+        if not os.path.exists(dir_name):
+            os.mkdir(dir_name)
+
+        return os.path.join(dir_name, file)
 
     def dump(self, data):
         file = self.gen_cache_path()
@@ -520,7 +526,7 @@ class DataFinanceDraw(object):
         file = self.gen_cache_path()
         if not os.path.exists(file):
             return
-        data = pandas.read_csv('{}-{}-{}.csv'.format(self.code, datetime.date.today().strftime('%Y%m%d'), self.period))
+        data = pandas.read_csv(file)
 
         data['date'] = pandas.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S')
         # 将日期列作为行索引

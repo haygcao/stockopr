@@ -54,9 +54,14 @@ def get_pid_of_python_proc(args):
     return -1
 
 
+def get_root_dir():
+    root_dir = os.path.join(os.path.dirname(__file__), '..')
+    return os.path.abspath(root_dir)
+
+
 def run_subprocess(script):
     # root_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    root_dir = os.path.join(os.path.dirname(__file__), '..')
+    root_dir = get_root_dir()
     monitor_path = os.path.join(root_dir, script)
     os.environ['PYTHONPATH'] = root_dir
     py = str(os.path.join(root_dir, 'venv', 'Scripts', 'python.exe'))
