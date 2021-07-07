@@ -172,9 +172,17 @@ def update_status_old(code, data, period):
 
 
 def check_trade_order_stop_loss(code, data):
-    # stop_loss = TradeSignalManager.get_stop_loss(code)
-    # return data['close'].iloc[-1] <= stop_loss
-    return False
+    stop_loss = TradeSignalManager.get_stop_loss(code)
+    price = data['close'].iloc[-1]
+    if price > stop_loss:
+        return False
+
+    white_list = config.get_white_list()
+    if code in white_list:
+        logger.warning('{} 现股价({})已跌破止损线({}), 因其在[白名单]之中, 现不做任何处理, 请确认白名单的合理性!'.format(
+            code, price, stop_loss))
+        return False
+    return True
 
 
 def update_status(code, data, period):

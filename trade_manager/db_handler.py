@@ -143,10 +143,7 @@ def query_operation_details(code=None, date: datetime.date = None):
     return details
 
 
-def save_operation_details(details: list[trade_data.OperationDetail], sync=False):
-    if not details:
-        return
-
+def save_operation_details(details: list[trade_data.OperationDetail], trade_date=None, sync=False):
     keys = ['time', 'code', 'operation', 'price', 'price_trade', 'price_limited', 'count', 'amount', 'cost']
 
     key = ', '.join(keys)
@@ -163,8 +160,11 @@ def save_operation_details(details: list[trade_data.OperationDetail], sync=False
     with mysqlcli.get_cursor() as c:
         try:
             if sync:
-                trade_date = details[0].trade_time.date()
                 c.execute("delete from {} where date(time) = %s".format(config.sql_tab_operation_detail), trade_date)
+
+            if not details:
+                return
+
             c.executemany(sql, val_list)
         except Exception as e:
             logger.info(e)

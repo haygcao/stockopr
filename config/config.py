@@ -355,6 +355,14 @@ def enable_signal(signal, enable):
         json.dump(signals, fp, indent=2)
 
 
+def get_white_list():
+    import json
+    with open(os.path.join(config_dir, 'trade_manager.json')) as fp:
+        trade_manager_config = json.load(fp)
+
+        return trade_manager_config['white_list']
+
+
 period_map = {
         'm1': {'period': '1min', 'long_period': '5min', 'kline_long_period': 'm5'},
         'm5': {'period': '5min', 'long_period': '30min', 'kline_long_period': 'm30'},

@@ -145,10 +145,10 @@ def sync():
 
     # operation detail
     operation_detail = tradeapi.query_operation_detail()
-    yesterday = dt.get_pre_trade_date()
-    # yesterday = datetime.date(2021, 7, 1)
-    operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == yesterday]
-    db_handler.save_operation_details(operation_detail, sync=True)
+    trade_date = dt.get_trade_date()
+    # trade_date = datetime.date(2021, 7, 1)
+    operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date]
+    db_handler.save_operation_details(operation_detail, trade_date, sync=True)
     logger.info('sync operation detail')
 
 
@@ -426,7 +426,12 @@ def handle_illegal_position(position: trade_data.Position, quota):
     count = position.avail_position - quota
     logger.warning('[{}]违规仓位, 请务必遵守规则, 持仓[{}]配额[{}], 卖出 {}x{}'.format(
         code, position.current_position, quota, price_trade, count))
-    # sell(code, price_trade=price_trade, count=count, auto=True)
+    white_list = config.get_white_list()
+    if code in white_list:
+        logger.warning('{} 在[白名单]之中, 不做任何处理, 请确认白名单的合理性!'.format(code))
+        return
+
+    sell(code, price_trade=price_trade, count=count, auto=True)
 
 
 def patrol():
