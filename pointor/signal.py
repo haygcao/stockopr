@@ -82,6 +82,19 @@ def write_supplemental_signal(supplemental_signal_path, code, date, command, per
                          })
 
 
+def write_signal_log(direct, code, period, column, n, data, header=False):
+    with open(config.signal_log_path, 'a') as f:
+        if header:
+            f.write('\n\n{0}   {1} {2:12s} {3:10s} {0}\n'.format(
+                ('*' * 10), datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), direct, '[{}][{}]'.format(n, period)))
+
+        if not numpy.any(data > 0):
+            return
+
+        msg = '[{}][{}]\n{}'.format(code, column, data[data > 0])
+        f.write(msg)
+
+
 def get_date_period(date, period, quote_date_index):
     ret = quote_date_index[quote_date_index >= date]
     return quote_date_index[-1] if ret.empty else ret[0]
@@ -146,13 +159,15 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
 
+    header = True
     for column in column_list:
         n = 5
         data = quote_copy.iloc[-n:][column]
-        if numpy.any(data > 0):
-            with open(config.signal_log_path, 'a') as f:
-                f.write('\n\n[{}][{}][{}][{}]\n{}'.format(code, period, column, n, data[data > 0]))
-        quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
+        direct = 'signal_enter'
+        write_signal_log(direct, code, period, column, n, data, header)
+        header = False
+
+        quote_copy.loc[:, direct] = quote_copy.apply(
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
 
     # 计算止损数据
@@ -165,13 +180,15 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     # 'macd_bear_market_deviation',
     # 'force_index_bear_market_deviation']
 
+    header = True
     # quote_copy = quote  # .copy()
     for column in column_list:
         n = 5
         data = quote_copy.iloc[-n:][column]
-        if numpy.any(data > 0):
-            with open(config.signal_log_path, 'a') as f:
-                f.write('\n\n[{}][{}][{}][{}]\n{}'.format(code, period, column, n, data[data > 0]))
+        direct = 'signal_exit'
+        write_signal_log(direct, code, period, column, n, data, header)
+        header = False
+
         quote_copy.loc[:, 'signal_exit'] = quote_copy.apply(
             lambda x: function(x.high, x.signal_exit, eval('x.{}'.format(column)), column), axis=1)
 
