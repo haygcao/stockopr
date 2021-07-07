@@ -428,7 +428,7 @@ def handle_illegal_position(position: trade_data.Position, quota):
         code, position.current_position, quota, price_trade, count))
     white_list = config.get_white_list()
     if code in white_list:
-        logger.warning('{} 在[白名单]之中, 不做任何处理, 请确认白名单的合理性!'.format(code))
+        logger.warning('[{}] 在[白名单]之中, 不做任何处理, 请确认白名单的合理性!'.format(code))
         return
 
     sell(code, price_trade=price_trade, count=count, auto=True)

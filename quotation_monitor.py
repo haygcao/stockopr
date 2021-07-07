@@ -179,7 +179,7 @@ def check_trade_order_stop_loss(code, data):
 
     white_list = config.get_white_list()
     if code in white_list:
-        logger.warning('{} 现股价({})已跌破止损线({}), 因其在[白名单]之中, 现不做任何处理, 请确认白名单的合理性!'.format(
+        logger.warning('[{}] 现股价({})已跌破止损线({}), 因其在[白名单]之中, 现不做任何处理, 请确认白名单的合理性!'.format(
             code, price, stop_loss))
         return False
     return True
