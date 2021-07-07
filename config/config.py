@@ -524,3 +524,10 @@ class ERROR(Enum):
     E_MACD_LINE_INC = 'MACD线向下, 禁止买入, 禁止持有, 请务必遵守规则!'
     E_WEAKER_THAN_MARKET = '弱于市场, 禁止买入, 禁止持有, 请务必遵守规则!'
     E_AD_INC = 'A/D低于A/D EMA, 禁止买入, 禁止持有, 请务必遵守规则!'
+
+
+class OscIndicator(Enum):
+    FORCE_INDEX = 'force_index'
+    ADOSC = 'adosc'
+    SKDJ = 'skdj'
+    RSI = 'rsi'

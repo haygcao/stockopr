@@ -1,7 +1,7 @@
 import numpy
 
 from indicator import ad, dmi
-from indicator.decorator import computed
+from indicator.decorator import computed, dynamic_system_filter
 
 
 def compute_index(quote, period=None):
@@ -34,9 +34,9 @@ def signal(quote, direct=1):
 
 @computed(column_name='volume_ad_signal_enter')
 # @ignore_long_period(column_name='force_index_signal_enter')
-# @dynamic_system_filter(column_name='force_index_signal_enter')
+@dynamic_system_filter(column_name='volume_ad_signal_enter')
 def signal_enter(quote, period=None):
-    # if is_long_period(period):
+    # if period.startswith('m'):
     #     quote = quote.assign(force_index_signal_enter=numpy.nan)
     #     return quote
 

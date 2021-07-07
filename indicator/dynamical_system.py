@@ -132,7 +132,7 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     quote_copy.loc[:, 'dlxt'] = quote['dlxt']
 
     if numpy.isnan(quote_copy['dlxt_long_period'][-1]):
-        quote_copy['dlxt_long_period'][-1] = quote_copy['dlxt_long_period'][-2]
+        quote_copy['dlxt_long_period'].iat[-1] = quote_copy['dlxt_long_period'][-2]
 
     # for debug
     # print(quote_copy.iloc[-50:])

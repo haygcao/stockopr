@@ -4,7 +4,7 @@ import functools
 import os
 
 from config import config
-from config.config import is_long_period
+from config.config import is_long_period, OscIndicator
 
 from acquisition import tx, quote_db
 
@@ -950,7 +950,7 @@ if __name__ == "__main__":
     # code = '600588'
     # code = '601633'
     period = 'day'  # m5 m30 day week
-    open_graph(code, period, 'skdj', 'data/csv/' + code + '.csv')
+    open_graph(code, period, OscIndicator.FORCE_INDEX.value, 'data/csv/' + code + '.csv')
     # open_graph(code, period)
 
     # code = '000001'

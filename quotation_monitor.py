@@ -13,7 +13,7 @@ import pandas
 import trade_manager.db_handler
 from chart import open_graph
 from config import config
-from config.config import period_map, Policy
+from config.config import period_map, Policy, OscIndicator
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
@@ -57,10 +57,16 @@ class TradeSignalManager:
     @classmethod
     def reload_trade_order(cls):
         cls.trade_order_map = trade_manager.db_handler.query_trade_order_map()
-        for code in cls.trade_order_map.keys():
+
+        position_list = trade_manager.db_handler.query_current_position()
+        code_list = [position.code for position in position_list]
+        code_list.extend(cls.trade_order_map.keys())
+
+        for code in code_list:
             if code in cls.signal_map:
                 continue
             cls.signal_map[code] = []
+
 
     @classmethod
     def get_trade_signal_list(cls, code):
@@ -306,7 +312,7 @@ def monitor_today():
                                              trade_signal.period, trade_signal.price)
 
             logger.info(TradeSignalManager.signal_map)
-            p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period,))
+            p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period, OscIndicator.FORCE_INDEX.value))
             p.start()
 
             order(trade_signal)

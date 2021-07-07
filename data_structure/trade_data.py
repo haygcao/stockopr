@@ -33,8 +33,8 @@ class Asset(TradeData):
         trade_config = config.get_trade_config()
         self.period = datetime.datetime.strptime(trade_config['period'], '%Y-%m-%d').date()
         self.origin = trade_config['total_money']
-        self.total_money = total_money
-        self.avail_money = avail_money
+        self.total_money = float(total_money)
+        self.avail_money = float(avail_money)
         self.market_value = self.total_money - self.avail_money
         self.position_percent = round(100 * self.market_value / self.total_money, 3)
         self.profit = self.total_money - self.origin
