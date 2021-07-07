@@ -91,13 +91,13 @@ class OperationDetail(TradeData):
         self.price_trade = price_trade
         self.price_limited = price_limited
         self.count = count
-        self.amount = round(price_limited * count, 3)
+        self.amount = round(price * count, 3)
 
         market = 'sz' if int(code[:2]) < 60 else 'sh'
-        direct = 'buy' if self.operation == 'B' else 'sell'
-
-        charge = 'config.charge_{}_{}'.format(direct, market)
-        self.cost = round(self.amount * eval(charge), 3)
+        # direct = 'buy' if self.operation == 'B' else 'sell'
+        # charge = 'config.charge_{}_{}'.format(direct, market)
+        # self.cost = abs(round(self.amount * eval(charge), 3))
+        self.cost = config.charge(self.amount, self.operation, market)
 
 
 @dataclass

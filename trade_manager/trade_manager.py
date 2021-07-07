@@ -146,6 +146,7 @@ def sync():
     # operation detail
     operation_detail = tradeapi.query_operation_detail()
     yesterday = dt.get_pre_trade_date()
+    # yesterday = datetime.date(2021, 7, 1)
     operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == yesterday]
     db_handler.save_operation_details(operation_detail, sync=True)
     logger.info('sync operation detail')

@@ -487,10 +487,23 @@ stamp_duty = 0.001   # 印花税 卖方
 commission = 0.0002   # 佣金 - 中信证券 双向
 transfer_fee = 0.00002   # 过户费 上海证券交易所收取 双向
 
-charge_sell_sz = commission + stamp_duty
-charge_sell_sh = commission + stamp_duty + transfer_fee
-charge_buy_sz = commission
-charge_buy_sh = commission + transfer_fee
+# charge_sell_sz = commission + stamp_duty
+# charge_sell_sh = commission + stamp_duty + transfer_fee
+# charge_buy_sz = commission
+# charge_buy_sh = commission + transfer_fee
+
+
+def charge(amount, direct, market):
+    amount = abs(amount)
+    if amount < 1:
+        return 0
+
+    cost = max(5, amount * commission)
+    if direct == 'S':
+        cost += amount * stamp_duty
+    if market == 'sh':
+        cost += amount * transfer_fee
+    return round(cost, 3)
 
 
 class Policy(Enum):
