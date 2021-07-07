@@ -58,6 +58,9 @@ def signal_enter(quote, period=None):
 @computed(column_name='volume_ad_signal_exit')
 # @ignore_long_period(column_name='force_index_signal_exit')
 def signal_exit(quote, period=None):
+    if period.startswith('m'):
+        quote = quote.assign(volume_ad_signal_exit=numpy.nan)
+        return quote
     quote = compute_index(quote, period)
 
     return signal(quote, direct=-1)

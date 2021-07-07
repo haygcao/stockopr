@@ -28,11 +28,15 @@
   "signal_enter_deviation": {
     "volume_ad_bull_market_deviation_signal_enter": true,
     "force_index_bull_market_deviation_signal_enter": true,
+    "skdj_bull_market_deviation_signal_enter": true,
+    "rsi_bull_market_deviation_signal_enter": true,
     "macd_bull_market_deviation_signal_enter": true
   },
   "signal_exit_deviation": {
     "volume_ad_bear_market_deviation_signal_exit": true,
     "force_index_bear_market_deviation_signal_exit": true,
+    "skdj_bear_market_deviation_signal_exit": true,
+    "rsi_bear_market_deviation_signal_exit": true,
     "macd_bear_market_deviation_signal_exit": true
   }
 }

@@ -336,3 +336,11 @@ def check_signal(code):
     price_info_df = price_info_df.append(price_info)
 
     recognize(price_info_df)
+
+
+def get_osc_key(name):
+    if 'volume_ad' in name:
+        return 'adosc'
+    if 'macd' in name:
+        return 'force_index'
+    return name

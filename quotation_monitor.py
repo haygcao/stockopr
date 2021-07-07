@@ -33,8 +33,10 @@ class TradeSignal:
     policy: Policy = Policy.DEFAULT
     period: str = ''
     last: bool = False
+    supplemental: str = ''
 
-    def __init__(self, code: str, price: float, date: datetime.datetime, command: str, category: Policy, period: str, last: bool):
+    def __init__(self, code: str, price: float, date: datetime.datetime, command: str, category: Policy, period: str,
+                 last: bool, supplemental: str = None):
         self.code = code
         self.price = price
         self.date = date
@@ -42,6 +44,7 @@ class TradeSignal:
         self.policy = category
         self.period = period
         self.last = last
+        self.supplemental = supplemental
 
 
 class TradeSignalManager:
@@ -203,12 +206,14 @@ def update_status(code, data, period):
     for deviation in signal_exit_deviation_tmp:
         if not numpy.isnan(data[deviation][index - 1]):
             direct = 'S'
-            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
+            supplemental = signal.get_osc_key(deviation[: deviation.index('_b')])
+            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True, supplemental)
 
     for deviation in signal_enter_deviation_tmp:
         if not numpy.isnan(data[deviation][index - 1]):
             direct = 'B'
-            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True)
+            supplemental = signal.get_osc_key(deviation[: deviation.index('_b')])
+            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True, supplemental)
 
     if not numpy.isnan(data['signal_exit'][index]):
         return TradeSignal(code, price, data_index_, 'S', Policy.DEFAULT, period, True)
@@ -312,7 +317,7 @@ def monitor_today():
                                              trade_signal.period, trade_signal.price)
 
             logger.info(TradeSignalManager.signal_map)
-            p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period, OscIndicator.FORCE_INDEX.value))
+            p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period, trade_signal.supplemental))
             p.start()
 
             order(trade_signal)

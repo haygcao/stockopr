@@ -241,7 +241,7 @@ class DataFinanceDraw(object):
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
     def add_oscillation(self, data, osc):
-        data_column = 'adosc' if osc == 'volume_ad' else osc
+        data_column = signal.get_osc_key(osc)
         data_oscillation = data[data_column]
 
         oscillation_color = [lightgrey if v >= 0 else grey for v in self.get_window(data[data_column])]
@@ -319,7 +319,8 @@ class DataFinanceDraw(object):
 
         panel = self.panel_oscillation  # + oscillatior_list.index(osc)
         self.add_plot.extend([
-            mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel, color=grey, secondary_y=False),
+            mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel,
+                             color=grey, secondary_y=False, title=oscillatior),
             mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey)])
         if self.get_window(data_oscillation_bar).any(skipna=True):
             self.add_plot.extend([
@@ -834,9 +835,11 @@ def show(candle):
 
 def open_graph(code, peroid, indicator, path=None):
     global oscillatior
-    indicator = 'volume_ad' if indicator == 'adosc' else indicator
-    oscillatior = indicator
+    if indicator:
+        indicator = 'volume_ad' if indicator == 'adosc' else indicator
+        oscillatior = indicator
 
+    print('indicator: {}, oscillatior: {}'.format(indicator, oscillatior))
     candle = DataFinanceDraw(code, peroid)
 
     if not candle.cache:
