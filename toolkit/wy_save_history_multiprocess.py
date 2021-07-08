@@ -98,7 +98,7 @@ def save_csv(file_csv, start_date):
                         continue
 
                     for idx in indice:
-                        val_list.append(row[idx] if row[idx] != 'None' else 0)
+                        val_list.append(row[idx] if row[idx] and row[idx] != 'None' else 0)
                     if float(row[7]) == 0:
                         val_list.append(0.0)
                     else:
@@ -152,8 +152,8 @@ if __name__ == '__main__':
     #print(file_list[0])
     #
     for file_csv in file_list:
-        if '001896' not in file_csv:
-            continue
+        # if len(file_csv.split('/')[-1]) == 10:
+        #     continue
         if not os.path.exists(file_csv):
             print(file_csv, 'not exist')
             continue

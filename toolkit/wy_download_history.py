@@ -80,6 +80,13 @@ def download_history_163(_code_str, LOG=True):
         return
 
     _ex = '0' if _code >= 600000 else '1'
+    """
+    0000001 上证指数
+    1399001 深证成指
+    1399006 创业板指
+    0000688 科创50
+    """
+    _ex = '' if len(_code_str) == 7 else _ex   # 指数
     _code_str_bk = _code_str
     _code_str = '{1}{0}'.format(_code_str, _ex)
     _dataUrl = dataUrl.format(_code_str)

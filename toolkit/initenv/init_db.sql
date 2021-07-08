@@ -280,3 +280,6 @@ create table equity(
   zongguben_peigu_hou decimal(20, 9)
 );
 create unique index equity_code_date_category on equity(code, date, category);
+
+insert into basic_info (code, name) value ('0000001', '上证指数'), ('1399001', '深证成指'), ('1399006', '创业板指'), ('0000688', '科创50)');
+commit;

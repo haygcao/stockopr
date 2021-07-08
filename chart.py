@@ -607,7 +607,10 @@ class DataFinanceDraw(object):
         self.add_channel(data)
         self.add_stop_loss(data)
         self.add_market()
-        self.add_rps(self.get_window(data))
+        if self.period.startswith('m'):
+            self.add_macd(data)
+        else:
+            self.add_rps(self.get_window(data))
 
         # data = data.iloc[-100:]
 
@@ -617,9 +620,6 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(exp13), type='line', width=width+0.2, color=dimgrey),
             mpf.make_addplot(self.get_window(exp26), type='line', width=width+0.1, color=black),
         ])
-
-        # if self.show_macd:
-        #     self.add_macd(data)
 
         self.compute_timestamp = datetime.datetime.now().timestamp()
 

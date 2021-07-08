@@ -1,9 +1,10 @@
-#-*- encoding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 
 import urllib.request
 import re
 import time
 import json
+
 
 def get_price_urllib(stock_code):
     exchange = "0" if (int(stock_code) // 100000 == 6) else "1"
@@ -35,6 +36,7 @@ def get_price_urllib(stock_code):
         val_list.append(val)
 
     return tuple(val_list)
+
 
 #国内股票数据：指数
 def getChinaStockIndexInfo(stockCode, period):
@@ -72,6 +74,7 @@ def getChinaStockIndexInfo(stockCode, period):
     finally:
         None
 
+
 def getChinaStockIndividualPriceInfoTx(stockCode):
     try:
         exchange = "sh" if (int(stockCode) // 100000 == 6) else "sz"
@@ -90,21 +93,22 @@ def getChinaStockIndividualPriceInfoTx(stockCode):
         else:
             return None
 
-        stockName   = stockInfo[1]  #名称
-        stockStart  = stockInfo[5]  #开盘
-        stockLastEnd= stockInfo[4]  #昨收盘
-        stockCur    = stockInfo[3]  #当前
-        stockMax    = stockInfo[41]  #最高
-        stockMin    = stockInfo[42]  #最低
-        stockUp     = round(float(stockCur) - float(stockLastEnd), 2)
+        stockName = stockInfo[1]  # 名称
+        stockStart = stockInfo[5]  # 开盘
+        stockLastEnd = stockInfo[4]  # 昨收盘
+        stockCur = stockInfo[3]  # 当前
+        stockMax = stockInfo[41]  # 最高
+        stockMin = stockInfo[42]  # 最低
+        stockUp = round(float(stockCur) - float(stockLastEnd), 2)
         stockVol = stockInfo[6]
         date = stockInfo[30]
         stockDate = '{}-{}-{}'.format(date[:4],date[4:6],date[6:8])
 
-        return {"name":stockName, 'trade_date':stockDate, 'code':stockCode, 'open':stockStart, 'high':stockMax, 'low':stockMin, 'close':stockCur, 'volume':stockVol, 'adj_close':0}
+        return {"name": stockName, 'trade_date': stockDate, 'code': stockCode, 'open': stockStart, 'high': stockMax, 'low': stockMin, 'close': stockCur, 'volume': stockVol, 'adj_close': 0}
     except Exception as e:
         print(e, stockCode)
         return None
+
 
 #国内股票数据：个股
 def getChinaStockIndividualPriceInfoWy(stockCode):
@@ -150,6 +154,7 @@ def getChinaStockIndividualPriceInfoWy(stockCode):
     finally:
         None
 
+
 #国内股票数据：个股
 def getChinaStockIndividualPriceInfo(stockCode):
     try:
@@ -171,7 +176,6 @@ def getChinaStockIndividualPriceInfo(stockCode):
         stockMin    = stockInfo[5]  #最低
         stockUp     = round(float(stockCur) - float(stockLastEnd), 2)
         stockRange  = round(100 * float(stockUp) / float(stockLastEnd), 2)
-
 
         #twitter = {'message': content}
         twitter = {"name":stockName, "code":stockCode, "yestclose":stockLastEnd, "open":stockStart, "price":stockCur, "high":stockMax, "low":stockMin, "updown":stockUp, "percent":stockRange}
