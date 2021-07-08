@@ -251,9 +251,13 @@ def compute_market(begin_date, end_date, include_end=False):
 
 # quote
 # insert ignore into
-def insert_into_quote(val_list):
+def insert_into_quote(val_list, ex=False):
     key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
     fmt_list = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s']
+    if ex:
+        key_list.extend(['yest_close', 'price_change', 'percent', 'amplitude'])
+    fmt_list = ['%s' for _ in key_list]
+
     key = ', '.join(key_list)
     fmt = ', '.join(fmt_list)
     sql_str = 'insert ignore into quote ({0}) values ({1})'.format(key, fmt)

@@ -38,10 +38,20 @@ def update_stock_basic_info(xlsfile):
 
 
 # 指数
-def save_sh_index_trade_info():
-    val = quote_www.get_price_urllib('999999')
-    if val:
-        quote_db.insert_into_quote([val,])
+def save_market_index_trade_info():
+    index_list = [
+        '0000001',
+        '1399001',
+        '1399006',
+        '0000688',
+    ]
+    val_list = []
+    for index in index_list:
+        val = quote_www.get_price_urllib(index)
+        if val:
+            val_list.append(val)
+
+    quote_db.insert_into_quote(val_list, ex=True)
 
 
 def save_quote_tx(xls):
@@ -252,7 +262,6 @@ def save_quote_impl(trade_date=None, xls=None):
     # save_quote_tx(xls)
     save_quote_xl()
     # save_quote_wy()
-    # save_sh_index_trade_info()
 
 
 def save_quote():
@@ -273,6 +282,9 @@ def save_quote():
 
     t3 = datetime.datetime.now()
     logger.info('calculate and save market cost [{}]'.format((t3 - t2).seconds, 2))
+
+    save_market_index_trade_info()
+    logger.info('save market index quote')
 
 
 def check_quote(quote1, quote2):

@@ -22,6 +22,9 @@ class AcquireTestCase(unittest.TestCase):
         ret = acquire.check_quote(quote1, quote2)
         print(ret)
 
+    def test_save_market_index_trade_info(self):
+        acquire.save_market_index_trade_info()
+
 
 def suite():
     suite = unittest.TestSuite()

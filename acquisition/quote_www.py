@@ -8,6 +8,7 @@ import json
 
 def get_price_urllib(stock_code):
     exchange = "0" if (int(stock_code) // 100000 == 6) else "1"
+    exchange = '' if len(stock_code) == 7 else exchange
     _stock_code = '{1}{0}'.format(stock_code, exchange)
     if stock_code == '999999':
         _stock_code = '0000001'
@@ -16,12 +17,9 @@ def get_price_urllib(stock_code):
     e = r.find(' }')
     data = json.loads(r[b:e])
     percent = float(data['percent']) * 100
-    percent = round(percent, 2)
-    #print(data['name'], percent, data['time'])
-    #print(stock_code, percent, data['time'])
-    print('{0}\t{1}\t{2}\t{3}'.format(data['symbol'], percent, data['price'], data['time']))
+    data['percent'] = round(percent, 2)
     #key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount'] #mysql
-    key_list = ['trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
+    key_list = ['trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'price_change', 'percent', 'amplitude']
     val_list = [stock_code]
     for key in key_list:
         if key == 'trade_date':
@@ -31,6 +29,14 @@ def get_price_urllib(stock_code):
                 return None
         elif key == 'close':
             val = data['price']
+        elif key == 'yest_close':
+            val = data['yestclose']
+        elif key == 'price_change':
+            val = data['updown']
+        elif key == 'amount':
+            val = data['turnover']
+        elif key == 'amplitude':
+            val = round(100 * (data['high'] - data['low']) / data['yestclose'], 3)
         else:
             val = data[key]
         val_list.append(val)
