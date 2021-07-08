@@ -359,5 +359,5 @@ def get_osc_key(name):
     if 'volume_ad' in name:
         return 'adosc'
     if 'macd' in name:
-        return 'force_index'
+        return 'macd_histogram'
     return name

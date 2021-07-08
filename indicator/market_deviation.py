@@ -185,6 +185,8 @@ def market_deviation_macd(quote, back, period, will, strict=True):
     # MACD 没有新低
     df = macd(quote['close'])
     # import pdb; pdb.set_trace()
+    quote['macd_line'] = df[0]
+    quote['macd_signal'] = df[1]
     quote['macd_histogram'] = df[2]
 
     column_name = 'macd_bull_market_deviation' if will == 1 else 'macd_bear_market_deviation'

@@ -39,7 +39,7 @@ panel_ratios = {
 
 oscillatior = 'force_index'
 # oscillatior = 'volume_ad'
-oscillatior_list = ['force_index', 'volume_ad', 'skdj', 'rsi']
+oscillatior_list = ['macd', 'force_index', 'volume_ad', 'skdj', 'rsi']
 # oscillatior_list = ['force_index']
 show_long_period_dynamical_system = False
 show_signal_detail = False
@@ -355,6 +355,32 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(data_support_20), type='line', width=width, color=color),
         ])
 
+    def add_rps(self, quote):
+        self.n_panels += 1
+
+        quote = relative_price_strength.relative_price_strength(quote, self.period)
+        diff = quote['rps'] - quote['erps']
+        diff_zero = diff.copy()
+        diff_zero[:] = 0
+
+        width = 0.5
+        panel = self.panel_macd
+        self.add_plot.extend([
+            # window
+            # mpf.make_addplot(quote['rps3'], panel=1, type='line', width=width+0.2, color=dimgrey),
+            # mpf.make_addplot(quote['rps10'], panel=1, type='line', width=width+0.2, color=grey),
+            # mpf.make_addplot(quote['rps20'], panel=1, type='line', width=width+0.2, color=grey),
+            # osc
+            # mpf.make_addplot(quote['rps'], panel=1, type='line', width=width + 0.2, color=grey),
+            # stock.close/market.close
+
+            mpf.make_addplot(diff, panel=panel, type='bar', width=1, color=lightgrey, alpha=0.5),
+            mpf.make_addplot(diff_zero, panel=panel, type='line', width=0.5, color=grey, secondary_y=False),
+
+            mpf.make_addplot(quote['rps'], panel=panel, type='line', width=width, color=dimgrey),
+            mpf.make_addplot(quote['erps'], panel=panel, type='line', width=width, color=grey, linestyle='dashdot'),
+        ])
+
     def add_macd(self, data):
         exp12 = data['close'].ewm(span=12, adjust=False).mean()
         exp26 = data['close'].ewm(span=26, adjust=False).mean()
@@ -378,12 +404,12 @@ class DataFinanceDraw(object):
         data_macd_bull_deviation_single_point = tune_deviation(data_macd_bull_deviation)
         data_macd_bear_deviation_single_point = tune_deviation(data_macd_bear_deviation)
 
-        if self.get_window(data['macd_bull_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bull_market_deviation_single_point), type='scatter',
-                                                   width=1, panel=0, color=green, markersize=50, marker=marker_up), ])
-        if self.get_window(data['macd_bear_market_deviation']).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bear_market_deviation_single_point), type='scatter',
-                                                   width=1, panel=0, color=red, markersize=50, marker=marker_down), ])
+        # if self.get_window(data['macd_bull_market_deviation']).any(skipna=True):
+        #     self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bull_market_deviation_single_point), type='scatter',
+        #                                            width=1, panel=0, color=green, markersize=50, marker=marker_up), ])
+        # if self.get_window(data['macd_bear_market_deviation']).any(skipna=True):
+        #     self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bear_market_deviation_single_point), type='scatter',
+        #                                           width=1, panel=0, color=red, markersize=50, marker=marker_down), ])
 
         self.n_panels += 1
         # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
@@ -581,6 +607,7 @@ class DataFinanceDraw(object):
         self.add_channel(data)
         self.add_stop_loss(data)
         self.add_market()
+        self.add_rps(self.get_window(data))
 
         # data = data.iloc[-100:]
 
@@ -591,8 +618,8 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(exp26), type='line', width=width+0.1, color=black),
         ])
 
-        if self.show_macd:
-            self.add_macd(data)
+        # if self.show_macd:
+        #     self.add_macd(data)
 
         self.compute_timestamp = datetime.datetime.now().timestamp()
 
@@ -625,7 +652,6 @@ class DataFinanceDraw(object):
                                     main_panel=0,
                                     volume_panel=self.panel_volume,
                                     returnfig=True,
-                                    # panel_ratios=(8, 0.2, 1.8),
                                     panel_ratios=panel_ratios[self.n_panels]
                                     )
 
@@ -698,12 +724,13 @@ class DataFinanceDraw(object):
         # 只显示一个振荡指示 panel
         len_osc = 1
 
-        map_index = {
-            'macd_bull_market_deviation': {'data': self.histogram_macd,
-                                           'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
-            'macd_bear_market_deviation': {'data': self.histogram_macd,
-                                           'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
-        }
+        # map_index = {
+        #     'macd_bull_market_deviation': {'data': self.histogram_macd,
+        #                                    'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
+        #     'macd_bear_market_deviation': {'data': self.histogram_macd,
+        #                                    'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
+        # }
+        map_index = {}
         for i, osc in enumerate(oscillatior_list):
             # 只显示一个振荡指示 panel
             if osc != oscillatior:
@@ -784,7 +811,8 @@ class DataFinanceDraw(object):
             unit1 = yminor_unit * 0.01
             # unit1 = 0
 
-            draw_minor = 'macd' in column_name or oscillatior in column_name
+            # draw_minor = 'macd' in column_name or oscillatior in column_name
+            draw_minor = oscillatior in column_name
             data2 = self.get_window(map_index[column_name]['data']) if draw_minor else None
             ax2 = map_index[column_name]['ax']  if draw_minor else -1
             # high = self.get_window(data2).max()

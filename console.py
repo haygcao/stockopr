@@ -35,6 +35,11 @@ sys.coinit_flags = 2
 import pywinauto
 
 
+g_periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
+g_periods.reverse()
+g_indicators = ['macd', 'force_index', 'adosc', 'skdj', 'rsi']
+
+
 def list_to_str(list_: list):
     return '|'.join([str(i) for i in list_])
 
@@ -63,8 +68,8 @@ class Panel(QWidget):
 
         self.signals = {}
         self.code = '300502'
-        self.period = 'week'
-        self.indicator = 'force_index'
+        self.period = g_periods[0]
+        self.indicator = g_indicators[0]
         self.monitor_proc = None
         self.check_thread = None
         self.rlock = threading.RLock()
@@ -93,9 +98,8 @@ class Panel(QWidget):
         btn_load.clicked.connect(self.load)
 
         combo_period = QComboBox(self)
-        periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
-        periods.reverse()
-        for period in periods:
+
+        for period in g_periods:
             combo_period.addItem(period)
 
         # comboPeriod.move(50, 50)
@@ -104,8 +108,8 @@ class Panel(QWidget):
         combo_period.activated[str].connect(self.on_activated_period)
 
         combo_indictor = QComboBox(self)
-        indicators = ['force_index', 'adosc', 'skdj', 'rsi',]
-        for indicator in indicators:
+
+        for indicator in g_indicators:
             combo_indictor.addItem(indicator)
         combo_indictor.activated[str].connect(self.on_activated_indicator)
 

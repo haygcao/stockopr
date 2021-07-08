@@ -25,9 +25,14 @@ def compute_rps_percent(quote, market, n):
 def compute_rps(quote, market, n):
     percent: pandas.Series = quote.close / market.close
     percent[-1] = percent[-2] if numpy.isnan(percent[-1]) else percent[-1]
-    quote.loc[:, 'rps'] = percent
-    quote.loc[:, 'erps'] = percent.ewm(span=n, adjust=False).mean()
-    return quote
+    # percent.iat[-1] = percent[-2] if numpy.isnan(percent[-1]) else percent[-1]
+
+    quote_copy = quote.copy()
+    quote_copy.loc[:, 'rps'] = percent.loc[:]
+
+    quote_copy.loc[:, 'erps'] = percent.ewm(span=n, adjust=False).mean()
+
+    return quote_copy
 
 
 def relative_price_strength(quote, period='day'):
