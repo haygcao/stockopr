@@ -180,10 +180,13 @@ if __name__ == '__main__':
     if not os.path.exists('data/csv'):
         os.makedirs('data/csv')
 
+    market_index_list = [
+        '0000001',
+        '1399001',
+        '1399006',
+        '0000688']
     _stock_list = basic.get_all_stock_code()
-    #_stock_list = ['002806', '300517', '300523', '300525', '601966', '603069']
-    #_stock_list = ['002425']
-    print(_stock_list)
+    _stock_list.extend(market_index_list)
 
     idx_max = 3
     idx = idx_max

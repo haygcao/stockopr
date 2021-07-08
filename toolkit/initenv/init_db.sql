@@ -17,9 +17,25 @@ use stock;
 create table if not exists basic_info(
     code varchar(8),
     name varchar(16),
+    industry_tdx varchar(16),
+    industry_zjh varchar(16),
+    industry_sw varchar(16),
     price_divisor_date date,
     price_divisor_adj_price decimal(10, 3),
     type varchar(8) default 'A');
+
+-- 板块指数(通达信)
+-- type 说明:
+-- 2 通达信行业板块 3 地区板块 4 概念板块 5 风格板块 8 证监会行业板块
+create table if not exists index_info(
+    code varchar(8),
+    name varchar(16),
+    type int,
+    major int,
+    minor int,
+    industry varchar(16),
+    update_date date,
+    PRIMARY key (code));
 
 CREATE TABLE future_variety (
     code varchar(8),
@@ -141,6 +157,10 @@ create table account_detail (
 
 -- 索引
 create unique index basic_info_code on basic_info(code);
+create index basic_info_industry_tdx on basic_info(industry_tdx);
+-- create index basic_info_industry_zjh on basic_info(industry_zjh);
+-- create index basic_info_industry_sw on basic_info(industry_sw);
+
 
 -- create index quote_code on quote(code);
 create index quote_trade_date on quote(trade_date);
@@ -281,5 +301,5 @@ create table equity(
 );
 create unique index equity_code_date_category on equity(code, date, category);
 
-insert into basic_info (code, name) value ('0000001', '上证指数'), ('1399001', '深证成指'), ('1399006', '创业板指'), ('0000688', '科创50)');
+insert into index_info (code, name) value ('0000001', '上证指数'), ('1399001', '深证成指'), ('1399006', '创业板指'), ('0000688', '科创50)');
 commit;

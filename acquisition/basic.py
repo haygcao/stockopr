@@ -169,7 +169,7 @@ def update_stock_name():
 def get_stock_code(name):
     with mysqlcli.get_cursor() as c:
         try:
-            sql = 'select code from {0} where name like "{1}%"'.format(config.sql_tab_basic_info, name)
+            sql = "select code from {0} where type = 'A' and name like '{1}%'".format(config.sql_tab_basic_info, name)
             c.execute(sql)
             # name = c.fetchall()
             r = c.fetchone()
