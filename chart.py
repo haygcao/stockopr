@@ -73,6 +73,12 @@ marker_up = '^'
 marker_down = 'v'
 
 
+def is_market_index(code):
+    if len(code) > 6:
+        return True
+    return False
+
+
 def import_csv(path):
     # 导入股票数据
     df = pandas.read_csv(path, encoding='gbk')
@@ -209,11 +215,12 @@ class DataFinanceDraw(object):
         count = self.count
         if not is_long_period(self.period):
             count *= 5
-        if self.period not in ['week', 'day'] or dt.istradetime():
-            self.data_origin = tx.get_kline_data(code, self.period, count)
-        else:
+        if is_market_index(self.code) or (self.period in ['week', 'day'] and not dt.istradetime()):
             period_type = config.period_map[self.period]['period']
             self.data_origin = quote_db.get_price_info_df_db(code, count, period_type=period_type)
+        else:
+            self.data_origin = tx.get_kline_data(code, self.period, count)
+
         # self.data_long_period_origin = tx.get_min_data(code, period, count)
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
@@ -364,11 +371,12 @@ class DataFinanceDraw(object):
             # mpf.make_addplot(quote['rps'], panel=1, type='line', width=width + 0.2, color=grey),
             # stock.close/market.close
 
-            mpf.make_addplot(diff, panel=panel, type='bar', width=1, color=lightgrey, alpha=0.5),
-            mpf.make_addplot(diff_zero, panel=panel, type='line', width=0.5, color=grey, secondary_y=False),
+            mpf.make_addplot(self.get_window(diff)
+                             , panel=panel, type='bar', width=1, color=lightgrey, alpha=0.5),
+            mpf.make_addplot(self.get_window(diff_zero), panel=panel, type='line', width=0.5, color=grey, secondary_y=False),
 
-            mpf.make_addplot(quote['rps'], panel=panel, type='line', width=width, color=dimgrey),
-            mpf.make_addplot(quote['erps'], panel=panel, type='line', width=width, color=grey, linestyle='dashdot'),
+            mpf.make_addplot(self.get_window(quote['rps']), panel=panel, type='line', width=width, color=dimgrey),
+            mpf.make_addplot(self.get_window(quote['erps']), panel=panel, type='line', width=width, color=grey, linestyle='dashdot'),
         ])
 
     def add_macd(self, data):
@@ -521,6 +529,45 @@ class DataFinanceDraw(object):
         self.add_plot.append(mpf.make_addplot(
             self.get_window(market['close']), panel=0, type='line', width=0.5, color=light_blue, secondary_y=True))
 
+    def add_market_indicator(self, quote):
+        period = self.period
+        # quote = quote_db.get_price_info_df_db('maq', days=250, period_type=config.period_map[period]['period'])
+        market = new_high_new_low.new_high_new_low(quote, period)
+
+        width = 0.5
+        panel = self.panel_oscillation
+        if oscillatior == 'nhnl':
+            nh_y = 100 * market['new_high_y'] / market['count']
+            nl_y = -100 * market['new_low_y'] / market['count']
+            hl = nh_y + nl_y
+            hl_zero = hl.copy()
+            hl_zero.loc[:] = 0
+            self.add_plot.extend([
+                mpf.make_addplot(self.get_window(nh_y), panel=panel, type='line', linestyle='dashdot', width=width, color=grey, title='NL',
+                                 y_on_right=True),
+                mpf.make_addplot(self.get_window(nl_y), panel=panel, type='line', linestyle='dashdot', width=width, color=grey,
+                                 secondary_y=False),
+                mpf.make_addplot(self.get_window(hl), panel=panel, type='line', width=width, color=dimgrey, secondary_y=False),
+                mpf.make_addplot(self.get_window(hl_zero), panel=panel, type='line', width=width, color=grey, secondary_y=False),
+            ])
+        elif oscillatior == 'adl':
+            ad = advance_decline.advance_decline(quote)
+            self.add_plot.extend([
+                mpf.make_addplot(self.get_window(ad), panel=panel, type='line', width=width, color=dimgrey, title='A/D', y_on_right=True),
+                # mpf.make_addplot(ad_zero, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
+            ])
+        elif oscillatior == 'ema_over':
+            up_ema52 = up_ema.up_ema(quote, period)
+            up_ema_h = up_ema52.copy()
+            up_ema_h.loc[:] = 75
+            up_ema_l = up_ema52.copy()
+            up_ema_l.loc[:] = 25
+            self.add_plot.extend([
+                mpf.make_addplot(self.get_window(up_ema52), panel=panel, type='line', width=width, color=dimgrey, ylabel='EMA_OVER'),
+                mpf.make_addplot(self.get_window(up_ema_h), panel=panel, type='line', width=width, color=dimgrey, secondary_y=False),
+                mpf.make_addplot(self.get_window(up_ema_l), panel=panel, type='line', width=width, color=dimgrey, secondary_y=False),
+            ])
+
     def more_panel_draw(self):
         data = None
         data = self.data_origin  # .iloc[-100:]
@@ -537,25 +584,29 @@ class DataFinanceDraw(object):
         self.data = data
 
         self.add_signal(data)
-        self.add_oscillations(data)
         self.add_resistance_support(data)
         self.add_dynamical_system(data)
         self.add_channel(data)
         self.add_stop_loss(data)
         self.add_market()
-        if self.period.startswith('m'):
-            self.add_macd(data)
-        else:
-            self.add_rps(self.get_window(data))
-
-        # data = data.iloc[-100:]
 
         width = 0.5
         color = dimgrey
         self.add_plot.extend([
-            mpf.make_addplot(self.get_window(exp13), type='line', width=width+0.2, color=dimgrey),
-            mpf.make_addplot(self.get_window(exp26), type='line', width=width+0.1, color=black),
+            mpf.make_addplot(self.get_window(exp13), type='line', width=width + 0.2, color=dimgrey),
+            mpf.make_addplot(self.get_window(exp26), type='line', width=width + 0.1, color=black),
         ])
+
+        if is_market_index(self.code):
+            self.add_market_indicator(data)
+        else:
+            self.add_oscillations(data)
+            if self.period.startswith('m'):
+                self.add_macd(data)
+            else:
+                self.add_rps(data)
+
+        # data = data.iloc[-100:]
 
         self.compute_timestamp = datetime.datetime.now().timestamp()
 
@@ -869,41 +920,6 @@ def show_indicator(code, period, indicator):
     mpf.plot(quote[-250:], type="candle", addplot=add_plot)
 
 
-def show_market(period):
-    quote = quote_db.get_price_info_df_db('maq', days=250, period_type=config.period_map[period]['period'])
-    market = new_high_new_low.new_high_new_low(quote, period)
-    nh_y = 100 * market['new_high_y'] / market['count']
-    nl_y = -100 * market['new_low_y'] / market['count']
-    hl = nh_y + nl_y
-    hl_zero = hl.copy()
-    hl_zero.loc[:] = 0
-
-    up_ema52 = up_ema.up_ema(quote, period)
-    up_ema_h = up_ema52.copy()
-    up_ema_h.loc[:] = 75
-    up_ema_l = up_ema52.copy()
-    up_ema_l.loc[:] = 25
-
-    ad = advance_decline.advance_decline(quote)
-
-    add_plot = []
-    width = 0.5
-    add_plot.extend([
-        mpf.make_addplot(nh_y, panel=1, type='line', linestyle='dashdot', width=width, color=grey, title='NL', y_on_right=True),
-        mpf.make_addplot(nl_y, panel=1, type='line', linestyle='dashdot', width=width, color=grey, secondary_y=False),
-        mpf.make_addplot(hl, panel=1, type='line', width=width, color=dimgrey, secondary_y=False),
-        mpf.make_addplot(hl_zero, panel=1, type='line', width=width, color=grey, secondary_y=False),
-
-        mpf.make_addplot(ad, panel=2, type='line', width=width, color=dimgrey, title='A/D', y_on_right=True),
-        # mpf.make_addplot(ad_zero, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
-
-        mpf.make_addplot(up_ema52, panel=3, type='line', width=width, color=dimgrey, ylabel='EMA_OVER'),
-        mpf.make_addplot(up_ema_h, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
-        mpf.make_addplot(up_ema_l, panel=3, type='line', width=width, color=dimgrey, secondary_y=False),
-    ])
-    mpf.plot(quote[-250:], type="line", addplot=add_plot, panel_ratios=[6.01, 1.33, 1.33, 1.33])  # [7, 1, 1, 1])  # [4.99, 1.67, 1.67, 1.67])
-
-
 if __name__ == "__main__":
     # show_market('day')
     # exit(0)
@@ -919,9 +935,10 @@ if __name__ == "__main__":
     # code = '000625'
     # code = '600588'
     # code = '601633'
+    code = '0000001'
     period = 'day'  # m5 m30 day week
-    open_graph(code, period, OscIndicator.FORCE_INDEX.value, 'data/csv/' + code + '.csv')
-    # open_graph(code, period)
+    # open_graph(code, period, OscIndicator.FORCE_INDEX.value, 'data/csv/' + code + '.csv')
+    open_graph(code, period, 'nhnl')
 
     # code = '000001'
     # candle = DataFinanceDraw(code)

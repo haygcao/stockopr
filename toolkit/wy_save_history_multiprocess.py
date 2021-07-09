@@ -99,7 +99,14 @@ def save_csv(file_csv, start_date):
 
                     for idx in indice:
                         val_list.append(row[idx] if row[idx] and row[idx] != 'None' else 0)
-                    if float(row[7]) == 0:
+
+                    ignore = False
+                    for i in [4, 5, 7]:
+                        if not row[i] or row[i] == 'None':
+                            ignore = True
+                            break
+
+                    if ignore:
                         val_list.append(0.0)
                     else:
                         val_list.append(round((float(row[4]) - float(row[5])) / float(row[7]) * 100, 2))
@@ -118,7 +125,7 @@ def save_csv(file_csv, start_date):
 def save(csv_queue):
     ok = False
     start_date = datetime.datetime(2010, 1, 1)
-    start_date = datetime.datetime(2021, 5, 25)
+    # start_date = datetime.datetime(2021, 5, 25)
 
     while True:
         file_csv = ''
@@ -147,13 +154,19 @@ if __name__ == '__main__':
 
     #stock_list = get_stock_list_from_file()
     stock_list = basic.get_all_stock_code()
-    #stock_list = ['600839']
+    tmp_list = [
+        '0000001',
+        '1399001',
+        '1399006',
+        '0000688']
+    stock_list.extend(tmp_list)
     file_list = get_file_list(stock_list)
     #print(file_list[0])
     #
     for file_csv in file_list:
-        # if len(file_csv.split('/')[-1]) == 10:
-        #     continue
+        # 处理市场指数
+        if len(file_csv.split('/')[-1]) == 10:
+            continue
         if not os.path.exists(file_csv):
             print(file_csv, 'not exist')
             continue

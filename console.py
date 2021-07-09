@@ -8,6 +8,7 @@ import threading
 import time
 import warnings
 
+import pandas
 import psutil
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt
@@ -38,6 +39,7 @@ import pywinauto
 g_periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
 g_periods.reverse()
 g_indicators = ['macd', 'force_index', 'adosc', 'skdj', 'rsi']
+g_market_indicators = ['nhnl', 'adl', 'ema_over']
 
 
 def list_to_str(list_: list):
@@ -109,7 +111,9 @@ class Panel(QWidget):
 
         combo_indictor = QComboBox(self)
 
-        for indicator in g_indicators:
+        indicators = g_indicators
+        indicators.extend(g_market_indicators)
+        for indicator in indicators:
             combo_indictor.addItem(indicator)
         combo_indictor.activated[str].connect(self.on_activated_indicator)
 
@@ -233,25 +237,26 @@ class Panel(QWidget):
         if not text:
             return
 
-        maq = 'maq'
-        if len(text) > 1 and text[0] not in '036' and text[-1] == ';':
-            if text.startswith(maq):
-                text = maq
-            else:
-                text = basic.get_stock_code(text[:-1])
-
-        if len(text) < 1 or (not text.endswith(';') and not re.match('[0-9]{6}', text) and text != maq):
+        # if len(text) < 1 or (not text.endswith(';') and not re.match('[0-9]{6}', text) and text != maq):
+        if not text.endswith(';'):
             return
 
-        self.code = text
+        maq = 'maq'
+        if text.startswith(maq) and not re.match('[0-9]{6}', text):
+            self.code = basic.get_stock_code(text[:-1])
+        else:
+            self.code = text[:-1]
 
         self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
         self.lbl.adjustSize()
 
-        if len(text) < 6 or text == maq:
+        # 市场指数长度为 7, 行业指数长度为 6, 且以 '88' 开始
+        if len(self.code) == 6 and self.code[0] in '036':
             return
 
         quote = tx.get_realtime_data_sina(self.code)
+        if not isinstance(quote, pandas.DataFrame):
+            return
 
         self.count_or_price[0] = quote['close'][-1]
         self.qle_count_or_price.setText(list_to_str(self.count_or_price))
@@ -321,7 +326,11 @@ class Panel(QWidget):
 
     def show_chart(self):
         print('{} {}'.format(self.code, self.period))
-        p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, self.indicator))
+        if len(self.code) == 7:
+            indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
+        else:
+            indicator = self.indicator if self.indicator in g_indicators else g_indicators[0]
+        p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, indicator))
         p.start()
         p.join(timeout=1)
         # open_graph(self.code, self.period)
@@ -335,7 +344,8 @@ class Panel(QWidget):
 
     def show_market(self):
         print('{} {}'.format(self.code, self.period))
-        p = multiprocessing.Process(target=chart.show_market, args=(self.period,))
+        indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
+        p = multiprocessing.Process(target=chart.show_market, args=(self.period, indicator))
         p.start()
         p.join(timeout=1)
 

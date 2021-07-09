@@ -33,8 +33,8 @@ def gen_cache_path(code, date, period):
 
 
 def get_cache_file(code, period):
-    file = gen_cache_path(code, datetime.date.today(), period)
-    dir_name = os.path.dirname(file)
+    cache_file = gen_cache_path(code, datetime.date.today(), period)
+    dir_name = os.path.dirname(cache_file)
     file_list = os.listdir(dir_name)
     for file in file_list:
         file = os.path.join(dir_name, file)
@@ -42,14 +42,14 @@ def get_cache_file(code, period):
         if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3 * 60:
             os.remove(file)
 
-    if not os.path.exists(file):
+    if not os.path.exists(cache_file):
         return
 
     # fname = pathlib.Path(file)
     # if not fname.exists():
     #     return
 
-    return file
+    return cache_file
 
 
 def dump(data, period):

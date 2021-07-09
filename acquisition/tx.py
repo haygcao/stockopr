@@ -132,6 +132,8 @@ def get_today_all():
 
 def get_realtime_data_sina(code):
     data_arr = get_realtime_quote_sina(code)
+    if not data_arr or len(data_arr) < 8:
+        return None
     open = float(data_arr[1])
     close = float(data_arr[3])
     high = float(data_arr[4])
