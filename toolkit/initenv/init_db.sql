@@ -15,7 +15,7 @@ use stock;
 -- 基本信息，代码，名称，市盈率，市净率，板块，概念，
 -- 板块使用id
 create table if not exists basic_info(
-    code varchar(8),
+    code varchar(8) NOT NULL,
     name varchar(16),
     industry_tdx varchar(16),
     industry_zjh varchar(16),
@@ -28,7 +28,7 @@ create table if not exists basic_info(
 -- type 说明:
 -- 2 通达信行业板块 3 地区板块 4 概念板块 5 风格板块 8 证监会行业板块
 create table if not exists index_info(
-    code varchar(8),
+    code varchar(8) NOT NULL,
     name varchar(16),
     type int,
     major int,
@@ -51,7 +51,7 @@ CREATE TABLE future_variety (
 -- create table if not exists quote (code varchar(8), trade_date date, open float, high float, low float, close float, volume bigint, turnover bigint);
 -- xr 即 exit right, 除权
 create table if not exists quote (
-    code varchar(8),
+    code varchar(8) NOT NULL,
     trade_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     close float,
     high float,

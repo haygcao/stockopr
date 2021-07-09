@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from acquisition import acquire, quote_db
+from acquisition import acquire, quote_db, quote_tdx
 from util import dt
 
 
@@ -25,6 +25,26 @@ class AcquireTestCase(unittest.TestCase):
     def test_save_market_index_trade_info(self):
         acquire.save_market_index_trade_info()
 
+    def test_tdx_basic_info(self):
+        market = 'shm.tnf'
+        market = 'szm.tnf'
+        infos = quote_tdx.basic_info('C:/new_tdx/T0002/hq_cache/' + market)  # szm.tnf
+        for t in infos:
+            if '300502' in t[0]:
+                print(t)
+        print(infos)
+
+    def test_tdx_quote(self):
+        import os
+        path = 'C:/new_tdx/vipdoc/sz/lday/'
+        file_list = os.listdir('C:/new_tdx/vipdoc/sz/lday/')
+        for i in file_list:
+            if i == 'sz300502.day':
+                quote = quote_tdx.parse_quote(path + i)
+                break
+        path = 'C:/new_tdx/vipdoc/sz/lday/sz300502.day'
+        quote = quote_tdx.parse_quote(path)
+        print(quote)
 
 def suite():
     suite = unittest.TestSuite()

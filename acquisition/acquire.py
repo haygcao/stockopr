@@ -17,6 +17,7 @@ import acquisition.quote_db as quote_db
 import acquisition.quote_www as quote_www
 
 # timeout in seconds
+from acquisition import industry_index
 from util import dt
 from util.log import logger
 
@@ -285,6 +286,9 @@ def save_quote():
 
     save_market_index_trade_info()
     logger.info('save market index quote')
+
+    industry_index.update_index_quote(start_date=today)
+    logger.info('save industry index quote')
 
 
 def check_quote(quote1, quote2):

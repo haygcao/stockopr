@@ -2,6 +2,8 @@ import os
 import struct
 import datetime
 
+import pandas
+
 
 def basic_info(filepath):
     """
@@ -35,11 +37,10 @@ def basic_info(filepath):
     return infos
 
 
-def stock_csv(filepath, name):
-    data = []
+def parse_quote(filepath, start_date=None, end_date=None):
+    code = os.path.basename(filepath)[2:-4]
+    quote = []
     with open(filepath, 'rb') as f:
-        file_object_path = 'D:/new_tdx/quote/sh/' + name +'.csv'
-        file_object = open(file_object_path, 'w+')
         while True:
             stock_date = f.read(4)
             stock_open = f.read(4)
@@ -69,27 +70,16 @@ def stock_csv(filepath, name):
             stock_reservation = struct.unpack("l", stock_reservation)
             # 格式化日期
             date_format = datetime.datetime.strptime(str(stock_date[0]), '%Y%M%d')
-            list = date_format.strftime('%Y-%M-%d') + "," + str(stock_open[0] / 100) + "," + str(
-                stock_high[0] / 100.0) + "," + str(stock_low[0] / 100.0) + "," + str(
-                stock_close[0] / 100.0) + "," + str(stock_vol[0]) + "\r\n"
 
-            file_object.writelines(list)
-        file_object.close()
+            if start_date and date_format.date() < start_date:
+                continue
+            if end_date and date_format.date() >= end_date:
+                continue
 
+            row = (code, date_format.strftime('%Y-%M-%d'), str(stock_open[0] / 100), str(
+                stock_high[0] / 100.0), str(stock_low[0] / 100.0),  str(
+                stock_close[0] / 100.0), str(stock_amount[0]), str(stock_vol[0]))
+            quote.append(row)
 
-if __name__ == '__main__':
-    market = 'shm.tnf'
-    market = 'szm.tnf'
-    infos = basic_info('C:/new_tdx/T0002/hq_cache/' + market)  # szm.tnf
-    for t in infos:
-        if '300502' in t[0]:
-            print(t)
-    print(infos)
-    exit(0)
-
-    path = 'C:/new_tdx/vipdoc/sh/lday/'
-    file_list = os.listdir('C:/new_tdx/vipdoc/sh/lday/')
-    for i in file_list:
-        if i == 'sh600839.day':
-            stock_csv(path+i, i[:-4])
-            break
+        df = pandas.DataFrame(quote, columns=['code', 'trade_date', 'open', 'high', 'low', 'close', 'amount', 'volume'])
+        return df

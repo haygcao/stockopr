@@ -1,6 +1,14 @@
 # -*- encoding: utf-8 -*-
+import datetime
+import os
 
+import pandas
+from sqlalchemy import create_engine
+
+from acquisition import quote_tdx
+from config import config
 from util import mysqlcli
+from util.log import logger
 
 
 def save_index_info():
@@ -53,6 +61,41 @@ def update_stock_index_info():
             print(e)
 
 
+def update_index_quote(start_date, end_date=None):
+    index_code_list = []
+    with open(r"C:\new_tdx\T0002\hq_cache\tdxzs.cfg") as f:
+        for line in f:
+            index_code_list.append(line.strip().split('|')[1])
+
+    try:
+        engine = create_engine(
+            'mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user,
+                                                                                  config.db_passwd))
+        quote = pandas.DataFrame()
+        for code in index_code_list:
+            path = 'C:/new_tdx/vipdoc/sh/lday/sh' + code + '.day'
+            if not os.path.exists(path):
+                logger.warning('{} not exists'.format(path))
+                continue
+            df = quote_tdx.parse_quote(path, start_date, end_date)
+            if len(quote) > 1024 * 64:
+                quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
+                # 清空 DataFrame
+                # quote.drop(quote.index, inplace=True)
+                quote = quote.iloc[0:0]
+            quote = quote.append(df)
+
+    except Exception as e:
+        print(e)
+
+
+def save_history():
+    start_date = datetime.date(1986, 12, 12)
+    update_index_quote(start_date)
+
+
 if __name__ == '__main__':
     # save_index_info()
-    update_stock_index_info()
+    # update_stock_index_info()
+    save_history()
+    # update_index_quote(datetime.date(2021, 7, 9))
