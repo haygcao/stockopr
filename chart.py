@@ -370,14 +370,17 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(data_support_20), type='line', width=width, color=color),
         ])
 
-    def add_rps(self, quote):
-        quote = relative_price_strength.relative_price_strength(quote, self.period)
-        diff = quote['rps'] - quote['erps']
+    def add_rps(self, quote, market_index, panel):
+        quote = relative_price_strength.relative_price_strength(quote, self.period, market_index)
+        if market_index != 'maq':
+            market_index = ''
+        rps = 'rps' + market_index
+        erps = 'erps' + market_index
+        diff = quote[rps] - quote[erps]
         diff_zero = diff.copy()
         diff_zero[:] = 0
 
         width = 0.5
-        panel = self.panel_macd
         self.add_plot.extend([
             # window
             # mpf.make_addplot(quote['rps3'], panel=1, type='line', width=width+0.2, color=dimgrey),
@@ -391,8 +394,8 @@ class DataFinanceDraw(object):
                              , panel=panel, type='bar', width=1, color=lightgrey, alpha=0.5),
             mpf.make_addplot(self.get_window(diff_zero), panel=panel, type='line', width=0.5, color=grey, secondary_y=False),
 
-            mpf.make_addplot(self.get_window(quote['rps']), panel=panel, type='line', width=width, color=dimgrey),
-            mpf.make_addplot(self.get_window(quote['erps']), panel=panel, type='line', width=width, color=grey, linestyle='dashdot'),
+            mpf.make_addplot(self.get_window(quote[rps]), panel=panel, type='line', width=width, color=dimgrey),
+            mpf.make_addplot(self.get_window(quote[erps]), panel=panel, type='line', width=width, color=grey, linestyle='dashdot'),
         ])
 
     def add_macd(self, data, panel):
@@ -615,12 +618,16 @@ class DataFinanceDraw(object):
         if is_market_index(self.code):
             self.add_market_indicator(data)
         else:
-            self.add_oscillations(data)
+            if oscillatior == 'rps':
+                self.add_rps(data, market_index='co', panel=self.panel_oscillation)
+            else:
+                self.add_oscillations(data)
+
             self.n_panels += 1
             if self.period.startswith('m'):
                 self.add_macd(data, self.panel_macd)
             else:
-                self.add_rps(data)
+                self.add_rps(data, market_index='maq', panel=self.panel_macd)
 
         # data = data.iloc[-100:]
 
@@ -951,10 +958,10 @@ if __name__ == "__main__":
     # code = '000625'
     # code = '600588'
     # code = '601633'
-    code = '0000001'
+    # code = '0000001'
     period = 'day'  # m5 m30 day week
     # open_graph(code, period, OscIndicator.FORCE_INDEX.value, 'data/csv/' + code + '.csv')
-    open_graph(code, period, 'nhnl')
+    open_graph(code, period, 'rps')
 
     # code = '000001'
     # candle = DataFinanceDraw(code)

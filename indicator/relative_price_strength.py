@@ -22,22 +22,32 @@ def compute_rps_percent(quote, market, n):
     return percent.ewm(span=n, adjust=False).mean()
 
 
-def compute_rps(quote, market, n):
+def compute_rps(quote, market, n, market_index):
     percent: pandas.Series = quote.close / market.close
     percent[-1] = percent[-2] if numpy.isnan(percent[-1]) else percent[-1]
     # percent.iat[-1] = percent[-2] if numpy.isnan(percent[-1]) else percent[-1]
 
+    if market_index != 'maq':
+        market_index = ''
     quote_copy = quote.copy()
-    quote_copy.loc[:, 'rps'] = percent.loc[:]
+    quote_copy.loc[:, 'rps' + market_index] = percent.loc[:]
 
-    quote_copy.loc[:, 'erps'] = percent.ewm(span=n, adjust=False).mean()
+    quote_copy.loc[:, 'erps' + market_index] = percent.ewm(span=n, adjust=False).mean()
 
     return quote_copy
 
 
-def relative_price_strength(quote, period='day'):
+def relative_price_strength(quote, period='day', market_index='maq'):
     period_type = config.period_map[period]['period']
-    market = quote_db.get_price_info_df_db('maq', len(quote), end_date=quote.index[-1], period_type=period_type)
+    if market_index != 'maq':
+        code = str(quote.code[-1])
+        if code[0] == '6':
+            market_index = '0000001'
+        elif code[0] == '0':
+            market_index = '1399001'
+        elif code[0] == '3':
+            market_index = '1399006'
+    market = quote_db.get_price_info_df_db(market_index, len(quote), end_date=quote.index[-1], period_type=period_type)
     # q = quote[~quote.index.isin(market.index)]
 
     # window
@@ -49,6 +59,6 @@ def relative_price_strength(quote, period='day'):
     # s2 = compute_rps(quote, market, 10)
     # quote.loc[:, 'rps'] = s1 - s2
 
-    quote = compute_rps(quote, market, 30)
+    quote = compute_rps(quote, market, 30, market_index)
 
     return quote

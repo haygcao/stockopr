@@ -38,7 +38,7 @@ import pywinauto
 
 g_periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
 g_periods.reverse()
-g_indicators = ['macd', 'force_index', 'adosc', 'skdj', 'rsi']
+g_indicators = ['macd', 'force_index', 'adosc', 'skdj', 'rsi', 'rps']
 g_market_indicators = ['nhnl', 'adl', 'ema_over']
 
 
