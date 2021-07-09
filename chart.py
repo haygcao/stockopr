@@ -314,15 +314,33 @@ class DataFinanceDraw(object):
         if osc != oscillatior:
             return
 
+        if osc == 'macd':
+            self.add_macd(data, self.panel_oscillation)
+            return
+
         panel = self.panel_oscillation  # + oscillatior_list.index(osc)
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel,
                              color=grey, secondary_y=False, title=oscillatior),
-            mpf.make_addplot(self.get_window(data_oscillation), type='line', width=1, panel=panel, color=dimgrey)])
+            mpf.make_addplot(self.get_window(data_oscillation), type='line', width=0.7, panel=panel, color=dimgrey)])
         if self.get_window(data_oscillation_bar).any(skipna=True):
             self.add_plot.extend([
                 mpf.make_addplot(self.get_window(data_oscillation_bar), type='bar', panel=panel,
                                  color=oscillation_color, secondary_y=False)])
+
+        if osc == 'skdj':
+            self.add_plot.append(mpf.make_addplot(
+                self.get_window(data['d']), width=0.7, panel=panel, color=grey, linestyle='dashdot', secondary_y=False))
+        d = {
+            'rsi': (70, 30),
+            'skdj': (80, 20)
+        }
+
+        if osc in d:
+            for val in d[osc]:
+                hline = data_oscillation.mask(data_oscillation.notnull(), val)
+                self.add_plot.append(
+                    mpf.make_addplot(self.get_window(hline), width=0.5, panel=panel, color=grey, secondary_y=False))
 
     def add_oscillations(self, data):
         for osc in oscillatior_list:
@@ -353,8 +371,6 @@ class DataFinanceDraw(object):
         ])
 
     def add_rps(self, quote):
-        self.n_panels += 1
-
         quote = relative_price_strength.relative_price_strength(quote, self.period)
         diff = quote['rps'] - quote['erps']
         diff_zero = diff.copy()
@@ -379,7 +395,7 @@ class DataFinanceDraw(object):
             mpf.make_addplot(self.get_window(quote['erps']), panel=panel, type='line', width=width, color=grey, linestyle='dashdot'),
         ])
 
-    def add_macd(self, data):
+    def add_macd(self, data, panel):
         exp12 = data['close'].ewm(span=12, adjust=False).mean()
         exp26 = data['close'].ewm(span=26, adjust=False).mean()
         macd = exp12 - exp26
@@ -409,7 +425,6 @@ class DataFinanceDraw(object):
         #     self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bear_market_deviation_single_point), type='scatter',
         #                                           width=1, panel=0, color=red, markersize=50, marker=marker_down), ])
 
-        self.n_panels += 1
         # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
         # 如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
 
@@ -429,9 +444,9 @@ class DataFinanceDraw(object):
             [
                 # mpf.make_addplot(self.get_window(histogram_positive, type='bar', width=0.7, panel=2, color='b')),
                 # mpf.make_addplot(self.get_window(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia')),
-                # mpf.make_addplot(self.get_window(macd, panel=self.panel_macd, color=lightgrey)),
-                # mpf.make_addplot(self.get_window(signal, panel=self.panel_macd, color=dimgrey)),
-                mpf.make_addplot(self.get_window(histogram), type='bar', panel=self.panel_macd, color=colors),
+                mpf.make_addplot(self.get_window(macd), width=0.5, panel=panel, color=grey),
+                mpf.make_addplot(self.get_window(macd_signal), width=0.5, panel=panel, color=grey, linestyle='dashdot'),
+                mpf.make_addplot(self.get_window(histogram), type='bar', panel=panel, color=colors),
                 # ), secondary_y=True)
                 # mpf.make_addplot(self.get_window(data_macd_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
                 # mpf.make_addplot(self.get_window(data_macd_bear_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=light_coral, markersize=50, marker=marker_down, secondary_y=False),
@@ -601,8 +616,9 @@ class DataFinanceDraw(object):
             self.add_market_indicator(data)
         else:
             self.add_oscillations(data)
+            self.n_panels += 1
             if self.period.startswith('m'):
-                self.add_macd(data)
+                self.add_macd(data, self.panel_macd)
             else:
                 self.add_rps(data)
 
