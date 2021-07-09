@@ -368,7 +368,7 @@ def create_trade_order(code, price_limited=0):
     quote = tx.get_kline_data(code, 'day')
     quote_week = quote_db.get_price_info_df_db_week(quote, period_type=config.period_map['day']['long_period'])
 
-    quote = signal.compute_signal(quote, 'day')
+    quote = signal.compute_signal(code, 'day', quote)
 
     price = quote['close'].iloc[-1] if price_limited == 0 else price_limited
     stop_loss = quote['stop_loss_full'].iloc[-1]

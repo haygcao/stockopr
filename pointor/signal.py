@@ -1,5 +1,6 @@
 #-*- encoding: utf-8 -*-
-
+import os
+import pathlib
 import time
 import datetime
 
@@ -17,7 +18,60 @@ from config import config
 from indicator import dynamical_system
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
     signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume_ad
+from util import util
 from util.log import logger
+
+
+def gen_cache_path(code, date, period):
+    file = '{}-{}-{}.csv'.format(code, date.strftime('%Y%m%d'), period)
+    root_dir = util.get_root_dir()
+    dir_name = os.path.join(root_dir, 'data', 'cache')  # , file)
+    if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
+
+    return os.path.join(dir_name, file)
+
+
+def get_cache_file(code, period):
+    file = gen_cache_path(code, datetime.date.today(), period)
+    dir_name = os.path.dirname(file)
+    file_list = os.listdir(dir_name)
+    for file in file_list:
+        file = os.path.join(dir_name, file)
+        fname = pathlib.Path(file)
+        if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3 * 60:
+            os.remove(file)
+
+    if not os.path.exists(file):
+        return
+
+    # fname = pathlib.Path(file)
+    # if not fname.exists():
+    #     return
+
+    return file
+
+
+def dump(data, period):
+    file = gen_cache_path(data.code[-1], datetime.date.today(), period)
+    if os.path.exists(file):
+        os.remove(file)
+
+    if 'date' not in data.columns:
+        data.insert(len(data.columns), 'date', data.index)
+    data.to_csv(file)
+
+
+def load(code, period):
+    file = gen_cache_path(code, datetime.date.today(), period)
+    data = pandas.read_csv(file)
+
+    data['date'] = pandas.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S')
+    # 将日期列作为行索引
+    data.set_index(['date'], inplace=True)
+    data.sort_index(ascending=True, inplace=True)
+
+    return data
 
 
 def mktime(_datetime):
@@ -100,7 +154,12 @@ def get_date_period(date, period, quote_date_index):
     return quote_date_index[-1] if ret.empty else ret[0]
 
 
-def compute_signal(quote, period, supplemental_signal_path=None):
+def compute_signal(code, period, quote, supplemental_signal_path=None):
+    file = get_cache_file(code, period)
+    if file:
+        data = load(code, period)
+        return data
+
     # 基础指标 - 动力系统
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
@@ -315,6 +374,8 @@ def compute_signal(quote, period, supplemental_signal_path=None):
     # if 'stop_loss_signal_exit' in quote_copy.columns:
     #     quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
     # quote_copy = signal_stop_loss.signal_exit(quote_copy)
+
+    dump(quote_copy, period)
 
     return quote_copy
 

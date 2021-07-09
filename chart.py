@@ -123,16 +123,6 @@ class DataFinanceDraw(object):
         self.period = period
         self.count = 250
 
-        file = self.gen_cache_path()
-        import pathlib
-        fname = pathlib.Path(file)
-        self.cache = None
-        if fname.exists():
-            if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3*60:
-                os.remove(file)
-            else:
-                self.cache = file
-
         self.show_volume = False
         self.show_macd = True
         self.panel_volume = 1 if self.show_volume else 0
@@ -531,63 +521,9 @@ class DataFinanceDraw(object):
         self.add_plot.append(mpf.make_addplot(
             self.get_window(market['close']), panel=0, type='line', width=0.5, color=light_blue, secondary_y=True))
 
-    def gen_cache_path(self):
-        file = '{}-{}-{}.csv'.format(self.code, datetime.date.today().strftime('%Y%m%d'), self.period)
-        root_dir = util.get_root_dir()
-        dir_name = os.path.join(root_dir, 'data', 'cache')  # , file)
-        if not os.path.exists(dir_name):
-            os.mkdir(dir_name)
-
-        return os.path.join(dir_name, file)
-
-    def dump(self, data):
-        file = self.gen_cache_path()
-        if os.path.exists(file):
-            os.remove(file)
-
-        if 'date' not in data.columns:
-            data.insert(len(data.columns), 'date', data.index)
-        data.to_csv(file)
-
-    def load(self):
-        file = self.gen_cache_path()
-        if not os.path.exists(file):
-            return
-        data = pandas.read_csv(file)
-
-        data['date'] = pandas.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S')
-        # 将日期列作为行索引
-        data.set_index(['date'], inplace=True)
-        data.sort_index(ascending=True, inplace=True)
-
-        return data
-
     def more_panel_draw(self):
         data = None
-        if self.cache:
-            data = self.load()
-
-        if not isinstance(data, pandas.DataFrame):
-            print('no cache')
-            data = self.data_origin  # .iloc[-100:]
-            data = signal.compute_signal(data, self.period)
-
-            data = signal_stop_loss.signal_exit(data)
-            # data = dynamical_system.dynamical_system(data)
-            # triple_screen signal
-            data = signal_dynamical_system.signal_enter(data, period=self.period)
-            data = signal_dynamical_system.signal_exit(data, period=self.period)
-
-            data = signal_channel.signal_enter(data, period=self.period)
-            data = signal_channel.signal_exit(data, period=self.period)
-
-            data = signal_market_deviation.signal_enter(data, self.period)
-            data = signal_market_deviation.signal_exit(data, self.period)
-
-            data = compute_atr(data)
-            data = force_index.force_index(data)
-
-            self.dump(data)
+        data = self.data_origin  # .iloc[-100:]
 
         # IndianRed #CD5C5C   DarkSeaGreen #8FBC8F
 
@@ -870,11 +806,14 @@ def open_graph(code, peroid, indicator, path=None):
     print('indicator: {}, oscillatior: {}'.format(indicator, oscillatior))
     candle = DataFinanceDraw(code, peroid)
 
-    if not candle.cache:
+    if signal.get_cache_file(code, peroid):
+        candle.data_origin = signal.load(code, peroid)
+    else:
         if path:
             candle.load_data(path)
         else:
             candle.fetch_data(code)
+        candle.data_origin = signal.compute_signal(code, peroid, candle.data_origin)
 
     update(candle)
     show(candle)

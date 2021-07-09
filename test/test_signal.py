@@ -8,18 +8,18 @@ from pointor import signal
 
 class SignalTestCase(unittest.TestCase):
     def setUp(self):
-        code = '300502'
+        self.code = '300502'
         self.period = 'week'  # 'm1'  # 'day'
         count = 250 * 5
         # self.quote = get_price_info_df_file_day(code, 250, '2021-5-13', 'data/300502.csv')
         # self.quote = tx.get_kline_data(code, self.period, count)
-        self.quote = quote_db.get_price_info_df_db(code, days=count, period_type='W')
+        self.quote = quote_db.get_price_info_df_db(self.code, days=count, period_type='W')
 
     def tearDown(self):
         pass
 
     def test_compute_signal(self):
-        quote = signal.compute_signal(self.quote, period=self.period)
+        quote = signal.compute_signal(self.code, self.period, self.quote)
         # print(quote[:50])
         # print(quote[-50:])
         print([column for column in quote.columns if 'signal_e' in column])

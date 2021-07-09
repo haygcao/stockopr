@@ -192,8 +192,6 @@ def update_status(code, data, period):
     if check_trade_order_stop_loss(code, data):
         return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
-    data = signal.compute_signal(data, period)
-
     now = datetime.datetime.now()
     index = -1 if now.minute > 55 or period == 'day' else -2
 
@@ -231,7 +229,11 @@ def update_status(code, data, period):
 
 
 def check_period(code, period):
-    data = get_min_data(code, period)
+    if signal.get_cache_file(code, period):
+        data = signal.load(code, period)
+    else:
+        data = get_min_data(code, period)
+        data = signal.compute_signal(code, period, data)
     if not isinstance(data, pandas.DataFrame) or data.empty:
         return
     logger.debug('now check {} {} status'.format(code, period))
