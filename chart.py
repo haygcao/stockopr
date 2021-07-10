@@ -314,15 +314,16 @@ class DataFinanceDraw(object):
         if osc != oscillatior:
             return
 
+        panel = self.panel_oscillation  # + oscillatior_list.index(osc)
+        self.add_plot.append(mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel,
+                         color=grey, secondary_y=False, title=oscillatior))
         if osc == 'macd':
-            self.add_macd(data, self.panel_oscillation)
+            self.add_macd(data, panel)
             return
 
-        panel = self.panel_oscillation  # + oscillatior_list.index(osc)
         self.add_plot.extend([
-            mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel,
-                             color=grey, secondary_y=False, title=oscillatior),
             mpf.make_addplot(self.get_window(data_oscillation), type='line', width=0.7, panel=panel, color=dimgrey)])
+
         if self.get_window(data_oscillation_bar).any(skipna=True):
             self.add_plot.extend([
                 mpf.make_addplot(self.get_window(data_oscillation_bar), type='bar', panel=panel,
@@ -447,8 +448,8 @@ class DataFinanceDraw(object):
             [
                 # mpf.make_addplot(self.get_window(histogram_positive, type='bar', width=0.7, panel=2, color='b')),
                 # mpf.make_addplot(self.get_window(histogram_negative, type='bar', width=0.7, panel=2, color='fuchsia')),
-                mpf.make_addplot(self.get_window(macd), width=0.5, panel=panel, color=grey),
-                mpf.make_addplot(self.get_window(macd_signal), width=0.5, panel=panel, color=grey, linestyle='dashdot'),
+                mpf.make_addplot(self.get_window(macd), width=0.5, panel=panel, color=grey, secondary_y=False),
+                mpf.make_addplot(self.get_window(macd_signal), width=0.5, panel=panel, color=grey, linestyle='dashdot', secondary_y=False),
                 mpf.make_addplot(self.get_window(histogram), type='bar', panel=panel, color=colors),
                 # ), secondary_y=True)
                 # mpf.make_addplot(self.get_window(data_macd_bull_deviation_single_point), type='scatter', width=1, panel=self.panel_macd, color=dark_olive_green3, markersize=50, marker=marker_up, secondary_y=False),
@@ -709,7 +710,7 @@ class DataFinanceDraw(object):
         ax.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
 
         # cursor = Cursor(self.fig, useblit=True, color='red', linewidth=2)
-        cursor = Cursor(axlist[0], useblit=True, color=grey, linewidth=1)
+        cursor = Cursor(axlist[1], useblit=True, color=grey, linewidth=1)
         # axlist[0].yaxis.set_label_position("right")
         # axlist[0].yaxis.tick_right()
         axlist[0].tick_params(axis='y', which='both', labelleft=False, labelright=True)
