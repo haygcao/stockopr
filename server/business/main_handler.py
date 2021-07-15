@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 import json
 
 import tornado.web
@@ -118,3 +119,47 @@ class QueryWithdrawOrderHandler(BaseHandler):
     def post(self):
         order_list = tradeapi.get_order()
         self.write(json.dumps(order_list))
+
+
+class QueryTradeSignalHandler(BaseHandler):
+    def get(self):
+        self.write("Hello, world")
+
+    def post(self):
+        param = self.request.body.decode('utf-8')
+        print(param)
+        param = json.loads(param)
+
+        if 'date' in param and param['date']:
+            date = datetime.datetime.strptime(param['date'], '%Y-%m-%d %H:%M:%S')
+        else:
+            date = None
+
+        from pointor import signal
+        from config import config
+        supplemental_signal_path = config.supplemental_signal_path
+        period = 'day'
+        supplemental_signal = signal.get_supplemental_signal(supplemental_signal_path, period)
+
+        signal_list = []
+        from trade_manager import trade_manager
+        position_list = trade_manager.query_current_position()
+        position_list = [position.code for position in position_list]
+        now = datetime.datetime.now() - datetime.timedelta(minutes=5)
+        for signal_dict in supplemental_signal:
+            if signal_dict['code'] not in position_list:
+                continue
+            if not date:
+                date = now
+
+            if signal_dict['date'] <= date:
+                continue
+
+            if not signal_dict['price']:
+                signal_dict['price'] = 0
+            signal_list.append(signal_dict)
+
+        from util.util import DateEncoder
+        res = json.dumps(signal_list, indent=2, cls=DateEncoder)
+
+        self.write(res)
