@@ -27,9 +27,14 @@ create table if not exists basic_info(
 -- 板块指数(通达信)
 -- type 说明:
 -- 2 通达信行业板块 3 地区板块 4 概念板块 5 风格板块 8 证监会行业板块
+-- eps: 每股收益   bps: 每股资产
 create table if not exists index_info(
     code varchar(8) NOT NULL,
     name varchar(16),
+    eps float,
+    bps float,
+    negotiable_share decimal(20, 6),
+    share decimal(20, 6),
     type int,
     major int,
     minor int,
@@ -64,6 +69,10 @@ create table if not exists quote (
     turnover_ratio float,
     volume bigint,
     amount bigint,
+    per float,
+    pb float,
+    mktcap decimal(20, 6),
+    nmc decimal(20, 6),
     quantity_relative_ratio float,
     amplitude float,
     five_minute float

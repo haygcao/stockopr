@@ -12,27 +12,29 @@ var hq_str_sz300502="新易盛,48.000,47.500,48.210,48.400,47.530,48.210,48.220,
 xl_realtime_quote_url = 'http://hq.sinajs.cn/list={code}'
 
 """
-[{"symbol":"sh688981","code":"688981","name":"\u4e2d\u82af\u56fd\u9645","trade":"55.730","pricechange":0,"changepercent":0,"buy":"0.000","sell":"0.000","settlement":"55.730","open":"0.000","high":"0.000","low":"0.000","volume":0,"amount":0,"ticktime":"09:01:15","per":83.179,"pb":4.368,"mktcap":44029922.58725,"nmc":6106074.169,"turnoverratio":0}]
-[{'symbol': 'sh688981',
-  'code': '688981',
-  'name': '中芯国际',
-  'trade': '55.730',
-  'pricechange': 0,
-  'changepercent': 0,
-  'buy': '0.000',
-  'sell': '0.000',
-  'settlement': '55.730',
-  'open': '0.000',
-  'high': '0.000',
-  'low': '0.000',
-  'volume': 0,
-  'amount': 0,
-  'ticktime': '09:01:15',
-  'per': 83.179,
-  'pb': 4.368,
-  'mktcap': 44029922.58725,
-  'nmc': 6106074.169,
-  'turnoverratio': 0}]
+https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?num=80&sort=code&asc=1&node=hs_a&symbol=&_s_r_a=page&page=1
+[{
+  "symbol": "sz000001",
+  "code": "000001",
+  "name": "\u5e73\u5b89\u94f6\u884c",
+  "trade": "21.410",
+  "pricechange": -0.21,
+  "changepercent": -0.971,
+  "buy": "21.400",
+  "sell": "21.410",
+  "settlement": "21.620",
+  "open": "21.410",
+  "high": "21.820",
+  "low": "21.320",
+  "volume": 30535068,
+  "amount": 657188702,
+  "ticktime": "10:53:51",
+  "per": 15.293,
+  "pb": 1.372,
+  "mktcap": 41548070.861918,
+  "nmc": 41547720.330975,
+  "turnoverratio": 0.15735
+}, ...]
   """
 xl_day_price_url = 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?num=80&sort=code&asc=0&node=%s&symbol=&_s_r_a=page&page=%s'
 

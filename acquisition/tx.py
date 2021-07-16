@@ -12,7 +12,7 @@ import requests
 import xlrd
 
 from acquisition import quote_db, basic
-from config import url as url_config
+from config import url as url_config, config
 from config.config import period_map
 
 import logging
@@ -116,9 +116,9 @@ def get_today_all():
         'changepercent': 'percent',
         'turnoverratio': 'turnover_ratio'
     }, inplace=True)
-    columns = ['code', 'name', 'open', 'close', 'high', 'low', 'volume', 'amount', 'price_change', 'yest_close', 'percent', 'turnover_ratio']
+
     for column in df.columns:
-        if column in columns:
+        if column in config.quote_columns:
             continue
         df = df.drop(column, axis=1)
     #     df = df.ix[df.volume > 0]

@@ -29,6 +29,9 @@ sql_tab_position = ch.sql_table_position
 sql_tab_equity = ch.sql_table_equity
 sql_tab_market = ch.sql_table_market
 
+quote_columns = ['code', 'name', 'open', 'close', 'high', 'low', 'volume', 'amount', 'price_change', 'yest_close',
+                 'percent', 'turnover_ratio', 'per', 'pb', 'mktcap', 'nmc']
+
 charg = ConfigHandler(os.path.join(config_dir, 'config.ini'), 'arg')
 check_per_sec = charg.check_per_sec
 
