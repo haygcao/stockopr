@@ -6,6 +6,11 @@ import random
 import datetime
 import sys
 
+# http://npm.taobao.org/mirrors/chromedriver
+
+# TODO
+# http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=000001&topline=10&year=2019&month=&rt=
+
 sys.path.append(".")
 import util.mysqlcli as mysqlcli
 
@@ -22,25 +27,55 @@ headers = {
 # 85.0.4183.38
 
 
-def get_code(url):
+def init_fund_code(date):
+    url = 'http://fund.eastmoney.com/allfund.html'
     html = requests.get(url, headers=headers)
     html.encoding = 'gbk'
     document = etree.HTML(html.text)
 
     info = document.xpath('// *[ @ id = "code_content"] / div / ul / li / div / a[1] /text()')
-    i = 0
+
+    code_list = []
     for fund in info:
         str = fund.split('）')[0]
         code = str.split('（')[1]
 
-        with open('fund_code.txt', 'a+') as f:
-            f.write(code + '\n')
+        code_list.append(code)
 
-        with open('fund_url.txt', 'a+') as u:
-            fund_url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
-            u.write(fund_url + '\n')
-        i = i + 1
-    print('i:', i)
+    print('{} funds'.format(len(code_list)))
+
+    with open('fund.txt', 'w') as f:
+        for code in code_list:
+            f.writelines(code)
+            f.write('\n')
+
+    insert_fund_code(code_list, date)
+
+
+def query_fund_code():
+    code_list = []
+    sql_str = 'select code from fund_basic'
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.execute(sql_str)
+            r = c.fetchall()
+            for row in r:
+                code_list.append(row['code'])
+        except Exception as e:
+            print(e)
+    return code_list
+
+
+def query_last_date():
+    sql_str = 'select max(date) date from fund_basic'
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.execute(sql_str)
+            r = c.fetchone()
+            date = r['date']
+        except Exception as e:
+            print(e)
+    return date
 
 
 def insert_into_fund_stock(data_arr):
@@ -57,9 +92,20 @@ def insert_into_fund_stock(data_arr):
         except Exception as e:
             print(e)
 
+
+def insert_fund_code(code_list, date):
+    sql_str = 'insert ignore into fund_basic (code, date) values (%s, %s)'
+    val_list = [(code, date) for code in code_list]
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.executemany(sql_str, val_list)
+        except Exception as e:
+            print(e)
+
+
 def insert_or_update_into_fund_basic(data):
     # sql_str = 'insert ignore into fund_basic (code, name, scale) values (%s, %s, %s)'
-    sql_str = 'insert ignore into fund_basic (code, name, scale, last_date) values (%s, %s, %s, %s) as alias ON DUPLICATE KEY UPDATE scale=alias.scale, last_date=alias.last_date'
+    sql_str = 'insert ignore into fund_basic (code, name, scale, date) values (%s, %s, %s, %s) as alias ON DUPLICATE KEY UPDATE scale=alias.scale, name=alias.name'
     key_list = ['fund_code', 'fund_name', 'scale', 'last_date']
     val_list = [data[key] for key in key_list]
     with mysqlcli.get_cursor() as c:
@@ -68,7 +114,9 @@ def insert_or_update_into_fund_basic(data):
         except Exception as e:
             print(e)
 
-def get_info(url, date):
+
+def get_info(code, date):
+    url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
     print(url)
     opt = webdriver.ChromeOptions()
     opt.set_headless()
@@ -160,26 +208,32 @@ def get_info(url, date):
 
 
 if __name__ == "__main__":
-    url = 'http://fund.eastmoney.com/allfund.html'
-    # get_code(url)
-    # exit(0)
-
     # get_info('http://fundf10.eastmoney.com/ccmx_000001.html')
     # exit(0)
 
-    date = datetime.date(2020, 9, 30)
-    begin = False
-    with open('fund_url.txt', 'r') as f:
-        i = 0
-        for url in f.readlines():
-            if url.startswith('BEGIN'):
-                begin = True
-                continue
+    date = datetime.date(2021, 3, 31)
 
-            if not begin:
-                continue
+    date_db = query_last_date()
+    if not date_db or date_db < date:
+        init_fund_code(date)
 
-            get_info(url, date)
-            time.sleep(random.randint(0, 2))
-            i = i + 1
-        print('run times:', i)
+    code_list = query_fund_code()
+    for code in code_list:
+        get_info(code, date)
+        # time.sleep(random.randint(0, 2))
+
+    # begin = False
+    # with open('fund.txt', 'r') as f:
+    #     i = 0
+    #     for code in f.readlines():
+    #         if code.startswith('BEGIN'):
+    #             begin = True
+    #             continue
+    #
+    #         if not begin:
+    #             continue
+    #
+    #         get_info(code, date)
+    #         time.sleep(random.randint(0, 2))
+    #         i = i + 1
+    #     print('run times:', i)

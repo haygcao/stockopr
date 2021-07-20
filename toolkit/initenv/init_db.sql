@@ -186,8 +186,8 @@ create unique index quote_code_trade_date on quote(code,trade_date);
 
 -- current_date() CURRENT_timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, all is ok
 
-create table fund_basic (code varchar(8), name varchar(32), scale decimal(10, 2));
-create unique index fund_basic_code on fund_basic(code);
+create table fund_basic (code varchar(8), name varchar(32), scale decimal(10, 2), `date` date);
+create unique index fund_basic_code_date on fund_basic(code, date);
 
 create table fund_stock (
     fund_code varchar(8),
