@@ -133,7 +133,10 @@ def exists_fund_stock(fund_code, date):
 
 def get_info(code, date):
     root_dir = util.util.get_root_dir()
-    html_path = os.path.join(root_dir, 'data', 'html', '{}.html'.format(code))
+    html_dir = os.path.join(root_dir, 'data', 'html', date.strftime('%Y%m%d'))
+    if not os.path.exists(html_dir):
+        os.makedirs(html_dir)
+    html_path = os.path.join(html_dir, '{}.html'.format(code))
 
     if not os.path.exists(html_path):
         url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
