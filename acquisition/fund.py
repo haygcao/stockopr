@@ -52,12 +52,12 @@ def init_fund_code(date):
     insert_fund_code(code_list, date)
 
 
-def query_fund_code():
+def query_fund_code(date):
     code_list = []
-    sql_str = 'select code from fund_basic'
+    sql_str = 'select code from fund_basic where date = %s and scale is NULL order by code'
     with mysqlcli.get_cursor() as c:
         try:
-            c.execute(sql_str)
+            c.execute(sql_str, (date,))
             r = c.fetchall()
             for row in r:
                 code_list.append(row['code'])
@@ -66,11 +66,11 @@ def query_fund_code():
     return code_list
 
 
-def query_last_date():
-    sql_str = 'select max(date) date from fund_basic'
+def query_last_date(date):
+    sql_str = 'select max(date) date from fund_basic where date = %s'
     with mysqlcli.get_cursor() as c:
         try:
-            c.execute(sql_str)
+            c.execute(sql_str, (date, ))
             r = c.fetchone()
             date = r['date']
         except Exception as e:
@@ -115,6 +115,19 @@ def insert_or_update_into_fund_basic(data):
             print(e)
 
 
+def exists_fund_stock(fund_code, date):
+    sql_str = 'select count(1) count from fund_stock where fund_code = %s and fund_date = %s'
+    sql_str = 'select scale count from fund_basic where code = %s and date = %s'
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.execute(sql_str, (fund_code, date))
+            r = c.fetchone()
+
+            return r['count']
+        except Exception as e:
+            print(e)
+
+
 def get_info(code, date):
     url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
     print(url)
@@ -129,7 +142,8 @@ def get_info(code, date):
 
     with open('jijin1.html', 'w', encoding='utf-8') as f:
         f.write(driver.page_source)
-    time.sleep(1)
+        f.flush()
+
     file = open('jijin1.html', 'r', encoding='utf-8')
     soup = BeautifulSoup(file, 'lxml')
 
@@ -140,7 +154,7 @@ def get_info(code, date):
         scale = soup.select('#bodydiv > div > div.r_cont > div.basic-new > div.bs_gl > p > label > span')[2].get_text().strip().split()[0]
         ind = scale.find('亿元')
         scale = scale[:ind] if ind > 0 else '0'
-        fund_date_max = datetime.date(2000, 1, 1)
+        fund_date_max = date
 
         table = soup.select('#cctable > div > div > table')
         h4 = soup.select('#cctable > div > div > h4')
@@ -156,18 +170,35 @@ def get_info(code, date):
             trs = table[i].select('tbody > tr')
 
             for tr in trs:
-                code = tr.select('td > a')[0].get_text()
-                name = tr.select('td > a')[1].get_text()
-                if i == 0:
-                    price = tr.select('td > span')[0].get_text()
-                    procent = tr.select('td.tor')[2].get_text()
-                    num = tr.select('td.tor')[3].get_text()
-                    market = tr.select('td.tor')[4].get_text()
+                td_code_name = tr.select('td > a')
+                if not td_code_name:
+                    td_code_name = tr.select('td > span')
+                if td_code_name:
+                    code = td_code_name[0].get_text()
+                    name = td_code_name[1].get_text()
                 else:
+                    continue
+
+                if i == 0:
+                    index = [2, 3, 4]
+                    price = tr.select('td > span')[0].get_text()
+                    item = tr.select('td.tor')
+                    if not item:
+                        item = tr.select('td.toc')
+                        index = [4, 5, 6]
+                    procent = item[index[0]].get_text()
+                    num = item[index[1]].get_text()
+                    market = item[index[2]].get_text()
+                else:
+                    index = [0, 1, 2]
                     price = 0
-                    procent = tr.select('td.tor')[0].get_text()
-                    num = tr.select('td.tor')[1].get_text()
-                    market = tr.select('td.tor')[2].get_text()
+                    item = tr.select('td.tor')
+                    if not item:
+                        item = tr.select('td.toc')
+                        index = [2, 3, 4]
+                    procent = item[index[0]].get_text()
+                    num = item[index[1]].get_text()
+                    market = item[index[2]].get_text()
                 try:
                     round(float(price), 2)
                 except ValueError:
@@ -189,15 +220,17 @@ def get_info(code, date):
                 }
                 data_arr.append(data)
 
-            if i == 0:
-                data = {
-                    'fund_code': fund_code,
-                    'last_date': fund_date_max,
-                    'fund_name': fund_name,
-                    'scale': scale
-                }
-                insert_or_update_into_fund_basic(data)
+        if len(data_arr) == 0:
+            return
+
         insert_into_fund_stock(data_arr)
+        data = {
+            'fund_code': fund_code,
+            'last_date': date,
+            'fund_name': fund_name,
+            'scale': scale
+        }
+        insert_or_update_into_fund_basic(data)
 
     except IndexError as e:
         import traceback
@@ -213,14 +246,24 @@ if __name__ == "__main__":
 
     date = datetime.date(2021, 3, 31)
 
-    date_db = query_last_date()
+    date_db = query_last_date(date)
     if not date_db or date_db < date:
         init_fund_code(date)
 
-    code_list = query_fund_code()
+    code_list = query_fund_code(date)
+    with open('fund_code_no_stock_in.txt') as f:
+        import re
+        for line in f:
+            r = re.match('http://fundf10.eastmoney.com/ccmx_([0-9]{6}).html', line)
+            code = r.group(1)
+            get_info(code, date)
+
+    exit(0)
     for code in code_list:
+        if exists_fund_stock(code, date):
+            continue
         get_info(code, date)
-        # time.sleep(random.randint(0, 2))
+        time.sleep(random.randint(0, 2))
 
     # begin = False
     # with open('fund.txt', 'r') as f:
