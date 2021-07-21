@@ -1,4 +1,6 @@
 # coding:utf-8
+import os.path
+
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
@@ -10,6 +12,7 @@ import sys
 
 # TODO
 # http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=000001&topline=10&year=2019&month=&rt=
+import util.util
 
 sys.path.append(".")
 import util.mysqlcli as mysqlcli
@@ -129,32 +132,45 @@ def exists_fund_stock(fund_code, date):
 
 
 def get_info(code, date):
-    url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
-    print(url)
-    opt = webdriver.ChromeOptions()
-    opt.set_headless()
-    driver = webdriver.Chrome(options=opt)
-    driver.maximize_window()
-    driver.get(url)
-    driver.implicitly_wait(5)
-    day = datetime.date.today()
-    today = '%s' % day
+    root_dir = util.util.get_root_dir()
+    html_path = os.path.join(root_dir, 'data', 'html', '{}.html'.format(code))
 
-    with open('jijin1.html', 'w', encoding='utf-8') as f:
-        f.write(driver.page_source)
-        f.flush()
+    if not os.path.exists(html_path):
+        url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
+        print(url)
+        opt = webdriver.ChromeOptions()
+        opt.set_headless()
+        driver = webdriver.Chrome(options=opt)
+        driver.maximize_window()
+        driver.get(url)
+        driver.implicitly_wait(5)
+        day = datetime.date.today()
+        today = '%s' % day
 
-    file = open('jijin1.html', 'r', encoding='utf-8')
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(driver.page_source)
+            f.flush()
+
+    file = open(html_path, 'r', encoding='utf-8')
     soup = BeautifulSoup(file, 'lxml')
 
     try:
         fund = soup.select('#bodydiv > div > div > div.basic-new > div.bs_jz > div.col-left > h4 > a')[0].get_text()
         fund_code = fund.split(' (')[1][:-1]
         fund_name = fund.split(' (')[0]
-        scale = soup.select('#bodydiv > div > div.r_cont > div.basic-new > div.bs_gl > p > label > span')[2].get_text().strip().split()[0]
+        scale_date = soup.select('#bodydiv > div > div.r_cont > div.basic-new > div.bs_gl > p > label > span')[2].get_text().strip().split()
+        scale = scale_date[0]
         ind = scale.find('亿元')
         scale = scale[:ind] if ind > 0 else '0'
-        fund_date_max = date
+
+        import re
+        date_str = re.match('.*([0-9]{4}-[0-9]{2}-[0-9]{2}).*', scale_date[1]).group(1)
+        # fund_date_max = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+        fund_date_max = datetime.date.fromisoformat(date_str)
+        if fund_date_max < date:
+            with open('fund_not_updated.txt', 'a+') as f:
+                f.write(url + '\n')
+            return
 
         table = soup.select('#cctable > div > div > table')
         h4 = soup.select('#cctable > div > div > h4')
@@ -166,7 +182,6 @@ def get_info(code, date):
             fund_date = datetime.date.fromisoformat(fund_date_str)
             if fund_date != date:
                 continue
-            fund_date_max = max(fund_date, fund_date_max)
             trs = table[i].select('tbody > tr')
 
             for tr in trs:
@@ -245,23 +260,25 @@ if __name__ == "__main__":
     # exit(0)
 
     date = datetime.date(2021, 3, 31)
+    date = datetime.date(2021, 6, 30)
 
     date_db = query_last_date(date)
     if not date_db or date_db < date:
         init_fund_code(date)
 
-    code_list = query_fund_code(date)
-    with open('fund_code_no_stock_in.txt') as f:
-        import re
-        for line in f:
-            r = re.match('http://fundf10.eastmoney.com/ccmx_([0-9]{6}).html', line)
-            code = r.group(1)
-            get_info(code, date)
+    # with open('fund_code_no_stock_in.txt') as f:
+    #     import re
+    #     for line in f:
+    #         r = re.match('http://fundf10.eastmoney.com/ccmx_([0-9]{6}).html', line)
+    #         code = r.group(1)
+    #         get_info(code, date)
+    # exit(0)
 
-    exit(0)
+    code_list = query_fund_code(date)
+    # code_list = ['000001']
     for code in code_list:
-        if exists_fund_stock(code, date):
-            continue
+        # if exists_fund_stock(code, date):
+        #     continue
         get_info(code, date)
         time.sleep(random.randint(0, 2))
 
