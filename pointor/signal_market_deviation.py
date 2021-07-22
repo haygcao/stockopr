@@ -2,6 +2,7 @@
 import numpy
 
 from indicator import market_deviation
+from util import dt
 
 
 def signal_one(quote_copy, column):
@@ -23,7 +24,8 @@ def signal_one(quote_copy, column):
     return quote_copy
 
 
-def signal(quote, column_list, period, back_days=125):
+def signal(quote, column_list, period, back_days):
+    back_days = 0 if dt.istradetime() else back_days
     quote = market_deviation.compute_index(quote, period, back_days)
 
     quote_copy = quote.copy()

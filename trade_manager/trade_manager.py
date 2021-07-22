@@ -168,9 +168,9 @@ def update_operation_detail(detail):
     db_handler.save_operation_details([detail])
 
 
-def check_list(quote):
+def check_list(quote, period):
     from indicator import second_stage as second_stage_indicator
-    if not second_stage_indicator.second_stage(quote):
+    if not second_stage_indicator.second_stage(quote, period):
         return ERROR.E_SECOND_STAGE
 
     quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
@@ -214,7 +214,7 @@ def buy(code, price_trade=0, price_limited=0, count=0, period='day', policy: Pol
 
     quote = tx.get_kline_data(code)
     if period == 'day' and policy != Policy.DEVIATION:
-        error = check_list(quote)
+        error = check_list(quote, 'day')
         if error != ERROR.OK:
             popup_warning_message_box_mp(error.value)
             return
@@ -451,7 +451,7 @@ def patrol():
             continue
 
         quote = tx.get_kline_data(position.code)
-        error = check_list(quote)
+        error = check_list(quote, 'day')
         if error != ERROR.OK:
             logger.info('{} - {}'.format(position.code, error.value))
             handle_illegal_position(position, quota)

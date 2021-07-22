@@ -4,11 +4,10 @@ import pandas
 
 from acquisition import quote_db
 from indicator.decorator import computed
-import selector
-from util import macd
+from util import macd, dt
 
 
-def second_stage(quote):
+def second_stage(quote, period):
     """
     股票魔法师 - 第二阶段特点
     1 股票价格在200日(40周)SMA均线以上
@@ -20,26 +19,53 @@ def second_stage(quote):
     7 交易量较大的同周中, 上涨的交易周数量高于下跌的
     """
 
-    ma_xxs = macd.ma(quote.close, 10)['ma']
-    ma_xs = macd.ma(quote.close, 20)['ma']
-    ma_s = macd.ma(quote.close, 50)['ma']
+    if period != 'day':
+        return False
+
+    n = {
+        'xxs': 10,
+        'xs': 20,
+        's': 50,
+        'm': 100,
+        'l': 100,
+        'xl': 150,
+        'xxl': 200
+    }
+    back_day = 120
+
+    # if period == 'day':
+    #     quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+    #
+    # n = {
+    #     'xxs': 2,
+    #     'xs': 4,
+    #     's': 10,
+    #     'm': 20,
+    #     'l': 20,
+    #     'xl': 30,
+    #     'xxl': 40
+    # }
+    # back_day = 24
+
+    ma_xxs = macd.ma(quote.close, n['xxs'])['ma']
+    ma_xs = macd.ma(quote.close, n['xs'])['ma']
+    ma_s = macd.ma(quote.close, n['s'])['ma']
     # ma_m = macd.ma(quote.close, 100)['ma']
-    ma_l = macd.ma(quote.close, 100)['ma']   # 20W
-    ma_xl = macd.ma(quote.close, 150)['ma']   # 30W
+    ma_l = macd.ma(quote.close, n['l'])['ma']   # 20W
+    ma_xl = macd.ma(quote.close, n['xl'])['ma']   # 30W
     # ma_xxl = macd.ma(quote.close, 200)['ma']  # 40W
 
     if quote.close[-1] <= ma_xl.iloc[-1]:
         return False
 
-    ma200_shift = ma_xl.shift(periods=1)
-    diff = ma_xl > ma200_shift
+    ma_xl_shift = ma_xl.shift(periods=1)
+    diff = ma_xl > ma_xl_shift
     if not diff.iloc[-5:].all():
         return False
 
     if ma_xl.iloc[-1] >= ma_l.iloc[-1]:
         return False
 
-    back_day = 120
     low = quote.close.iloc[-back_day:].min()
     if quote.close[-1]/low - 1 < 0.3:
         return False
@@ -81,12 +107,16 @@ def second_stage(quote):
 
 
 @computed(column_name='second_stage')
-def compute_second_stage(quote):
+def compute_second_stage(quote, period='day'):
     mask = pandas.Series(False, index=quote.index)
     size = len(mask)
-    for day in range(120, 0, -1):
-        ret = second_stage(quote[:-day])
-        mask.iat[size - day] = ret
+    back_day = 0 if dt.istradetime() else 120
+    # back_day = 0
+    for day in range(back_day, 0, -1):
+        ret = second_stage(quote[:-day], period)
+        mask.iat[size - 1 - day] = ret
+    ret = second_stage(quote, period)
+    mask.iat[-1] = ret
     quote.insert(len(quote.columns), 'second_stage', mask)
 
     return quote
