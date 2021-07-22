@@ -94,9 +94,9 @@ class Panel(QWidget):
 
         self.btn_tdx = QPushButton('tdx', self)
         self.btn_tdx.clicked.connect(self.open_tdx)
-        self.btn_tdx_prev = QPushButton('prev', self)
+        self.btn_tdx_prev = QPushButton('<-', self)
         self.btn_tdx_prev.clicked.connect(self.open_tdx)
-        self.btn_tdx_next = QPushButton('next', self)
+        self.btn_tdx_next = QPushButton('->', self)
         self.btn_tdx_next.clicked.connect(self.open_tdx)
 
         btn_load = QPushButton('load', self)
@@ -125,8 +125,12 @@ class Panel(QWidget):
 
         qle_code.textChanged[str].connect(self.on_code_changed)
 
-        btn_show_chart = QPushButton('show', self)
-        btn_show_chart.clicked.connect(self.show_chart)
+        self.btn_show_chart = QPushButton('show', self)
+        self.btn_show_chart.clicked.connect(self.show_chart)
+        self.btn_show_chart_prev = QPushButton('<-', self)
+        self.btn_show_chart_prev.clicked.connect(self.show_chart)
+        self.btn_show_chart_next = QPushButton('->', self)
+        self.btn_show_chart_next.clicked.connect(self.show_chart)
 
         pid = util.get_pid_of_python_proc('watch_dog')
         if pid < 0:
@@ -174,7 +178,13 @@ class Panel(QWidget):
         grid.addWidget(self.combo_code, 2, 0)
         grid.addWidget(combo_period, 2, 1)
         grid.addWidget(combo_indictor, 2, 2)
-        grid.addWidget(btn_show_chart, 2, 3)
+
+        h_layout_show_chart = QHBoxLayout()
+        h_layout_show_chart.addWidget(self.btn_show_chart_prev)
+        h_layout_show_chart.addWidget(self.btn_show_chart)
+        h_layout_show_chart.addWidget(self.btn_show_chart_next)
+        grid.addLayout(h_layout_show_chart, 2, 3)
+
         grid.addWidget(btn_load, 2, 4)
         grid.addWidget(self.btn_monitor, 1, 1)
         grid.addWidget(self.btn_update_quote, 1, 2)
@@ -284,16 +294,20 @@ class Panel(QWidget):
 
         self.qle_count_or_price.setText(list_to_str(self.count_or_price))
 
-    def open_tdx(self):
+    def set_current(self):
         current_index = self.combo_code.currentIndex()
 
         widget = self.sender()
-        if widget == self.btn_tdx_prev:
+        if widget == self.btn_tdx_prev or widget == self.btn_show_chart_prev:
             current_index -= 1
-        elif widget == self.btn_tdx_next:
+        elif widget == self.btn_tdx_next or widget == self.btn_show_chart_next:
             current_index += 1
 
         self.combo_code.setCurrentIndex(current_index)
+
+    def open_tdx(self):
+        self.set_current()
+
         text = self.combo_code.currentText()
         self.code = text.split()[0]
 
@@ -364,6 +378,14 @@ class Panel(QWidget):
         self.lbl.adjustSize()
 
     def show_chart(self):
+        self.set_current()
+
+        text = self.combo_code.currentText()
+        self.code = text.split()[0]
+
+        self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
+        self.lbl.adjustSize()
+
         if self.code == 'maq' or len(self.code) == 7:
             print('market index')
             indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
