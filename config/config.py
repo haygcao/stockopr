@@ -439,6 +439,14 @@ def get_tradeapi_server():
     return trade['tradeapi_server']['base_url']
 
 
+import json
+fp = open(os.path.join(config_dir, 'config.json'))
+global_config = json.load(fp)
+fp.close()
+
+update_candidate_pool = global_config['scan']['update_candidate_pool']
+
+
 def get_scan_strategy_name_list():
     import json
     fp = open(os.path.join(config_dir, 'config.json'))

@@ -109,6 +109,20 @@ create table if not exists financial_data (
     );
 
 -- 建仓
+create table candidate_pool(
+    code varchar(8),
+    added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    class varchar(32),
+    `rank` int
+    );
+
+create table candidate_pool_history(
+    code varchar(8),
+    added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    class varchar(32),
+    `rank` int
+    );
+
 create table selected(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

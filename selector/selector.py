@@ -23,7 +23,7 @@ import selector.plugin.d as d
 import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
-from selector.plugin import market_deviation, hot_strong, bull_at_bottom
+from selector.plugin import market_deviation, hot_strong, bull_at_bottom, second_stage
 from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
@@ -48,9 +48,10 @@ selector = {
     'dd': d.dd,
     'zf': zf.zf,
     'qd': qd.qd,
-    'nsbl': market_deviation.market_deviation,   # 牛市背离
+    'bull_deviation': market_deviation.market_deviation,   # 牛市背离
     'ema_value': ema_value.ema_value,   # 价值回归
     'hot_strong': hot_strong.hot_strong,
+    'second_stage': second_stage.second_stage,   # 第二阶段
     'bull_at_bottom': bull_at_bottom.bull_at_bottom,
     'dlxt_green': dynamical_system.dynamical_system_green,
     'dlxt_red': dynamical_system.dynamical_system_red,
@@ -127,10 +128,19 @@ def select_one_strategy(code_list, strategy_name):
     return code_list
 
 
+def update_candidate_pool():
+    code_list = basic.get_all_stock_code()
+    code_list = select_one_strategy(code_list, 'second_stage')
+    basic.upsert_candidate_pool(code_list)
+
+
 def select(strategy_name_list, stock_list: list[tuple]):
     begin = datetime.datetime.now()
 
-    code_list = basic.get_all_stock_code()
+    if config.update_candidate_pool:
+        update_candidate_pool()
+
+    code_list = basic.get_candidate_stock_code()
     # code_list = future.get_future_contract_list()
     code_list = [code for code in code_list if int(code[:2]) <= 60]
     # code_list = ['300502']
@@ -151,7 +161,7 @@ def select(strategy_name_list, stock_list: list[tuple]):
 
     log = '\n'.join([' '.join(t) for t in stock_list])
     with open(config.scan_log_path, 'a') as f:
-        f.writelines('[{}] cost [{}s]'.format(begin, (end - begin).seconds))
+        f.writelines('[{}] cost [{}s] [{}]'.format(begin, (end - begin).seconds, len(stock_list)))
         f.writelines('\n')
         f.writelines(log)
         f.writelines('\n\n')

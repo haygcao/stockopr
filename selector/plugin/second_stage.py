@@ -17,21 +17,23 @@ def second_stage(quote):
     7 交易量较大的同周中, 上涨的交易周数量高于下跌的
     """
 
-    ma10 = macd.ma(quote.close, 10)['ma']
-    ma30 = macd.ma(quote.close, 30)['ma']
-    ma60 = macd.ma(quote.close, 60)['ma']
-    ma150 = macd.ma(quote.close, 150)['ma']
-    ma200 = macd.ma(quote.close, 200)['ma']
+    ma_xxs = macd.ma(quote.close, 10)['ma']
+    ma_xs = macd.ma(quote.close, 20)['ma']
+    ma_s = macd.ma(quote.close, 50)['ma']
+    # ma_m = macd.ma(quote.close, 100)['ma']
+    ma_l = macd.ma(quote.close, 100)['ma']   # 20W
+    ma_xl = macd.ma(quote.close, 150)['ma']   # 30W
+    # ma_xxl = macd.ma(quote.close, 200)['ma']  # 40W
 
-    if quote.close[-1] <= ma200.iloc[-1]:
+    if quote.close[-1] <= ma_xl.iloc[-1]:
         return False
 
-    ma200_shift = ma200.shift(periods=1)
-    diff = ma200 > ma200_shift
+    ma200_shift = ma_xl.shift(periods=1)
+    diff = ma_xl > ma200_shift
     if not diff.iloc[-5:].all():
         return False
 
-    if ma200.iloc[-1] >= ma150.iloc[-1]:
+    if ma_xl.iloc[-1] >= ma_l.iloc[-1]:
         return False
 
     back_day = 120
@@ -39,12 +41,13 @@ def second_stage(quote):
     if quote.close[-1]/low - 1 < 0.3:
         return False
 
-    if not (ma150.iloc[-1] < ma60.iloc[-1] < ma30.iloc[-1] < ma10.iloc[-1]):
+    if not (ma_l.iloc[-1] < ma_s.iloc[-1] < ma_xs.iloc[-1] < ma_xxs.iloc[-1]):
         return False
 
     up_percent = 7
     up_day_mask = quote.percent.iloc[-back_day:] > up_percent
     other_day_mask = quote.percent.iloc[-back_day:] < 2
+
     up_vol = quote.volume.iloc[-back_day:][up_day_mask]
     other_vol = quote.volume.iloc[-back_day:][other_day_mask]
     up_vol_mean = up_vol.mean()
@@ -54,9 +57,9 @@ def second_stage(quote):
 
     quote_week = quote_db.get_price_info_df_db_week(quote, period_type='W')
     back_week = 40
-    vol = quote_week.volume[-back_week:]
-    vol_shift = vol.shift(periods=1)
-    m = vol > vol_shift * 3
+    vol_min = quote_week.volume[-back_week:].rolling(5).min()
+    vol_max = quote_week.volume[-back_week:].rolling(5).max()
+    m = vol_max > vol_min * 5
     match = m[m]
     if len(match) == 0:
         return False

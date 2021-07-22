@@ -7,8 +7,9 @@
     "position_unit": 40000
   },
   "scan": {
+    "update_candidate_pool": false,
     "strategy_name_list": [
-      "bull_at_bottom"
+      "bull_deviation"
     ]
   },
   "signal": {
