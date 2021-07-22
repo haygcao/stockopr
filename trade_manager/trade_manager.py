@@ -10,6 +10,7 @@ from config.config import Policy, ERROR
 from data_structure import trade_data
 from indicator import atr, ema, dynamical_system, relative_price_strength, ad
 from pointor import signal
+import selector
 from trade_manager import tradeapi, db_handler
 from util import mysqlcli, dt
 
@@ -168,6 +169,10 @@ def update_operation_detail(detail):
 
 
 def check_list(quote):
+    from indicator import second_stage as second_stage_indicator
+    if not second_stage_indicator.second_stage(quote):
+        return ERROR.E_SECOND_STAGE
+
     quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
     if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
         return ERROR.E_DYNAMICAL_SYSTEM

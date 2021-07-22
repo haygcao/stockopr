@@ -59,4 +59,7 @@ def compute_enter_mask(quote, period):
     macd_line_shift = macd_line.shift(periods=1)
     mask = mask | (macd_line <= macd_line_shift)
 
+    # 第二阶段
+    mask = mask | (~quote.second_stage)
+
     return mask

@@ -537,6 +537,7 @@ class Policy(Enum):
 
 class ERROR(Enum):
     OK = ''
+    E_SECOND_STAGE = '不在第二阶段, 禁止买入, 禁止持有, 请务必遵守规则!'
     E_DYNAMICAL_SYSTEM = '动力系统为红色, 禁止买入, 禁止持有, 请务必遵守规则!'
     E_LONG_PERIOD_EMA_INC = '长周期EMA26向下, 禁止买入, 禁止持有, 请务必遵守规则!'
     E_CLOSE_OVER_LONG_PERIOD_EMA = 'CLOSE低于第周期EMA26, 禁止买入, 禁止持有, 请务必遵守规则!'

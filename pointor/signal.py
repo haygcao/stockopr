@@ -15,7 +15,7 @@ import acquisition.quote_www as quote_www
 import pointor.signal_gd as signal_gd
 import dealer.bought as basic
 from config import config
-from indicator import dynamical_system
+from indicator import dynamical_system, second_stage
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
     signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume_ad
 from util import util
@@ -163,6 +163,9 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     # 基础指标 - 动力系统
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
+    # 第二阶段
+    quote = second_stage.compute_second_stage(quote)
+
     # 动力系统
     quote = signal_dynamical_system.signal_enter(quote, period=period)
     quote = signal_dynamical_system.signal_exit(quote, period=period)
@@ -220,7 +223,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
 
     header = True
     for column in column_list:
-        n = 5
+        n = 40
         data = quote_copy.iloc[-n:][column]
         direct = 'signal_enter'
         write_signal_log(direct, code, period, column, n, data, header)
@@ -242,7 +245,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     header = True
     # quote_copy = quote  # .copy()
     for column in column_list:
-        n = 5
+        n = 40
         data = quote_copy.iloc[-n:][column]
         direct = 'signal_exit'
         write_signal_log(direct, code, period, column, n, data, header)
