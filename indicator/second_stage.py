@@ -88,7 +88,7 @@ def second_stage(quote, period):
     back_week = 40
     vol_min = quote_week.volume[-back_week:].rolling(5).min()
     vol_max = quote_week.volume[-back_week:].rolling(5).max()
-    m = vol_max > vol_min * 5
+    m = vol_max > vol_min * 10
     match = m[m]
     if len(match) == 0:
         return False

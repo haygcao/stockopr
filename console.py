@@ -93,8 +93,12 @@ class Panel(QWidget):
 
         self.combo_code.activated[str].connect(self.on_activated_code)
 
-        btn_tdx = QPushButton('tdx', self)
-        btn_tdx.clicked.connect(self.open_tdx)
+        self.btn_tdx = QPushButton('tdx', self)
+        self.btn_tdx.clicked.connect(self.open_tdx)
+        self.btn_tdx_prev = QPushButton('prev', self)
+        self.btn_tdx_prev.clicked.connect(self.open_tdx)
+        self.btn_tdx_next = QPushButton('next', self)
+        self.btn_tdx_next.clicked.connect(self.open_tdx)
 
         btn_load = QPushButton('load', self)
         btn_load.clicked.connect(self.load)
@@ -189,7 +193,12 @@ class Panel(QWidget):
         grid.addWidget(self.log, 4, 0)
         grid.addWidget(btn_show_indicator, 4, 2)
         grid.addWidget(btn_market, 4, 3)
-        grid.addWidget(btn_tdx, 4, 4)
+
+        h_layout_tdx = QHBoxLayout()
+        h_layout_tdx.addWidget(self.btn_tdx_prev)
+        h_layout_tdx.addWidget(self.btn_tdx)
+        h_layout_tdx.addWidget(self.btn_tdx_next)
+        grid.addLayout(h_layout_tdx, 4, 4)
 
         h_layout_enter = QHBoxLayout()
 
@@ -278,6 +287,21 @@ class Panel(QWidget):
         self.qle_count_or_price.setText(list_to_str(self.count_or_price))
 
     def open_tdx(self):
+        current_index = self.combo_code.currentIndex()
+
+        widget = self.sender()
+        if widget == self.btn_tdx_prev:
+            current_index -= 1
+        elif widget == self.btn_tdx_next:
+            current_index += 1
+
+        self.combo_code.setCurrentIndex(current_index)
+        text = self.combo_code.currentText()
+        self.code = text.split()[0]
+
+        self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
+        self.lbl.adjustSize()
+
         pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
         if pid < 0:
             app = pywinauto.Application(backend="win32").start('C:\\new_tdx\\TdxW.exe')
@@ -290,7 +314,7 @@ class Panel(QWidget):
         win32api.SetCursorPos(pos)
 
         # main_window.type_keys(str(self.code))
-        pywinauto.keyboard.send_keys(str(self.code))
+        pywinauto.keyboard.send_keys(self.code)
         pywinauto.keyboard.send_keys('{ENTER}')
 
     def load(self):
