@@ -66,7 +66,7 @@ class Panel(QWidget):
 
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
-        self.setFixedSize(600, 200)
+        self.setFixedSize(660, 200)
 
         self.signals = {}
         self.code = '300502'
@@ -300,19 +300,29 @@ class Panel(QWidget):
         code_list = [position.code for position in position_list]
 
         code_name_map = trade_manager.db_handler.query_trade_order_map()
-        code_list.extend([code for code in code_name_map.keys() if code not in code_list])
+        code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
+        code_list_tmp.sort()
+        code_list.extend(code_list_tmp)
 
-        for code in code_list:
-            name = basic.get_stock_name(code)
-            self.combo_code.addItem('{} {}'.format(code, name))
-
+        code_list_tmp = []
         with open('data/portfolio.txt', encoding='utf8') as fp:
             for code_name in fp:
                 code_name = code_name.strip()
                 if not code_name:
                     continue
-                # name = basic.get_stock_name(code)
-                self.combo_code.addItem(code_name)
+                code_list_tmp.append(code_name.split()[0])
+        code_list_tmp.sort()
+        code_list.extend(code_list_tmp)
+
+        code_list_tmp = basic.get_candidate_stock_code()
+        code_list.extend(code_list_tmp)
+
+        for code in code_list:
+            name = basic.get_stock_name(code)
+            self.combo_code.addItem('{} {}'.format(code, name))
+
+        # self.combo_code.adjustSize()
+        self.combo_code.setMaxVisibleItems(50)
 
     def on_activated_period(self, text):
         self.period = text

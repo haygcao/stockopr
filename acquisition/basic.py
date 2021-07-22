@@ -43,7 +43,7 @@ def upsert_candidate_pool(code_list):
 def get_candidate_stock_code():
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT code FROM candidate_pool"
+        sql = "SELECT code FROM candidate_pool order by code"
         c.execute(sql)
         stock_code_list = c.fetchall()
 
