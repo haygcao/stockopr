@@ -74,7 +74,7 @@ marker_down = 'v'
 
 
 def is_market_index(code):
-    if len(code) > 6:
+    if code == 'maq' or len(code) > 6:
         return True
     return False
 
@@ -602,12 +602,7 @@ class DataFinanceDraw(object):
         #
         self.data = data
 
-        self.add_signal(data)
-        self.add_resistance_support(data)
         self.add_dynamical_system(data)
-        self.add_channel(data)
-        self.add_stop_loss(data)
-        self.add_market()
 
         width = 0.5
         color = dimgrey
@@ -619,6 +614,12 @@ class DataFinanceDraw(object):
         if is_market_index(self.code):
             self.add_market_indicator(data)
         else:
+            self.add_signal(data)
+            self.add_resistance_support(data)
+            self.add_channel(data)
+            self.add_stop_loss(data)
+            self.add_market()
+
             if oscillatior == 'rps':
                 self.add_rps(data, market_index='co', panel=self.panel_oscillation)
             else:
@@ -645,8 +646,10 @@ class DataFinanceDraw(object):
         # y_label_lower:设置成交量图一栏的标题
         # figratio:设置图形纵横比
         # figscale:设置图形尺寸(数值越大图像质量越高)
+
+        quote_type = 'line' if is_market_index(self.code) else 'candle'
         self.kwargs = dict(
-            type='candle',  # 'ohlc',
+            type=quote_type,  # 'ohlc',
             # mav=13, #(7, 30, 60),
             volume=self.show_volume,
             title='{} {}'.format(self.code, self.period),
@@ -948,10 +951,11 @@ if __name__ == "__main__":
     # show_market('day')
     # exit(0)
 
-    # code = 'maq'
+    code = 'maq'
     # code = '300502'
+    open_graph(code, 'day', 'nhnl')
     # show_indicator(code, 'week', relative_price_strength.relative_price_strength)
-    # exit(0)
+    exit(0)
 
     code = '000001'
     code = '300502'

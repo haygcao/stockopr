@@ -31,10 +31,9 @@ from util.pywinauto_util import max_window
 
 # pywinauto
 # QWindowsContext: OleInitialize() failed: "COM error 0xffffffff80010106 RPC_E_CHANGED_MODE (Unknown error 0x080010106)"
-warnings.simplefilter("ignore", UserWarning)
+warnings.simplefilter("ignore", category=UserWarning)
 sys.coinit_flags = 2
 import pywinauto
-
 
 g_periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
 g_periods.reverse()
@@ -69,7 +68,7 @@ class Panel(QWidget):
         self.setFixedSize(660, 200)
 
         self.signals = {}
-        self.code = '300502'
+        self.code = 'maq'
         self.period = g_periods[0]
         self.indicator = g_indicators[0]
         self.monitor_proc = None
@@ -115,9 +114,7 @@ class Panel(QWidget):
 
         combo_indictor = QComboBox(self)
 
-        indicators = g_indicators
-        indicators.extend(g_market_indicators)
-        for indicator in indicators:
+        for indicator in g_indicators + g_market_indicators:
             combo_indictor.addItem(indicator)
         combo_indictor.activated[str].connect(self.on_activated_indicator)
 
@@ -251,7 +248,7 @@ class Panel(QWidget):
             return
 
         maq = 'maq'
-        if text.startswith(maq) and not re.match('[0-9]{6}', text):
+        if not text.startswith(maq) and not re.match('[0-9]{6}', text):
             self.code = basic.get_stock_code(text[:-1])
         else:
             self.code = text[:-1]
@@ -278,8 +275,9 @@ class Panel(QWidget):
     def on_activated_code(self, text):
         self.code = text.split()[0]
 
-        quote = tx.get_realtime_data_sina(self.code)
-        self.count_or_price[0] = quote['close'][-1]
+        if not text.startswith('maq'):
+            quote = tx.get_realtime_data_sina(self.code)
+            self.count_or_price[0] = quote['close'][-1]
 
         self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
         self.lbl.adjustSize()
@@ -303,15 +301,20 @@ class Panel(QWidget):
         self.lbl.adjustSize()
 
         pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
+        print('tdx pid: {}'.format(pid))
         if pid < 0:
-            app = pywinauto.Application(backend="win32").start('C:\\new_tdx\\TdxW.exe')
+            app = pywinauto.Application(backend="uia").start('C:\\new_tdx\\TdxW.exe')
         else:
-            app = pywinauto.Application(backend="win32").connect(process=pid)
+            app = pywinauto.Application(backend="uia").connect(process=pid)
 
         pos = win32api.GetCursorPos()
         main_window = app.window(class_name='TdxW_MainFrame_Class')
         max_window(main_window)
         win32api.SetCursorPos(pos)
+
+        # import win32con
+        # width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
+        # height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
 
         # main_window.type_keys(str(self.code))
         pywinauto.keyboard.send_keys(self.code)
@@ -319,7 +322,9 @@ class Panel(QWidget):
 
     def load(self):
         self.combo_code.clear()
-
+        index_list = ['maq', '0000001', '0000688', '1399001', '1399006']
+        for code in index_list:
+            self.combo_code.addItem(code)
         position_list = trade_manager.db_handler.query_current_position()
         code_list = [position.code for position in position_list]
 
@@ -359,11 +364,13 @@ class Panel(QWidget):
         self.lbl.adjustSize()
 
     def show_chart(self):
-        print('{} {}'.format(self.code, self.period))
-        if len(self.code) == 7:
+        if self.code == 'maq' or len(self.code) == 7:
+            print('market index')
             indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
         else:
+            print('stock')
             indicator = self.indicator if self.indicator in g_indicators else g_indicators[0]
+        print('{} {} {}'.format(self.code, self.period, indicator))
         p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, indicator))
         p.start()
         p.join(timeout=1)
