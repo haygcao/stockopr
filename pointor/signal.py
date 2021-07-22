@@ -164,7 +164,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
     # 第二阶段
-    quote = second_stage.compute_second_stage(quote)
+    quote = second_stage.compute_second_stage(quote, period)
 
     # 动力系统
     quote = signal_dynamical_system.signal_enter(quote, period=period)

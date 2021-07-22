@@ -472,7 +472,6 @@ class DataFinanceDraw(object):
 
         if is_long_period(self.period):
             dlxt_long_period_color = dlxt_color
-            dlxt_long_period = dlxt
 
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
@@ -635,6 +634,129 @@ class DataFinanceDraw(object):
 
         self.compute_timestamp = datetime.datetime.now().timestamp()
 
+    def draw_arrow(self, axlist, yminor_unit):
+        if is_market_index(self.code):
+            return
+        
+        # 带箭头的线
+        len_osc = len(oscillatior_list)
+
+        # 只显示一个振荡指示 panel
+        len_osc = 1
+
+        # map_index = {
+        #     'macd_bull_market_deviation': {'data': self.histogram_macd,
+        #                                    'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
+        #     'macd_bear_market_deviation': {'data': self.histogram_macd,
+        #                                    'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
+        # }
+        map_index = {}
+        for i, osc in enumerate(oscillatior_list):
+            # 只显示一个振荡指示 panel
+            if osc != oscillatior:
+                continue
+            i = 0
+            map_index.update({
+                '{}_bull_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
+                                                         'ax': axlist[
+                                                             4 + i * 2] if not show_long_period_dynamical_system or is_long_period(
+                                                             self.period) else axlist[6 + i * 2]}
+            })
+            map_index.update({'{}_bear_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
+                                                                       'ax': axlist[
+                                                                           4 + i * 2] if not show_long_period_dynamical_system or is_long_period(
+                                                                           self.period) else axlist[6 + i * 2]}})
+            # 只显示一个振荡指示 panel
+            break
+
+        def draw_deviation_line(data, ax, ax2, data1, data2, unit1, unit2, color, will, draw_minor):
+            """
+            width: float, default: 0.001
+            Width of full arrow tail.
+
+            length_includes_head: bool, default: False
+            True if head is to be counted in calculating the length.
+
+            head_width: float or None, default: 3*width
+            Total width of the full arrow head.
+
+            head_length: float or None, default: 1.5*head_width
+            Length of arrow head.
+            """
+            points = data1[data1.notnull()]
+            if not points.any(skipna=True):
+                return
+            mask = data1.notnull()
+
+            # points2 = data2[data2.notnull()]
+            if draw_minor:
+                points2 = data2[mask]
+                points2 = points2[points2.notnull()]
+            else:
+                points2 = None
+
+            value = data.min() if will == 1 else data.max()
+            shape = 'left' if will == 1 else 'right'  # full
+            for index in range(0, len(points), 2):
+                index_first = numpy.where(data1.index == points.index[index])[0][0]
+                index_second = numpy.where(data1.index == points.index[index + 1])[0][0]
+
+                width = unit1 / 10
+                ax.arrow(index_first, points.values[index], index_second - index_first,
+                         (points.values[index + 1] - points.values[index]), shape=shape, color=color,
+                         length_includes_head=True, width=width, head_width=0, head_length=0)
+
+                ax.arrow(index_second, points.values[index + 1], 0,
+                         (value - points.values[index + 1]), shape=shape, linestyle='-', color=color,
+                         length_includes_head=True, width=width, head_width=0, head_length=0)
+
+                if not draw_minor:
+                    continue
+
+                width = unit2 / 10
+                ax2.arrow(index_first, points2.values[index], index_second - index_first,
+                          (points2.values[index + 1] - points2.values[index]), shape=shape, color=color, )
+                # length_includes_head=True, width=width, head_width=0, head_length=0)
+
+        ax = axlist[0] if is_long_period(self.period) else axlist[0]
+        deviation_list = [
+            'macd_bull_market_deviation', 'macd_bear_market_deviation',
+            # '{}_bull_market_deviation'.format(oscillatior), '{}_bear_market_deviation'.format(oscillatior)
+        ]
+        deviation_list.extend(['{}_bull_market_deviation'.format(osc) for osc in oscillatior_list])
+        deviation_list.extend(['{}_bear_market_deviation'.format(osc) for osc in oscillatior_list])
+
+        # deviation_list = ['force_index_bull_market_deviation']
+        for column_name in deviation_list:
+            data = self.get_window(self.data[column_name])
+
+            unit1 = yminor_unit * 0.01
+            # unit1 = 0
+
+            # draw_minor = 'macd' in column_name or oscillatior in column_name
+            draw_minor = oscillatior in column_name
+            data2 = self.get_window(map_index[column_name]['data']) if draw_minor else None
+            ax2 = map_index[column_name]['ax'] if draw_minor else -1
+            # high = self.get_window(data2).max()
+            # low = self.get_window(data2).min()
+            # yminor_unit2 = round((high - low) / 10, 2)
+            # yminor_unit2 = max(yminor_unit2, 0.01)
+            #
+            # unit2 = yminor_unit2 * 0.1
+            unit2 = 0
+
+            # print(unit1, unit2)
+
+            if 'bull' in column_name:
+                will = 1
+                color = dark_green  # if 'macd' in column_name else dark_green
+            else:
+                will = -1
+                color = red  # if 'macd' in column_name else dark_red
+
+            draw_deviation_line(self.data['close'], ax, ax2, data, data2, unit1, unit2, color,
+                                will, draw_minor)
+
     def show(self):
         # 设置基本参数
         # type:绘制图形的类型, 有candle, renko, ohlc, line等
@@ -732,122 +854,7 @@ class DataFinanceDraw(object):
 
         # axlist[3].fill_between(self.data.index, self.data['force_index'])
 
-        # 带箭头的线
-        len_osc = len(oscillatior_list)
-
-        # 只显示一个振荡指示 panel
-        len_osc = 1
-
-        # map_index = {
-        #     'macd_bull_market_deviation': {'data': self.histogram_macd,
-        #                                    'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
-        #     'macd_bear_market_deviation': {'data': self.histogram_macd,
-        #                                    'ax': axlist[4 + 2 * len_osc] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + 2 * len_osc]},
-        # }
-        map_index = {}
-        for i, osc in enumerate(oscillatior_list):
-            # 只显示一个振荡指示 panel
-            if osc != oscillatior:
-                continue
-            i = 0
-            map_index.update({
-                '{}_bull_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
-                                                                 'ax': axlist[
-                                                                     4 + i*2] if not show_long_period_dynamical_system or is_long_period(
-                                                                     self.period) else axlist[6 + i*2]}
-            })
-            map_index.update({'{}_bear_market_deviation'.format(osc): {'data': eval('self.histogram_{}'.format(osc)),
-                                                  'ax': axlist[4 + i*2] if not show_long_period_dynamical_system or is_long_period(self.period) else axlist[6 + i*2]}})
-            # 只显示一个振荡指示 panel
-            break
-
-        def draw_deviation_line(data, ax, ax2, data1, data2, unit1, unit2, color, will, draw_minor):
-            """
-            width: float, default: 0.001
-            Width of full arrow tail.
-
-            length_includes_head: bool, default: False
-            True if head is to be counted in calculating the length.
-
-            head_width: float or None, default: 3*width
-            Total width of the full arrow head.
-
-            head_length: float or None, default: 1.5*head_width
-            Length of arrow head.
-            """
-            points = data1[data1.notnull()]
-            if not points.any(skipna=True):
-                return
-            mask = data1.notnull()
-
-            # points2 = data2[data2.notnull()]
-            if draw_minor:
-                points2 = data2[mask]
-                points2 = points2[points2.notnull()]
-            else:
-                points2 = None
-
-            value = data.min() if will == 1 else data.max()
-            shape = 'left' if will == 1 else 'right'  # full
-            for index in range(0, len(points), 2):
-                index_first = numpy.where(data1.index == points.index[index])[0][0]
-                index_second = numpy.where(data1.index == points.index[index + 1])[0][0]
-
-                width = unit1 / 10
-                ax.arrow(index_first, points.values[index], index_second - index_first,
-                         (points.values[index + 1] - points.values[index]), shape=shape, color=color,
-                         length_includes_head=True, width=width, head_width=0, head_length=0)
-
-                ax.arrow(index_second, points.values[index + 1], 0,
-                         (value - points.values[index + 1]), shape=shape, linestyle='-', color=color,
-                         length_includes_head=True, width=width, head_width=0, head_length=0)
-
-                if not draw_minor:
-                    continue
-
-                width = unit2 / 10
-                ax2.arrow(index_first, points2.values[index], index_second - index_first,
-                          (points2.values[index + 1] - points2.values[index]), shape=shape, color=color,)
-                          # length_includes_head=True, width=width, head_width=0, head_length=0)
-
-        ax = axlist[0] if is_long_period(self.period) else axlist[0]
-        deviation_list = [
-            'macd_bull_market_deviation', 'macd_bear_market_deviation',
-            # '{}_bull_market_deviation'.format(oscillatior), '{}_bear_market_deviation'.format(oscillatior)
-        ]
-        deviation_list.extend(['{}_bull_market_deviation'.format(osc) for osc in oscillatior_list])
-        deviation_list.extend(['{}_bear_market_deviation'.format(osc) for osc in oscillatior_list])
-
-        # deviation_list = ['force_index_bull_market_deviation']
-        for column_name in deviation_list:
-            data = self.get_window(self.data[column_name])
-
-            unit1 = yminor_unit * 0.01
-            # unit1 = 0
-
-            # draw_minor = 'macd' in column_name or oscillatior in column_name
-            draw_minor = oscillatior in column_name
-            data2 = self.get_window(map_index[column_name]['data']) if draw_minor else None
-            ax2 = map_index[column_name]['ax']  if draw_minor else -1
-            # high = self.get_window(data2).max()
-            # low = self.get_window(data2).min()
-            # yminor_unit2 = round((high - low) / 10, 2)
-            # yminor_unit2 = max(yminor_unit2, 0.01)
-            #
-            # unit2 = yminor_unit2 * 0.1
-            unit2 = 0
-
-            # print(unit1, unit2)
-
-            if 'bull' in column_name:
-                will = 1
-                color = dark_green  # if 'macd' in column_name else dark_green
-            else:
-                will = -1
-                color = red  # if 'macd' in column_name else dark_red
-
-            draw_deviation_line(self.data['close'], ax, ax2, data, data2, unit1, unit2, color,
-                                will, draw_minor)
+        self.draw_arrow(axlist, yminor_unit)
 
         # l = matplotlib.lines.Line2D([points.index[0], points.index[1]], [points.values[1], points.values[0]], color=red, marker=marker_up)
         # axlist[0].add_line(l)
