@@ -384,7 +384,7 @@ def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
     #else:
     #    _code = code
     _code = code
-    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'percent']
+    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'percent']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     on = '{0}.code = basic_info.code'.format(table[1])
     where = '{3}.code = "{0}" and trade_date <= "{1}" order by trade_date desc limit {2}'.format(_code, end_date, days, table[1])
@@ -427,6 +427,8 @@ def get_price_info_df_db_week(df, period_type='W'):
     period_data['close'] = df['close'].resample(period_type).last()
     period_data['volume'] = df['volume'].resample(period_type).sum()
     period_data['amount'] = df['amount'].resample(period_type).sum()
+    period_data['yest_close'] = period_data['close'].shift(periods=1)
+    period_data['percent'] = (period_data['close']/period_data['yest_close'] - 1) * 100
 
     # period_data.set_index('trade_date', inplace=True)
     period_data = period_data[period_data['code'].notnull()]
