@@ -194,8 +194,10 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     quote = second_stage.compute_second_stage(quote, period)
 
     # enter signal
-    signal_list = config.get_signal_list()
+    signal_list = config.get_signal_list(period)
     for s in signal_list:
+        if s not in signal_func:
+            continue
         if s == 'stop_loss_signal_exit':
             continue
         if 'market_deviation' in s:
@@ -203,33 +205,6 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             quote = signal_func[s](quote, period=period, column=column)
             continue
         quote = signal_func[s](quote, period=period)
-
-    # # 动力系统
-    # quote = signal_dynamical_system.signal_enter(quote, period=period)
-    # quote = signal_dynamical_system.signal_exit(quote, period=period)
-    #
-    # # 通道
-    # quote = signal_channel.signal_enter(quote, period=period)
-    # quote = signal_channel.signal_exit(quote, period=period)
-    #
-    # # 背离
-    # quote = signal_market_deviation.signal_enter(quote, period)
-    # quote = signal_market_deviation.signal_exit(quote, period)
-    #
-    # # 强力指数
-    # quote = signal_force_index.signal_enter(quote, period)
-    # quote = signal_force_index.signal_exit(quote, period)
-    #
-    # # ema 价值回归
-    # quote = signal_ema_value.signal_enter(quote, period)
-    #
-    # # 阻力位, 支撑位
-    # quote = signal_resistance_support.signal_enter(quote, period)
-    # quote = signal_resistance_support.signal_exit(quote, period)
-    #
-    # # 量价
-    # quote = signal_volume_ad.signal_enter(quote, period)
-    # quote = signal_volume_ad.signal_exit(quote, period)
 
     if 'signal_enter' not in quote.columns:
         quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
@@ -255,7 +230,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
 
     # 合并
     # 处理合并看多信号
-    column_list = config.get_signal_enter_list()
+    column_list = config.get_signal_enter_list(period)
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
 
@@ -279,7 +254,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         quote_copy.insert(len(quote_copy.columns), 'stop_loss_signal_exit', numpy.nan)
 
     # 处理合并看空信号
-    column_list = config.get_signal_exit_list()
+    column_list = config.get_signal_exit_list(period)
     # 'macd_bear_market_deviation',
     # 'force_index_bear_market_deviation']
 
@@ -368,16 +343,25 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             next_negative = negative.index[j]
         negative[temp_negative_index] = temp_negative
 
+    deviation_signals = config.get_signal_enter_deviation(period)
     i += 1
     j += 1
     while i < len(positive):
-        if numpy.isnan(quote_copy.loc[positive.index[i], 'macd_bull_market_deviation'])\
-                and numpy.isnan(quote_copy.loc[positive.index[i], 'force_index_bull_market_deviation']):
+        b = True
+        for deviation in deviation_signals:
+            column = deviation[:deviation.index('_signal')]
+            b &= numpy.isnan(quote_copy.loc[positive.index[i], column])
+        if b:
             positive[i] = numpy.nan
         i += 1
+
+    deviation_signals = config.get_signal_exit_deviation(period)
     while j < len(negative):
-        if numpy.isnan(quote_copy.loc[negative.index[j], 'macd_bear_market_deviation']) \
-                and numpy.isnan(quote_copy.loc[negative.index[j], 'force_index_bear_market_deviation']):
+        b = True
+        for deviation in deviation_signals:
+            column = deviation[:deviation.index('_signal')]
+            b &= numpy.isnan(quote_copy.loc[negative.index[j], column])
+        if b:
             negative[j] = numpy.nan
         j += 1
 

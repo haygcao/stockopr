@@ -209,15 +209,15 @@ class Panel(QWidget):
 
         h_layout_enter = QGridLayout()
 
-        self.widget_signals = []
-        signals = config.get_all_signal_enter()
+        self.widget_signals = {}
+        signals = config.get_all_signal_enter(self.period)
         # h_layout_enter.addStretch(len(signals))
         i = 0
         j = 0
         for s, enabled in signals.items():
             w = QtWidgets.QCheckBox(s, self)
             w.setChecked(enabled)
-            self.widget_signals.append(w)
+            self.widget_signals.update({s: w})
             w.stateChanged.connect(self.checked)
             if 'deviation' in s:
                 h_layout_enter.addWidget(w, 0, i)
@@ -228,11 +228,11 @@ class Panel(QWidget):
 
         i = 0
         j = 0
-        signals = config.get_all_signal_exit()
+        signals = config.get_all_signal_exit(self.period)
         for s, enabled in signals.items():
             w = QtWidgets.QCheckBox(s, self)
             w.setChecked(enabled)
-            self.widget_signals.append(w)
+            self.widget_signals.update({s: w})
             w.stateChanged.connect(self.checked)
             if 'deviation' in s:
                 h_layout_enter.addWidget(w, 2, i)
@@ -253,12 +253,12 @@ class Panel(QWidget):
         self.show()
 
     def checked(self, checked):
-        for w in self.widget_signals:
+        for s, w in self.widget_signals.items():
             if self.sender() == w:
                 checked = True if checked == Qt.Checked else False
                 w.setChecked(checked)
                 s = w.text()
-                config.enable_signal(s, checked)
+                config.enable_signal(s, checked, self.period)
 
     def on_code_changed(self, text):
         if not text:
@@ -385,6 +385,10 @@ class Panel(QWidget):
         self.period = text
         self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
         self.lbl.adjustSize()
+
+        signals = config.get_all_signal(self.period)
+        for s, v in signals.items():
+            self.widget_signals.get(s).setChecked(v)
 
     def on_activated_indicator(self, text):
         self.indicator = text

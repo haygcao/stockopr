@@ -283,9 +283,17 @@ S = 'S'
 N = ''
 
 
-def get_a_signal_list(key):
+def gen_signal_config_path(period):
+    if period.startswith('m'):
+        period = '_rt'
+    else:
+        period = ''
+    return os.path.join(config_dir, 'signal{}.json'.format(period))
+
+
+def get_a_signal_list(key, period):
     import json
-    fp = open(os.path.join(config_dir, 'signal.json'))
+    fp = open(gen_signal_config_path(period))
     signals = json.load(fp)
 
     fp.close()
@@ -295,52 +303,59 @@ def get_a_signal_list(key):
     return d
 
 
-def get_signal_enter_list():
-    d = get_a_signal_list('signal_enter')
+def get_signal_enter_list(period):
+    d = get_a_signal_list('signal_enter', period)
     return [s for s, enabled in d.items() if enabled]
 
 
-def get_all_signal_enter():
-    d = get_a_signal_list('signal_enter')
+def get_all_signal_enter(period):
+    d = get_a_signal_list('signal_enter', period)
     return d
 
 
-def get_signal_enter_deviation():
-    d = get_a_signal_list('signal_enter')
+def get_signal_enter_deviation(period):
+    d = get_a_signal_list('signal_enter', period)
     return [s for s, enabled in d.items() if 'deviation' in s and enabled]
 
 
-def get_signal_exit_list():
-    d = get_a_signal_list('signal_exit')
+def get_signal_exit_list(period):
+    d = get_a_signal_list('signal_exit', period)
     return [s for s, enabled in d.items() if enabled]
 
 
-def get_all_signal_exit():
-    d = get_a_signal_list('signal_exit')
+def get_all_signal_exit(period):
+    d = get_a_signal_list('signal_exit', period)
     return d
 
 
-def get_signal_exit_deviation():
-    d = get_a_signal_list('signal_exit')
+def get_signal_exit_deviation(period):
+    d = get_a_signal_list('signal_exit', period)
     return [s for s, enabled in d.items() if 'deviation' in s and enabled]
 
 
-def get_signal_list():
-    signals = []
-    signals.extend(get_signal_enter_list())
-    signals.extend(get_signal_exit_list())
+def get_all_signal(period):
+    signals = {}
+    signals.update(get_all_signal_enter(period))
+    signals.update(get_all_signal_exit(period))
     return signals
 
 
-def enabled_signal(signal):
-    signals = get_signal_list()
+def get_signal_list(period):
+    signals = []
+    signals.extend(get_signal_enter_list(period))
+    signals.extend(get_signal_exit_list(period))
+    return signals
+
+
+def enabled_signal(signal, period):
+    signals = get_signal_list(period)
     return signal in signals
 
 
-def enable_signal(signal, enable):
+def enable_signal(signal, enable, period):
     enable = True if enable else False
     import json
-    with open(os.path.join(config_dir, 'signal.json'), 'r+') as fp:
+    with open(gen_signal_config_path(period), 'r+') as fp:
         signals = json.load(fp)
 
         key = signal[signal.index('signal'):]
@@ -354,7 +369,7 @@ def enable_signal(signal, enable):
         # fp.seek(0)
         # json.dump(signals, fp, indent=2)
 
-    with open(os.path.join(config_dir, 'signal.json'), 'w') as fp:
+    with open(gen_signal_config_path(period), 'w') as fp:
         json.dump(signals, fp, indent=2)
 
 

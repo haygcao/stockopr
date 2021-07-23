@@ -10,7 +10,7 @@ def computed(column_name=None):
             if column_name in (args[0]).columns:
                 return args[0]
             if column_name.endswith('signal_enter') or column_name.endswith('signal_exit'):
-                if not config.enabled_signal(column_name):
+                if not config.enabled_signal(column_name, kwargs.get('period')):
                     if 'stop_loss' in column_name:
                         args[0].insert(len(args[0].columns), 'stop_loss', numpy.nan)
                     args[0].insert(len(args[0].columns), column_name, numpy.nan)

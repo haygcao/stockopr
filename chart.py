@@ -237,7 +237,46 @@ class DataFinanceDraw(object):
         self.data_origin = data.iloc[-count:]
         self.load_data_timestamp = datetime.datetime.now().timestamp()
 
+    def add_oscillation_deviation(self, osc, oscillation_bull_market_deviation, oscillation_bear_market_deviation, data_oscillation):
+        data_oscillation_bull_deviation = oscillation_bull_market_deviation.mask(
+            oscillation_bull_market_deviation.notnull().values,
+            data_oscillation * 1.2).values
+
+        data_oscillation_bear_deviation = oscillation_bear_market_deviation.mask(
+            oscillation_bear_market_deviation.notnull().values,
+            data_oscillation * 1.2).values
+
+        # draw line
+        # https://github.com/matplotlib/mplfinance/issues/42
+        # https://github.com/matplotlib/mplfinance/issues/54
+        # if self.get_window(data[bull_deviation_column]).any(skipna=True):
+        #     self.add_plot.extend([mpf.make_addplot(self.get_window(data_oscillation), aline=[
+        #         (oscillation_bull_market_deviation.index[0], oscillation_bull_market_deviation[0]),
+        #     (oscillation_bull_market_deviation.index[1], oscillation_bull_market_deviation[1])],
+        #                                            type='line', width=1, panel=0, color=green),
+        #                           ])
+
+        oscillation_bull_market_deviation_single_point = tune_deviation(oscillation_bull_market_deviation)
+        oscillation_bear_market_deviation_single_point = tune_deviation(oscillation_bear_market_deviation)
+        data_oscillation_bull_deviation_single_point = tune_deviation(data_oscillation_bull_deviation)
+        data_oscillation_bear_deviation_single_point = tune_deviation(data_oscillation_bear_deviation)
+
+        if self.get_window(oscillation_bull_market_deviation).any(skipna=True):
+            self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bull_market_deviation_single_point),
+                                                   type='scatter', width=1, panel=0, color=green, markersize=50,
+                                                   marker=marker_up),
+                                  ])
+        if self.get_window(oscillation_bear_market_deviation).any(skipna=True):
+            self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bear_market_deviation_single_point),
+                                                   type='scatter', width=1, panel=0, color=red, markersize=50,
+                                                   marker=marker_down), ])
+
     def add_oscillation(self, data, osc):
+        signal_enabled = config.enabled_signal('{}_signal_exit'.format(osc), self.period)
+        signal_deviation_enabled = config.enabled_signal('{}_bear_market_deviation_signal_exit'.format(osc), self.period)
+        if not signal_enabled and not signal_deviation_enabled:
+            return
+
         data_column = signal.get_osc_key(osc)
         data_oscillation = data[data_column]
 
@@ -266,54 +305,24 @@ class DataFinanceDraw(object):
         # eval('self.histogram_{} = data_oscillation'.format(osc))
         exec('self.histogram_{} = data_oscillation'.format(osc))
 
-        bull_deviation_column = '{}_bull_market_deviation'.format(osc)
-        oscillation_bull_market_deviation = data[bull_deviation_column]
-        data_oscillation_bull_deviation = oscillation_bull_market_deviation.mask(
-            oscillation_bull_market_deviation.notnull().values,
-            data_oscillation * 1.2).values
+        if signal_deviation_enabled:
+            oscillation_bull_market_deviation = data['{}_bull_market_deviation'.format(osc)]
+            oscillation_bear_market_deviation = data['{}_bear_market_deviation'.format(osc)]
 
-        bear_deviation_column = '{}_bear_market_deviation'.format(osc)
-        oscillation_bear_market_deviation = data[bear_deviation_column]
-        data_oscillation_bear_deviation = oscillation_bear_market_deviation.mask(
-            oscillation_bear_market_deviation.notnull().values,
-            data_oscillation * 1.2).values
+            oscillation_color = [dark_olive_green3 if not numpy.isnan(v) else oscillation_color[i]
+                                 for (i,), v in
+                                 numpy.ndenumerate(self.get_window(oscillation_bull_market_deviation).values)]
+            oscillation_color = [light_coral if not numpy.isnan(v) else oscillation_color[i]
+                                 for (i,), v in
+                                 numpy.ndenumerate(self.get_window(oscillation_bear_market_deviation).values)]
 
-        # draw line
-        # https://github.com/matplotlib/mplfinance/issues/42
-        # https://github.com/matplotlib/mplfinance/issues/54
-        # if self.get_window(data[bull_deviation_column]).any(skipna=True):
-        #     self.add_plot.extend([mpf.make_addplot(self.get_window(data_oscillation), aline=[
-        #         (oscillation_bull_market_deviation.index[0], oscillation_bull_market_deviation[0]),
-        #     (oscillation_bull_market_deviation.index[1], oscillation_bull_market_deviation[1])],
-        #                                            type='line', width=1, panel=0, color=green),
-        #                           ])
-
-        oscillation_bull_market_deviation_single_point = tune_deviation(oscillation_bull_market_deviation)
-        oscillation_bear_market_deviation_single_point = tune_deviation(oscillation_bear_market_deviation)
-        data_oscillation_bull_deviation_single_point = tune_deviation(data_oscillation_bull_deviation)
-        data_oscillation_bear_deviation_single_point = tune_deviation(data_oscillation_bear_deviation)
-
-        oscillation_color = [dark_olive_green3 if not numpy.isnan(v) else oscillation_color[i]
-                             for (i,), v in numpy.ndenumerate(self.get_window(oscillation_bull_market_deviation).values)]
-        oscillation_color = [light_coral if not numpy.isnan(v) else oscillation_color[i]
-                             for (i,), v in numpy.ndenumerate(self.get_window(oscillation_bear_market_deviation).values)]
-
-        zero = data_oscillation.mask(data_oscillation.notnull(), 0)
-
-        if self.get_window(data[bull_deviation_column]).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bull_market_deviation_single_point),
-                                                   type='scatter', width=1, panel=0, color=green, markersize=50,
-                                                   marker=marker_up),
-                                  ])
-        if self.get_window(data[bear_deviation_column]).any(skipna=True):
-            self.add_plot.extend([mpf.make_addplot(self.get_window(oscillation_bear_market_deviation_single_point),
-                                                   type='scatter', width=1, panel=0, color=red, markersize=50,
-                                                   marker=marker_down), ])
+            self.add_oscillation_deviation(osc, oscillation_bull_market_deviation, oscillation_bear_market_deviation, data_oscillation)
 
         # 只显示一个振荡指标 panel
         if osc != oscillatior:
             return
 
+        zero = data_oscillation.mask(data_oscillation.notnull(), 0)
         panel = self.panel_oscillation  # + oscillatior_list.index(osc)
         self.add_plot.append(mpf.make_addplot(self.get_window(zero), type='line', width=0.5, panel=panel,
                          color=grey, secondary_y=False, title=oscillatior))
@@ -332,6 +341,7 @@ class DataFinanceDraw(object):
         if osc == 'skdj':
             self.add_plot.append(mpf.make_addplot(
                 self.get_window(data['d']), width=0.7, panel=panel, color=grey, linestyle='dashdot', secondary_y=False))
+
         d = {
             'rsi': (70, 30),
             'skdj': (80, 20)
@@ -348,6 +358,9 @@ class DataFinanceDraw(object):
             self.add_oscillation(data, osc)
 
     def add_resistance_support(self, data):
+        if not config.enabled_signal('resistance_support_signal_exit', self.period):
+            return
+
         data_support = self.data[:]['low'].copy()
         data_resistance = self.data[:]['high'].copy()
         # data_resistance = data_resistance.mask(data_resistance > 0, data_resistance.max())
@@ -409,41 +422,43 @@ class DataFinanceDraw(object):
         histogram = macd - macd_signal
         self.histogram_macd = histogram
 
-        macd_bull_market_deviation = data['macd_bull_market_deviation']
-        data_macd_bull_deviation = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values,
-                                                                   histogram * 1.2).values
-
-        macd_bear_market_deviation = data['macd_bear_market_deviation']
-        data_macd_bear_deviation = macd_bear_market_deviation.mask(macd_bear_market_deviation.notnull().values,
-                                                                   histogram * 1.2).values
-
-        macd_bull_market_deviation_single_point = tune_deviation(macd_bull_market_deviation)
-        macd_bear_market_deviation_single_point = tune_deviation(macd_bear_market_deviation)
-        data_macd_bull_deviation_single_point = tune_deviation(data_macd_bull_deviation)
-        data_macd_bear_deviation_single_point = tune_deviation(data_macd_bear_deviation)
-
-        # if self.get_window(data['macd_bull_market_deviation']).any(skipna=True):
-        #     self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bull_market_deviation_single_point), type='scatter',
-        #                                            width=1, panel=0, color=green, markersize=50, marker=marker_up), ])
-        # if self.get_window(data['macd_bear_market_deviation']).any(skipna=True):
-        #     self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bear_market_deviation_single_point), type='scatter',
-        #                                           width=1, panel=0, color=red, markersize=50, marker=marker_down), ])
-
-        # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
-        # 如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
-
-        # histogram[histogram < 0] = None
-        # histogram_positive = histogram
-        # histogram = macd - signal
-        # histogram[histogram >= 0] = None
-        # histogram_negative = histogram
-
         # macd panel
         colors = [lightgrey if v >= 0 else grey for v in self.get_window(histogram)]
-        colors = [dark_olive_green3 if not numpy.isnan(v) else colors[i]
-                  for (i,), v in numpy.ndenumerate(self.get_window(macd_bull_market_deviation).values)]
-        colors = [light_coral if not numpy.isnan(v) else colors[i]
-                  for (i,), v in numpy.ndenumerate(self.get_window(macd_bear_market_deviation).values)]
+
+        if 'macd_bull_market_deviation' in data.columns:
+            macd_bull_market_deviation = data['macd_bull_market_deviation']
+            data_macd_bull_deviation = macd_bull_market_deviation.mask(macd_bull_market_deviation.notnull().values,
+                                                                       histogram * 1.2).values
+
+            macd_bear_market_deviation = data['macd_bear_market_deviation']
+            data_macd_bear_deviation = macd_bear_market_deviation.mask(macd_bear_market_deviation.notnull().values,
+                                                                       histogram * 1.2).values
+
+            macd_bull_market_deviation_single_point = tune_deviation(macd_bull_market_deviation)
+            macd_bear_market_deviation_single_point = tune_deviation(macd_bear_market_deviation)
+            data_macd_bull_deviation_single_point = tune_deviation(data_macd_bull_deviation)
+            data_macd_bear_deviation_single_point = tune_deviation(data_macd_bear_deviation)
+
+            # if self.get_window(data['macd_bull_market_deviation']).any(skipna=True):
+            #     self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bull_market_deviation_single_point), type='scatter',
+            #                                            width=1, panel=0, color=green, markersize=50, marker=marker_up), ])
+            # if self.get_window(data['macd_bear_market_deviation']).any(skipna=True):
+            #     self.add_plot.extend([mpf.make_addplot(self.get_window(macd_bear_market_deviation_single_point), type='scatter',
+            #                                           width=1, panel=0, color=red, markersize=50, marker=marker_down), ])
+
+            # 计算macd的数据。计算macd数据可以使用第三方模块talib（常用的金融指标kdj、macd、boll等等都有，这里不展开了），
+            # 如果在金融数据分析和量化交易上深耕的朋友相信对这些指标的计算原理已经了如指掌，直接通过原始数据计算即可，以macd的计算为例如下：
+
+            # histogram[histogram < 0] = None
+            # histogram_positive = histogram
+            # histogram = macd - signal
+            # histogram[histogram >= 0] = None
+            # histogram_negative = histogram
+
+            colors = [dark_olive_green3 if not numpy.isnan(v) else colors[i]
+                      for (i,), v in numpy.ndenumerate(self.get_window(macd_bull_market_deviation).values)]
+            colors = [light_coral if not numpy.isnan(v) else colors[i]
+                      for (i,), v in numpy.ndenumerate(self.get_window(macd_bear_market_deviation).values)]
         self.add_plot.extend(
             [
                 # mpf.make_addplot(self.get_window(histogram_positive, type='bar', width=0.7, panel=2, color='b')),
@@ -489,6 +504,9 @@ class DataFinanceDraw(object):
         ])
 
     def add_channel(self, data):
+        if not config.enabled_signal('channel_signal_exit', self.period):
+            return
+
         data_atr = data['atr']
         exp = data['close'].ewm(span=26, adjust=False).mean()
 
@@ -509,6 +527,9 @@ class DataFinanceDraw(object):
         ])
 
     def add_stop_loss(self, data):
+        if not config.enabled_signal('stop_loss_signal_exit', self.period):
+            return
+
         data_stop_loss = self.data[:]['stop_loss'].copy()
         data_stop_loss_signal_exit = self.data[:]['stop_loss_signal_exit'].copy()
         if self.get_window(data_stop_loss).any(skipna=True):
@@ -526,11 +547,11 @@ class DataFinanceDraw(object):
 
     def add_signal(self, data):
         if show_signal_detail:
-            signal_list = config.get_signal_enter_list()
+            signal_list = config.get_signal_enter_list(self.period)
             for s in signal_list:
                 self.add_a_signal(data, s, dark_olive_green3, marker_up)
 
-            signal_list = config.get_signal_exit_list()
+            signal_list = config.get_signal_exit_list(self.period)
             for s in signal_list:
                 self.add_a_signal(data, s, light_coral, marker_down)
 
@@ -637,7 +658,7 @@ class DataFinanceDraw(object):
     def draw_arrow(self, axlist, yminor_unit):
         if is_market_index(self.code):
             return
-        
+
         # 带箭头的线
         len_osc = len(oscillatior_list)
 
@@ -728,6 +749,10 @@ class DataFinanceDraw(object):
 
         # deviation_list = ['force_index_bull_market_deviation']
         for column_name in deviation_list:
+            tail = 'signal_enter' if 'bull' in column_name else 'signal_exit'
+            signal_name = '{}_{}'.format(column_name, tail)
+            if not config.enabled_signal(signal_name, self.period):
+                continue
             data = self.get_window(self.data[column_name])
 
             unit1 = yminor_unit * 0.01
@@ -958,14 +983,15 @@ if __name__ == "__main__":
     # show_market('day')
     # exit(0)
 
-    code = 'maq'
-    # code = '300502'
-    open_graph(code, 'day', 'nhnl')
-    # show_indicator(code, 'week', relative_price_strength.relative_price_strength)
-    exit(0)
+    # code = 'maq'
+    # # code = '300502'
+    # open_graph(code, 'day', 'nhnl')
+    # # show_indicator(code, 'week', relative_price_strength.relative_price_strength)
+    # exit(0)
 
     code = '000001'
     code = '300502'
+    # code = '603912'
     # code = '000999'
     # code = '000625'
     # code = '600588'
