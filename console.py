@@ -66,7 +66,7 @@ class Panel(QWidget):
 
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
-        self.setFixedSize(700, 200)
+        self.setFixedSize(700, 250)
 
         self.signals = {}
         self.code = 'maq'
@@ -84,7 +84,7 @@ class Panel(QWidget):
 
     def initUI(self):
         self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)), self)
-        self.log = QLabel("this for log", self)
+        # self.log = QLabel("this for log", self)
 
         self.combo_code = QComboBox(self)
         # comboCode.adjustSize()
@@ -165,12 +165,6 @@ class Panel(QWidget):
         btn_new_order = QPushButton('new order', self)
         btn_new_order.clicked.connect(self.new_trade_order)
 
-        btn_show_indicator = QPushButton('indicator', self)
-        btn_show_indicator.clicked.connect(self.show_indicator)
-
-        btn_market = QPushButton('market', self)
-        btn_market.clicked.connect(self.show_market)
-
         grid = QGridLayout()
 
         grid.setSpacing(10)
@@ -211,37 +205,46 @@ class Panel(QWidget):
 
         grid.addWidget(btn_new_order, 3, 4)
 
-        grid.addWidget(self.log, 4, 0)
-        grid.addWidget(btn_show_indicator, 4, 2)
-        grid.addWidget(btn_market, 4, 3)
+        # grid.addWidget(self.log, 4, 0)
 
-        h_layout_enter = QHBoxLayout()
+        h_layout_enter = QGridLayout()
 
         self.widget_signals = []
         signals = config.get_all_signal_enter()
         # h_layout_enter.addStretch(len(signals))
+        i = 0
+        j = 0
         for s, enabled in signals.items():
             w = QtWidgets.QCheckBox(s, self)
             w.setChecked(enabled)
             self.widget_signals.append(w)
             w.stateChanged.connect(self.checked)
-            h_layout_enter.addWidget(w)
+            if 'deviation' in s:
+                h_layout_enter.addWidget(w, 0, i)
+                i += 1
+            else:
+                h_layout_enter.addWidget(w, 1, j)
+                j += 1
 
-        h_layout_exit = QHBoxLayout()
+        i = 0
+        j = 0
         signals = config.get_all_signal_exit()
-        # h_layout_exit.addStretch(len(signals))
         for s, enabled in signals.items():
             w = QtWidgets.QCheckBox(s, self)
             w.setChecked(enabled)
             self.widget_signals.append(w)
             w.stateChanged.connect(self.checked)
-            h_layout_exit.addWidget(w)
+            if 'deviation' in s:
+                h_layout_enter.addWidget(w, 2, i)
+                i += 1
+            else:
+                h_layout_enter.addWidget(w, 3, j)
+                j += 1
 
         layout = QVBoxLayout()
         layout.addStretch(2)
         layout.addLayout(grid)
         layout.addLayout(h_layout_enter)
-        layout.addLayout(h_layout_exit)
 
         self.setLayout(layout)
 
@@ -498,7 +501,7 @@ class Panel(QWidget):
             if now - update_time > datetime.timedelta(seconds=60):
                 latest_quote_date = quote_db.get_latest_trade_date()
                 latest_sync_date = trade_manager.db_handler.query_money().date
-                self.log.setText('latest quote:\t{}\nlatest sync:\t{}'.format(latest_quote_date, latest_sync_date))
+                # self.log.setText('latest quote:\t{}\nlatest sync:\t{}'.format(latest_quote_date, latest_sync_date))
                 if latest_sync_date != dt.get_trade_date():
                     # self.log.setStyleSheet("color : red")
                     self.btn_sync.setStyleSheet("color : red")

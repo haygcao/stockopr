@@ -306,8 +306,8 @@ def get_all_signal_enter():
 
 
 def get_signal_enter_deviation():
-    d = get_a_signal_list('signal_enter_deviation')
-    return [s for s, enabled in d.items() if enabled]
+    d = get_a_signal_list('signal_enter')
+    return [s for s, enabled in d.items() if 'deviation' in s and enabled]
 
 
 def get_signal_exit_list():
@@ -321,8 +321,8 @@ def get_all_signal_exit():
 
 
 def get_signal_exit_deviation():
-    d = get_a_signal_list('signal_exit_deviation')
-    return [s for s, enabled in d.items() if enabled]
+    d = get_a_signal_list('signal_exit')
+    return [s for s, enabled in d.items() if 'deviation' in s and enabled]
 
 
 def get_signal_list():
