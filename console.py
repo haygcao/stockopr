@@ -119,6 +119,11 @@ class Panel(QWidget):
             combo_indictor.addItem(indicator)
         combo_indictor.activated[str].connect(self.on_activated_indicator)
 
+        self.combo_strategy = QComboBox(self)
+        for indicator in ['bull_deviation', 'ema_value', 'vcp']:
+            self.combo_strategy.addItem(indicator)
+        # combo_strategy.activated[str].connect(self.on_activated_indicator)
+
         qle_code = QLineEdit('300502', self)
 
         # qle.move(60, 100)
@@ -185,7 +190,6 @@ class Panel(QWidget):
         h_layout_tdx.addWidget(self.btn_tdx_next)
         grid.addLayout(h_layout_tdx, 3, 3)
 
-        grid.addWidget(btn_load, 2, 4)
         grid.addWidget(self.btn_monitor, 1, 1)
 
         h_layout_data = QHBoxLayout()
@@ -193,7 +197,11 @@ class Panel(QWidget):
         h_layout_data.addWidget(self.btn_sync)
         grid.addLayout(h_layout_data, 1, 2)
 
-        grid.addWidget(self.btn_scan, 1, 4)
+        grid.addWidget(self.combo_strategy, 1, 3)
+        h_layout_analyse = QHBoxLayout()
+        h_layout_analyse.addWidget(self.btn_scan)
+        h_layout_analyse.addWidget(btn_load)
+        grid.addLayout(h_layout_analyse, 1, 4)
 
         grid.addWidget(qle_code, 3, 0)
         grid.addWidget(self.qle_count_or_price, 3, 1)
@@ -464,8 +472,7 @@ class Panel(QWidget):
 
     def scan(self):
         print('scan started')
-        strategy_name_list = ['bull_at_bottom']
-        strategy_name_list = []
+        strategy_name_list = [self.combo_strategy.currentText()]
         # with multiprocessing.Manager() as manager:
         #     l = manager.list()
         #     p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, l))
