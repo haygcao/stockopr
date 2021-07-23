@@ -86,7 +86,9 @@ def second_stage(quote, period):
 
     quote_week = quote_db.get_price_info_df_db_week(quote, period_type='W')
     back_week = 40
-    vol_min = quote_week.volume[-back_week:].rolling(5).min()
+    # vol_min = quote_week.volume[-back_week:].rolling(5).min()
+    vol_min = quote_week.volume[-back_week:].rolling(5).mean()
+    vol_min = vol_min.shift(periods=1)
     vol_max = quote_week.volume[-back_week:].rolling(5).max()
     m = vol_max > vol_min * 10
     match = m[m]
