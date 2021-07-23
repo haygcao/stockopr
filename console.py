@@ -35,7 +35,8 @@ warnings.simplefilter("ignore", category=UserWarning)
 sys.coinit_flags = 2
 import pywinauto
 
-g_periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
+# g_periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
+g_periods = ['m5', 'm30', 'day', 'week']
 g_periods.reverse()
 g_indicators = ['macd', 'force_index', 'adosc', 'skdj', 'rsi', 'rps']
 g_market_indicators = ['nhnl', 'adl', 'ema_over']
@@ -65,7 +66,7 @@ class Panel(QWidget):
 
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
-        self.setFixedSize(660, 200)
+        self.setFixedSize(700, 200)
 
         self.signals = {}
         self.code = 'maq'
@@ -133,11 +134,10 @@ class Panel(QWidget):
         self.btn_show_chart_next.clicked.connect(self.show_chart)
 
         pid = util.get_pid_of_python_proc('watch_dog')
+        txt = 'watch dog'
         if pid < 0:
-            txt = 'watch dog stopped'
             color = 'red'
         else:
-            txt = 'watch dog running'
             color = 'green'
         self.btn_monitor = QPushButton(txt, self)
         self.btn_monitor.setStyleSheet("background-color : {}".format(color))
@@ -145,7 +145,7 @@ class Panel(QWidget):
 
         threading.Thread(target=self.check, args=()).start()
 
-        self.btn_update_quote = QPushButton('update quote', self)
+        self.btn_update_quote = QPushButton('update', self)
         self.btn_update_quote.clicked.connect(self.update_quote)
 
         self.btn_sync = QPushButton('sync', self)
@@ -185,27 +185,35 @@ class Panel(QWidget):
         h_layout_show_chart.addWidget(self.btn_show_chart_next)
         grid.addLayout(h_layout_show_chart, 2, 3)
 
+        h_layout_tdx = QHBoxLayout()
+        h_layout_tdx.addWidget(self.btn_tdx_prev)
+        h_layout_tdx.addWidget(self.btn_tdx)
+        h_layout_tdx.addWidget(self.btn_tdx_next)
+        grid.addLayout(h_layout_tdx, 3, 3)
+
         grid.addWidget(btn_load, 2, 4)
         grid.addWidget(self.btn_monitor, 1, 1)
-        grid.addWidget(self.btn_update_quote, 1, 2)
-        grid.addWidget(self.btn_sync, 1, 3)
+
+        h_layout_data = QHBoxLayout()
+        h_layout_data.addWidget(self.btn_update_quote)
+        h_layout_data.addWidget(self.btn_sync)
+        grid.addLayout(h_layout_data, 1, 2)
+
         grid.addWidget(self.btn_scan, 1, 4)
 
         grid.addWidget(qle_code, 3, 0)
         grid.addWidget(self.qle_count_or_price, 3, 1)
-        grid.addWidget(btn_buy, 3, 2)
-        grid.addWidget(btn_sell, 3, 3)
+
+        h_layout_order = QHBoxLayout()
+        h_layout_order.addWidget(btn_buy)
+        h_layout_order.addWidget(btn_sell)
+        grid.addLayout(h_layout_order, 3, 2)
+
         grid.addWidget(btn_new_order, 3, 4)
 
         grid.addWidget(self.log, 4, 0)
         grid.addWidget(btn_show_indicator, 4, 2)
         grid.addWidget(btn_market, 4, 3)
-
-        h_layout_tdx = QHBoxLayout()
-        h_layout_tdx.addWidget(self.btn_tdx_prev)
-        h_layout_tdx.addWidget(self.btn_tdx)
-        h_layout_tdx.addWidget(self.btn_tdx_next)
-        grid.addLayout(h_layout_tdx, 4, 4)
 
         h_layout_enter = QHBoxLayout()
 
@@ -285,8 +293,8 @@ class Panel(QWidget):
     def on_activated_code(self, text):
         self.code = text.split()[0]
 
-        if not text.startswith('maq'):
-            quote = tx.get_realtime_data_sina(self.code)
+        quote = tx.get_realtime_data_sina(self.code)
+        if isinstance(quote, pandas.DataFrame):
             self.count_or_price[0] = quote['close'][-1]
 
         self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
@@ -296,13 +304,17 @@ class Panel(QWidget):
 
     def set_current(self):
         current_index = self.combo_code.currentIndex()
+        max_index = self.combo_code.count() - 1
 
         widget = self.sender()
         if widget == self.btn_tdx_prev or widget == self.btn_show_chart_prev:
             current_index -= 1
+            current_index = max_index if current_index < 0 else current_index
         elif widget == self.btn_tdx_next or widget == self.btn_show_chart_next:
             current_index += 1
+            current_index = 0 if current_index > max_index else current_index
 
+        current_index = max(0, min(current_index, max_index))
         self.combo_code.setCurrentIndex(current_index)
 
     def open_tdx(self):
@@ -315,7 +327,6 @@ class Panel(QWidget):
         self.lbl.adjustSize()
 
         pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
-        print('tdx pid: {}'.format(pid))
         if pid < 0:
             app = pywinauto.Application(backend="uia").start('C:\\new_tdx\\TdxW.exe')
         else:
@@ -418,7 +429,6 @@ class Panel(QWidget):
             # if self.btn_monitor.isChecked():
             if pid > 0:
                 print('stop watch dog')
-                self.btn_monitor.setText('watch dog stopped')
                 self.btn_monitor.setStyleSheet("background-color : red")
                 # self.btn_monitor.setCheckable(False)
                 # self.monitor_proc.terminate()
@@ -428,7 +438,6 @@ class Panel(QWidget):
                 psutil.Process(pid=pid).terminate()
             else:
                 print('start watch dog')
-                self.btn_monitor.setText('watch dog running')
                 self.btn_monitor.setStyleSheet("background-color : green")
                 # self.btn_monitor.setCheckable(True)
                 # self.monitor_proc = multiprocessing.Process(target=watch_dog.monitor, args=())
@@ -509,11 +518,10 @@ class Panel(QWidget):
                 continue
 
             pid_prev_check = pid
+            txt = 'watch dog'
             if pid < 0:
-                txt = 'watch dog stopped'
                 color = 'red'
             else:
-                txt = 'watch dog running'
                 color = 'green'
 
             print('check watch dog', color)
