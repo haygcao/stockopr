@@ -24,44 +24,25 @@ def signal_one(quote_copy, column):
     return quote_copy
 
 
-def signal(quote, column_list, period, back_days):
+def signal(quote, column, period, back_days):
     back_days = 0 if dt.istradetime() else back_days
-    quote = market_deviation.compute_index(quote, period, back_days)
+    quote = market_deviation.compute_index(quote, period, back_days, column)
 
     quote_copy = quote.copy()
-    for column in column_list:
-        quote_copy = signal_one(quote_copy, column)
+    quote_copy = signal_one(quote_copy, column)
 
     return quote_copy
 
 
-def signal_enter(quote, period='day', back_days=125):
-    column_list = [
-        'force_index_bull_market_deviation',
-        'macd_bull_market_deviation',
-        'volume_ad_bull_market_deviation',
-        'skdj_bull_market_deviation',
-        'rsi_bull_market_deviation',
-    ]
-
-    return signal(quote, column_list, period, back_days)
+def signal_enter(quote, period='day', back_days=125, column=None):
+    return signal(quote, column, period, back_days)
 
 
-def signal_exit(quote, period='day', back_days=125):
-    column_list = [
-        'force_index_bear_market_deviation',
-        'macd_bear_market_deviation',
-        'volume_ad_bear_market_deviation',
-        'skdj_bear_market_deviation',
-        'rsi_bear_market_deviation',
-    ]
-
-    return signal(quote, column_list, period, back_days)
+def signal_exit(quote, period='day', back_days=125, column=None):
+    return signal(quote, column, period, back_days)
 
 
 def signal_enter_and_exit(quote, period, back_days=125):
-    quote = market_deviation.compute_index(quote, period, back_days)
-
     column_list = ['force_index_bull_market_deviation',
                    'macd_bull_market_deviation',
                    'volume_ad_bull_market_deviation',
@@ -73,5 +54,6 @@ def signal_enter_and_exit(quote, period, back_days=125):
                    'skdj_bear_market_deviation',
                    'rsi_bear_market_deviation',
                    ]
-
+    for column in column_list:
+        quote = market_deviation.compute_index(quote, period, back_days, column)
     return signal(quote, column_list, period, back_days)

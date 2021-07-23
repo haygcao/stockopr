@@ -229,20 +229,26 @@ def market_deviation_rsi(quote, back, period, will, strict=True):
     return market_deviation(quote, period, quote['rsi'] - 50, back, column_name, will, strict=strict)
 
 
-@computed(column_name='macd_bull_market_deviation')
-def compute_index(quote, period, back_days):
-    for func in [
-        market_deviation_force_index,
-        market_deviation_macd,
-        market_deviation_volume_ad,
-        market_deviation_skdj,
-        market_deviation_rsi
-    ]:
-        for will in [1, -1]:
-            back_day = 0
-            while back_day <= back_days:
-                quote, n = func(quote, back_day, period, will)
-                back_day += n
+indicator_func = {
+    'force_index': market_deviation_force_index,
+    'macd': market_deviation_macd,
+    'volume_ad': market_deviation_volume_ad,
+    'skdj': market_deviation_skdj,
+    'rsi': market_deviation_rsi
+}
+
+
+# @computed(column_name='macd_bull_market_deviation')
+def compute_index(quote, period, back_days, column):
+    if column in quote.columns:
+        return quote
+
+    func = indicator_func[column[:column.index('_b')]]
+    for will in [1, -1]:
+        back_day = 0
+        while back_day <= back_days:
+            quote, n = func(quote, back_day, period, will)
+            back_day += n
 
     # bull_market_deviation = quote['macd_bear_market_deviation']
     # print(bull_market_deviation[bull_market_deviation.notnull()])

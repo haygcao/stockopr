@@ -198,6 +198,10 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     for s in signal_list:
         if s == 'stop_loss_signal_exit':
             continue
+        if 'market_deviation' in s:
+            column = s[:s.index('_signal')]
+            quote = signal_func[s](quote, period=period, column=column)
+            continue
         quote = signal_func[s](quote, period=period)
 
     # # 动力系统
