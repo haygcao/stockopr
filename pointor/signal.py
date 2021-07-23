@@ -22,6 +22,33 @@ from util import util
 from util.log import logger
 
 
+signal_func = {
+    "dynamical_system_signal_enter": signal_dynamical_system.signal_enter,
+    "channel_signal_enter": signal_channel.signal_enter,
+    "force_index_signal_enter": signal_force_index.signal_enter,
+    "ema_value_signal_enter": signal_ema_value.signal_enter,
+    "volume_ad_signal_enter": signal_volume_ad.signal_enter,
+    "resistance_support_signal_enter": signal_resistance_support.signal_enter,
+    "force_index_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
+    "volume_ad_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
+    "skdj_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
+    "rsi_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
+    "macd_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
+
+    "dynamical_system_signal_exit": signal_dynamical_system.signal_exit,
+    "channel_signal_exit": signal_channel.signal_exit,
+    "force_index_signal_exit": signal_force_index.signal_exit,
+    "volume_ad_signal_exit": signal_volume_ad.signal_exit,
+    "resistance_support_signal_exit": signal_resistance_support.signal_exit,
+    "force_index_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
+    "volume_ad_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
+    "skdj_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
+    "rsi_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
+    "macd_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
+    "stop_loss_signal_exit": signal_stop_loss.signal_exit
+  }
+
+
 def gen_cache_path(code, date, period):
     file = '{}-{}-{}.csv'.format(code, date.strftime('%Y%m%d'), period)
     root_dir = util.get_root_dir()
@@ -166,32 +193,39 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     # 第二阶段
     quote = second_stage.compute_second_stage(quote, period)
 
-    # 动力系统
-    quote = signal_dynamical_system.signal_enter(quote, period=period)
-    quote = signal_dynamical_system.signal_exit(quote, period=period)
+    # enter signal
+    signal_list = config.get_signal_list()
+    for s in signal_list:
+        if s == 'stop_loss_signal_exit':
+            continue
+        quote = signal_func[s](quote, period=period)
 
-    # 通道
-    quote = signal_channel.signal_enter(quote, period=period)
-    quote = signal_channel.signal_exit(quote, period=period)
-
-    # 背离
-    quote = signal_market_deviation.signal_enter(quote, period)
-    quote = signal_market_deviation.signal_exit(quote, period)
-
-    # 强力指数
-    quote = signal_force_index.signal_enter(quote, period)
-    quote = signal_force_index.signal_exit(quote, period)
-
-    # ema 价值回归
-    quote = signal_ema_value.signal_enter(quote, period)
-
-    # 阻力位, 支撑位
-    quote = signal_resistance_support.signal_enter(quote, period)
-    quote = signal_resistance_support.signal_exit(quote, period)
-
-    # 量价
-    quote = signal_volume_ad.signal_enter(quote, period)
-    quote = signal_volume_ad.signal_exit(quote, period)
+    # # 动力系统
+    # quote = signal_dynamical_system.signal_enter(quote, period=period)
+    # quote = signal_dynamical_system.signal_exit(quote, period=period)
+    #
+    # # 通道
+    # quote = signal_channel.signal_enter(quote, period=period)
+    # quote = signal_channel.signal_exit(quote, period=period)
+    #
+    # # 背离
+    # quote = signal_market_deviation.signal_enter(quote, period)
+    # quote = signal_market_deviation.signal_exit(quote, period)
+    #
+    # # 强力指数
+    # quote = signal_force_index.signal_enter(quote, period)
+    # quote = signal_force_index.signal_exit(quote, period)
+    #
+    # # ema 价值回归
+    # quote = signal_ema_value.signal_enter(quote, period)
+    #
+    # # 阻力位, 支撑位
+    # quote = signal_resistance_support.signal_enter(quote, period)
+    # quote = signal_resistance_support.signal_exit(quote, period)
+    #
+    # # 量价
+    # quote = signal_volume_ad.signal_enter(quote, period)
+    # quote = signal_volume_ad.signal_exit(quote, period)
 
     if 'signal_enter' not in quote.columns:
         quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
@@ -235,7 +269,10 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     # 计算止损数据
     if 'stop_loss_signal_exit' in quote_copy.columns:
         quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
-    quote_copy = signal_stop_loss.signal_exit(quote_copy)
+    if 'stop_loss_signal_exit' in signal_list:
+        quote_copy = signal_stop_loss.signal_exit(quote_copy)
+    else:
+        quote_copy.insert(len(quote_copy.columns), 'stop_loss_signal_exit', numpy.nan)
 
     # 处理合并看空信号
     column_list = config.get_signal_exit_list()

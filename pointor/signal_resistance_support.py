@@ -74,6 +74,7 @@ def signal_exit(quote, period=None):
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'support'] = quote['support_origin'].shift(periods=config.resistance_support_backdays)
+    quote_copy.loc[:, 'ema26_shift'] = quote['ema26'].shift(periods=1)
     quote_copy.loc[:, 'resistance_support_signal_exit'] = quote_copy.apply(
         lambda x: function_exit(x.high, x.close, x.support, x.dlxt_long_period, x.dlxt, x.dlxt_ema13, x.ema13, x.ema26,
                                  x.ema26_shift, period, x.name), axis=1)
