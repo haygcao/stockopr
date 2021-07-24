@@ -450,7 +450,7 @@ class Panel(QWidget):
         [combo.select_clear() for combo in self.combo_signal.values()]
         signals = config.get_all_signal(self.period)
         for s, v in signals.items():
-            self.widget_signals.get(s).setChecked(v)
+            # self.widget_signals.get(s).setChecked(v)
             if v:
                 self.combo_signal.get(get_combo_signal_key(s)).select_text(s)
 

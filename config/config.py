@@ -369,7 +369,7 @@ def enable_signal(signal, enable, period):
         # fp.seek(0)
         # json.dump(signals, fp, indent=2)
 
-    with open(gen_signal_config_path(period), 'w') as fp:
+    with open(gen_signal_config_path(period), 'w', newline='\n') as fp:
         json.dump(signals, fp, indent=2)
 
 
