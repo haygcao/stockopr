@@ -27,6 +27,7 @@ from pointor.signal import write_supplemental_signal
 from selector import selector
 from trade_manager import trade_manager
 from util import util, dt
+from util.QComboCheckBox import QComboCheckBox
 from util.pywinauto_util import max_window
 
 # pywinauto
@@ -119,9 +120,11 @@ class Panel(QWidget):
             combo_indictor.addItem(indicator)
         combo_indictor.activated[str].connect(self.on_activated_indicator)
 
-        self.combo_strategy = QComboBox(self)
+        # self.combo_strategy = QComboBox(self)
+        self.combo_strategy = QComboCheckBox()
         for indicator in ['bull_deviation', 'ema_value', 'vcp']:
             self.combo_strategy.addItem(indicator)
+        # self.combo_strategy.setCurrentIndex(1)
         # combo_strategy.activated[str].connect(self.on_activated_indicator)
 
         qle_code = QLineEdit('300502', self)
@@ -472,14 +475,16 @@ class Panel(QWidget):
 
     def scan(self):
         print('scan started')
-        strategy_name_list = [self.combo_strategy.currentText()]
+        strategy_name_list = [s.text() for s in self.combo_strategy.get_selected()]
+        print(strategy_name_list)
+        p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None))
+        p.start()
+
         # with multiprocessing.Manager() as manager:
         #     l = manager.list()
         #     p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, l))
         #     p.start()
         #     p.join()
-        p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None))
-        p.start()
 
     def buy(self):
         supplemental_signal_path = config.supplemental_signal_path
