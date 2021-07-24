@@ -47,6 +47,19 @@ def list_to_str(list_: list):
     return '|'.join([str(i) for i in list_])
 
 
+def get_combo_signal_key(s):
+    if 'enter' in s:
+        if 'deviation' in s:
+            return 'enter_deviation'
+        else:
+            return 'enter'
+    else:
+        if 'deviation' in s:
+            return 'exit_deviation'
+        else:
+            return 'exit'
+
+
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -67,9 +80,17 @@ class Panel(QWidget):
 
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
-        self.setFixedSize(700, 250)
+        # self.setFixedSize(700, 200)
+        self.setFixedWidth(700)
 
-        self.signals = {}
+        # self.widget_signals = {}
+        self.combo_signal = {
+            'enter': QComboCheckBox(),
+            'enter_deviation': QComboCheckBox(),
+            'exit': QComboCheckBox(),
+            'exit_deviation': QComboCheckBox()
+        }
+
         self.code = 'maq'
         self.period = g_periods[0]
         self.indicator = g_indicators[0]
@@ -125,6 +146,7 @@ class Panel(QWidget):
         for indicator in ['bull_deviation', 'ema_value', 'vcp']:
             self.combo_strategy.addItem(indicator)
         # self.combo_strategy.setCurrentIndex(1)
+        self.combo_strategy.select_index(0)
         # combo_strategy.activated[str].connect(self.on_activated_indicator)
 
         qle_code = QLineEdit('300502', self)
@@ -218,44 +240,57 @@ class Panel(QWidget):
 
         # grid.addWidget(self.log, 4, 0)
 
-        h_layout_enter = QGridLayout()
+        h_layout_signal = QHBoxLayout()
 
-        self.widget_signals = {}
-        signals = config.get_all_signal_enter(self.period)
-        # h_layout_enter.addStretch(len(signals))
-        i = 0
-        j = 0
-        for s, enabled in signals.items():
-            w = QtWidgets.QCheckBox(s, self)
-            w.setChecked(enabled)
-            self.widget_signals.update({s: w})
-            w.stateChanged.connect(self.checked)
-            if 'deviation' in s:
-                h_layout_enter.addWidget(w, 0, i)
-                i += 1
-            else:
-                h_layout_enter.addWidget(w, 1, j)
-                j += 1
+        for combo in self.combo_signal.values():
+            combo.activated[str].connect(self.on_activated_signal)
+            h_layout_signal.addWidget(combo)
 
-        i = 0
-        j = 0
-        signals = config.get_all_signal_exit(self.period)
+        signals = config.get_all_signal(self.period)
         for s, enabled in signals.items():
-            w = QtWidgets.QCheckBox(s, self)
-            w.setChecked(enabled)
-            self.widget_signals.update({s: w})
-            w.stateChanged.connect(self.checked)
-            if 'deviation' in s:
-                h_layout_enter.addWidget(w, 2, i)
-                i += 1
-            else:
-                h_layout_enter.addWidget(w, 3, j)
-                j += 1
+            combo = self.combo_signal.get(get_combo_signal_key(s))
+            combo.addItem(s)
+            if enabled:
+                combo.select_text(s)
+
+        # h_layout_enter = QGridLayout()
+        #
+        # signals = config.get_all_signal_enter(self.period)
+        # # h_layout_enter.addStretch(len(signals))
+        # i = 0
+        # j = 0
+        # for s, enabled in signals.items():
+        #     w = QtWidgets.QCheckBox(s, self)
+        #     w.setChecked(enabled)
+        #     self.widget_signals.update({s: w})
+        #     w.stateChanged.connect(self.checked)
+        #     if 'deviation' in s:
+        #         h_layout_enter.addWidget(w, 0, i)
+        #         i += 1
+        #     else:
+        #         h_layout_enter.addWidget(w, 1, j)
+        #         j += 1
+        #
+        # i = 0
+        # j = 0
+        # signals = config.get_all_signal_exit(self.period)
+        # for s, enabled in signals.items():
+        #     w = QtWidgets.QCheckBox(s, self)
+        #     w.setChecked(enabled)
+        #     self.widget_signals.update({s: w})
+        #     w.stateChanged.connect(self.checked)
+        #     if 'deviation' in s:
+        #         h_layout_enter.addWidget(w, 2, i)
+        #         i += 1
+        #     else:
+        #         h_layout_enter.addWidget(w, 3, j)
+        #         j += 1
 
         layout = QVBoxLayout()
         layout.addStretch(2)
         layout.addLayout(grid)
-        layout.addLayout(h_layout_enter)
+        # layout.addLayout(h_layout_enter)
+        layout.addLayout(h_layout_signal)
 
         self.setLayout(layout)
 
@@ -315,6 +350,12 @@ class Panel(QWidget):
         self.lbl.adjustSize()
 
         self.qle_count_or_price.setText(list_to_str(self.count_or_price))
+
+    def on_activated_signal(self, text):
+        combo: QComboCheckBox = self.sender()
+
+        enabled = text in [s.text() for s in combo.get_selected()]
+        config.enable_signal(text, enabled, self.period)
 
     def set_current(self):
         current_index = self.combo_code.currentIndex()
@@ -397,9 +438,12 @@ class Panel(QWidget):
         self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
         self.lbl.adjustSize()
 
+        [combo.select_clear() for combo in self.combo_signal.values()]
         signals = config.get_all_signal(self.period)
         for s, v in signals.items():
             self.widget_signals.get(s).setChecked(v)
+            if v:
+                self.combo_signal.get(get_combo_signal_key(s)).select_text(s)
 
     def on_activated_indicator(self, text):
         self.indicator = text
@@ -477,8 +521,8 @@ class Panel(QWidget):
         print('scan started')
         strategy_name_list = [s.text() for s in self.combo_strategy.get_selected()]
         print(strategy_name_list)
-        p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None))
-        p.start()
+        # p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None))
+        # p.start()
 
         # with multiprocessing.Manager() as manager:
         #     l = manager.list()
