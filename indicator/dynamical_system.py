@@ -156,3 +156,9 @@ def dynamical_system_blue(quote):
     quote = dynamical_system(quote)
 
     return True if quote['dlxt'][-1] == 0 else False
+
+
+def dynamical_system_not_red(quote):
+    quote = dynamical_system(quote)
+
+    return True if quote['dlxt'][-1] >= 0 else False

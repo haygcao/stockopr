@@ -22,7 +22,8 @@ def check_long_period_dynamical_system(quote):
     period = 'day'
     period_type = period_map[period]['long_period']
     quote_week = quote_db.get_price_info_df_db_week(quote, period_type)
-    if dynamical_system.dynamical_system_green(quote_week):
+    # if dynamical_system.dynamical_system_green(quote_week):
+    if dynamical_system.dynamical_system_not_red(quote_week):
         return True
     return False
 
@@ -32,7 +33,7 @@ def market_deviation(quote):
     column_list = ['force_index_bull_market_deviation_signal_enter', 'macd_bull_market_deviation_signal_enter']
     column_list = ['macd_bull_market_deviation_signal_enter']
 
-    days = 5 if period == 'day' else 2
+    days = 3 if period == 'day' else 2
     if period == 'week' and datetime.datetime.today().weekday() < 4:
         days += 1
     for column in column_list:

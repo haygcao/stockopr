@@ -142,7 +142,8 @@ def select(strategy_name_list, stock_list: list[tuple]):
     if config.update_candidate_pool:
         update_candidate_pool()
 
-    code_list = basic.get_candidate_stock_code()
+    # code_list = basic.get_candidate_stock_code()
+    code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
     code_list = [code for code in code_list if int(code[:2]) <= 60]
     # code_list = ['300502']

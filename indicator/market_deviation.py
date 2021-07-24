@@ -197,7 +197,8 @@ def market_deviation_macd(quote, back, period, will, strict=True):
 def market_deviation_force_index(quote, back, period, will, strict=True):
     # import ipdb;
     # ipdb.set_trace()
-    n = 13 if is_long_period(period) else 2
+    # n = 13 if is_long_period(period) else 2
+    n = 13
     quote = force_index.force_index(quote, n=n)
 
     column_name = 'force_index_bull_market_deviation' if will == 1 else 'force_index_bear_market_deviation'
