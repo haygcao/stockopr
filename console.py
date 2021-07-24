@@ -298,6 +298,10 @@ class Panel(QWidget):
         self.setWindowTitle('K')
         self.show()
 
+    def set_label(self):
+        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
+        self.lbl.adjustSize()
+
     def checked(self, checked):
         for s, w in self.widget_signals.items():
             if self.sender() == w:
@@ -320,8 +324,7 @@ class Panel(QWidget):
         else:
             self.code = text[:-1]
 
-        self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
-        self.lbl.adjustSize()
+        self.set_label()
 
         # 市场指数长度为 7, 行业指数长度为 6, 且以 '88' 开始
         if len(self.code) == 6 and self.code[0] in '036':
@@ -336,8 +339,7 @@ class Panel(QWidget):
 
     def on_count_or_price_changed(self, text):
         self.count_or_price = text.split('|')
-        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
-        self.lbl.adjustSize()
+        self.set_label()
 
     def on_activated_code(self, text):
         self.code = text.split()[0]
@@ -346,8 +348,7 @@ class Panel(QWidget):
         if isinstance(quote, pandas.DataFrame):
             self.count_or_price[0] = quote['close'][-1]
 
-        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
-        self.lbl.adjustSize()
+        self.set_label()
 
         self.qle_count_or_price.setText(list_to_str(self.count_or_price))
 
@@ -378,8 +379,7 @@ class Panel(QWidget):
         text = self.combo_code.currentText()
         self.code = text.split()[0]
 
-        self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
-        self.lbl.adjustSize()
+        self.set_label()
 
         pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
         if pid < 0:
@@ -396,8 +396,18 @@ class Panel(QWidget):
         # width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
         # height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
 
+        m = {
+            'maq': '999999',
+            '0000001': '999999',
+            '0000688': '000688',  # '"000688 {VK_DOWN}",
+            '1399001': '399001',
+            '1399006': '399006'
+        }
         # main_window.type_keys(str(self.code))
-        pywinauto.keyboard.send_keys(self.code)
+        code = self.code if len(self.code) == 6 else m[self.code]
+        pywinauto.keyboard.send_keys(code)
+        if self.code == '0000688':
+            time.sleep(0.5)
         pywinauto.keyboard.send_keys('{ENTER}')
 
     def load(self):
@@ -435,8 +445,7 @@ class Panel(QWidget):
 
     def on_activated_period(self, text):
         self.period = text
-        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
-        self.lbl.adjustSize()
+        self.set_label()
 
         [combo.select_clear() for combo in self.combo_signal.values()]
         signals = config.get_all_signal(self.period)
@@ -447,8 +456,7 @@ class Panel(QWidget):
 
     def on_activated_indicator(self, text):
         self.indicator = text
-        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
-        self.lbl.adjustSize()
+        self.set_label()
 
     def show_chart(self):
         self.set_current()
@@ -456,8 +464,7 @@ class Panel(QWidget):
         text = self.combo_code.currentText()
         self.code = text.split()[0]
 
-        self.lbl.setText('{} {} {}'.format(self.code, self.period, self.close))
-        self.lbl.adjustSize()
+        self.set_label()
 
         if self.code == 'maq' or len(self.code) == 7:
             print('market index')
