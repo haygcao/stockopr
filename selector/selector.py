@@ -53,9 +53,10 @@ selector = {
     'hot_strong': hot_strong.hot_strong,
     'second_stage': second_stage.second_stage,   # 第二阶段
     'bull_at_bottom': bull_at_bottom.bull_at_bottom,
-    'dlxt_green': dynamical_system.dynamical_system_green,
-    'dlxt_red': dynamical_system.dynamical_system_red,
-    'dlxt_blue': dynamical_system.dynamical_system_blue,
+    'dyn_sys_green': dynamical_system.dynamical_system_green,
+    'dyn_sys_red': dynamical_system.dynamical_system_red,
+    'dyn_sys_blue': dynamical_system.dynamical_system_blue,
+    'super_stock': hot_strong.hot_strong,
     'qlzs_p': force_index.force_index_positive,
     'qlzs_m': force_index.force_index_minus
 }
@@ -128,22 +129,23 @@ def select_one_strategy(code_list, strategy_name):
     return code_list
 
 
-def update_candidate_pool():
-    code_list = basic.get_all_stock_code()
-    code_list = select_one_strategy(code_list, 'second_stage')
-    # 科创板
-    code_list = [code for code in code_list if not code.startswith('688')]
-    basic.upsert_candidate_pool(code_list)
+def update_candidate_pool(classification_list):
+    for classification in classification_list:
+        code_list = basic.get_all_stock_code()
+        code_list = select_one_strategy(code_list, classification)
+        # 科创板
+        code_list = [code for code in code_list if not code.startswith('688')]
+        basic.upsert_candidate_pool(code_list, classification)
 
 
-def select(strategy_name_list, stock_list: list[tuple]):
+def select(strategy_name_list, stock_list: list[tuple], candidate_list=['second_stage']):
     begin = datetime.datetime.now()
 
     if config.update_candidate_pool:
         update_candidate_pool()
 
-    # code_list = basic.get_candidate_stock_code()
-    code_list = basic.get_all_stock_code()
+    code_list = basic.get_candidate_stock_code(candidate_list)
+    # code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
     code_list = [code for code in code_list if int(code[:2]) <= 60]
     # code_list = ['300502']

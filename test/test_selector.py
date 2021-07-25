@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from acquisition import quote_db
+from acquisition import quote_db, basic
 from selector import selector
 from selector.plugin.second_stage import second_stage
 from util import dt
@@ -24,6 +24,10 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_update_candidate_pool(self):
         selector.update_candidate_pool()
+
+    def test_get_candidate_pool(self):
+        code_list = basic.get_candidate_stock_code(['second_stage'])
+        print(code_list)
 
 
 def suite():

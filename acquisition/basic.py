@@ -15,23 +15,23 @@ import acquisition.quote_www as price
 import config.config as config
 
 
-def upsert_candidate_pool(code_list):
+def upsert_candidate_pool(code_list, classification):
     if not code_list:
         return
 
     with mysqlcli.get_cursor() as cursor:
-        sql_str = u"INSERT IGNORE INTO candidate_pool_history (code) VALUES (%s)"
+        sql_str = u"INSERT IGNORE INTO candidate_pool_history (code, class) VALUES (%s, %s)"
         value_list = []
         for code in code_list:
-            value_list.append((code, ))
+            value_list.append((code, classification))
 
         try:
             cursor.executemany(sql_str, value_list)
 
-            sql_str = u"truncate table candidate_pool"
-            cursor.execute(sql_str)
+            sql_str = u"delete from candidate_pool where class = %s"
+            cursor.execute(sql_str, (classification, ))
 
-            sql_str = u"INSERT IGNORE INTO candidate_pool (code) VALUES (%s)"
+            sql_str = u"INSERT IGNORE INTO candidate_pool (code, class) VALUES (%s, %s)"
             cursor.executemany(sql_str, value_list)
 
         except pymysql.err.IntegrityError as e:
@@ -40,11 +40,11 @@ def upsert_candidate_pool(code_list):
             print(e)
 
 
-def get_candidate_stock_code():
+def get_candidate_stock_code(candidate_list):
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT code FROM candidate_pool order by code"
-        c.execute(sql)
+        sql = "SELECT code FROM candidate_pool where class in (%s) order by code"
+        c.execute(sql, ','.join(candidate_list))
         stock_code_list = c.fetchall()
 
         return [code['code'] for code in stock_code_list]

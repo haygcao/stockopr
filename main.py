@@ -46,7 +46,7 @@ def test_select_mp():
     strategy_name_list = ['ema_value']
     strategy_name_list = ['hot_strong', 'ema_value']
     strategy_name_list = ['bull_at_bottom']
-    stock_list = selector.select(strategy_name_list)
+    stock_list = selector.select(strategy_name_list, None, ['second_stage'])
     for code, name in stock_list:
         logger.info(code, name)
     logger.info('+++ {0} +++'.format(len(stock_list)))

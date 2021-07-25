@@ -111,7 +111,6 @@ class Panel(QWidget):
         self.combo_code = QComboBox(self)
         # comboCode.adjustSize()
         self.combo_code.resize(self.combo_code.width() + 50, self.combo_code.height())
-        self.load()
 
         self.combo_code.activated[str].connect(self.on_activated_code)
 
@@ -140,6 +139,16 @@ class Panel(QWidget):
         for indicator in g_indicators + g_market_indicators:
             combo_indictor.addItem(indicator)
         combo_indictor.activated[str].connect(self.on_activated_indicator)
+
+        self.combo_classification = QComboCheckBox()
+        for indicator in ['market_index', 'position', 'allow_buy', 'trace', 'candidate_pool', 'reserve']:
+            self.combo_classification.addItem(indicator)
+        self.combo_classification.select_index(2)
+
+        self.combo_candidate = QComboCheckBox()
+        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super_stock']:  # potential
+            self.combo_candidate.addItem(indicator)
+        self.combo_candidate.select_index(0)
 
         # self.combo_strategy = QComboBox(self)
         self.combo_strategy = QComboCheckBox()
@@ -181,6 +190,8 @@ class Panel(QWidget):
         self.btn_sync = QPushButton('sync', self)
         self.btn_sync.clicked.connect(self.sync)
 
+        self.btn_update_candidate = QPushButton('update', self)
+        self.btn_update_candidate.clicked.connect(self.update_candidate)
         self.btn_scan = QPushButton('scan', self)
         self.btn_scan.clicked.connect(self.scan)
 
@@ -198,7 +209,7 @@ class Panel(QWidget):
         grid = QGridLayout()
 
         grid.setSpacing(10)
-        grid.addWidget(self.lbl, 1, 0)
+        grid.addWidget(self.lbl, 4, 0)
         grid.addWidget(self.combo_code, 2, 0)
         grid.addWidget(combo_period, 2, 1)
         grid.addWidget(combo_indictor, 2, 2)
@@ -215,14 +226,10 @@ class Panel(QWidget):
         h_layout_tdx.addWidget(self.btn_tdx_next)
         grid.addLayout(h_layout_tdx, 3, 3)
 
-        grid.addWidget(self.btn_monitor, 1, 1)
-
-        h_layout_data = QHBoxLayout()
-        h_layout_data.addWidget(self.btn_update_quote)
-        h_layout_data.addWidget(self.btn_sync)
-        grid.addLayout(h_layout_data, 1, 2)
-
-        grid.addWidget(self.combo_strategy, 1, 3)
+        grid.addWidget(self.combo_classification, 1, 0)
+        grid.addWidget(self.combo_candidate, 1, 1)
+        grid.addWidget(self.combo_strategy, 1, 2)
+        grid.addWidget(self.btn_update_candidate, 1, 3)
         h_layout_analyse = QHBoxLayout()
         h_layout_analyse.addWidget(self.btn_scan)
         h_layout_analyse.addWidget(btn_load)
@@ -286,11 +293,19 @@ class Panel(QWidget):
         #         h_layout_enter.addWidget(w, 3, j)
         #         j += 1
 
+        h_layout_data = QHBoxLayout()
+        h_layout_data.addWidget(self.btn_update_quote)
+        h_layout_data.addWidget(self.btn_sync)
+        grid.addLayout(h_layout_data, 4, 3)
+        grid.addWidget(self.btn_monitor, 4, 4)
+
         layout = QVBoxLayout()
         layout.addStretch(2)
         layout.addLayout(grid)
         # layout.addLayout(h_layout_enter)
         layout.addLayout(h_layout_signal)
+
+        self.load()
 
         self.setLayout(layout)
 
@@ -412,29 +427,37 @@ class Panel(QWidget):
 
     def load(self):
         self.combo_code.clear()
+
+        classification_list = [i.text() for i in self.combo_classification.get_selected()]
         index_list = ['maq', '0000001', '0000688', '1399001', '1399006']
-        for code in index_list:
-            self.combo_code.addItem(code)
-        position_list = trade_manager.db_handler.query_current_position()
-        code_list = [position.code for position in position_list]
+        if 'market_index' in classification_list:
+            for code in index_list:
+                self.combo_code.addItem(code)
 
-        code_name_map = trade_manager.db_handler.query_trade_order_map()
-        code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
-        code_list_tmp.sort()
-        code_list.extend(code_list_tmp)
+        code_list = []
+        if 'position' in classification_list:
+            position_list = trade_manager.db_handler.query_current_position()
+            code_list.extend([position.code for position in position_list])
 
-        code_list_tmp = []
-        with open('data/portfolio.txt', encoding='utf8') as fp:
-            for code_name in fp:
-                code_name = code_name.strip()
-                if not code_name:
-                    continue
-                code_list_tmp.append(code_name.split()[0])
-        code_list_tmp.sort()
-        code_list.extend(code_list_tmp)
+            code_name_map = trade_manager.db_handler.query_trade_order_map()
+            code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
+            code_list_tmp.sort()
+            code_list.extend(code_list_tmp)
 
-        code_list_tmp = basic.get_candidate_stock_code()
-        code_list.extend(code_list_tmp)
+            code_list_tmp = []
+            with open('data/portfolio.txt', encoding='utf8') as fp:
+                for code_name in fp:
+                    code_name = code_name.strip()
+                    if not code_name:
+                        continue
+                    code_list_tmp.append(code_name.split()[0])
+            code_list_tmp.sort()
+            code_list.extend(code_list_tmp)
+
+        if 'candidate_pool' in classification_list:
+            candidate_list = [i.text() for i in self.combo_candidate.get_selected()]
+            code_list_tmp = basic.get_candidate_stock_code(candidate_list)
+            code_list.extend(code_list_tmp)
 
         for code in code_list:
             name = basic.get_stock_name(code)
@@ -524,12 +547,21 @@ class Panel(QWidget):
         p.start()
         print('sync started')
 
+    def update_candidate(self):
+        selected_list = [s.text() for s in self.combo_candidate.get_selected()]
+        print(selected_list)
+        p = multiprocessing.Process(target=selector.update_candidate_pool, args=(selected_list, ))
+        p.start()
+
+        pass
+
     def scan(self):
         print('scan started')
         strategy_name_list = [s.text() for s in self.combo_strategy.get_selected()]
-        print(strategy_name_list)
-        # p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None))
-        # p.start()
+        candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
+        print(strategy_name_list, candidate_list)
+        p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None, candidate_list))
+        p.start()
 
         # with multiprocessing.Manager() as manager:
         #     l = manager.list()
