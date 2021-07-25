@@ -50,6 +50,23 @@ def get_candidate_stock_code(candidate_list):
         return [code['code'] for code in stock_code_list]
 
 
+def _get_traced_stock_code(strategy_list, allowed):
+    with mysqlcli.get_cursor() as c:
+        sql = "SELECT code FROM selected where allowed_to_buy = %s and class in (%s) order by code"
+        c.execute(sql, ','.join(allowed, strategy_list))
+        stock_code_list = c.fetchall()
+
+        return [code['code'] for code in stock_code_list]
+
+
+def get_traced_stock_code(strategy_list):
+    return _get_traced_stock_code(strategy_list, 0)
+
+
+def get_allowed_to_buy_stock_code(strategy_list):
+    return _get_traced_stock_code(strategy_list, 1)
+
+
 def get_all_stock_code():
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)

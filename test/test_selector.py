@@ -29,6 +29,10 @@ class SelectorPluginTestCase(unittest.TestCase):
         code_list = basic.get_candidate_stock_code(['second_stage'])
         print(code_list)
 
+    def test_select(self):
+        code_list = selector.select(['ema_value'], None, ['second_stage'])
+        print(code_list)
+
 
 def suite():
     suite = unittest.TestSuite()

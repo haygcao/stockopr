@@ -4,7 +4,7 @@ from pointor import signal_ema_value
 
 
 def ema_value(quote, back_days=0):
-    quote = signal_ema_value.signal_enter(quote)
+    quote = signal_ema_value.signal_enter(quote, period='day')
     column_list = ['ema_value_signal_enter']
 
     end_index = None if back_days == 0 else -back_days

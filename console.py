@@ -459,6 +459,11 @@ class Panel(QWidget):
             code_list_tmp = basic.get_candidate_stock_code(candidate_list)
             code_list.extend(code_list_tmp)
 
+        if 'trace' in classification_list:
+            strategy_list = [i.text() for i in self.combo_strategy.get_selected()]
+            code_list_tmp = basic.get_traced_stock_code(strategy_list)
+            code_list.extend(code_list_tmp)
+
         for code in code_list:
             name = basic.get_stock_name(code)
             self.combo_code.addItem('{} {}'.format(code, name))
@@ -559,7 +564,7 @@ class Panel(QWidget):
         print('scan started')
         strategy_name_list = [s.text() for s in self.combo_strategy.get_selected()]
         candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
-        print(strategy_name_list, candidate_list)
+        print(candidate_list, strategy_name_list)
         p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None, candidate_list))
         p.start()
 

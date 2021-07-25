@@ -60,6 +60,9 @@ def compute_enter_mask(quote, period):
     mask = mask | (macd_line <= macd_line_shift)
 
     # 第二阶段
+    if 'second_stage' not in quote.columns:
+        return mask
+
     mask = mask | (~quote.second_stage)
 
     return mask

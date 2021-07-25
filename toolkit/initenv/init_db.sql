@@ -127,14 +127,16 @@ create table selected(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     class varchar(32),
-    `rank` int
+    `rank` int,
+    allowed_to_buy int
     );
 
 create table selected_history(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     class varchar(32),
-    `rank` int
+    `rank` int,
+    allowed_to_buy int
     );
 
 -- 交易记录

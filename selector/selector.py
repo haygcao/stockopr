@@ -84,7 +84,6 @@ def _select(strategy_name, code):
 
     ret = None
     if is_match(df, strategy_name):
-        selected.add_selected(code, strategy_name)
         # print('{}'.format(code))
         ret = code
 
@@ -153,6 +152,8 @@ def select(strategy_name_list, stock_list: list[tuple], candidate_list=['second_
     strategy_name_list = config.get_scan_strategy_name_list() if not strategy_name_list else strategy_name_list
     for strategy_name in strategy_name_list:
         code_list = select_one_strategy(code_list, strategy_name)
+        for code in code_list:
+            selected.add_selected(code, strategy_name)
         logger.info(strategy_name, code_list)
 
     # code_list.append('300502')
