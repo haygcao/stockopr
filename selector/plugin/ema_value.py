@@ -3,7 +3,7 @@ import numpy
 from pointor import signal_ema_value
 
 
-def ema_value(quote, back_days=0):
+def ema_value(quote, back_days=5):
     quote = signal_ema_value.signal_enter(quote, period='day')
     column_list = ['ema_value_signal_enter']
 

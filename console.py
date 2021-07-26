@@ -478,6 +478,11 @@ class Panel(QWidget):
             code_list_tmp = basic.get_traced_stock_code(strategy_list)
             code_list.extend(code_list_tmp)
 
+        if 'allow_buy' in classification_list:
+            strategy_list = [i.text() for i in self.combo_strategy.get_selected()]
+            code_list_tmp = basic.get_allowed_to_buy_stock_code(strategy_list)
+            code_list.extend(code_list_tmp)
+
         for code in code_list:
             name = basic.get_stock_name(code)
             self.combo_code.addItem('{} {}'.format(code, name))

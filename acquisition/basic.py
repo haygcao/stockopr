@@ -15,23 +15,23 @@ import acquisition.quote_www as price
 import config.config as config
 
 
-def upsert_candidate_pool(code_list, classification):
+def upsert_candidate_pool(code_list, strategy):
     if not code_list:
         return
 
     with mysqlcli.get_cursor() as cursor:
-        sql_str = u"INSERT IGNORE INTO candidate_pool_history (code, class) VALUES (%s, %s)"
+        sql_str = u"INSERT IGNORE INTO portfolio_history (code, class, status) VALUES (%s, %s, %s)"
         value_list = []
         for code in code_list:
-            value_list.append((code, classification))
+            value_list.append((code, strategy, 'candidate'))
 
         try:
             cursor.executemany(sql_str, value_list)
 
-            sql_str = u"delete from candidate_pool where class = %s"
-            cursor.execute(sql_str, (classification, ))
+            sql_str = u"delete from portfolio where class = %s and status = %s"
+            cursor.execute(sql_str, (strategy, 'candidate'))
 
-            sql_str = u"INSERT IGNORE INTO candidate_pool (code, class) VALUES (%s, %s)"
+            sql_str = u"INSERT IGNORE INTO portfolio (code, class, status) VALUES (%s, %s, %s)"
             cursor.executemany(sql_str, value_list)
 
         except pymysql.err.IntegrityError as e:
@@ -43,28 +43,28 @@ def upsert_candidate_pool(code_list, classification):
 def get_candidate_stock_code(candidate_list):
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT code FROM candidate_pool where class in (%s) order by code"
+        sql = "SELECT code FROM portfolio where status = 'candidate' and class in (%s) order by code"
         c.execute(sql, ','.join(candidate_list))
         stock_code_list = c.fetchall()
 
         return [code['code'] for code in stock_code_list]
 
 
-def _get_traced_stock_code(strategy_list, allowed):
+def _get_traced_stock_code(strategy_list, status):
     with mysqlcli.get_cursor() as c:
-        sql = "SELECT code FROM selected where allowed_to_buy = %s and class in (%s) order by code"
-        c.execute(sql, ','.join(allowed, strategy_list))
+        sql = "SELECT code FROM portfolio where status = %s and class in (%s) order by code"
+        c.execute(sql, (status, ','.join(strategy_list)))
         stock_code_list = c.fetchall()
 
         return [code['code'] for code in stock_code_list]
 
 
 def get_traced_stock_code(strategy_list):
-    return _get_traced_stock_code(strategy_list, 0)
+    return _get_traced_stock_code(strategy_list, 'traced')
 
 
 def get_allowed_to_buy_stock_code(strategy_list):
-    return _get_traced_stock_code(strategy_list, 1)
+    return _get_traced_stock_code(strategy_list, 'allow_buy')
 
 
 def get_all_stock_code():

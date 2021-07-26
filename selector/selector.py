@@ -128,13 +128,13 @@ def select_one_strategy(code_list, strategy_name):
     return code_list
 
 
-def update_candidate_pool(classification_list):
-    for classification in classification_list:
+def update_candidate_pool(strategy_list):
+    for strategy in strategy_list:
         code_list = basic.get_all_stock_code()
-        code_list = select_one_strategy(code_list, classification)
+        code_list = select_one_strategy(code_list, strategy)
         # 科创板
         code_list = [code for code in code_list if not code.startswith('688')]
-        basic.upsert_candidate_pool(code_list, classification)
+        basic.upsert_candidate_pool(code_list, strategy)
 
 
 def select(strategy_name_list, stock_list: list[tuple], candidate_list=['second_stage']):
@@ -167,7 +167,8 @@ def select(strategy_name_list, stock_list: list[tuple], candidate_list=['second_
 
     log = '\n'.join([' '.join(t) for t in stock_list])
     with open(config.scan_log_path, 'a') as f:
-        f.writelines('[{}] cost [{}s] [{}]'.format(begin, (end - begin).seconds, len(stock_list)))
+        f.writelines('[{}] cost [{}s] [{}][{}] [{}]'.format(
+            begin, (end - begin).seconds, ', '.join(candidate_list), ', '.join(strategy_name_list), len(stock_list)))
         f.writelines('\n')
         f.writelines(log)
         f.writelines('\n\n')

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+""" slope 暂未计算, 先由人工判断
+"""
+
 from acquisition import quote_db
 from util.macd import ema, atr
 
@@ -15,7 +18,7 @@ def volume(vol, vol_ema_s, vol_ema_m, vol_ema_l, back_day):
 
 def price(close, ema_l, ema_xl, ema_xxl, back_day):
     close_ = close.iloc[-1 - back_day]
-    return ema_l.iloc[-1 - back_day] < close_ < ema_l.iloc[-2 - back_day]
+    return ema_l.iloc[-1 - back_day] < close_   # < ema_l.iloc[-2 - back_day]
 
 
 def bottom(close, ema_l, ema_xl, ema_xxl, back_day):
@@ -62,8 +65,11 @@ def super(quote, back_days=30):
 
     ema_l = ema(quote['close'], n=30)['ema']
     ema_xl = ema(quote['close'], n=50)['ema']
+    # 100 周, 2年...
     ema_xxl = ema(quote['close'], n=100)['ema']
+    # ema_xxl = ema_xl
 
+    # 回退 6个月
     for back_day in range(0, back_days):
         if super_one_day(vol_series, vol_ema_s, vol_ema_m, vol_ema_l, quote['close'], ema_l, ema_xl, ema_xxl, back_day):
             return True

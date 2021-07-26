@@ -30,7 +30,7 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(code_list)
 
     def test_select(self):
-        code_list = selector.select(['ema_value'], None, ['second_stage'])
+        code_list = selector.select(['ema_value'], None, ['super'])
         print(code_list)
 
 

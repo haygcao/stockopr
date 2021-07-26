@@ -109,40 +109,26 @@ create table if not exists financial_data (
     );
 
 -- 建仓
-create table candidate_pool(
+create table portfolio(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status varchar(32),
     class varchar(32),
     `rank` int
     );
 
-create table candidate_pool_history(
+create table portfolio_history(
     code varchar(8),
     added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status varchar(32),
     class varchar(32),
     `rank` int
     );
 
-create table selected(
-    code varchar(8),
-    added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    class varchar(32),
-    `rank` int,
-    allowed_to_buy int
-    );
-
-create table selected_history(
-    code varchar(8),
-    added_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    class varchar(32),
-    `rank` int,
-    allowed_to_buy int
-    );
-
-create unique index candidate_pool_code_class on candidate_pool(code, class);
-create unique index candidate_pool_history_code_class on candidate_pool_history(code, class);
-create unique index selected_code_class on selected(code, class);
-create unique index selected_history_code_class on selected_history(code, class);
+create unique index portfolio_code_class on portfolio(code, class);
+create index portfolio_status on portfolio(status);
+create unique index portfolio_history_code_class on portfolio_history(code, class);
+create index portfolio_history_status on portfolio_history(status);
 
 -- 交易记录
 create table trade_detail (
