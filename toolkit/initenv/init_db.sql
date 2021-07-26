@@ -139,6 +139,11 @@ create table selected_history(
     allowed_to_buy int
     );
 
+create unique index candidate_pool_code_class on candidate_pool(code, class);
+create unique index candidate_pool_history_code_class on candidate_pool_history(code, class);
+create unique index selected_code_class on selected(code, class);
+create unique index selected_history_code_class on selected_history(code, class);
+
 -- 交易记录
 create table trade_detail (
     code varchar(8),
