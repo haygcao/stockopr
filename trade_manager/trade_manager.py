@@ -12,7 +12,7 @@ from indicator import atr, ema, dynamical_system, relative_price_strength, ad
 from pointor import signal
 import selector
 from trade_manager import tradeapi, db_handler
-from util import mysqlcli, dt
+from util import mysqlcli, dt, qt_util
 
 from util.log import logger
 from util.qt_util import popup_warning_message_box_mp
@@ -151,6 +151,15 @@ def sync():
     operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date]
     db_handler.save_operation_details(operation_detail, trade_date, sync=True)
     logger.info('sync operation detail')
+
+    m = db_handler.query_money()
+    ps = db_handler.query_current_position()
+    p = ps[0] if ps else None
+    # o = db_handler.query_operation_details()
+    if m.date == trade_date and (not p or p.date == trade_date):
+        qt_util.popup_info_message_box_mp('[{}] [{}]\nsync account OK'.format(m.date, p.date if p else ''))
+    else:
+        qt_util.popup_warning_message_box_mp('[{}] [{}]\nsync account FAILED'.format(m.date, p.date if p else ''))
 
 
 def check_quota(code, direction):

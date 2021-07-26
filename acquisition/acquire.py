@@ -20,6 +20,7 @@ import acquisition.quote_www as quote_www
 from acquisition import industry_index
 from util import dt
 from util.log import logger
+from util import qt_util
 
 timeout = 5
 socket.setdefaulttimeout(timeout)
@@ -289,6 +290,8 @@ def save_quote():
 
     industry_index.update_index_quote(start_date=today)
     logger.info('save industry index quote')
+
+    qt_util.popup_info_message_box_mp('update quote OK')
 
 
 def check_quote(quote1, quote2):

@@ -81,10 +81,6 @@ def test_signal():
 
 def test():
     return
-    util.qt_util.popup_warning_message_box('hello')
-    util.qt_util.popup_warning_message_box('hello')
-    time.sleep(3)
-    exit(0)
 
 
 if __name__ == '__main__':
