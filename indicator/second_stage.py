@@ -32,6 +32,7 @@ def second_stage(quote, period):
         'xxl': 200
     }
     back_day = 120
+    vol_times = 4
 
     # if period == 'day':
     #     quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
@@ -90,7 +91,7 @@ def second_stage(quote, period):
     vol_min = quote_week.volume[-back_week:].rolling(5).mean()
     vol_min = vol_min.shift(periods=1)
     vol_max = quote_week.volume[-back_week:].rolling(5).max()
-    m = vol_max > vol_min * 10
+    m = vol_max > vol_min * vol_times
     match = m[m]
     if len(match) == 0:
         return False

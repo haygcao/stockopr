@@ -23,7 +23,7 @@ import selector.plugin.d as d
 import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
-from selector.plugin import market_deviation, hot_strong, bull_at_bottom, second_stage
+from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong
 from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
@@ -50,13 +50,13 @@ selector = {
     'qd': qd.qd,
     'bull_deviation': market_deviation.market_deviation,   # 牛市背离
     'ema_value': ema_value.ema_value,   # 价值回归
-    'hot_strong': hot_strong.hot_strong,
+    'super': super.super,
     'second_stage': second_stage.second_stage,   # 第二阶段
     'bull_at_bottom': bull_at_bottom.bull_at_bottom,
     'dyn_sys_green': dynamical_system.dynamical_system_green,
     'dyn_sys_red': dynamical_system.dynamical_system_red,
     'dyn_sys_blue': dynamical_system.dynamical_system_blue,
-    'super_stock': hot_strong.hot_strong,
+    'hot_strong': hot_strong.hot_strong,
     'qlzs_p': force_index.force_index_positive,
     'qlzs_m': force_index.force_index_minus
 }

@@ -1,3 +1,17 @@
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2021, shuhm. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""stockopr is stock trade helper in Python. Supported platforms:
+
+ - Linux
+ - Windows
+
+Works with Python versions from 3.4 to 3.9+.
+"""
+
 import datetime
 import multiprocessing
 import os
@@ -146,7 +160,7 @@ class Panel(QWidget):
         self.combo_classification.select_index(2)
 
         self.combo_candidate = QComboCheckBox()
-        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super_stock']:  # potential
+        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super']:  # potential
             self.combo_candidate.addItem(indicator)
         self.combo_candidate.select_index(0)
 
