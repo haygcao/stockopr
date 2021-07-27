@@ -674,6 +674,9 @@ class Panel(QWidget):
         widget = self.geometry()
         x = ag.width() - widget.width() - 30
         y = 2 * ag.height() - sg.height() - widget.height() - 50
+
+        x = 0
+        y = 100
         self.move(x, y)
 
 
