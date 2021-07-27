@@ -69,28 +69,40 @@ def high_angle(quote, back_day):
     Out[3]: 59.99999999999999
     """
 
-    if quote.percent.iloc[-1 - back_day] < 15:
+    current = -1 - back_day
+    tomorrow = current + 1
+    after_tomorrow = current + 2
+    yest = current - 1
+    if quote.percent.iloc[current] < 15:
         return False
 
     if back_day == 0:
         return True
 
-    if quote.close.iloc[-1 - back_day + 3] < quote.high.iloc[-1 - back_day]:
+    yest_close = quote.close.iloc[yest]
+    percent = 100 * (quote.close.iloc[after_tomorrow] / yest_close - 1)
+
+    date = quote.index[current]
+    third = quote.close.iloc[after_tomorrow]
+    first_two = quote.high.iloc[current: tomorrow + 1]
+    first_two_max = first_two.max()
+    if third < first_two_max and percent < 40:
         return False
 
     # if not (quote.percent.iloc[-1 - back_day: -1 - back_day + 3] > 0).all():
     #     return False
 
-    low = quote.close.iloc[-back_day - 2]
-    index = len(quote) - back_day
-    series_low = quote.low.iloc[index: index + 5]
+    series_low = quote.low.iloc[tomorrow: after_tomorrow + 1]
+    if len(series_low) == 0:
+        print(quote.code[-1], series_low)
+        return False
     low_max = series_low.max()
     low_min = series_low.min()
-    if low > low_min * 0.9:
+    if yest_close > low_min * 0.9:
         return False
 
     index = numpy.where(series_low == low_max)[0][0]
-    y = (low_max / low - 1) * 20
+    y = (low_max / yest_close - 1) * 20
     x = index + 2
 
     angle = math.degrees(math.atan(y/x))
@@ -152,8 +164,10 @@ def super(quote, back_days=30):
     # ema_xxl = ema_xl
 
     # 回退 6个月
-    for back_day in range(back_days, 2, -1):
+    for back_day in range(back_days, 1, -1):
         if super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
+            date = quote.index[-1 - back_day]
+            # print(quote.code[-1], date)
             return True
 
     return False

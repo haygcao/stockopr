@@ -10,11 +10,7 @@ from util import dt
 
 class SelectorPluginTestCase(unittest.TestCase):
     def setUp(self):
-        self.code = '300502'
-        self.code = '600483'
-        self.code = '300077'
-        self.code = '000652'
-        self.code = '000036'
+        self.code = '000027'
         self.period = 'day'
         count = 1000
         self.quote = quote_db.get_price_info_df_db(self.code, days=count, period_type='D')
