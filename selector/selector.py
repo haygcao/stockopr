@@ -78,7 +78,7 @@ def _select(strategy_name, code):
     import util.mysqlcli as mysqlcli
     _conn = mysqlcli.get_connection()
 
-    df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
+    df = quote_db.get_price_info_df_db(code, 1000, '', 'D', _conn)
     if df.empty:
         logger.info(code, 'no quote')
         return
@@ -132,10 +132,11 @@ def select_one_strategy(code_list, strategy_name):
 def update_candidate_pool(strategy_list):
     for strategy in strategy_list:
         code_list = basic.get_all_stock_code()
+        # code_list = ['300077']
         code_list = select_one_strategy(code_list, strategy)
         # 科创板
         code_list = [code for code in code_list if not code.startswith('688')]
-        basic.upsert_candidate_pool(code_list, 'candidate', strategy)
+        basic.upsert_candidate_pool(code_list, 'candidate', strategy, ignore_duplicate=False)
 
 
 def select(strategy_name_list, stock_list: list[tuple], candidate_list=['second_stage']):

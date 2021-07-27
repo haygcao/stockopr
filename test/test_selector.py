@@ -4,6 +4,7 @@ import unittest
 from acquisition import quote_db, basic
 from selector import selector
 from selector.plugin.second_stage import second_stage
+from selector.plugin.super import super
 from util import dt
 
 
@@ -11,8 +12,9 @@ class SelectorPluginTestCase(unittest.TestCase):
     def setUp(self):
         self.code = '300502'
         self.code = '600483'
+        self.code = '300077'
         self.period = 'day'
-        count = 250
+        count = 750
         self.quote = quote_db.get_price_info_df_db(self.code, days=count, period_type='D')
 
     def tearDown(self):
@@ -20,6 +22,10 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_second_stage(self):
         ret = second_stage(self.quote)
+        print(ret)
+
+    def test_super(self):
+        ret = super(self.quote)
         print(ret)
 
     def test_update_candidate_pool(self):

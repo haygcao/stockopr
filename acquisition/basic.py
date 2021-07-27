@@ -15,7 +15,7 @@ import acquisition.quote_www as price
 import config.config as config
 
 
-def upsert_candidate_pool(code_list, status, strategy):
+def upsert_candidate_pool(code_list, status, strategy, ignore_duplicate=True):
     if not code_list:
         return
 
@@ -26,10 +26,10 @@ def upsert_candidate_pool(code_list, status, strategy):
             value_list.append((code, strategy, status))
 
         try:
-            cursor.executemany(sql_str, value_list)
-
-            sql_str = u"delete from portfolio where class = %s and status = %s"
-            cursor.execute(sql_str, (strategy, status))
+            if not ignore_duplicate:
+                cursor.executemany(sql_str, value_list)
+                sql_str = u"delete from portfolio where class = %s and status = %s"
+                cursor.execute(sql_str, (strategy, status))
 
             sql_str = u"INSERT IGNORE INTO portfolio (code, class, status) VALUES (%s, %s, %s)"
             cursor.executemany(sql_str, value_list)
