@@ -38,9 +38,9 @@ def add_selected(code, cls='hp', rank=9):
         if r:
             import datetime
             # r['added_date'], datetime.date
-            #tm = time.strptime(r['added_date'], '%Y-%m-%d')
-            #t = time.mktime(tm)
-            #d = datetime.date.fromtimestamp(t)
+            # tm = time.strptime(r['added_date'], '%Y-%m-%d')
+            # t = time.mktime(tm)
+            # d = datetime.date.fromtimestamp(t)
             # datetime.timedelta
             if (datetime.date.today() - r['added_date'].date()).days <= 5:
                 return

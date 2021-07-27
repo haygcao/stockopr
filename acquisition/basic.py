@@ -15,7 +15,7 @@ import acquisition.quote_www as price
 import config.config as config
 
 
-def upsert_candidate_pool(code_list, strategy):
+def upsert_candidate_pool(code_list, status, strategy):
     if not code_list:
         return
 
@@ -23,13 +23,13 @@ def upsert_candidate_pool(code_list, strategy):
         sql_str = u"INSERT IGNORE INTO portfolio_history (code, class, status) VALUES (%s, %s, %s)"
         value_list = []
         for code in code_list:
-            value_list.append((code, strategy, 'candidate'))
+            value_list.append((code, strategy, status))
 
         try:
             cursor.executemany(sql_str, value_list)
 
             sql_str = u"delete from portfolio where class = %s and status = %s"
-            cursor.execute(sql_str, (strategy, 'candidate'))
+            cursor.execute(sql_str, (strategy, status))
 
             sql_str = u"INSERT IGNORE INTO portfolio (code, class, status) VALUES (%s, %s, %s)"
             cursor.executemany(sql_str, value_list)
