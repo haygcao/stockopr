@@ -139,7 +139,6 @@ def get_info(code, date, date_prev):
     html_path = os.path.join(html_dir, '{}.html'.format(code))
 
     url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
-    print(url)
     if not os.path.exists(html_path):
         opt = webdriver.ChromeOptions()
         opt.set_headless()
@@ -153,6 +152,10 @@ def get_info(code, date, date_prev):
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(driver.page_source)
             f.flush()
+    else:
+        return
+
+    print(url)
 
     file = open(html_path, 'r', encoding='utf-8')
     soup = BeautifulSoup(file, 'lxml')
