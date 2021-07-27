@@ -131,16 +131,16 @@ def exists_fund_stock(fund_code, date):
             print(e)
 
 
-def get_info(code, date):
+def get_info(code, date, date_prev):
     root_dir = util.get_root_dir()
     html_dir = os.path.join(root_dir, 'data', 'html', date.strftime('%Y%m%d'))
     if not os.path.exists(html_dir):
         os.makedirs(html_dir)
     html_path = os.path.join(html_dir, '{}.html'.format(code))
 
+    url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
+    print(url)
     if not os.path.exists(html_path):
-        url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
-        print(url)
         opt = webdriver.ChromeOptions()
         opt.set_headless()
         driver = webdriver.Chrome(options=opt)
@@ -161,7 +161,16 @@ def get_info(code, date):
         fund = soup.select('#bodydiv > div > div > div.basic-new > div.bs_jz > div.col-left > h4 > a')[0].get_text()
         fund_code = fund.split(' (')[1][:-1]
         fund_name = fund.split(' (')[0]
-        scale_date = soup.select('#bodydiv > div > div.r_cont > div.basic-new > div.bs_gl > p > label > span')[2].get_text().strip().split()
+        scale_date_str = soup.select('#bodydiv > div > div.r_cont > div.basic-new > div.bs_gl > p > label > span')[2].get_text()
+        if scale_date_str.strip() == '---':
+            file.close()
+            os.remove(html_path)
+
+            with open('fund_new.txt', 'a+') as f:
+                f.write(url + '\n')
+            return
+
+        scale_date = scale_date_str.strip().split()
         scale = scale_date[0]
         ind = scale.find('亿元')
         scale = scale[:ind] if ind > 0 else '0'
@@ -170,9 +179,18 @@ def get_info(code, date):
         date_str = re.match('.*([0-9]{4}-[0-9]{2}-[0-9]{2}).*', scale_date[1]).group(1)
         # fund_date_max = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
         fund_date_max = datetime.date.fromisoformat(date_str)
-        if fund_date_max < date:
-            with open('fund_not_updated.txt', 'a+') as f:
-                f.write(url + '\n')
+        if fund_date_max != date:
+            if fund_date_max > date_prev:
+                with open('fund_new.txt', 'a+') as f:
+                    f.write(url + '\n')
+            elif fund_date_max == date_prev:
+                with open('fund_not_updated.txt', 'a+') as f:
+                    f.write(url + '\n')
+            else:
+                with open('fund_paused.txt', 'a+') as f:
+                    f.write(url + '\n')
+            file.close()
+            os.remove(html_path)
             return
 
         table = soup.select('#cctable > div > div > table')
@@ -251,6 +269,9 @@ def get_info(code, date):
         insert_or_update_into_fund_basic(data)
 
     except IndexError as e:
+        file.close()
+        os.remove(html_path)
+
         import traceback
         traceback.print_stack()
         print(e)
@@ -262,7 +283,7 @@ if __name__ == "__main__":
     # get_info('http://fundf10.eastmoney.com/ccmx_000001.html')
     # exit(0)
 
-    date = datetime.date(2021, 3, 31)
+    date_prev = datetime.date(2021, 3, 31)
     date = datetime.date(2021, 6, 30)
 
     date_db = query_last_date(date)
@@ -278,11 +299,11 @@ if __name__ == "__main__":
     # exit(0)
 
     code_list = query_fund_code(date)
-    # code_list = ['000001']
+    # code_list = ['588300']
     for code in code_list:
         # if exists_fund_stock(code, date):
         #     continue
-        get_info(code, date)
+        get_info(code, date, date_prev)
         time.sleep(random.randint(0, 2))
 
     # begin = False
