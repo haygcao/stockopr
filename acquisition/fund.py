@@ -12,10 +12,10 @@ import sys
 
 # TODO
 # http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=000001&topline=10&year=2019&month=&rt=
-import util.util
 
 sys.path.append(".")
-import util.mysqlcli as mysqlcli
+from util import util
+from util import mysqlcli
 
 # coding:utf-8
 import requests
@@ -132,7 +132,7 @@ def exists_fund_stock(fund_code, date):
 
 
 def get_info(code, date):
-    root_dir = util.util.get_root_dir()
+    root_dir = util.get_root_dir()
     html_dir = os.path.join(root_dir, 'data', 'html', date.strftime('%Y%m%d'))
     if not os.path.exists(html_dir):
         os.makedirs(html_dir)

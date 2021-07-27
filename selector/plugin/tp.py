@@ -5,6 +5,8 @@ import config.config as config
 import selector.util as util
 from selector.plugin._dt import dt_ma
 from selector.plugin.hp import hp_ma
+from util import util
+
 
 def tp_ma(quote, maN=config.TP_MA_N, almost=config.ALMOST_EQUAL, range=config.TP_RANGE):
     ma20 = ma(quote, maN)

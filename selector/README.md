@@ -9,21 +9,30 @@ strong base
 候选策略(candidate strategy): second_stage, super, strong_base, dyn_sys_green, dyn_sys_blue
 跟踪策略(trace strategy): strong_base_breakout, magic_line, vcp_breakout, bull_deviation, osc_oversold
 
-strong_base_breakout:
-  input: strong_base
-  period: day
-ema_value:
-  input: super, second_stage, dyn_sys_green, dyn_sys_blue
-  period: day
+收益风险比: A+, A, A-, B+, B, B-, C+, C, C-
+A+
 magic_line:
   input: super
   period: week
-vcp_breakout:
+vcp_breakout/blt_breakout:
   input: super
   period: day
+
+A
 bull_deviation:
   input: second_stage, dyn_sys_green, dyn_sys_blue
   period: day
 osc_oversold
   input: second_stage, dyn_sys_green, dyn_sys_blue
   period: day
+ema_value:
+  input: super, second_stage, dyn_sys_green, dyn_sys_blue
+  period: day
+
+B+ 现不具备判断未来走势的能力
+strong_base_breakout:
+  input: strong_base
+  period: day
+
+
+

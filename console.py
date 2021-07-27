@@ -155,21 +155,21 @@ class Panel(QWidget):
         combo_indictor.activated[str].connect(self.on_activated_indicator)
 
         self.combo_classification = QComboCheckBox()
-        for indicator in ['market_index', 'position', 'allow_buy', 'trace', 'candidate_pool', 'reserve']:
+        for indicator in ['market_index', 'position', 'allow_buy', 'trace', 'candidate', 'reserve']:
             self.combo_classification.addItem(indicator)
         self.combo_classification.select_index(2)
 
         self.combo_candidate = QComboCheckBox()
         for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super']:  # potential
             self.combo_candidate.addItem(indicator)
-        self.combo_candidate.select_index(0)
+        self.combo_candidate.select_text('super')
 
         # self.combo_strategy = QComboBox(self)
         self.combo_strategy = QComboCheckBox()
-        for indicator in ['bull_deviation', 'ema_value', 'vcp']:
+        for indicator in ['magic_line', 'vcp', 'bull_deviation', 'ema_value']:
             self.combo_strategy.addItem(indicator)
         # self.combo_strategy.setCurrentIndex(1)
-        self.combo_strategy.select_index(0)
+        self.combo_strategy.select_text('magic_line')
         # combo_strategy.activated[str].connect(self.on_activated_indicator)
 
         qle_code = QLineEdit('300502', self)
@@ -468,7 +468,7 @@ class Panel(QWidget):
             code_list_tmp.sort()
             code_list.extend(code_list_tmp)
 
-        if 'candidate_pool' in classification_list:
+        if 'candidate' in classification_list:
             candidate_list = [i.text() for i in self.combo_candidate.get_selected()]
             code_list_tmp = basic.get_candidate_stock_code(candidate_list)
             code_list.extend(code_list_tmp)

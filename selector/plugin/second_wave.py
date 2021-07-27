@@ -6,6 +6,7 @@ import selector.util as util
 from selector.plugin._ht import ht_ma
 from selector.plugin._dt import dt_ma
 from selector.plugin.hp  import hp_ma
+from util import util
 
 
 def second_wave(quote):
@@ -39,7 +40,7 @@ def second_wave2(quote, begin=config.SECOND_DAY, last_n_maN=config.SECOND_LAST_N
 
     ma_arr_all = util.gen_ma(quote)
 
-    if not util.almost_equal(ma_arr_all[0]['ma'][-1], ma_arr_all[2]['ma'][-1]):
+    if not util.almost_equal(ma_arr_all[0]['ma'][-1], ma_arr_all[2]['ma'][-1], 1):
         return False
 
     if 100 * (ma_arr_all[0]['ma'][-1] - ma_arr_all[4]['ma'][-1]) / ma_arr_all[4]['ma'][-1] > 5:

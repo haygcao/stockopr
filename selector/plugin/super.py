@@ -4,16 +4,21 @@
 """
 
 from acquisition import quote_db
+from util import util
 from util.macd import ema, atr
 
 
 vol_times = 10
 up_percent = 1.1
+almost = 10
 
 
 def volume(vol, vol_ema_s, vol_ema_m, vol_ema_l, back_day):
     # vol_ema5_shift = vol_ema5.shift(periods=1)
-    return vol.iloc[-1 - back_day] > vol_times * vol_ema_s.iloc[-2 - back_day]
+    for n in range(2):
+        if vol.iloc[-1 - back_day] > vol_times * vol_ema_s.iloc[-2 - n - back_day]:
+            return True
+    return False
 
 
 def price(close, ema_l, ema_xl, ema_xxl, back_day):
@@ -21,9 +26,23 @@ def price(close, ema_l, ema_xl, ema_xxl, back_day):
     return ema_l.iloc[-1 - back_day] < close_   # < ema_l.iloc[-2 - back_day]
 
 
-def bottom(close, ema_l, ema_xl, ema_xxl, back_day):
+def bottom(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
     close_ = close.iloc[-2 - back_day]
     return close_ < ema_xl.iloc[-1 - back_day] * up_percent and close_ < ema_xxl.iloc[-1 - back_day] * up_percent
+
+
+def strong_base(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
+    if 21 + back_day >= len(close):
+        return False
+    close_ = close.iloc[-2 - back_day]
+    xl = ema_xl.iloc[-1 - back_day]
+    l = ema_l.iloc[-10 -1 - back_day]
+    m = ema_m.iloc[-20 - 1 - back_day]
+    s = ema_s.iloc[-30 - 1 - back_day]
+
+    if util.almost_equal(xl, m, almost) and util.almost_equal(l, s, almost) and util.almost_equal(close_, l, almost):
+        return True
+    return False
 
 
 def price_amplitude(amplitude, back_day):
@@ -34,7 +53,7 @@ def trend(ema_l, back_day):
     return ema_l.iloc[-1 - back_day] > ema_l.iloc[-2 - back_day]
 
 
-def super_one_day(vol, vol_ema_s, vol_ema_m, vol_ema_l, close, ema_l, ema_xl, ema_xxl, back_day):
+def super_one_day(vol, vol_ema_s, vol_ema_m, vol_ema_l, close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
     if not volume(vol, vol_ema_s, vol_ema_m, vol_ema_l, back_day):
         return False
 
@@ -44,8 +63,11 @@ def super_one_day(vol, vol_ema_s, vol_ema_m, vol_ema_l, close, ema_l, ema_xl, em
     if not trend(ema_l, back_day):
         return False
 
-    if not bottom(close, ema_l, ema_xl, ema_xxl, back_day):
+    if not strong_base(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
         return False
+
+    # if not bottom(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
+    #     return False
 
     return True
 
@@ -63,6 +85,8 @@ def super(quote, back_days=30):
     close_yest = quote['close'].shift(periods=1)
     amplitude = atr5 / close_yest
 
+    ema_s = ema(quote['close'], n=5)['ema']
+    ema_m = ema(quote['close'], n=10)['ema']
     ema_l = ema(quote['close'], n=30)['ema']
     ema_xl = ema(quote['close'], n=50)['ema']
     # 100 周, 2年...
@@ -71,7 +95,7 @@ def super(quote, back_days=30):
 
     # 回退 6个月
     for back_day in range(0, back_days):
-        if super_one_day(vol_series, vol_ema_s, vol_ema_m, vol_ema_l, quote['close'], ema_l, ema_xl, ema_xxl, back_day):
+        if super_one_day(vol_series, vol_ema_s, vol_ema_m, vol_ema_l, quote['close'], ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
             return True
 
     return False

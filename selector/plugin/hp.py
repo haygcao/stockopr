@@ -2,8 +2,9 @@
 
 import config.config as config
 import selector.util as util
-
+from util import util
 from util.macd import bbands
+
 
 # boll 曲线中线也许更好一些
 # r 表示取前n个ma

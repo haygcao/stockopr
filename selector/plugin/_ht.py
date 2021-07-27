@@ -1,9 +1,11 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from util.macd import ma
 
 import config.config as config
 import selector.util as util
+from util import util
+
 
 # 回调到ma30支撑点
 def ht_ma(quote, maN=config.HT_MA_N, almost=config.ALMOST_EQUAL, range=config.HT_RANGE):

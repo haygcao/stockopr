@@ -15,6 +15,15 @@ class DateEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
+def almost_equal(m, n, almost):
+    l = m
+    if m > n:
+        l = n
+    if abs(m - n) * 100 / l < almost:
+        return True
+    return False
+
+
 def get_pname_by_id(pid):
     try:
         p = psutil.Process(pid)
