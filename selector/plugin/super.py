@@ -11,16 +11,16 @@ from util import util
 from util.macd import ema, atr
 
 
-vol_times = 5
-up_percent = 1.5
-almost = 10
+g_vol_times = 5
+g_up_percent = 1.5
+g_almost = 10
+g_angle = 55
 
 
 def volume(vol, vol_ema_s, vol_ema_m, vol_ema_l, back_day):
     # vol_ema5_shift = vol_ema5.shift(periods=1)
-    for n in range(2):
-        if vol.iloc[-1 - back_day] > vol_times * vol_ema_m.iloc[-2 - n - back_day]:
-            return True
+    if vol.iloc[-1 - back_day: -1 - back_day + 3].mean() > g_vol_times * vol_ema_m.iloc[-2 - back_day]:
+        return True
     return False
 
 
@@ -31,17 +31,18 @@ def price(close, ema_l, ema_xl, ema_xxl, back_day):
 
 def bottom(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
     close_ = close.iloc[-2 - back_day]
-    return close_ < ema_xl.iloc[-1 - back_day] * up_percent and close_ < ema_xxl.iloc[-1 - back_day] * up_percent
+    return close_ < ema_xl.iloc[-1 - back_day] * g_up_percent and close_ < ema_xxl.iloc[-1 - back_day] * g_up_percent
 
 
 def strong_base(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
-    xxl_l = ema_xxl.iloc[-20 - 1 - back_day]
-    xxl = ema_xxl.iloc[-10 - 1 - back_day]
-    xl_l = ema_xl.iloc[-20 - 1 - back_day]
-    xl = ema_xl.iloc[-10 - 1 - back_day]
+    xxl = ema_xxl.iloc[-2 - back_day]
+    xl = ema_xl.iloc[-2 - back_day]
+    l = ema_l.iloc[-2 - back_day]
+    m = ema_m.iloc[-2 - back_day]
+    s = ema_s.iloc[-2 - back_day]
 
     # print(len(close), xxl, xl, l, m)
-    if util.almost_equal(xxl_l, xxl, almost) and util.almost_equal(xl_l, xl, almost) and util.almost_equal(xxl, xl, almost):
+    if util.almost_equal(l, m, g_almost) and util.almost_equal(m, s, g_almost) and util.almost_equal(l, s, g_almost):
         return True
     return False
 
@@ -74,8 +75,15 @@ def high_angle(quote, back_day):
     if back_day == 0:
         return True
 
+    if quote.close.iloc[-1 - back_day + 3] < quote.high.iloc[-1 - back_day]:
+        return False
+
+    # if not (quote.percent.iloc[-1 - back_day: -1 - back_day + 3] > 0).all():
+    #     return False
+
     low = quote.close.iloc[-back_day - 2]
-    series_low = quote.low.iloc[len(quote) - back_day:]
+    index = len(quote) - back_day
+    series_low = quote.low.iloc[index: index + 5]
     low_max = series_low.max()
     low_min = series_low.min()
     if low > low_min * 0.9:
@@ -87,7 +95,7 @@ def high_angle(quote, back_day):
 
     angle = math.degrees(math.atan(y/x))
     # print('\n{} {}'.format(quote.code.iloc[-1], angle))
-    if angle < 45:
+    if angle < g_angle:
         return False
 
     return True
@@ -144,7 +152,7 @@ def super(quote, back_days=30):
     # ema_xxl = ema_xl
 
     # 回退 6个月
-    for back_day in range(back_days, -1, -1):
+    for back_day in range(back_days, 2, -1):
         if super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
             return True
 
