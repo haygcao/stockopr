@@ -64,11 +64,14 @@ def get_pid_by_exec(exec_path):
 
 def get_pid_of_python_proc(args):
     for proc in psutil.process_iter():
-        if proc.name() != 'python.exe':
-            continue
-        cmdline = proc.cmdline()
-        if args in str(cmdline):
-            return proc.pid
+        try:
+            if proc.name() != 'python.exe':
+                continue
+            cmdline = proc.cmdline()
+            if args in str(cmdline):
+                return proc.pid
+        except Exception as e:
+            print(e)
     return -1
 
 

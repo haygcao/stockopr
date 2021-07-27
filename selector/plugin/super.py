@@ -19,7 +19,7 @@ almost = 10
 def volume(vol, vol_ema_s, vol_ema_m, vol_ema_l, back_day):
     # vol_ema5_shift = vol_ema5.shift(periods=1)
     for n in range(2):
-        if vol.iloc[-1 - back_day] > vol_times * vol_ema_s.iloc[-2 - n - back_day]:
+        if vol.iloc[-1 - back_day] > vol_times * vol_ema_m.iloc[-2 - n - back_day]:
             return True
     return False
 
@@ -41,7 +41,7 @@ def strong_base(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
     xl = ema_xl.iloc[-10 - 1 - back_day]
 
     # print(len(close), xxl, xl, l, m)
-    if util.almost_equal(xxl_l, xl_l, almost) and util.almost_equal(xxl, xl, almost) and util.almost_equal(xxl_l, xl, almost):
+    if util.almost_equal(xxl_l, xxl, almost) and util.almost_equal(xl_l, xl, almost) and util.almost_equal(xxl, xl, almost):
         return True
     return False
 
@@ -67,14 +67,18 @@ def high_angle(quote, back_day):
     In[3]: math.degrees(math.atan(math.sqrt(3)))
     Out[3]: 59.99999999999999
     """
+
+    if quote.percent.iloc[-1 - back_day] < 15:
+        return False
+
     if back_day == 0:
-        return quote.percent.iloc[-1 - back_day] > 15
+        return True
 
     low = quote.close.iloc[-back_day - 2]
     series_low = quote.low.iloc[len(quote) - back_day:]
     low_max = series_low.max()
     low_min = series_low.min()
-    if low > low_min * 1.1:
+    if low > low_min * 0.9:
         return False
 
     index = numpy.where(series_low == low_max)[0][0]
@@ -82,6 +86,7 @@ def high_angle(quote, back_day):
     x = index + 2
 
     angle = math.degrees(math.atan(y/x))
+    # print('\n{} {}'.format(quote.code.iloc[-1], angle))
     if angle < 45:
         return False
 
@@ -95,11 +100,9 @@ def super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, e
     if not volume(vol, vol_ema_s, vol_ema_m, vol_ema_l, back_day):
         return False
 
-    # print('volume ok')
     if not price(close, ema_l, ema_xl, ema_xxl, back_day):
         return False
 
-    # print('price ok')
     if not trend(ema_l, back_day):
         return False
 
@@ -113,6 +116,8 @@ def super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, e
 
     if not high_angle(quote, back_day):
         return False
+
+    # print('high angle ok')
 
     return True
 
