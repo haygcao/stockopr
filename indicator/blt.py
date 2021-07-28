@@ -66,7 +66,7 @@ def blt_one_day(quote, ema_m, ema_s, ema_xs, back_day, var_ma):
 
 
 @computed(column_name='blt')
-def blt(quote, period, back_days=30):
+def blt(quote, period, back_days=125):
     # blt 使用日数据
     ema_xs = ma(quote['close'], n=3)['ma']
     ema_s = ma(quote['close'], n=5)['ma']

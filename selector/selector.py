@@ -55,8 +55,8 @@ selector = {
     'second_stage': second_stage.second_stage,   # 第二阶段
     'magic_line': magic_line.magic_line,
     'base_breakout': base_breakout.base_breakout,
-    'vcp': vcp.vcp,
     'blt': blt.blt,
+    'vcp': vcp.vcp,
     'bull_at_bottom': bull_at_bottom.bull_at_bottom,
     'dyn_sys_green': dynamical_system.dynamical_system_green,
     'dyn_sys_red': dynamical_system.dynamical_system_red,
