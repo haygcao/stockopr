@@ -23,7 +23,8 @@ import selector.plugin.d as d
 import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
-from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, base_breakout
+from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
+    base_breakout, blt, vcp
 from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
@@ -54,6 +55,8 @@ selector = {
     'second_stage': second_stage.second_stage,   # 第二阶段
     'magic_line': magic_line.magic_line,
     'base_breakout': base_breakout.base_breakout,
+    'vcp': vcp.vcp,
+    'blt': blt.blt,
     'bull_at_bottom': bull_at_bottom.bull_at_bottom,
     'dyn_sys_green': dynamical_system.dynamical_system_green,
     'dyn_sys_red': dynamical_system.dynamical_system_red,
