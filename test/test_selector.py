@@ -3,6 +3,7 @@ import unittest
 
 from acquisition import quote_db, basic
 from selector import selector
+from selector.plugin.base_breakout import base_breakout
 from selector.plugin.second_stage import second_stage
 from selector.plugin.super import super
 from util import dt
@@ -10,7 +11,7 @@ from util import dt
 
 class SelectorPluginTestCase(unittest.TestCase):
     def setUp(self):
-        self.code = '000027'
+        self.code = '300049'
         self.period = 'day'
         count = 1000
         self.quote = quote_db.get_price_info_df_db(self.code, days=count, period_type='D')
@@ -24,6 +25,10 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_super(self):
         ret = super(self.quote)
+        print(ret)
+
+    def test_strong_breakout(self):
+        ret = base_breakout(self.quote)
         print(ret)
 
     def test_update_candidate_pool(self):

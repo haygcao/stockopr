@@ -23,7 +23,7 @@ import selector.plugin.d as d
 import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
-from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line
+from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, base_breakout
 from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
@@ -53,6 +53,7 @@ selector = {
     'super': super.super,
     'second_stage': second_stage.second_stage,   # 第二阶段
     'magic_line': magic_line.magic_line,
+    'base_breakout': base_breakout.base_breakout,
     'bull_at_bottom': bull_at_bottom.bull_at_bottom,
     'dyn_sys_green': dynamical_system.dynamical_system_green,
     'dyn_sys_red': dynamical_system.dynamical_system_red,
@@ -76,9 +77,9 @@ def is_match(df, strategy_name):
 
 def _select(strategy_name, code):
     import util.mysqlcli as mysqlcli
-    _conn = mysqlcli.get_connection()
+    # _conn = mysqlcli.get_connection()
 
-    df = quote_db.get_price_info_df_db(code, 1000, '', 'D', _conn)
+    df = quote_db.get_price_info_df_db(code, days=1000, period_type='D')
     if df.empty:
         logger.info(code, 'no quote')
         return
@@ -88,7 +89,7 @@ def _select(strategy_name, code):
         # print('{}'.format(code))
         ret = code
 
-    _conn.close()
+    # _conn.close()
 
     return ret
 

@@ -166,7 +166,7 @@ class Panel(QWidget):
 
         # self.combo_strategy = QComboBox(self)
         self.combo_strategy = QComboCheckBox()
-        for indicator in ['magic_line', 'vcp', 'bull_deviation', 'ema_value']:
+        for indicator in ['magic_line', 'vcp', 'base_breakout', 'bull_deviation', 'ema_value']:
             self.combo_strategy.addItem(indicator)
         # self.combo_strategy.setCurrentIndex(1)
         self.combo_strategy.select_text('magic_line')

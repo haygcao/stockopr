@@ -55,6 +55,18 @@ def trend(ema_l, back_day):
     return ema_l.iloc[-1 - back_day] > ema_l.iloc[-2 - back_day]
 
 
+def strong_breakout(quote, current):
+    third = quote.close.iloc[current + 2]
+    first_two = quote.high.iloc[current: current + 2]
+    first_two_max = first_two.max()
+
+    percent = 100 * (quote.close.iloc[current + 2] / quote.close.iloc[current - 1] - 1)
+    if third < first_two_max and percent < 40:
+        return False
+
+    return True
+
+
 def high_angle(quote, back_day):
     """
     60度角的直角三角形, 三边长度比例为, 1:sqrt(3):2
@@ -80,19 +92,16 @@ def high_angle(quote, back_day):
         return True
 
     yest_close = quote.close.iloc[yest]
-    percent = 100 * (quote.close.iloc[after_tomorrow] / yest_close - 1)
 
     date = quote.index[current]
-    third = quote.close.iloc[after_tomorrow]
-    first_two = quote.high.iloc[current: tomorrow + 1]
-    first_two_max = first_two.max()
-    if third < first_two_max and percent < 40:
+    if not strong_breakout(quote, current):
         return False
 
     # if not (quote.percent.iloc[-1 - back_day: -1 - back_day + 3] > 0).all():
     #     return False
 
-    series_low = quote.low.iloc[tomorrow: after_tomorrow + 1]
+    end_index = after_tomorrow + 1 if after_tomorrow < -1 else None
+    series_low = quote.low.iloc[tomorrow: end_index]
     if len(series_low) == 0:
         print(quote.code[-1], series_low)
         return False
