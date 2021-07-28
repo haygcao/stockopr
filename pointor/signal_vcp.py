@@ -21,18 +21,8 @@ def signal_enter(quote, period=None):
     quote = compute_index(quote, period)
 
     quote_copy = quote  # .copy()
-    quote_copy.loc[:, 'ema26_shift'] = quote['ema26'].shift(periods=1)
 
-    quote_copy.insert(len(quote_copy.columns), 'vcp_signal_enter', quote_copy.blt)
-
-    ema26_shift5 = quote['ema26'].shift(periods=5)
-
-    mask1 = quote_copy.ema26 >= quote_copy.ema26_shift
-    mask2 = quote_copy.ema26 <= quote_copy.ema13
-    mask3 = quote_copy.ema13 >= quote_copy.low
-    # mask4 = quote_copy.ema26 / ema26_shift5 > config.period_ema26_oscillation_threshold_map[period]
-    mask = mask1 & mask2 & mask3  # & mask4
-    quote_copy['vcp_signal_enter'] = quote_copy['vcp_signal_enter'].mask(mask, quote_copy['low'])
+    quote_copy.insert(len(quote_copy.columns), 'vcp_signal_enter', quote_copy.vcp)
 
     # 利用 dmi 过滤掉振荡走势中的信号
     mask1 = quote_copy['adx'] < quote_copy['pdi']
@@ -40,8 +30,5 @@ def signal_enter(quote, period=None):
     mask3 = quote_copy['adx'] < 50
     mask = mask1 | mask2 | mask3
     quote_copy['vcp_signal_enter'] = quote_copy['vcp_signal_enter'].mask(mask, numpy.nan)
-
-    # remove temp data
-    quote_copy.drop(['ema26_shift'], axis=1, inplace=True)
 
     return quote_copy

@@ -4,6 +4,7 @@
 股价突破 vcp 转折点时买入
 """
 import numpy
+import pandas
 
 from indicator import blt
 from indicator.decorator import computed
@@ -35,7 +36,13 @@ def vcp_one_day(quote, low_index, ema_l, ema_m, ema_s, back_day, var_ma='m50'):
         if l != list_sorted:
             return False
 
-    return True
+    series = pandas.Series(low_list)
+    series_shift = series.shift(periods=1)
+    percent = (series / series_shift - 1) * 100
+    percent = percent.fillna(1)
+    print('\n{}\n{}'.format(quote.code[-1], percent))
+
+    return (percent > 1).all()
 
 
 @computed(column_name='vcp')
@@ -54,5 +61,5 @@ def vcp(quote, period, back_days=125):
 
         if vcp_one_day(quote, low_index, ema_l, ema_m, ema_s, back_day, var_ma='m50'):
             current = -1 - back_day
-            quote.blt.iat[current] = quote.low.iloc[current]
+            quote.vcp.iat[current] = quote.low.iloc[current]
     return quote
