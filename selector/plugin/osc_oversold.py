@@ -5,5 +5,5 @@
 """
 
 
-def oversold(quote, back_days=30):
+def oversold(quote, period, back_days=30):
     pass

@@ -19,15 +19,16 @@ def tp_ma(quote, maN=config.TP_MA_N, almost=config.ALMOST_EQUAL, range=config.TP
 
     return False
 
-def tp(quote):
+
+def tp(quote, period):
     # 20天前, 还在整理
     if not hp_ma(quote, 30, 10, almost=1):
         return False
 
-    #if not hp_boll(quote):
+    # if not hp_boll(quote):
     #    return False
 
-    #if not hp_ma(quote, r=2):
+    # if not hp_ma(quote, r=2):
     #    return False
 
     # ma30, ma60 向上

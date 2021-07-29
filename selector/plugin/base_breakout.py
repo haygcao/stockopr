@@ -15,7 +15,7 @@ def base_breakout_one_day(quote, ema_m, ema_s, back_day):
     return super.strong_breakout(quote, current=-3 - back_day)
 
 
-def base_breakout(quote):
+def base_breakout(quote, period):
     # 重采样为 周数据
     # quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
 

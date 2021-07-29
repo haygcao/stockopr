@@ -7,7 +7,7 @@ import util.dt   as util_dt
 
 # n天跌幅
 # 10天跌15%, ma60向上
-def d(quote, percent_exp=config.D_PERCENT_EXP, nday=config.D_NDAY):
+def d(quote, period, percent_exp=config.D_PERCENT_EXP, nday=config.D_NDAY):
     quote = quote[-1*nday:]
     if len(quote) < nday:
         return False

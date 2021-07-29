@@ -8,7 +8,7 @@ import numpy
 from pointor import signal_vcp
 
 
-def vcp(quote, back_days=3):
+def vcp(quote, period, back_days=3):
     quote = signal_vcp.signal_enter(quote, period='day')
     column_list = ['vcp_signal_enter']
 

@@ -23,7 +23,7 @@ def one_day(close, ad, back_day):
     return True
 
 
-def bull_at_bottom(quote, back_days=10):
+def bull_at_bottom(quote, period, back_days=10):
     close = quote['close']
     close_shift = quote['close'].shift(periods=1)
     ad = close / close_shift - 1

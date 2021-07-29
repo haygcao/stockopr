@@ -8,7 +8,7 @@ import numpy
 from pointor import signal_blt
 
 
-def blt(quote, back_days=3):
+def blt(quote, period, back_days=3):
     quote = signal_blt.signal_enter(quote, period='day')
     column_list = ['blt_signal_enter']
 

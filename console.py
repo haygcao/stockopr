@@ -591,7 +591,7 @@ class Panel(QWidget):
     def update_candidate(self):
         selected_list = [s.text() for s in self.combo_candidate.get_selected()]
         print(selected_list)
-        p = multiprocessing.Process(target=selector.update_candidate_pool, args=(selected_list, ))
+        p = multiprocessing.Process(target=selector.update_candidate_pool, args=(selected_list, self.period))
         p.start()
 
         pass
@@ -601,7 +601,7 @@ class Panel(QWidget):
         strategy_name_list = [s.text() for s in self.combo_strategy.get_selected()]
         candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
         print(candidate_list, strategy_name_list)
-        p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, None, candidate_list))
+        p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, candidate_list, self.period))
         p.start()
 
         # with multiprocessing.Manager() as manager:

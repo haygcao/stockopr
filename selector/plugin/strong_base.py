@@ -4,7 +4,7 @@ from util.macd import ema
 from . import super
 
 
-def strong_base(quote, back_days=3):
+def strong_base(quote, period, back_days=3):
     times = 5
 
     ema_s = ema(quote['close'], n=times * 5)['ema']

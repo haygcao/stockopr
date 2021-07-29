@@ -32,7 +32,7 @@ def test_select():
     code = '000982'
     df = quote_db.get_price_info_df_db(code, 500, '', 'D', _conn)
     df = df.sort_index()
-    ret = selector.is_match(df, 'bull_at_bottom')
+    ret = selector.is_match(df, 'bull_at_bottom', 'day')
     # ret = selector.is_match(df, 'hot_strong')
     # ret = selector.is_match(df, 'nsbl')
     # ret = selector.is_match(df, 'dlxt_blue')
@@ -46,7 +46,7 @@ def test_select_mp():
     strategy_name_list = ['ema_value']
     strategy_name_list = ['hot_strong', 'ema_value']
     strategy_name_list = ['bull_at_bottom']
-    stock_list = selector.select(strategy_name_list, None, ['second_stage'])
+    stock_list = selector.select(strategy_name_list, ['second_stage'])
     for code, name in stock_list:
         logger.info(code, name)
     logger.info('+++ {0} +++'.format(len(stock_list)))

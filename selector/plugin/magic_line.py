@@ -29,7 +29,7 @@ def magic_line_one_day(vol, vol_ema_s, vol_ema_m, vol_ema_l, quote, ema_s, ema_m
     return True
 
 
-def magic_line(quote, back_days=5):
+def magic_line(quote, period, back_days=5):
     # 重采样为 周数据
     quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
 

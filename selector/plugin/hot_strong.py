@@ -27,7 +27,7 @@ def hot_strong_one_day(vol_ema5, vol_ema10, amplitude, ema26, back_day):
     return True
 
 
-def hot_strong(quote, back_days=30):
+def hot_strong(quote, period, back_days=30):
     vol_series = quote['volume']
     vol_ema5 = ema(vol_series, n=5)['ema']
     vol_ema10 = ema(vol_series, n=10)['ema']

@@ -20,12 +20,10 @@ import selector.plugin.tp as tp
 
 import selector.plugin.z as z
 import selector.plugin.d as d
-
-import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
-    base_breakout, blt, vcp, strong_base
+    base_breakout, blt, vcp, strong_base, amplitude
 from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
@@ -49,8 +47,7 @@ selector = {
     'dz': z.dz,
     'd': d.d,
     'dd': d.dd,
-    'zf': zf.zf,
-    'qd': qd.qd,
+    'amplitude': amplitude.amplitude,
     'bull_deviation': market_deviation.market_deviation,   # 牛市背离
     'ema_value': ema_value.ema_value,   # 价值回归
     'super': super.super,
@@ -70,7 +67,7 @@ selector = {
 }
 
 
-def is_match(df, strategy_name):
+def is_match(df, strategy_name, period):
     if util.filter_quote(df):
         return False
 
@@ -81,7 +78,7 @@ def is_match(df, strategy_name):
     return False
 
 
-def _select(strategy_name, code):
+def _select(strategy_name, period, code):
     import util.mysqlcli as mysqlcli
     # _conn = mysqlcli.get_connection()
 
@@ -97,7 +94,7 @@ def _select(strategy_name, code):
         return
 
     ret = None
-    if is_match(df, strategy_name):
+    if is_match(df, strategy_name, period):
         # print('{}'.format(code))
         ret = code
 
@@ -106,7 +103,7 @@ def _select(strategy_name, code):
     return ret
 
 
-def select_one_strategy(code_list, strategy_name):
+def select_one_strategy(code_list, strategy_name, period):
     """
     https://docs.python.org/3/library/multiprocessing.html
     This means that if you try joining that process you may get a deadlock
@@ -119,7 +116,7 @@ def select_one_strategy(code_list, strategy_name):
 
     logger.info('{} [{}] to check {}...'.format(datetime.datetime.now(), len(code_list), strategy_name))
 
-    select_func = functools.partial(_select, strategy_name)
+    select_func = functools.partial(_select, strategy_name, period)
 
     nproc = multiprocessing.cpu_count()
     with multiprocessing.Pool(nproc) as p:
@@ -142,13 +139,13 @@ def select_one_strategy(code_list, strategy_name):
     return code_list
 
 
-def update_candidate_pool(strategy_list):
+def update_candidate_pool(strategy_list, period='day'):
     t1 = datetime.datetime.now()
     msg = ''
     for strategy in strategy_list:
         code_list = basic.get_all_stock_code()
         # code_list = ['000065']
-        code_list = select_one_strategy(code_list, strategy)
+        code_list = select_one_strategy(code_list, strategy, period)
         # 科创板
         code_list = [code for code in code_list if not code.startswith('688')]
         msg += '{}: {}\n'.format(strategy, len(code_list))
@@ -159,13 +156,13 @@ def update_candidate_pool(strategy_list):
     qt_util.popup_info_message_box_mp('update candidate finished in [{}s]\n{}'.format(cost, msg))
 
 
-def select(strategy_name_list, stock_list: list[tuple], candidate_list=None):
+def select(strategy_name_list, candidate_list=None, period='day'):
     begin = datetime.datetime.now()
 
-    if config.update_candidate_pool:
-        update_candidate_pool()
-
     candidate_list = candidate_list if not candidate_list else ['super']
+    if config.update_candidate_pool:
+        update_candidate_pool(candidate_list)
+
     code_list = basic.get_candidate_stock_code(candidate_list)
     # code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
@@ -174,7 +171,7 @@ def select(strategy_name_list, stock_list: list[tuple], candidate_list=None):
 
     strategy_name_list = config.get_scan_strategy_name_list() if not strategy_name_list else strategy_name_list
     for strategy_name in strategy_name_list:
-        code_list = select_one_strategy(code_list, strategy_name)
+        code_list = select_one_strategy(code_list, strategy_name, period)
         # for code in code_list:
         #     selected.add_selected(code, strategy_name)
         basic.upsert_candidate_pool(code_list, 'allow_buy', strategy_name)
@@ -183,7 +180,7 @@ def select(strategy_name_list, stock_list: list[tuple], candidate_list=None):
     # code_list.append('300502')
     code_list.sort()
 
-    stock_list = [] if not isinstance(stock_list, list) else stock_list
+    stock_list = []
     for code in code_list:
         stock_list.append((code, basic.get_stock_name(code)))
 

@@ -28,7 +28,7 @@ def check_long_period_dynamical_system(quote):
     return False
 
 
-def market_deviation(quote):
+def market_deviation(quote, period):
     period = 'day'
     column_list = ['force_index_bull_market_deviation_signal_enter', 'macd_bull_market_deviation_signal_enter']
     column_list = ['macd_bull_market_deviation_signal_enter']

@@ -154,7 +154,7 @@ def super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, e
     return True
 
 
-def super(quote, back_days=150):
+def super(quote, period, back_days=150):
     # 重采样为 周数据
     # quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
 

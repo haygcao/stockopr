@@ -8,7 +8,7 @@ from util.macd import bbands
 
 # boll 曲线中线也许更好一些
 # r 表示取前n个ma
-def hp_ma(quote, begin=config.HP_DAY, duration=config.HP_DURATION, first_n_maN=config.HP_FIRST_N_MA, almost=config.ALMOST_EQUAL):
+def hp_ma(quote, period, begin=config.HP_DAY, duration=config.HP_DURATION, first_n_maN=config.HP_FIRST_N_MA, almost=config.ALMOST_EQUAL):
     if duration == -1:
         duration = begin
     ma_arr = util.gen_ma(quote)

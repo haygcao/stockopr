@@ -9,7 +9,7 @@ from selector.plugin.hp  import hp_ma
 from util import util
 
 
-def second_wave(quote):
+def second_wave(quote, period):
     # 20天前, 还在整理
     if not hp_ma(quote, 30, 30, almost=1):
         return False
