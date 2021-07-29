@@ -499,12 +499,14 @@ class Panel(QWidget):
         # self.combo_code.adjustSize()
         self.combo_code.setMaxVisibleItems(50)
 
+        qt_util.popup_info_message_box_mp('[{}] loaded'.format(len(code_list)))
+
     def delete_data_in_db(self):
         classification_list = [i.text() for i in self.combo_classification.get_selected()]
         strategy_list = [i.text() for i in self.combo_strategy.get_selected()]
-        candidate_list = [i.text() for i in self.combo_candidate.get_selected()]
+        # candidate_list = [i.text() for i in self.combo_candidate.get_selected()]
 
-        l = strategy_list + candidate_list
+        l = strategy_list  # + candidate_list
         n = basic.delete_portfolio(classification_list, l)
         qt_util.popup_info_message_box_mp('{}{}\n[{}] deleted'.format(classification_list, l, n))
 
