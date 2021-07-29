@@ -71,7 +71,7 @@ def is_match(df, strategy_name, period):
     if util.filter_quote(df):
         return False
 
-    rc = selector.get(strategy_name)(df)
+    rc = selector.get(strategy_name)(df, period)
     if rc:
         return True
 
