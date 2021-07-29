@@ -106,7 +106,7 @@ class Panel(QWidget):
         }
 
         self.code = 'maq'
-        self.period = g_periods[0]
+        self.period = 'day'
         self.indicator = g_indicators[0]
         self.monitor_proc = None
         self.check_thread = None
@@ -145,6 +145,7 @@ class Panel(QWidget):
 
         for period in g_periods:
             combo_period.addItem(period)
+        combo_period.setCurrentIndex(g_periods.index(self.period))
 
         # comboPeriod.move(50, 50)
         # self.lbl.move(50, 150)
