@@ -67,10 +67,11 @@ def get_allowed_to_buy_stock_code(strategy_list):
     return _get_traced_stock_code(strategy_list, 'allow_buy')
 
 
-def delete_portfolio(strategy_list, status_list):
+def delete_portfolio(status_list, strategy_list):
     with mysqlcli.get_cursor() as c:
-        sql = "DELETE FROM portfolio where status in (%s) and class in (%s)"
-        c.execute(sql, (','.join(status_list), ','.join(strategy_list)))
+        sql = "DELETE FROM portfolio where status in ('%s') and class in ('%s')" % (
+            "','".join(status_list), "','".join(strategy_list))
+        c.execute(sql)
         c.execute('SELECT ROW_COUNT() as DelRowCount')
         return c.fetchone()['DelRowCount']
 

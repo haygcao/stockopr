@@ -501,8 +501,11 @@ class Panel(QWidget):
     def delete_data_in_db(self):
         classification_list = [i.text() for i in self.combo_classification.get_selected()]
         strategy_list = [i.text() for i in self.combo_strategy.get_selected()]
-        n = basic.delete_portfolio(classification_list, strategy_list)
-        qt_util.popup_info_message_box_mp('[{}] deleted'.format(n))
+        candidate_list = [i.text() for i in self.combo_candidate.get_selected()]
+
+        l = strategy_list + candidate_list
+        n = basic.delete_portfolio(classification_list, l)
+        qt_util.popup_info_message_box_mp('{}{}\n[{}] deleted'.format(classification_list, l, n))
 
     def on_activated_period(self, text):
         self.period = text
