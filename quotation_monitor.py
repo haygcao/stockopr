@@ -164,8 +164,8 @@ def update_status_old(code, data, period):
 
     if not numpy.isnan(data['dynamical_system_signal_exit'][-1]):
         return TradeSignal(code, price, data_index_, 'S', Policy.DYNAMICAL_SYSTEM, period, True)
-    # if not status_map[code][str(m)] or data['dlxt'][-1] != status_map[code][str(m)][-1]:
-    #     status_map[code][str(m)].append((datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), data['dlxt'][-1]))
+    # if not status_map[code][str(m)] or data['dyn_sys'][-1] != status_map[code][str(m)][-1]:
+    #     status_map[code][str(m)].append((datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), data['dyn_sys'][-1]))
     #     return True
 
     return

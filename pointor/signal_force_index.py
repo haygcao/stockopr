@@ -9,37 +9,37 @@ from indicator import force_index, dynamical_system, dmi
 from indicator.decorator import computed, ignore_long_period, dynamic_system_filter
 
 
-def function_enter(low, dlxt_long_period, dlxt,  dlxt_ema13, force_index, force_index_shift, period, date):
-    if dlxt_long_period < 0 or dlxt < 0:
+def function_enter(low, dyn_sys_long_period, dyn_sys,  dyn_sys_ema13, force_index, force_index_shift, period, date):
+    if dyn_sys_long_period < 0 or dyn_sys < 0:
         return numpy.nan
 
     # ema13 向上, 强力指数下穿 0   # 信号出现时，买单价格设置为比最高价最一个最小单位，如果股价下跌，动态下调买入价，程序自动交易时，放弃
-    # if dlxt_ema13 and force_index_shift >= 0 and force_index < 0:   # and dlxt > 0:
+    # if dyn_sys_ema13 and force_index_shift >= 0 and force_index < 0:   # and dyn_sys > 0:
     #     return low
 
     # ema13 向上, 强力指数 <0 或上穿 0
-    # if dlxt_ema13 > 0 and (force_index < 0 or force_index_shift < 0):
+    # if dyn_sys_ema13 > 0 and (force_index < 0 or force_index_shift < 0):
     #     # print(date, '5')
     #     return low
 
     # ema13 向上, 强力指数为负, 且开始变大
-    if dlxt_ema13 > 0 and force_index_shift < 0 and force_index > force_index_shift:
+    if dyn_sys_ema13 > 0 and force_index_shift < 0 and force_index > force_index_shift:
         return low
 
     return numpy.nan
 
 
-def function_exit(high, dlxt_long_period, dlxt, force_index, force_index_shift, period):
+def function_exit(high, dyn_sys_long_period, dyn_sys, force_index, force_index_shift, period):
     """
     上涨趋势中, 忽略振荡指标的卖出信号
     """
     return numpy.nan
 
     # 暂时不考虑做空, 即长周期动量为红色时, 是处于空仓状态的
-    if dlxt_long_period < 0:
+    if dyn_sys_long_period < 0:
         return numpy.nan
 
-    # if dlxt == 0 and 0 < force_index < force_index_shift:
+    # if dyn_sys == 0 and 0 < force_index < force_index_shift:
     #     return high
 
     return numpy.nan
@@ -72,17 +72,17 @@ def signal_enter(quote, period=None):
 
     # quote_copy.loc[:, 'force_index_signal_enter'] = quote_copy.apply(
     #     lambda x: function_enter(
-    #         x.low, x.dlxt_long_period, x.dlxt, x.dlxt_ema13,
+    #         x.low, x.dyn_sys_long_period, x.dyn_sys, x.dyn_sys_ema13,
     #         x.force_index13 if is_long_period(period) else x.force_index, x.force_index_shift, period, x.name), axis=1)
 
     # quote_copy = quote_copy.drop(['force_index_signal_enter'], axis=1)
-    # dlxt_ema13 > 0 and force_index_shift < 0 and force_index > force_index_shift:
+    # dyn_sys_ema13 > 0 and force_index_shift < 0 and force_index > force_index_shift:
     signal_column = 'force_index_signal_enter'
     quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
 
     ema26_shift5 = quote['ema26'].shift(periods=5)
 
-    mask1 = quote_copy.dlxt_ema13 > 0
+    mask1 = quote_copy.dyn_sys_ema13 > 0
     mask2 = quote_copy.force_index_shift < 0
     mask3 = quote_copy.force_index > quote_copy.force_index_shift
     # mask4 = quote_copy.ema26 / ema26_shift5 > config.period_ema26_oscillation_threshold_map[period]
@@ -99,9 +99,9 @@ def signal_enter(quote, period=None):
     quote_copy[signal_column] = quote_copy[signal_column].mask(mask, numpy.nan)
 
     # quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
-    #     quote_copy['dlxt_long_period'] < 0, numpy.nan)
+    #     quote_copy['dyn_sys_long_period'] < 0, numpy.nan)
     # quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
-    #     quote_copy['dlxt'] < 0, numpy.nan)
+    #     quote_copy['dyn_sys'] < 0, numpy.nan)
 
     # ema26_rolling_min = quote_copy.loc[:, 'ema26'].rolling(20, min_periods=1).min()
     # force_index_signal_enter = quote_copy.loc[:, 'force_index_signal_enter']

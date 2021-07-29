@@ -35,7 +35,7 @@ def test_select():
     ret = selector.is_match(df, 'bull_at_bottom', 'day')
     # ret = selector.is_match(df, 'hot_strong')
     # ret = selector.is_match(df, 'nsbl')
-    # ret = selector.is_match(df, 'dlxt_blue')
+    # ret = selector.is_match(df, 'dyn_sys_blue')
     # ret = selector.is_match(df, 'qlzs_p')
     print(ret)
 

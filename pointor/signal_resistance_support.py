@@ -6,8 +6,8 @@ from indicator import ema
 from indicator.decorator import computed, ignore_long_period, dynamic_system_filter
 
 
-def function_enter_origin(low, close, resistance, dlxt_long_period, dlxt, dlxt_ema13, ema13, ema26, ema26_shift, period, date):
-    if dlxt_long_period < 0:  # or dlxt < 0:
+def function_enter_origin(low, close, resistance, dyn_sys_long_period, dyn_sys, dyn_sys_ema13, ema13, ema26, ema26_shift, period, date):
+    if dyn_sys_long_period < 0:  # or dyn_sys < 0:
         return numpy.nan
 
     if close < resistance:
@@ -27,7 +27,7 @@ def function_enter(signal, signal_shift):
     return numpy.nan
 
 
-def function_exit(high, close, support, dlxt_long_period, dlxt, dlxt_ema13, ema13, ema26, ema26_shift, period, date):
+def function_exit(high, close, support, dyn_sys_long_period, dyn_sys, dyn_sys_ema13, ema13, ema26, ema26_shift, period, date):
     if close > support:
         return numpy.nan
 
@@ -54,7 +54,7 @@ def signal_enter(quote, period=None):
     quote_copy.loc[:, 'resistance'] = quote['resistance_origin'].shift(periods=config.resistance_support_backdays)
     quote_copy.loc[:, 'ema26_shift'] = quote['ema26'].shift(periods=1)
     quote_copy.loc[:, 'resistance_support_signal_enter_origin'] = quote_copy.apply(
-        lambda x: function_enter_origin(x.low, x.close, x.resistance, x.dlxt_long_period, x.dlxt, x.dlxt_ema13, x.ema13,
+        lambda x: function_enter_origin(x.low, x.close, x.resistance, x.dyn_sys_long_period, x.dyn_sys, x.dyn_sys_ema13, x.ema13,
                                  x.ema26, x.ema26_shift, period, x.name), axis=1)
     quote_copy.loc[:, 'resistance_support_signal_enter_shift'] = quote_copy['resistance_support_signal_enter_origin'].shift(periods=1)
     quote_copy.loc[:, 'resistance_support_signal_enter'] = quote_copy.apply(
@@ -76,7 +76,7 @@ def signal_exit(quote, period=None):
     quote_copy.loc[:, 'support'] = quote['support_origin'].shift(periods=config.resistance_support_backdays)
     quote_copy.loc[:, 'ema26_shift'] = quote['ema26'].shift(periods=1)
     quote_copy.loc[:, 'resistance_support_signal_exit'] = quote_copy.apply(
-        lambda x: function_exit(x.high, x.close, x.support, x.dlxt_long_period, x.dlxt, x.dlxt_ema13, x.ema13, x.ema26,
+        lambda x: function_exit(x.high, x.close, x.support, x.dyn_sys_long_period, x.dyn_sys, x.dyn_sys_ema13, x.ema13, x.ema26,
                                  x.ema26_shift, period, x.name), axis=1)
 
     return quote_copy

@@ -136,11 +136,11 @@ class DataFinanceDraw(object):
         self.n_panels = (3 if self.show_volume else 2) + osc_len
         if show_long_period_dynamical_system and not is_long_period(self.period):
             self.n_panels += 1
-            self.panel_dlxt_long_period = self.panel_volume + 1
-            self.panel_dlxt = self.panel_dlxt_long_period + 1
+            self.panel_dyn_sys_long_period = self.panel_volume + 1
+            self.panel_dyn_sys = self.panel_dyn_sys_long_period + 1
         else:
-            self.panel_dlxt = self.panel_volume + 1
-        self.panel_oscillation = self.panel_dlxt + 1
+            self.panel_dyn_sys = self.panel_volume + 1
+        self.panel_oscillation = self.panel_dyn_sys + 1
         self.panel_macd = self.panel_oscillation + osc_len
 
         self.data_long_period_origin = pandas.DataFrame()
@@ -472,35 +472,35 @@ class DataFinanceDraw(object):
             ])
 
     def add_dynamical_system(self, data):
-        dlxt = data["dlxt"]
-        dlxt_long_period = data["dlxt_long_period"]
+        dyn_sys = data["dyn_sys"]
+        dyn_sys_long_period = data["dyn_sys_long_period"]
 
-        dlxt_long_period_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
-                                  self.get_window(dlxt_long_period)]
-        dlxt_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
-                      self.get_window(dlxt)]
+        dyn_sys_long_period_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
+                                  self.get_window(dyn_sys_long_period)]
+        dyn_sys_color = [dark_olive_green3 if v > 0 else light_coral if v < 0 else light_blue for v in
+                      self.get_window(dyn_sys)]
 
-        dlxt.values[:] = 1
-        # dlxt_long_period.values[:] = self.data_origin['high'].max()   # data['low']
-        dlxt_long_period.values[:] = data['low']
-        # dlxt.values[:] = self.data_origin['low']
+        dyn_sys.values[:] = 1
+        # dyn_sys_long_period.values[:] = self.data_origin['high'].max()   # data['low']
+        dyn_sys_long_period.values[:] = data['low']
+        # dyn_sys.values[:] = self.data_origin['low']
 
         if is_long_period(self.period):
-            dlxt_long_period_color = dlxt_color
+            dyn_sys_long_period_color = dyn_sys_color
 
         self.add_plot.extend([
-            mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
-                             color=dlxt_long_period_color,
+            mpf.make_addplot(self.get_window(dyn_sys_long_period), type='bar', width=1, panel=0,
+                             color=dyn_sys_long_period_color,
                              alpha=alpha)])
 
         if show_long_period_dynamical_system:
             self.add_plot.extend([
-                mpf.make_addplot(self.get_window(dlxt_long_period), type='bar', width=1, panel=0,
-                                 color=dlxt_long_period_color,
+                mpf.make_addplot(self.get_window(dyn_sys_long_period), type='bar', width=1, panel=0,
+                                 color=dyn_sys_long_period_color,
                                  alpha=alpha)])
 
         self.add_plot.extend([
-            mpf.make_addplot(self.get_window(dlxt), type='bar', width=1, panel=self.panel_dlxt, color=dlxt_color)
+            mpf.make_addplot(self.get_window(dyn_sys), type='bar', width=1, panel=self.panel_dyn_sys, color=dyn_sys_color)
         ])
 
     def add_channel(self, data):

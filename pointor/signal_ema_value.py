@@ -7,12 +7,12 @@ from indicator import force_index, dynamical_system, ema, dmi
 from indicator.decorator import computed, ignore_long_period, dynamic_system_filter
 
 
-def function_enter(low, close, dlxt_long_period, dlxt, dlxt_ema13, ema13, ema26, ema26_shift, period, date):
-    if dlxt_long_period < 0:  # or dlxt < 0:
+def function_enter(low, close, dyn_sys_long_period, dyn_sys, dyn_sys_ema13, ema13, ema26, ema26_shift, period, date):
+    if dyn_sys_long_period < 0:  # or dyn_sys < 0:
         return numpy.nan
 
     # ema13 向上, close 回归 ema13 ~ ema26 价值区间, ema13 >= ema26
-    if dlxt_long_period >= 0 and ema26_shift <= ema26 <= ema13 and low <= ema13:
+    if dyn_sys_long_period >= 0 and ema26_shift <= ema26 <= ema13 and low <= ema13:
         # print(date, '5')
         return low
 

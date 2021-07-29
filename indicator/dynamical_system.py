@@ -21,8 +21,8 @@ def function(ema_, macd_):
 
 
 def dynamical_system(quote, n=13):
-    if 'dlxt' in quote.columns:
-        # print('dynamical_system - dlxt already')
+    if 'dyn_sys' in quote.columns:
+        # print('dynamical_system - dyn_sys already')
         return quote
 
     quote = ema.compute_ema(quote)
@@ -36,19 +36,19 @@ def dynamical_system(quote, n=13):
     histogram = quote['macd_histogram']
 
     ema13_shift = ema13.shift(periods=1)
-    dlxt_ema = ema13 > ema13_shift
+    dyn_sys_ema = ema13 > ema13_shift
 
     quote_copy = quote.copy()
-    quote_copy.loc[:, 'dlxt_ema13'] = dlxt_ema.values
+    quote_copy.loc[:, 'dyn_sys_ema13'] = dyn_sys_ema.values
 
     # quote_copy.loc[:, 'macd'] = histogram
     histogram_shift = histogram.shift(periods=1)
-    dlxt_macd = histogram > histogram_shift
-    quote_copy.loc[:, 'dlxt_macd'] = dlxt_macd.values
+    dyn_sys_macd = histogram > histogram_shift
+    quote_copy.loc[:, 'dyn_sys_macd'] = dyn_sys_macd.values
 
     # df.city.apply(lambda x: 1 if 'ing' in x else 0)
     # quote_copy_copy = quote_copy.copy()
-    quote_copy.loc[:, 'dlxt'] = quote_copy.apply(lambda x: function(x.dlxt_ema13, x.dlxt_macd), axis=1)
+    quote_copy.loc[:, 'dyn_sys'] = quote_copy.apply(lambda x: function(x.dyn_sys_ema13, x.dyn_sys_macd), axis=1)
 
     # quote_copy.drop(['macd'], axis=1)
 
@@ -82,7 +82,7 @@ def compute_period(quote):
     return period
 
 
-@computed(column_name='dlxt')
+@computed(column_name='dyn_sys')
 def dynamical_system_dual_period(quote, n=13, period=None):
     # 长中周期动力系统中，均不为红色，且至少一个为绿色，强力指数为负
     # pandas.infer_freq(candle.data_origin.index)   # If not continuous pandas.infer_freq will return None.
@@ -97,42 +97,42 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     # print(quote_week[-50:])
     quote_week = dynamical_system(quote_week)
     # print(quote_week[-50:])
-    # quote_week.rename(columns={'dlxt': 'dlxt_long_period'}, inplace=True)
+    # quote_week.rename(columns={'dyn_sys': 'dyn_sys_long_period'}, inplace=True)
     # quote_week.drop(['open', 'close'], axis=1, inplace=True)
-    # quote_week = quote_week[['dlxt']]
-    dlxt_long_period = quote_week.resample(period_type_reverse).last()
-    dlxt_long_period['dlxt'] = quote_week['dlxt'].resample(period_type_reverse).pad()
-    # print(dlxt_long_period[-50:])
+    # quote_week = quote_week[['dyn_sys']]
+    dyn_sys_long_period = quote_week.resample(period_type_reverse).last()
+    dyn_sys_long_period['dyn_sys'] = quote_week['dyn_sys'].resample(period_type_reverse).pad()
+    # print(dyn_sys_long_period[-50:])
 
     # 补齐最后一天的数据
     if period in ['m30', 'm5', 'm1']:
-        last_row_index = dlxt_long_period.index[-1]
+        last_row_index = dyn_sys_long_period.index[-1]
         pd_loss = quote[last_row_index:]
-        dlxt_long_period = dlxt_long_period.append(pd_loss, )
+        dyn_sys_long_period = dyn_sys_long_period.append(pd_loss, )
 
-        # dlxt_long_period = dlxt_long_period.unique()
-        # indexs = dlxt_long_period.index.drop_duplicates()
-        # dlxt_long_period = dlxt_long_period[dlxt_long_period.index.isin(indexs)]
+        # dyn_sys_long_period = dyn_sys_long_period.unique()
+        # indexs = dyn_sys_long_period.index.drop_duplicates()
+        # dyn_sys_long_period = dyn_sys_long_period[dyn_sys_long_period.index.isin(indexs)]
         # https://stackoverflow.com/questions/22918212/fastest-way-to-drop-duplicated-index-in-a-pandas-dataframe
-        # dlxt_long_period = dlxt_long_period.groupby(dlxt_long_period.index).first()
-        dlxt_long_period = dlxt_long_period[~dlxt_long_period.index.duplicated(keep='first')]
+        # dyn_sys_long_period = dyn_sys_long_period.groupby(dyn_sys_long_period.index).first()
+        dyn_sys_long_period = dyn_sys_long_period[~dyn_sys_long_period.index.duplicated(keep='first')]
 
-        last_dlxt = dlxt_long_period.loc[last_row_index]['dlxt']
-        dlxt_long_period.loc[last_row_index:, 'dlxt'] = last_dlxt
+        last_dyn_sys = dyn_sys_long_period.loc[last_row_index]['dyn_sys']
+        dyn_sys_long_period.loc[last_row_index:, 'dyn_sys'] = last_dyn_sys
 
-    dlxt_long_period = dlxt_long_period[dlxt_long_period.index.isin(quote.index)]
+    dyn_sys_long_period = dyn_sys_long_period[dyn_sys_long_period.index.isin(quote.index)]
 
      # 中周期动力系统
     quote = dynamical_system(quote)
     # print(quote[-50:])
 
-    dlxt_long_period_copy = dlxt_long_period.copy()
+    dyn_sys_long_period_copy = dyn_sys_long_period.copy()
     quote_copy = quote.copy()
-    quote_copy.loc[:, 'dlxt_long_period'] = dlxt_long_period_copy['dlxt'].loc[:]
-    quote_copy.loc[:, 'dlxt'] = quote['dlxt']
+    quote_copy.loc[:, 'dyn_sys_long_period'] = dyn_sys_long_period_copy['dyn_sys'].loc[:]
+    quote_copy.loc[:, 'dyn_sys'] = quote['dyn_sys']
 
-    if numpy.isnan(quote_copy['dlxt_long_period'][-1]):
-        quote_copy['dlxt_long_period'].iat[-1] = quote_copy['dlxt_long_period'][-2]
+    if numpy.isnan(quote_copy['dyn_sys_long_period'][-1]):
+        quote_copy['dyn_sys_long_period'].iat[-1] = quote_copy['dyn_sys_long_period'][-2]
 
     # for debug
     # print(quote_copy.iloc[-50:])

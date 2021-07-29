@@ -183,7 +183,7 @@ def check_list(quote, period):
         return ERROR.E_SECOND_STAGE
 
     quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
-    if quote['dlxt'].iloc[-1] < 0 or quote['dlxt_long_period'].iloc[-1] < 0:
+    if quote['dyn_sys'].iloc[-1] < 0 or quote['dyn_sys_long_period'].iloc[-1] < 0:
         return ERROR.E_DYNAMICAL_SYSTEM
     # 长周期 ema26 向上, 且 close > 长周期 ema26
     n = 120
@@ -269,7 +269,7 @@ def sell(code, price_trade, price_limited=0, count=0, period='day', policy: Poli
     quote = tx.get_kline_data(code)
     if period == 'day' and (not policy or (policy != Policy.DEVIATION and policy != Policy.CHANNEL)):
         quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
-        if quote['dlxt'].iloc[-1] >= 0 and quote['dlxt_long_period'].iloc[-1] >= 0:
+        if quote['dyn_sys'].iloc[-1] >= 0 and quote['dyn_sys_long_period'].iloc[-1] >= 0:
             popup_warning_message_box_mp('动力系统不为红色, 禁止清仓, 请务必遵守规则!')
             return
 

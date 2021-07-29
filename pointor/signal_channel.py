@@ -9,20 +9,20 @@ from indicator.decorator import computed
 from util import macd
 
 
-def function_enter(low, dlxt_long_period, dlxt, ema, atr, period, date):
-    if not is_long_period(period) and dlxt_long_period == -1:
+def function_enter(low, dyn_sys_long_period, dyn_sys, ema, atr, period, date):
+    if not is_long_period(period) and dyn_sys_long_period == -1:
         return numpy.nan
 
-    if dlxt == -1:
+    if dyn_sys == -1:
         return numpy.nan
 
-    # if dlxt == -1:
+    # if dyn_sys == -1:
     #     if low <= ema - 3*atr:
     #         return low
 
     times = period_price_diff_ratio_atr_map[period]
 
-    if dlxt >= 0:
+    if dyn_sys >= 0:
         if low <= ema - times * atr:
             # print(date, '1')
             return low
@@ -34,17 +34,17 @@ def function_enter(low, dlxt_long_period, dlxt, ema, atr, period, date):
     return numpy.nan
 
 
-def function_exit(high, dlxt_long_period, dlxt, ema, atr, period):
-    # if not is_long_period(period) and dlxt_long_period == 1:
+def function_exit(high, dyn_sys_long_period, dyn_sys, ema, atr, period):
+    # if not is_long_period(period) and dyn_sys_long_period == 1:
     #     return numpy.nan
 
-    # if dlxt == 1:
+    # if dyn_sys == 1:
     #     if high >= ema + 3*atr:
     #         return high
 
     times = period_price_diff_ratio_atr_map[period]
 
-    if dlxt <= 0:
+    if dyn_sys <= 0:
         if high >= ema + times * atr:
             return high
 

@@ -13,7 +13,7 @@ from util import dt
 
 class SelectorPluginTestCase(unittest.TestCase):
     def setUp(self):
-        self.code = '300339'
+        self.code = '000065'
         self.period = 'day'
         count = 1000
         self.quote = quote_db.get_price_info_df_db(self.code, days=count, period_type='D')
@@ -42,7 +42,7 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(ret)
 
     def test_update_candidate_pool(self):
-        selector.update_candidate_pool()
+        selector.update_candidate_pool(['super'], 'day')
 
     def test_get_candidate_pool(self):
         code_list = basic.get_candidate_stock_code(['second_stage'])

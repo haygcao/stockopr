@@ -45,8 +45,8 @@ def dynamic_system_filter(column_name=None):
 
 
 def compute_enter_mask(quote, period):
-    mask = quote['dlxt_long_period'] < 0
-    mask = mask | (quote['dlxt'] < 0)
+    mask = quote['dyn_sys_long_period'] < 0
+    mask = mask | (quote['dyn_sys'] < 0)
 
     # 长周期 ema26 向上, 且 close > 长周期 ema26
     n = 26 if is_long_period(period) else 120
