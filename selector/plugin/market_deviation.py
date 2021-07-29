@@ -4,7 +4,7 @@ import numpy
 
 from acquisition import quote_db
 from config.config import period_map, USING_LONG_PERIOD, MAX_CLOSE_PAST_DAYS, DECLINE_RATIO
-from indicator import dynamical_system
+from . import dynamical_system
 from pointor import signal_market_deviation
 
 

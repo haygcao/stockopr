@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import math
 
 from indicator.decorator import computed
@@ -28,15 +29,3 @@ def force_index(quote, n=2):
     quote_copy.loc[:, 'force_index13'] = si_ema13.values
 
     return quote_copy
-
-
-def force_index_positive(quote):
-    quote = force_index(quote)
-
-    return True if quote['force_index'][-1] > 0 else False
-
-
-def force_index_minus(quote):
-    quote = force_index(quote)
-
-    return True if quote['force_index'][-1] < 0 else False

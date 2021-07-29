@@ -138,27 +138,3 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     # print(quote_copy.iloc[-50:])
 
     return quote_copy
-
-
-def dynamical_system_green(quote):
-    quote = dynamical_system(quote)
-
-    return True if quote['dlxt'][-1] == 1 else False
-
-
-def dynamical_system_red(quote):
-    quote = dynamical_system(quote)
-
-    return True if quote['dlxt'][-1] == -1 else False
-
-
-def dynamical_system_blue(quote):
-    quote = dynamical_system(quote)
-
-    return True if quote['dlxt'][-1] == 0 else False
-
-
-def dynamical_system_not_red(quote):
-    quote = dynamical_system(quote)
-
-    return True if quote['dlxt'][-1] >= 0 else False

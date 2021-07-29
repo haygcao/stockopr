@@ -25,8 +25,8 @@ import selector.plugin.qd as qd
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
     base_breakout, blt, vcp, strong_base, amplitude
 from selector.plugin import ema_value
-import indicator.dynamical_system as dynamical_system
-import indicator.force_index as force_index
+from selector.plugin import dynamical_system
+from selector.plugin import force_index
 from util import dt, qt_util
 
 from . import selected
@@ -62,8 +62,8 @@ selector = {
     'dyn_sys_red': dynamical_system.dynamical_system_red,
     'dyn_sys_blue': dynamical_system.dynamical_system_blue,
     'hot_strong': hot_strong.hot_strong,
-    'qlzs_p': force_index.force_index_positive,
-    'qlzs_m': force_index.force_index_minus
+    'force_index_p': force_index.force_index_positive,
+    'force_index_m': force_index.force_index_minus
 }
 
 
