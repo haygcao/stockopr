@@ -40,7 +40,7 @@ from indicator import relative_price_strength
 from pointor.signal import write_supplemental_signal
 from selector import selector
 from trade_manager import trade_manager
-from util import util, dt
+from util import util, dt, qt_util
 from util.QComboCheckBox import QComboCheckBox
 from util.pywinauto_util import max_window
 
@@ -138,6 +138,9 @@ class Panel(QWidget):
         btn_load = QPushButton('load', self)
         btn_load.clicked.connect(self.load)
 
+        btn_delete = QPushButton('delete', self)
+        btn_delete.clicked.connect(self.delete_data_in_db)
+
         combo_period = QComboBox(self)
 
         for period in g_periods:
@@ -160,7 +163,7 @@ class Panel(QWidget):
         self.combo_classification.select_index(2)
 
         self.combo_candidate = QComboCheckBox()
-        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super']:  # potential
+        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super', 'strong_base']:  # potential
             self.combo_candidate.addItem(indicator)
         self.combo_candidate.select_text('super')
 
@@ -232,22 +235,27 @@ class Panel(QWidget):
         h_layout_show_chart.addWidget(self.btn_show_chart_prev)
         h_layout_show_chart.addWidget(self.btn_show_chart)
         h_layout_show_chart.addWidget(self.btn_show_chart_next)
-        grid.addLayout(h_layout_show_chart, 2, 3)
+        grid.addLayout(h_layout_show_chart, 3, 3)
 
         h_layout_tdx = QHBoxLayout()
         h_layout_tdx.addWidget(self.btn_tdx_prev)
         h_layout_tdx.addWidget(self.btn_tdx)
         h_layout_tdx.addWidget(self.btn_tdx_next)
-        grid.addLayout(h_layout_tdx, 3, 3)
+        grid.addLayout(h_layout_tdx, 2, 3)
 
         grid.addWidget(self.combo_classification, 1, 0)
         grid.addWidget(self.combo_candidate, 1, 1)
         grid.addWidget(self.combo_strategy, 1, 2)
-        grid.addWidget(self.btn_update_candidate, 1, 3)
+
         h_layout_analyse = QHBoxLayout()
+        h_layout_analyse.addWidget(self.btn_update_candidate)
         h_layout_analyse.addWidget(self.btn_scan)
-        h_layout_analyse.addWidget(btn_load)
-        grid.addLayout(h_layout_analyse, 1, 4)
+        grid.addLayout(h_layout_analyse, 1, 3)
+
+        h_layout_candidate = QHBoxLayout()
+        h_layout_candidate.addWidget(btn_load)
+        h_layout_candidate.addWidget(btn_delete)
+        grid.addLayout(h_layout_candidate, 1, 4)
 
         grid.addWidget(qle_code, 3, 0)
         grid.addWidget(self.qle_count_or_price, 3, 1)
@@ -489,6 +497,12 @@ class Panel(QWidget):
 
         # self.combo_code.adjustSize()
         self.combo_code.setMaxVisibleItems(50)
+
+    def delete_data_in_db(self):
+        classification_list = [i.text() for i in self.combo_classification.get_selected()]
+        strategy_list = [i.text() for i in self.combo_strategy.get_selected()]
+        n = basic.delete_portfolio(classification_list, strategy_list)
+        qt_util.popup_info_message_box_mp('[{}] deleted'.format(n))
 
     def on_activated_period(self, text):
         self.period = text
