@@ -37,9 +37,9 @@ def bottom(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
     return close_ < ema_xl.iloc[-1 - back_day] * g_up_percent and close_ < ema_xxl.iloc[-1 - back_day] * g_up_percent
 
 
-def strong_base(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
-    xxl = ema_xxl.iloc[-2 - back_day]
-    xl = ema_xl.iloc[-2 - back_day]
+def strong_base(ema_s, ema_m, ema_l, back_day):
+    # xxl = ema_xxl.iloc[-2 - back_day]
+    # xl = ema_xl.iloc[-2 - back_day]
     l = ema_l.iloc[-2 - back_day]
     m = ema_m.iloc[-2 - back_day]
     s = ema_s.iloc[-2 - back_day]
@@ -139,7 +139,7 @@ def super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, e
         return False
 
     # print('trend ok')
-    if not strong_base(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
+    if not strong_base(ema_s, ema_m, ema_l, back_day):
         return False
 
     # print('strong base ok')

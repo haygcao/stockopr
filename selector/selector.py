@@ -25,7 +25,7 @@ import selector.plugin.zf as zf
 import selector.plugin.qd as qd
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
-    base_breakout, blt, vcp
+    base_breakout, blt, vcp, strong_base
 from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
@@ -59,6 +59,7 @@ selector = {
     'base_breakout': base_breakout.base_breakout,
     'blt': blt.blt,
     'vcp': vcp.vcp,
+    'strong_base': strong_base.strong_base,
     'bull_at_bottom': bull_at_bottom.bull_at_bottom,
     'dyn_sys_green': dynamical_system.dynamical_system_green,
     'dyn_sys_red': dynamical_system.dynamical_system_red,
