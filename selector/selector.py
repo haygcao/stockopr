@@ -7,6 +7,7 @@ import sys
 
 import tqdm
 
+from acquisition import tx
 from config import config
 from selector import util
 
@@ -28,6 +29,7 @@ from selector.plugin import market_deviation, super, bull_at_bottom, second_stag
 from selector.plugin import ema_value
 import indicator.dynamical_system as dynamical_system
 import indicator.force_index as force_index
+from util import dt, qt_util
 
 from . import selected
 
@@ -82,6 +84,12 @@ def _select(strategy_name, code):
     import util.mysqlcli as mysqlcli
     # _conn = mysqlcli.get_connection()
 
+    # 无法频繁获取数据
+    # if dt.istradetime():
+    #     df = tx.get_kline_data(code, 'day')
+    # else:
+    #     df = quote_db.get_price_info_df_db(code, days=1000, period_type='D')
+
     df = quote_db.get_price_info_df_db(code, days=1000, period_type='D')
     if df.empty:
         logger.info(code, 'no quote')
@@ -134,21 +142,29 @@ def select_one_strategy(code_list, strategy_name):
 
 
 def update_candidate_pool(strategy_list):
+    t1 = datetime.datetime.now()
+    msg = ''
     for strategy in strategy_list:
         code_list = basic.get_all_stock_code()
         # code_list = ['000065']
         code_list = select_one_strategy(code_list, strategy)
         # 科创板
         code_list = [code for code in code_list if not code.startswith('688')]
+        msg += '{}: {}\n'.format(strategy, len(code_list))
         basic.upsert_candidate_pool(code_list, 'candidate', strategy, ignore_duplicate=False)
 
+    t2 = datetime.datetime.now()
+    cost = (t2 - t1).seconds
+    qt_util.popup_info_message_box_mp('update candidate finished in [{}s]\n{}'.format(cost, msg))
 
-def select(strategy_name_list, stock_list: list[tuple], candidate_list=['second_stage']):
+
+def select(strategy_name_list, stock_list: list[tuple], candidate_list=None):
     begin = datetime.datetime.now()
 
     if config.update_candidate_pool:
         update_candidate_pool()
 
+    candidate_list = candidate_list if not candidate_list else ['super']
     code_list = basic.get_candidate_stock_code(candidate_list)
     # code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
@@ -171,11 +187,14 @@ def select(strategy_name_list, stock_list: list[tuple], candidate_list=['second_
         stock_list.append((code, basic.get_stock_name(code)))
 
     end = datetime.datetime.now()
+    cost = (end - begin).seconds
 
     log = '\n'.join([' '.join(t) for t in stock_list])
     with open(config.scan_log_path, 'a') as f:
         f.writelines('[{}] cost [{}s] [{}][{}] [{}]'.format(
-            begin, (end - begin).seconds, ', '.join(candidate_list), ', '.join(strategy_name_list), len(stock_list)))
+            begin, cost, ', '.join(candidate_list), ', '.join(strategy_name_list), len(stock_list)))
         f.writelines('\n')
         f.writelines(log)
         f.writelines('\n\n')
+
+    qt_util.popup_info_message_box_mp('scan finished in [{}s]\ntotal: {}'.format(cost, len(stock_list)))
