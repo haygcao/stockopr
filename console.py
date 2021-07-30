@@ -186,18 +186,23 @@ class Panel(QWidget):
         combo_indictor.activated[str].connect(self.on_activated_indicator)
 
         self.combo_classification = QComboCheckBox()
-        for indicator in ['market_index', 'position', 'allow_buy', 'trace', 'candidate', 'reserve']:
+        for indicator in ['market_index', 'position', 'allow_buy', 'traced', 'candidate', 'reserve']:
             self.combo_classification.addItem(indicator)
         self.combo_classification.select_index(2)
 
         self.combo_candidate = QComboCheckBox()
-        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super', 'strong_base']:  # potential
+        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super']:  # , 'strong_base']:  # potential
             self.combo_candidate.addItem(indicator)
         self.combo_candidate.select_text('super')
 
+        self.combo_traced = QComboCheckBox()
+        for indicator in ['value_return']:
+            self.combo_traced.addItem(indicator)
+        self.combo_traced.select_text('value_return')
+
         # self.combo_strategy = QComboBox(self)
         self.combo_strategy = QComboCheckBox()
-        for indicator in ['magic_line', 'blt', 'vcp', 'base_breakout', 'bull_deviation', 'ema_value']:
+        for indicator in ['value_return', 'magic_line', 'blt', 'vcp', 'base_breakout', 'bull_deviation', 'ema_value']:
             self.combo_strategy.addItem(indicator)
         # self.combo_strategy.setCurrentIndex(1)
         self.combo_strategy.select_text('magic_line')
@@ -235,8 +240,10 @@ class Panel(QWidget):
         self.btn_sync = QPushButton('sync', self)
         self.btn_sync.clicked.connect(self.sync)
 
-        self.btn_update_candidate = QPushButton('update', self)
+        self.btn_update_candidate = QPushButton('u cnd', self)
         self.btn_update_candidate.clicked.connect(self.update_candidate)
+        self.btn_update_traced = QPushButton('u trc', self)
+        self.btn_update_traced.clicked.connect(self.update_traced)
         self.btn_scan = QPushButton('scan', self)
         self.btn_scan.clicked.connect(self.scan)
 
@@ -248,7 +255,7 @@ class Panel(QWidget):
         btn_sell = QPushButton('sell', self)
         btn_sell.clicked.connect(self.sell)
 
-        btn_new_order = QPushButton('new order', self)
+        btn_new_order = QPushButton('i ordr', self)
         btn_new_order.clicked.connect(self.new_trade_order)
 
         grid = QGridLayout()
@@ -273,17 +280,18 @@ class Panel(QWidget):
 
         grid.addWidget(self.combo_classification, 1, 0)
         grid.addWidget(self.combo_candidate, 1, 1)
-        grid.addWidget(self.combo_strategy, 1, 2)
-
-        h_layout_analyse = QHBoxLayout()
-        h_layout_analyse.addWidget(self.btn_update_candidate)
-        h_layout_analyse.addWidget(self.btn_scan)
-        grid.addLayout(h_layout_analyse, 1, 3)
+        grid.addWidget(self.combo_traced, 1, 2)
+        grid.addWidget(self.combo_strategy, 1, 3)
 
         h_layout_candidate = QHBoxLayout()
-        h_layout_candidate.addWidget(btn_load)
-        h_layout_candidate.addWidget(btn_delete)
+        h_layout_candidate.addWidget(self.btn_update_candidate)
+        h_layout_candidate.addWidget(self.btn_update_traced)
         grid.addLayout(h_layout_candidate, 1, 4)
+
+        h_layout_analyse = QHBoxLayout()
+        h_layout_analyse.addWidget(self.btn_scan)
+        h_layout_analyse.addWidget(btn_load)
+        grid.addLayout(h_layout_analyse, 2, 4)
 
         grid.addWidget(qle_code, 3, 0)
         grid.addWidget(self.qle_count_or_price, 3, 1)
@@ -293,7 +301,10 @@ class Panel(QWidget):
         h_layout_order.addWidget(btn_sell)
         grid.addLayout(h_layout_order, 3, 2)
 
-        grid.addWidget(btn_new_order, 3, 4)
+        h_layout_op = QHBoxLayout()
+        h_layout_op.addWidget(btn_delete)
+        h_layout_op.addWidget(btn_new_order)
+        grid.addLayout(h_layout_op, 3, 4)
 
         # grid.addWidget(self.log, 4, 0)
 
@@ -518,9 +529,9 @@ class Panel(QWidget):
             code_list_tmp = basic.get_candidate_stock_code(candidate_list)
             code_list.extend(code_list_tmp)
 
-        if 'trace' in classification_list:
-            strategy_list = [i.text() for i in self.combo_strategy.get_selected()]
-            code_list_tmp = basic.get_traced_stock_code(strategy_list)
+        if 'traced' in classification_list:
+            traced_list = [i.text() for i in self.combo_traced.get_selected()]
+            code_list_tmp = basic.get_traced_stock_code(traced_list)
             code_list.extend(code_list_tmp)
 
         if 'allow_buy' in classification_list:
@@ -540,9 +551,9 @@ class Panel(QWidget):
     def delete_data_in_db(self):
         classification_list = [i.text() for i in self.combo_classification.get_selected()]
         strategy_list = [i.text() for i in self.combo_strategy.get_selected()]
-        # candidate_list = [i.text() for i in self.combo_candidate.get_selected()]
+        traced_list = [i.text() for i in self.combo_traced.get_selected()]
 
-        l = strategy_list  # + candidate_list
+        l = strategy_list + traced_list
         n = basic.delete_portfolio(classification_list, l)
         qt_util.popup_info_message_box_mp('{}{}\n[{}] deleted'.format(classification_list, l, n))
 
@@ -629,18 +640,27 @@ class Panel(QWidget):
         print('sync started')
 
     def update_candidate(self):
+        print('update candidate started')
         selected_list = [s.text() for s in self.combo_candidate.get_selected()]
         print(selected_list)
         p = multiprocessing.Process(target=selector.update_candidate_pool, args=(selected_list, self.period))
         p.start()
 
-        pass
+    def update_traced(self):
+        print('update traced started')
+        traced_list = [s.text() for s in self.combo_traced.get_selected()]
+        candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
+        print(candidate_list, traced_list)
+        p = multiprocessing.Process(target=selector.select, args=(traced_list, candidate_list, self.period))
+        p.start()
 
     def scan(self):
         print('scan started')
         strategy_name_list = [s.text() for s in self.combo_strategy.get_selected()]
         candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
-        print(candidate_list, strategy_name_list)
+        traced_list = [s.text() for s in self.combo_traced.get_selected()]
+        print(candidate_list, traced_list, strategy_name_list)
+        candidate_list.extend(traced_list)
         p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, candidate_list, self.period))
         p.start()
 

@@ -23,7 +23,7 @@ import selector.plugin.d as d
 import selector.plugin.qd as qd
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
-    base_breakout, blt, vcp, strong_base, amplitude
+    base_breakout, blt, vcp, strong_base, amplitude, value_return
 from selector.plugin import ema_value
 from selector.plugin import dynamical_system
 from selector.plugin import force_index
@@ -54,6 +54,7 @@ selector = {
     'second_stage': second_stage.second_stage,   # 第二阶段
     'magic_line': magic_line.magic_line,
     'base_breakout': base_breakout.base_breakout,
+    'value_return': value_return.value_return,
     'blt': blt.blt,
     'vcp': vcp.vcp,
     'strong_base': strong_base.strong_base,
@@ -64,6 +65,10 @@ selector = {
     'hot_strong': hot_strong.hot_strong,
     'force_index_p': force_index.force_index_positive,
     'force_index_m': force_index.force_index_minus
+}
+
+strategy_map = {
+    'value_return': 'traced'
 }
 
 
@@ -167,14 +172,14 @@ def select(strategy_name_list, candidate_list=None, period='day'):
     # code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
     code_list = [code for code in code_list if int(code[:2]) <= 60]
-    # code_list = ['300502']
+    # code_list = ['300479']
 
     strategy_name_list = config.get_scan_strategy_name_list() if not strategy_name_list else strategy_name_list
     for strategy_name in strategy_name_list:
         code_list = select_one_strategy(code_list, strategy_name, period)
         # for code in code_list:
         #     selected.add_selected(code, strategy_name)
-        basic.upsert_candidate_pool(code_list, 'allow_buy', strategy_name)
+        basic.upsert_candidate_pool(code_list, strategy_map.get(strategy_name, 'allow_buy'), strategy_name)
         logger.info(strategy_name, code_list)
 
     # code_list.append('300502')
