@@ -25,11 +25,12 @@ import warnings
 import pandas
 import psutil
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow, QDesktopWidget,
-                             QHBoxLayout, QVBoxLayout)
+                             QHBoxLayout, QVBoxLayout, QShortcut)
+import system_hotkey
 import win32api
 
 import chart
@@ -87,6 +88,8 @@ class Main(QMainWindow):
 
 
 class Panel(QWidget):
+    # sig_keyhot = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Icon')
@@ -114,9 +117,33 @@ class Panel(QWidget):
         self.running = True
         self.count_or_price = [0, 0]   # [price, count]
 
+        # self.sig_keyhot.connect(self.MKey_pressEvent)
+
+        self.hk_tdx_l = system_hotkey.SystemHotkey()
+        self.hk_tdx_r = system_hotkey.SystemHotkey()
+        self.hk_tdx = system_hotkey.SystemHotkey()
+        self.hk_tdx_l.register(('alt', 'j'), callback=lambda x: self.open_tdx(-1))
+        self.hk_tdx_r.register(('alt', 'l'), callback=lambda x: self.open_tdx(1))
+        self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.open_tdx(0))
+
+        self.hk_show_l = system_hotkey.SystemHotkey()
+        self.hk_show_r = system_hotkey.SystemHotkey()
+        self.hk_show = system_hotkey.SystemHotkey()
+        self.hk_show_l.register(('shift', 'j'), callback=lambda x: self.show_chart(-1))
+        self.hk_show_r.register(('shift', 'l'), callback=lambda x: self.show_chart(1))
+        self.hk_show.register(('shift', 'k'), callback=lambda x: self.show_chart(0))
+
         self.qle_count_or_price = QLineEdit('price|count', self)
 
         self.initUI()
+
+    # # 热键处理函数
+    # def MKey_pressEvent(self, i_str):
+    #     print("按下的按键是%s" % (i_str,))
+    #
+    # # 热键信号发送函数(将外部信号，转化成qt信号)
+    # def send_key_event(self, i_str):
+    #     self.sig_keyhot.emit(i_str)
 
     def initUI(self):
         self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)), self)
@@ -396,23 +423,32 @@ class Panel(QWidget):
         enabled = text in [s.text() for s in combo.get_selected()]
         config.enable_signal(text, enabled, self.period)
 
-    def set_current(self):
+    def get_forward(self):
+        widget = self.sender()
+        if widget == self.btn_tdx_prev or widget == self.btn_show_chart_prev:
+            return -1
+        elif widget == self.btn_tdx_next or widget == self.btn_show_chart_next:
+            return 1
+        return 0
+
+    def set_current(self, forward=1):
         current_index = self.combo_code.currentIndex()
         max_index = self.combo_code.count() - 1
 
-        widget = self.sender()
-        if widget == self.btn_tdx_prev or widget == self.btn_show_chart_prev:
+        if forward == -1:
             current_index -= 1
             current_index = max_index if current_index < 0 else current_index
-        elif widget == self.btn_tdx_next or widget == self.btn_show_chart_next:
+        # elif
+        elif forward == 1:
             current_index += 1
             current_index = 0 if current_index > max_index else current_index
 
         current_index = max(0, min(current_index, max_index))
         self.combo_code.setCurrentIndex(current_index)
 
-    def open_tdx(self):
-        self.set_current()
+    def open_tdx(self, forword=None):
+        forward = forword if forword else self.get_forward()
+        self.set_current(forward)
 
         text = self.combo_code.currentText()
         self.code = text.split()[0]
@@ -525,8 +561,9 @@ class Panel(QWidget):
         self.indicator = text
         self.set_label()
 
-    def show_chart(self):
-        self.set_current()
+    def show_chart(self, forword=None):
+        forward = forword if forword else self.get_forward()
+        self.set_current(forward)
 
         text = self.combo_code.currentText()
         self.code = text.split()[0]
