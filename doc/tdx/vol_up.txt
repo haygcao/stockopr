@@ -1,0 +1,8 @@
+D:=5;
+E:=20;
+T:=5;
+
+LOWV:=LLV(VOL,9);
+HIGHV:=HHV(VOL, D);
+EMAV:= EMA(VOL, E);
+HIGHV > T*EMAV;

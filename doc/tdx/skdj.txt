@@ -1,0 +1,11 @@
+LOWV:=LLV(LOW,9);
+HIGHV:=HHV(HIGH,9);
+RSV:=EMA((CLOSE-LOWV)/(HIGHV-LOWV)*100,3);
+K_:=EMA(RSV,3);
+D_:=MA(K_,3);
+ADJ:=0;
+K : K_ - ADJ;
+D : D_ - ADJ;
+H_:80 - ADJ;
+L_:20 - ADJ;
+ZERO: 50 - ADJ;
