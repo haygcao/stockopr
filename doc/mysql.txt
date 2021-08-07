@@ -1,0 +1,12 @@
+
+mysqldump -uroot -p test_db stock_db --ignore-table=test_db.t1 --ignore-table=test_db.t2 > /backup/mysqldump/test2.db
+
+mysqladmin -uroot -p create db_name
+mysql -uroot -p  db_name < /backup/mysqldump/db_name.db
+
+mysql > use db_name
+mysql > source /backup/mysqldump/db_name.db
+
+
+mysql> select * from quote where trade_date > '2020-01-01' into outfile ‘/tmp/quote.txt';
+mysql> load data infile '/tmp/quote.txt' into table quote;
