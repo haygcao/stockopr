@@ -1,0 +1,6 @@
+[user]
+	email = shuhm.gg@gmail.com
+	name = shuhm
+	
+[core]
+	autocrlf = false
