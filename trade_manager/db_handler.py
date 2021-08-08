@@ -84,7 +84,7 @@ def query_current_position():
     return position_list
 
 
-def save_positions(position_list: list[trade_data.Position], sync=False):
+def save_positions(position_list, sync=False):
     if not position_list:
         return
 
@@ -143,7 +143,7 @@ def query_operation_details(code=None, date: datetime.date = None):
     return details
 
 
-def save_operation_details(details: list[trade_data.OperationDetail], trade_date=None, sync=False):
+def save_operation_details(details, trade_date=None, sync=False):
     keys = ['time', 'code', 'operation', 'price', 'price_trade', 'price_limited', 'count', 'amount', 'cost']
 
     key = ', '.join(keys)

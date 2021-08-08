@@ -24,14 +24,15 @@ import warnings
 
 import pandas
 import psutil
+import pyautogui
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow, QDesktopWidget,
                              QHBoxLayout, QVBoxLayout, QShortcut)
-import system_hotkey
-import win32api
+# import system_hotkey
+# import win32api
 
 import chart
 import trade_manager.db_handler
@@ -49,7 +50,7 @@ from util.pywinauto_util import max_window
 # QWindowsContext: OleInitialize() failed: "COM error 0xffffffff80010106 RPC_E_CHANGED_MODE (Unknown error 0x080010106)"
 warnings.simplefilter("ignore", category=UserWarning)
 sys.coinit_flags = 2
-import pywinauto
+# import pywinauto
 
 # g_periods = ['m1', 'm5', 'm15', 'm30', 'm60', 'day', 'week']
 g_periods = ['m5', 'm30', 'day', 'week']
@@ -75,6 +76,21 @@ def get_combo_signal_key(s):
             return 'exit'
 
 
+def send_key(key):
+    import pyautogui as pag
+
+    x, y = pag.position()
+
+    screen_width, screen_height = pyautogui.size()
+    pyautogui.moveTo(screen_width - 100, screen_height / 2)
+    pyautogui.click()
+
+    pyautogui.typewrite(message=key, interval=0.1)
+    pyautogui.press('enter')
+
+    pag.moveTo(x, y)
+
+
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -83,8 +99,26 @@ class Main(QMainWindow):
         self.show()
 
     def initUI(self):
-        self.alertWidget = Panel()
+        self.alertWidget = Widget()
         self.setCentralWidget(self.alertWidget)
+
+
+class Widget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.combo_classification = QComboCheckBox()
+        # self.combo_classification = QPushButton('xxx')
+        # self.combo_classification = QLabel('xxx')
+        grid = QGridLayout()
+        grid.addWidget(self.combo_classification)
+        # grid = QVBoxLayout()
+        # grid.addWidget(self.combo_classification)
+        self.setGeometry(300, 300, 280, 170)
+        self.setLayout(grid)
+        self.show()
 
 
 class Panel(QWidget):
@@ -93,7 +127,7 @@ class Panel(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Icon')
-        self.setWindowIcon(QIcon('data/icon11.png'))
+        # self.setWindowIcon(QIcon('data/icon11.png'))
 
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
@@ -119,23 +153,63 @@ class Panel(QWidget):
 
         # self.sig_keyhot.connect(self.MKey_pressEvent)
 
-        self.hk_tdx_l = system_hotkey.SystemHotkey()
-        self.hk_tdx_r = system_hotkey.SystemHotkey()
-        self.hk_tdx = system_hotkey.SystemHotkey()
-        self.hk_tdx_l.register(('alt', 'j'), callback=lambda x: self.open_tdx(-1))
-        self.hk_tdx_r.register(('alt', 'l'), callback=lambda x: self.open_tdx(1))
-        self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.open_tdx(0))
-
-        self.hk_show_l = system_hotkey.SystemHotkey()
-        self.hk_show_r = system_hotkey.SystemHotkey()
-        self.hk_show = system_hotkey.SystemHotkey()
-        self.hk_show_l.register(('shift', 'j'), callback=lambda x: self.show_chart(-1))
-        self.hk_show_r.register(('shift', 'l'), callback=lambda x: self.show_chart(1))
-        self.hk_show.register(('shift', 'k'), callback=lambda x: self.show_chart(0))
+        # self.hk_tdx_l = system_hotkey.SystemHotkey()
+        # self.hk_tdx_r = system_hotkey.SystemHotkey()
+        # self.hk_tdx = system_hotkey.SystemHotkey()
+        # self.hk_tdx_l.register(('alt', 'j'), callback=lambda x: self.open_tdx(-1))
+        # self.hk_tdx_r.register(('alt', 'l'), callback=lambda x: self.open_tdx(1))
+        # self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.open_tdx(0))
+        #
+        # self.hk_show_l = system_hotkey.SystemHotkey()
+        # self.hk_show_r = system_hotkey.SystemHotkey()
+        # self.hk_show = system_hotkey.SystemHotkey()
+        # self.hk_show_l.register(('shift', 'j'), callback=lambda x: self.show_chart(-1))
+        # self.hk_show_r.register(('shift', 'l'), callback=lambda x: self.show_chart(1))
+        # self.hk_show.register(('shift', 'k'), callback=lambda x: self.show_chart(0))
 
         self.qle_count_or_price = QLineEdit('price|count', self)
 
-        self.initUI()
+        self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)), self)
+        self.combo_code = QComboBox(self)
+        self.combo_period = QComboBox(self)
+        self.combo_indictor = QComboBox(self)
+
+        self.btn_tdx = QPushButton('tdx', self)
+        self.btn_tdx_prev = QPushButton('<-', self)
+        self.btn_tdx_next = QPushButton('->', self)
+
+        self.btn_show_chart = QPushButton('show', self)
+        self.btn_show_chart_prev = QPushButton('<-', self)
+        self.btn_show_chart_next = QPushButton('->', self)
+
+        self.combo_classification = QComboCheckBox()
+        self.combo_candidate = QComboCheckBox()
+        self.combo_traced = QComboCheckBox()
+        self.combo_strategy = QComboCheckBox()
+
+        self.btn_monitor = QPushButton('watch dog', self)
+        self.btn_update_quote = QPushButton('update', self)
+        self.btn_sync = QPushButton('sync', self)
+
+        self.btn_update_candidate = QPushButton('u cnd', self)
+        self.btn_update_traced = QPushButton('u trc', self)
+        self.btn_scan = QPushButton('scan', self)
+
+        self.btn_load = QPushButton('load', self)
+        self.qle_code = QLineEdit('300502', self)
+
+        self.btn_buy = QPushButton('buy', self)
+        self.btn_sell = QPushButton('sell', self)
+        self.btn_new_order = QPushButton('i ordr', self)
+
+        self.btn_delete = QPushButton('delete', self)
+
+        # self.log = QLabel("this for log", self)
+
+        self.init_ui()
+        threading.Thread(target=self.check, args=()).start()
+
+        self.show()
 
     # # 热键处理函数
     # def MKey_pressEvent(self, i_str):
@@ -145,126 +219,92 @@ class Panel(QWidget):
     # def send_key_event(self, i_str):
     #     self.sig_keyhot.emit(i_str)
 
-    def initUI(self):
-        self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)), self)
-        # self.log = QLabel("this for log", self)
-
-        self.combo_code = QComboBox(self)
-        # comboCode.adjustSize()
-        self.combo_code.resize(self.combo_code.width() + 50, self.combo_code.height())
-
-        self.combo_code.activated[str].connect(self.on_activated_code)
-
-        self.btn_tdx = QPushButton('tdx', self)
-        self.btn_tdx.clicked.connect(self.open_tdx)
-        self.btn_tdx_prev = QPushButton('<-', self)
-        self.btn_tdx_prev.clicked.connect(self.open_tdx)
-        self.btn_tdx_next = QPushButton('->', self)
-        self.btn_tdx_next.clicked.connect(self.open_tdx)
-
-        btn_load = QPushButton('load', self)
-        btn_load.clicked.connect(self.load)
-
-        btn_delete = QPushButton('delete', self)
-        btn_delete.clicked.connect(self.delete_data_in_db)
-
-        combo_period = QComboBox(self)
-
+    def init_period(self):
         for period in g_periods:
-            combo_period.addItem(period)
-        combo_period.setCurrentIndex(g_periods.index(self.period))
+            self.combo_period.addItem(period)
+        self.combo_period.setCurrentIndex(g_periods.index(self.period))
+        self.combo_period.activated[str].connect(self.on_activated_period)
 
-        # comboPeriod.move(50, 50)
-        # self.lbl.move(50, 150)
-
-        combo_period.activated[str].connect(self.on_activated_period)
-
-        combo_indictor = QComboBox(self)
-
+    def init_indicator(self):
         for indicator in g_indicators + g_market_indicators:
-            combo_indictor.addItem(indicator)
-        combo_indictor.activated[str].connect(self.on_activated_indicator)
+            self.combo_indictor.addItem(indicator)
+        self.combo_indictor.activated[str].connect(self.on_activated_indicator)
 
-        self.combo_classification = QComboCheckBox()
         for indicator in ['market_index', 'position', 'allow_buy', 'traced', 'candidate', 'reserve']:
             self.combo_classification.addItem(indicator)
         self.combo_classification.select_index(2)
 
-        self.combo_candidate = QComboCheckBox()
         for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super']:  # , 'strong_base']:  # potential
             self.combo_candidate.addItem(indicator)
         self.combo_candidate.select_text('super')
 
-        self.combo_traced = QComboCheckBox()
         for indicator in ['value_return']:
             self.combo_traced.addItem(indicator)
         self.combo_traced.select_text('value_return')
 
         # self.combo_strategy = QComboBox(self)
-        self.combo_strategy = QComboCheckBox()
+
         for indicator in ['value_return', 'magic_line', 'blt', 'vcp', 'base_breakout', 'bull_deviation', 'ema_value']:
             self.combo_strategy.addItem(indicator)
         # self.combo_strategy.setCurrentIndex(1)
         self.combo_strategy.select_text('magic_line')
-        # combo_strategy.activated[str].connect(self.on_activated_indicator)
 
-        qle_code = QLineEdit('300502', self)
+    def init_ui(self):
+        # comboCode.adjustSize()
+        self.combo_code.resize(self.combo_code.width() + 50, self.combo_code.height())
 
-        # qle.move(60, 100)
-        # self.lbl.move(60, 40)
+        self.combo_code.activated[str].connect(self.on_activated_code)
 
-        qle_code.textChanged[str].connect(self.on_code_changed)
+        self.btn_tdx.clicked.connect(self.open_tdx)
+        self.btn_tdx_prev.clicked.connect(self.open_tdx)
+        self.btn_tdx_next.clicked.connect(self.open_tdx)
 
-        self.btn_show_chart = QPushButton('show', self)
+        self.btn_load.clicked.connect(self.load)
+        self.btn_delete.clicked.connect(self.delete_data_in_db)
+
+        self.qle_code.textChanged[str].connect(self.on_code_changed)
+
         self.btn_show_chart.clicked.connect(self.show_chart)
-        self.btn_show_chart_prev = QPushButton('<-', self)
         self.btn_show_chart_prev.clicked.connect(self.show_chart)
-        self.btn_show_chart_next = QPushButton('->', self)
         self.btn_show_chart_next.clicked.connect(self.show_chart)
 
-        pid = util.get_pid_of_python_proc('watch_dog')
-        txt = 'watch dog'
-        if pid < 0:
-            color = 'red'
-        else:
-            color = 'green'
-        self.btn_monitor = QPushButton(txt, self)
-        self.btn_monitor.setStyleSheet("background-color : {}".format(color))
         self.btn_monitor.clicked.connect(self.control_watch_dog)
-
-        threading.Thread(target=self.check, args=()).start()
-
-        self.btn_update_quote = QPushButton('update', self)
         self.btn_update_quote.clicked.connect(self.update_quote)
-
-        self.btn_sync = QPushButton('sync', self)
         self.btn_sync.clicked.connect(self.sync)
-
-        self.btn_update_candidate = QPushButton('u cnd', self)
         self.btn_update_candidate.clicked.connect(self.update_candidate)
-        self.btn_update_traced = QPushButton('u trc', self)
         self.btn_update_traced.clicked.connect(self.update_traced)
-        self.btn_scan = QPushButton('scan', self)
         self.btn_scan.clicked.connect(self.scan)
 
         self.qle_count_or_price.textChanged[str].connect(self.on_count_or_price_changed)
 
-        btn_buy = QPushButton('buy', self)
-        btn_buy.clicked.connect(self.buy)
+        self.btn_buy.clicked.connect(self.buy)
+        self.btn_sell.clicked.connect(self.sell)
+        self.btn_new_order.clicked.connect(self.new_trade_order)
 
-        btn_sell = QPushButton('sell', self)
-        btn_sell.clicked.connect(self.sell)
+        self.init_period()
+        self.init_indicator()
 
-        btn_new_order = QPushButton('i ordr', self)
-        btn_new_order.clicked.connect(self.new_trade_order)
+        ###
+        h_layout_signal = QHBoxLayout()
+
+        for combo in self.combo_signal.values():
+            combo.activated[str].connect(self.on_activated_signal)
+            h_layout_signal.addWidget(combo)
+
+        signals = config.get_all_signal(self.period)
+        for s, enabled in signals.items():
+            combo = self.combo_signal.get(get_combo_signal_key(s))
+            combo.addItem(s)
+            if enabled:
+                combo.select_text(s)
 
         grid = QGridLayout()
 
         grid.setSpacing(10)
         grid.addWidget(self.lbl, 4, 0)
         grid.addWidget(self.combo_code, 2, 0)
-        grid.addWidget(combo_period, 2, 1)
-        grid.addWidget(combo_indictor, 2, 2)
+        grid.addWidget(self.combo_period, 2, 1)
+        grid.addWidget(self.combo_indictor, 2, 2)
 
         h_layout_show_chart = QHBoxLayout()
         h_layout_show_chart.addWidget(self.btn_show_chart_prev)
@@ -290,69 +330,18 @@ class Panel(QWidget):
 
         h_layout_analyse = QHBoxLayout()
         h_layout_analyse.addWidget(self.btn_scan)
-        h_layout_analyse.addWidget(btn_load)
+        h_layout_analyse.addWidget(self.btn_load)
         grid.addLayout(h_layout_analyse, 2, 4)
 
-        grid.addWidget(qle_code, 3, 0)
-        grid.addWidget(self.qle_count_or_price, 3, 1)
-
         h_layout_order = QHBoxLayout()
-        h_layout_order.addWidget(btn_buy)
-        h_layout_order.addWidget(btn_sell)
+        h_layout_order.addWidget(self.btn_buy)
+        h_layout_order.addWidget(self.btn_sell)
         grid.addLayout(h_layout_order, 3, 2)
 
         h_layout_op = QHBoxLayout()
-        h_layout_op.addWidget(btn_delete)
-        h_layout_op.addWidget(btn_new_order)
+        h_layout_op.addWidget(self.btn_delete)
+        h_layout_op.addWidget(self.btn_new_order)
         grid.addLayout(h_layout_op, 3, 4)
-
-        # grid.addWidget(self.log, 4, 0)
-
-        h_layout_signal = QHBoxLayout()
-
-        for combo in self.combo_signal.values():
-            combo.activated[str].connect(self.on_activated_signal)
-            h_layout_signal.addWidget(combo)
-
-        signals = config.get_all_signal(self.period)
-        for s, enabled in signals.items():
-            combo = self.combo_signal.get(get_combo_signal_key(s))
-            combo.addItem(s)
-            if enabled:
-                combo.select_text(s)
-
-        # h_layout_enter = QGridLayout()
-        #
-        # signals = config.get_all_signal_enter(self.period)
-        # # h_layout_enter.addStretch(len(signals))
-        # i = 0
-        # j = 0
-        # for s, enabled in signals.items():
-        #     w = QtWidgets.QCheckBox(s, self)
-        #     w.setChecked(enabled)
-        #     self.widget_signals.update({s: w})
-        #     w.stateChanged.connect(self.checked)
-        #     if 'deviation' in s:
-        #         h_layout_enter.addWidget(w, 0, i)
-        #         i += 1
-        #     else:
-        #         h_layout_enter.addWidget(w, 1, j)
-        #         j += 1
-        #
-        # i = 0
-        # j = 0
-        # signals = config.get_all_signal_exit(self.period)
-        # for s, enabled in signals.items():
-        #     w = QtWidgets.QCheckBox(s, self)
-        #     w.setChecked(enabled)
-        #     self.widget_signals.update({s: w})
-        #     w.stateChanged.connect(self.checked)
-        #     if 'deviation' in s:
-        #         h_layout_enter.addWidget(w, 2, i)
-        #         i += 1
-        #     else:
-        #         h_layout_enter.addWidget(w, 3, j)
-        #         j += 1
 
         h_layout_data = QHBoxLayout()
         h_layout_data.addWidget(self.btn_update_quote)
@@ -360,19 +349,20 @@ class Panel(QWidget):
         grid.addLayout(h_layout_data, 4, 3)
         grid.addWidget(self.btn_monitor, 4, 4)
 
+        grid.addWidget(self.qle_code, 3, 0)
+        grid.addWidget(self.qle_count_or_price, 3, 1)
+
         layout = QVBoxLayout()
         layout.addStretch(2)
         layout.addLayout(grid)
-        # layout.addLayout(h_layout_enter)
         layout.addLayout(h_layout_signal)
 
-        self.load()
+        # self.load()
 
         self.setLayout(layout)
 
         self.setGeometry(300, 300, 280, 170)
         self.setWindowTitle('K')
-        self.show()
 
     def set_label(self):
         self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
@@ -466,16 +456,17 @@ class Panel(QWidget):
 
         self.set_label()
 
-        pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
-        if pid < 0:
-            app = pywinauto.Application(backend="uia").start('C:\\new_tdx\\TdxW.exe')
-        else:
-            app = pywinauto.Application(backend="uia").connect(process=pid)
+        # pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
+        # if pid < 0:
+        #     app = pywinauto.Application(backend="uia").start('C:\\new_tdx\\TdxW.exe')
+        # else:
+        #     app = pywinauto.Application(backend="uia").connect(process=pid)
 
-        pos = win32api.GetCursorPos()
-        main_window = app.window(class_name='TdxW_MainFrame_Class')
-        max_window(main_window)
-        win32api.SetCursorPos(pos)
+
+        # pos = win32api.GetCursorPos()
+        # main_window = app.window(class_name='TdxW_MainFrame_Class')
+        # max_window(main_window)
+        # win32api.SetCursorPos(pos)
 
         # import win32con
         # width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
@@ -490,10 +481,13 @@ class Panel(QWidget):
         }
         # main_window.type_keys(str(self.code))
         code = self.code if len(self.code) == 6 else m[self.code]
-        pywinauto.keyboard.send_keys(code)
-        if self.code == '0000688':
-            time.sleep(0.5)
-        pywinauto.keyboard.send_keys('{ENTER}')
+        send_key(code)
+        # pyautogui.typewrite(message=code, interval=0.1)
+        # pywinauto.keyboard.send_keys(code)
+        # if self.code == '0000688':
+        #     time.sleep(0.5)
+        # pyautogui.press('enter')
+        # pywinauto.keyboard.send_keys('{ENTER}')
 
     def load(self):
         self.combo_code.clear()
@@ -588,7 +582,8 @@ class Panel(QWidget):
             print('stock')
             indicator = self.indicator if self.indicator in g_indicators else g_indicators[0]
         print('{} {} {}'.format(self.code, self.period, indicator))
-        p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, indicator))
+        # p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, indicator))
+        p = threading.Thread(target=chart.open_graph, args=(self.code, self.period, indicator))
         p.start()
         p.join(timeout=1)
         # open_graph(self.code, self.period)
@@ -694,7 +689,7 @@ class Panel(QWidget):
         trade_manager.create_trade_order(self.code, price_limited=self.count_or_price[0])
 
     def check(self):
-        pid_prev_check = -1
+        pid_prev_check = None
         update_time = datetime.datetime(2021, 6, 18, 0, 0, 0)
         while self.running:
             now = datetime.datetime.now()
@@ -761,8 +756,9 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # ex = Main()
+    # ex = Widget()
     ex = Panel()
-    ex.location_on_the_screen()
+    # ex.location_on_the_screen()
     print('width: {}\theight: {}'.format(ex.width(), ex.height()))
 
     rc = app.exec_()

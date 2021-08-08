@@ -10,7 +10,11 @@ tar zxf ta-lib-0.4.0-src.tar.gz
 cd ta-lib
 ./configure
 make -j16
+# ta-lib$ find . -name "libta_lib.so.*"
+# ./src/.libs/libta_lib.so.0
+# ./src/.libs/libta_lib.so.0.0.0
 make install
+# on deepin, no need to 'ln'
 ln -s /usr/local/lib/libta_lib.so.0.0.0 /usr/lib64/libta_lib.so.0
 cd -
 rm -rf ta-lib
