@@ -130,7 +130,7 @@ class Panel(QWidget):
         self.setWindowTitle('Icon')
         # self.setWindowIcon(QIcon('data/icon11.png'))
 
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.CustomizeWindowHint)
 
         # self.setFixedSize(700, 200)
         self.setFixedWidth(700)
