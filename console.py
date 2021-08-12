@@ -17,6 +17,7 @@ import multiprocessing
 import os
 import re
 import signal
+import subprocess
 import sys
 import threading
 import time
@@ -31,7 +32,7 @@ from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow, QDesktopWidget,
                              QHBoxLayout, QVBoxLayout, QShortcut)
-# import system_hotkey
+import system_hotkey
 # import win32api
 
 import chart
@@ -153,13 +154,13 @@ class Panel(QWidget):
 
         # self.sig_keyhot.connect(self.MKey_pressEvent)
 
-        # self.hk_tdx_l = system_hotkey.SystemHotkey()
-        # self.hk_tdx_r = system_hotkey.SystemHotkey()
-        # self.hk_tdx = system_hotkey.SystemHotkey()
-        # self.hk_tdx_l.register(('alt', 'j'), callback=lambda x: self.open_tdx(-1))
-        # self.hk_tdx_r.register(('alt', 'l'), callback=lambda x: self.open_tdx(1))
-        # self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.open_tdx(0))
-        #
+        self.hk_tdx_l = system_hotkey.SystemHotkey()
+        self.hk_tdx_r = system_hotkey.SystemHotkey()
+        self.hk_tdx = system_hotkey.SystemHotkey()
+        self.hk_tdx_l.register(('alt', 'j'), callback=lambda x: self.switch_code(-1))
+        self.hk_tdx_r.register(('alt', 'l'), callback=lambda x: self.switch_code(1))
+        self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.switch_code(0))
+
         # self.hk_show_l = system_hotkey.SystemHotkey()
         # self.hk_show_r = system_hotkey.SystemHotkey()
         # self.hk_show = system_hotkey.SystemHotkey()
@@ -174,13 +175,14 @@ class Panel(QWidget):
         self.combo_period = QComboBox(self)
         self.combo_indictor = QComboBox(self)
 
-        self.btn_tdx = QPushButton('tdx', self)
         self.btn_tdx_prev = QPushButton('<-', self)
         self.btn_tdx_next = QPushButton('->', self)
 
+        self.btn_tdx = QPushButton('tdx', self)
         self.btn_show_chart = QPushButton('show', self)
-        self.btn_show_chart_prev = QPushButton('<-', self)
-        self.btn_show_chart_next = QPushButton('->', self)
+        self.btn_f10 = QPushButton('f10', self)
+        # self.btn_show_chart_prev = QPushButton('<-', self)
+        # self.btn_show_chart_next = QPushButton('->', self)
 
         self.combo_classification = QComboCheckBox()
         self.combo_candidate = QComboCheckBox()
@@ -256,8 +258,8 @@ class Panel(QWidget):
         self.combo_code.activated[str].connect(self.on_activated_code)
 
         self.btn_tdx.clicked.connect(self.open_tdx)
-        self.btn_tdx_prev.clicked.connect(self.open_tdx)
-        self.btn_tdx_next.clicked.connect(self.open_tdx)
+        self.btn_tdx_prev.clicked.connect(self.switch_code)
+        self.btn_tdx_next.clicked.connect(self.switch_code)
 
         self.btn_load.clicked.connect(self.load)
         self.btn_delete.clicked.connect(self.delete_data_in_db)
@@ -265,8 +267,9 @@ class Panel(QWidget):
         self.qle_code.textChanged[str].connect(self.on_code_changed)
 
         self.btn_show_chart.clicked.connect(self.show_chart)
-        self.btn_show_chart_prev.clicked.connect(self.show_chart)
-        self.btn_show_chart_next.clicked.connect(self.show_chart)
+        self.btn_f10.clicked.connect(self.show_f10)
+        # self.btn_show_chart_prev.clicked.connect(self.show_chart)
+        # self.btn_show_chart_next.clicked.connect(self.show_chart)
 
         self.btn_monitor.clicked.connect(self.control_watch_dog)
         self.btn_update_quote.clicked.connect(self.update_quote)
@@ -307,14 +310,15 @@ class Panel(QWidget):
         grid.addWidget(self.combo_indictor, 2, 2)
 
         h_layout_show_chart = QHBoxLayout()
-        h_layout_show_chart.addWidget(self.btn_show_chart_prev)
+        # h_layout_show_chart.addWidget(self.btn_show_chart_prev)
+        h_layout_show_chart.addWidget(self.btn_tdx)
+        h_layout_show_chart.addWidget(self.btn_f10)
         h_layout_show_chart.addWidget(self.btn_show_chart)
-        h_layout_show_chart.addWidget(self.btn_show_chart_next)
+        # h_layout_show_chart.addWidget(self.btn_show_chart_next)
         grid.addLayout(h_layout_show_chart, 3, 3)
 
         h_layout_tdx = QHBoxLayout()
         h_layout_tdx.addWidget(self.btn_tdx_prev)
-        h_layout_tdx.addWidget(self.btn_tdx)
         h_layout_tdx.addWidget(self.btn_tdx_next)
         grid.addLayout(h_layout_tdx, 2, 3)
 
@@ -426,9 +430,9 @@ class Panel(QWidget):
 
     def get_forward(self):
         widget = self.sender()
-        if widget == self.btn_tdx_prev or widget == self.btn_show_chart_prev:
+        if widget == self.btn_tdx_prev:  # or widget == self.btn_show_chart_prev:
             return -1
-        elif widget == self.btn_tdx_next or widget == self.btn_show_chart_next:
+        elif widget == self.btn_tdx_next:  # or widget == self.btn_show_chart_next:
             return 1
         return 0
 
@@ -447,8 +451,8 @@ class Panel(QWidget):
         current_index = max(0, min(current_index, max_index))
         self.combo_code.setCurrentIndex(current_index)
 
-    def open_tdx(self, forword=None):
-        forward = forword if forword else self.get_forward()
+    def switch_code(self, forward):
+        forward = forward if forward else self.get_forward()
         self.set_current(forward)
 
         text = self.combo_code.currentText()
@@ -456,6 +460,7 @@ class Panel(QWidget):
 
         self.set_label()
 
+    def open_tdx(self):
         # pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
         # if pid < 0:
         #     app = pywinauto.Application(backend="uia").start('C:\\new_tdx\\TdxW.exe')
@@ -587,6 +592,12 @@ class Panel(QWidget):
         p.start()
         p.join(timeout=1)
         # open_graph(self.code, self.period)
+
+    def show_f10(self):
+        code = self.code
+        url = 'http://basic.10jqka.com.cn/' + code
+        cmd = ['/usr/bin/browser', '--tabs', url]
+        subprocess.Popen(cmd)
 
     def show_indicator(self):
         print('{} {}'.format(self.code, self.period))
@@ -758,7 +769,7 @@ if __name__ == '__main__':
     # ex = Main()
     # ex = Widget()
     ex = Panel()
-    # ex.location_on_the_screen()
+    ex.location_on_the_screen()
     print('width: {}\theight: {}'.format(ex.width(), ex.height()))
 
     rc = app.exec_()
