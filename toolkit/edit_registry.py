@@ -30,5 +30,5 @@ def modify_mysqld_exec_path():
 
 
 if __name__ == "__main__":
-    # add_to_registry()
-    modify_mysqld_exec_path()
+    add_to_registry()
+    # modify_mysqld_exec_path()

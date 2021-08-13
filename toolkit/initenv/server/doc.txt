@@ -1,0 +1,35 @@
+account server 选定 Windows 7 Starter 作为运行环境
+1 python 3.8.10 是目前支持 win7 最新的版本, python 3.9+ 不再支持 win7 系统
+2 安装 python 需要安装系统补丁 KB2533623
+3 win7 starter 系统自带的解压程序无法解压'同花顺下单.zip', 使用 7zip
+4 edit_registry.py 用于添加开机自动运行
+5 部署目录结构为
+  C:/server/security_account_server.py
+  C:/server/server/
+  C:/server/toolkit/edit_registry.py
+  C:/同花顺下单
+
+
+Windows 10
+主要问题
+1 磁盘占用率高, 经常100%, 可能原因, Defender 实时保护功能自动运行, 扫描磁盘, 安装杀毒软件(360安全卫士)后, 发现还是有程序在运行
+2 Cortana, 你的手机等程序和系统服务自动运行
+1 win10 要求的资源总是会多于 win7 的
+
+
+Windows XP
+https://www.lfd.uci.edu/~gohlke/pythonlibs/#pywin32
+
+pip No module named typing
+https://bootstrap.pypa.io/pip/3.4/get-pip.py
+https://bootstrap.pypa.io/get-pip.py -o get-pip.py   # 要求 python >= 3.6
+
+tonado == 5.1.1
+psutil == 3.4.2
+pywin32 == 224
+
+最终 pywinauto 还是报错了
+File "_ctypes/callproc.c", line 920, in GetResult
+OSError: [WinError -2147312566] 加载类型库/DLL 时出错
+
+总结, XP 系统和 python 3.4 都不被第三方库支持了
