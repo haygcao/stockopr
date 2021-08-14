@@ -571,15 +571,7 @@ class Panel(QWidget):
         self.indicator = text
         self.set_label()
 
-    def show_chart(self, forword=None):
-        forward = forword if forword else self.get_forward()
-        self.set_current(forward)
-
-        text = self.combo_code.currentText()
-        self.code = text.split()[0]
-
-        self.set_label()
-
+    def show_chart(self):
         if self.code == 'maq' or len(self.code) == 7:
             print('market index')
             indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
