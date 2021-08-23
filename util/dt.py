@@ -91,21 +91,25 @@ def istradeday(day=None):
 
 def get_trade_date():
     if not istradeday():
-        return get_pre_trade_date()
+        return get_pre_trade_date(prev=1)
 
     now = datetime.datetime.now()
     if now >= datetime.datetime(year=now.year, month=now.month, day=now.day, hour=9, minute=15):
         return now.date()
 
-    return get_pre_trade_date()
+    return get_pre_trade_date(prev=2)
 
 
-def get_pre_trade_date(date=None):
+def get_pre_trade_date(date=None, prev=2):
     date = date if date else datetime.date.today()
-    date = date - datetime.timedelta(days=1)
-
-    while not istradeday(date):
+    d = 0
+    while True:
+        if istradeday(date):
+            d += 1
+        if d == prev:
+            break
         date = date - datetime.timedelta(days=1)
+
     return date
 
 

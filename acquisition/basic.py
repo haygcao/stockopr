@@ -13,6 +13,7 @@ import pymysql
 import util.mysqlcli as mysqlcli
 import acquisition.quote_www as price
 import config.config as config
+from util.log import logger
 
 
 def upsert_candidate_pool(code_list, status, strategy, ignore_duplicate=True):
@@ -118,30 +119,63 @@ def save_stock_list_into_db(stock_list):
 
 # update old row
 # stock_list[(code, name), ...]
-def upsert_stock_list_into_db(stock_list):
+def upsert_stock_list_into_db(stock_list, ignore=True):
     with mysqlcli.get_cursor() as cursor:
+        # # not all arguments converted during string formatting
+        # sql_fmt = u"INSERT INTO basic_info (code, name) VALUES (%s, %s) ON DUPLICATE KEY update name = %s"
+        # sql = sql_fmt
+        # cursor.executemany(sql, [(code, name, name) for code, name in stock_list])
+        # return
+
+        # # too slow
+        # sql_fmt = u"INSERT INTO basic_info (code, name) VALUES ('{code}', '{name}') ON DUPLICATE KEY update name = '{name}'"
+        # for code, name in stock_list:
+        #     try:
+        #         sql = sql_fmt.format(code=code, name=name)
+        #         cursor.execute(sql, None)
+        #     except Exception as e:
+        #         print(e)  # (1062, "Duplicate entry '603999' for key 'PRIMARY'")
+
         # Create a new record
-        sql_fmt = u"INSERT INTO basic_info (code, name) VALUES ('{code}', '{name}') ON DUPLICATE KEY update name = '{name}'"
-        # sql_ins = "INSERT INTO basic_info (code, name) VALUES ('{}', '{}')"
-        # sql_sel = 'select name from basic_info where code = "{0}"'
-        # sql_upd = 'update basic_info set name = "{1}" where code = "{0}"'
-        for code, name in stock_list:
-            # sql = sql.format(code, name.decode('unicode-escape'))
-            try:
-                # sql = sql_sel.format(code)
-                # n = cursor.execute(sql, None)
-                # if n == 0:
-                #     sql = sql_ins.format(code, name)
-                #     cursor.execute(sql, None)
-                #     continue
-                # r = cursor.fetchone()
-                # if r['name'] == name:
-                #     continue
-                # sql = sql_upd.format(code, name)
-                sql = sql_fmt.format(code=code, name=name)
-                cursor.execute(sql, None)
-            except Exception as e:
-                print(e)  # (1062, "Duplicate entry '603999' for key 'PRIMARY'")
+        sql_ins = "INSERT INTO basic_info (code, name) VALUES (%s, %s)"
+        sql_sel = 'select code, name from basic_info'
+        sql_upd = 'update basic_info set name = (%s) where code = (%s)'
+
+        sql = sql_sel
+        cursor.execute(sql, None)
+        r = cursor.fetchall()
+        # existed_stock_list = [(row['code'], row['name']) for row in r]
+        existed_stock_map = {row['code']: row['name'] for row in r}
+        new_stock_list = []
+        update_stock_list = []
+        for t in stock_list:
+            code = t[0]
+            if code not in existed_stock_map:
+                new_stock_list.append(t)
+                continue
+
+            name = t[1]
+            if name != existed_stock_map[code]:
+                update_stock_list.append((t[1], t[0]))
+            break
+
+            # for t_ in existed_stock_list:
+            #     if t_[0] != t[0]:
+            #         continue
+            #     if t_[1] != t[1]:
+            #         update_stock_list.append((t[1], t[0]))
+            #     break
+            # else:
+            #     new_stock_list.append(t)
+
+        sql = sql_ins
+        cursor.executemany(sql, new_stock_list)
+        logger.info('[{}] new stock basic info:\n{}'.format(len(new_stock_list), new_stock_list))
+
+        sql = sql_upd
+        print(sql, update_stock_list)
+        cursor.executemany(sql, update_stock_list)
+        logger.info('[{}] update stock basic info:\n{}'.format(len(update_stock_list), update_stock_list))
 
 
 def get_selected_stock_code():

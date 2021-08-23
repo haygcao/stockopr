@@ -152,8 +152,12 @@ def compute_market_avg_quote(quote):
 
 
 def save_quote_xl(ignore=True):
+    t1 = datetime.datetime.now()
     same_day = True
     df_quote = tx.get_today_all()
+    t2 = datetime.datetime.now()
+    logger.info('fetch data cost: [{}]s'.format((t2 - t1).seconds))
+
     df_quote = df_quote[df_quote.volume > 0]
     # # define values
     # values = [value1, value2, value3, ...]
@@ -187,14 +191,14 @@ def save_quote_xl(ignore=True):
                     break
 
         if same_day:
-            print('not updated...')
+            logger.info('not updated...')
             return
 
         df_quote.loc[:, 'trade_date'] = df_quote.index
 
         tmp = df_quote['code'].duplicated()
         if tmp.any():
-            print('duplicated...')
+            logger.info('duplicated...')
             df_quote = df_quote[~df_quote['code'].duplicated(keep='first')]
 
         # df_basic = df_quote.loc[:, ['code', 'name']]
@@ -211,11 +215,18 @@ def save_quote_xl(ignore=True):
             if not ignore:
                 return
 
+        t3 = datetime.datetime.now()
         basic.upsert_stock_list_into_db(stock_list)
+        t4 = datetime.datetime.now()
+        logger.info('update basic cost: [{}]s'.format((t4 - t3).seconds))
 
         df_quote = compute_market_avg_quote(df_quote)
+
         # Do not insert the row number (index=False)
         df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
+        t5 = datetime.datetime.now()
+        logger.info('save quote cost: [{}]s'.format((t5 - t4).seconds))
+
         # df_quote.to_csv('2021-06-07.csv')
     except Exception as e:
         print(e)
@@ -276,14 +287,14 @@ def save_quote():
     t1 = datetime.datetime.now()
     save_quote_impl(xls)
     t2 = datetime.datetime.now()
-    logger.info('save quote cost [{}]'.format((t2 - t1).seconds, 2))
+    logger.info('save quote cost [{}]s'.format((t2 - t1).seconds))
 
     today = datetime.date.today()  # 2021/07/01
     today_datetime = datetime.datetime(today.year, today.month, today.day)
     quote_db.compute_market(today_datetime, today_datetime, include_end=True)
 
     t3 = datetime.datetime.now()
-    logger.info('calculate and save market cost [{}]'.format((t3 - t2).seconds, 2))
+    logger.info('calculate and save market cost [{}]s'.format((t3 - t2).seconds))
 
     save_market_index_trade_info()
     logger.info('save market index quote')

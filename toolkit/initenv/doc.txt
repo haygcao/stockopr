@@ -1,0 +1,9 @@
+初始化表结构 init_db.sql
+
+下载最新股票代码列表 tx.py
+
+初始化basic_info表，init_basic_info.py
+
+下载历史数据 wy_download_history.py
+
+历史数据入库 wy_save_history_multiprocess.py   -- 入库2010 年及以后的数据

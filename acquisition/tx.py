@@ -17,6 +17,8 @@ from config.config import period_map
 
 import logging
 
+from util import dt
+
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 # logging.Logger.manager.loggerDict
@@ -124,7 +126,7 @@ def get_today_all():
     #     df = df.ix[df.volume > 0]
     amplitude = round(100 * (df.high - df.low) / df.yest_close, 3)
     df = df.assign(amplitude=amplitude)
-    df = df.assign(date=datetime.date.today())
+    df = df.assign(date=dt.get_trade_date())
     df.set_index('date', inplace=True)
 
     return df
