@@ -63,7 +63,9 @@ def update_stock_index_info():
 
 def update_index_quote(start_date, end_date=None):
     index_code_list = []
-    with open(r"C:\new_tdx\T0002\hq_cache\tdxzs.cfg") as f:
+    tdx_home = config.tdx_home
+    tdx_index_path = os.path.join(tdx_home, "T0002/hq_cache/tdxzs.cfg")
+    with open(tdx_index_path) as f:
         for line in f:
             index_code_list.append(line.strip().split('|')[1])
 
@@ -73,7 +75,7 @@ def update_index_quote(start_date, end_date=None):
                                                                                   config.db_passwd))
         quote = pandas.DataFrame()
         for code in index_code_list:
-            path = 'C:/new_tdx/vipdoc/sh/lday/sh' + code + '.day'
+            path = os.path.join(tdx_home, 'vipdoc/sh/lday/sh' + code + '.day')
             if not os.path.exists(path):
                 logger.warning('{} not exists'.format(path))
                 continue

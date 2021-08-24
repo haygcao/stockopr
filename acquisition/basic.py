@@ -157,7 +157,6 @@ def upsert_stock_list_into_db(stock_list, ignore=True):
             name = t[1]
             if name != existed_stock_map[code]:
                 update_stock_list.append((t[1], t[0]))
-            break
 
             # for t_ in existed_stock_list:
             #     if t_[0] != t[0]:
@@ -168,14 +167,15 @@ def upsert_stock_list_into_db(stock_list, ignore=True):
             # else:
             #     new_stock_list.append(t)
 
-        sql = sql_ins
-        cursor.executemany(sql, new_stock_list)
-        logger.info('[{}] new stock basic info:\n{}'.format(len(new_stock_list), new_stock_list))
+        if new_stock_list:
+            sql = sql_ins
+            cursor.executemany(sql, new_stock_list)
+            logger.info('[{}] new stock basic info:\n{}'.format(len(new_stock_list), new_stock_list))
 
-        sql = sql_upd
-        print(sql, update_stock_list)
-        cursor.executemany(sql, update_stock_list)
-        logger.info('[{}] update stock basic info:\n{}'.format(len(update_stock_list), update_stock_list))
+        if update_stock_list:
+            sql = sql_upd
+            cursor.executemany(sql, update_stock_list)
+            logger.info('[{}] update stock basic info'.format(len(update_stock_list), update_stock_list))
 
 
 def get_selected_stock_code():

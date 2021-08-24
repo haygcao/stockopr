@@ -6,6 +6,7 @@
 股票代码 日期 信息类型 每10股派几元 配股价 每10股送几股 每10股配几股
 注:信息类型是1的为除权除息, 大于1的为股本变动, 都是4字节的 float
 """
+import os
 import struct
 from ctypes import *
 import pandas as pd
@@ -97,7 +98,7 @@ class GbbqReader(object):
 
 
 def save_equity():
-    df = GbbqReader().get_df(r"C:\new_tdx\T0002\hq_cache\gbbq")
+    df = GbbqReader().get_df(os.path.join(config.tdx_home, "T0002/hq_cache/gbbq"))
     with mysqlcli.get_cursor() as c:
         try:
             # today is 2021/06/30, max(date) is 2021/07/08(601015), 公告出了, 数据就有了, 故不能以本次数据的最晚日期与库中最晚日期比较

@@ -176,6 +176,9 @@ ChinaStockIndexList = [
     "000003",  # sh000003 B股指数
 ]
 
+# tdx_home = r"C:\new_tdx"
+tdx_home = "/home/shuhm/PlayOnLinux's virtual drives/tdx/drive_c/new_jyplug"
+
 accounts = {'tdx_zxs': {'pid': '', 'hwnd': '', 'hwnd_name': '', 'exe_path': ''},
             'ths_gjs': {'pid': '', 'hwnd': '', 'hwnd_name': '', 'exe_path': 'D:\\BIN\\全能行证券交易终端\\xiadan.exe'},
             'ths_gjl': {'pid': '', 'hwnd': '', 'hwnd_name': '', 'exe_path': 'D:\\BIN\\weituo\\国金证券\\xiadan.exe'},  #'D:\\BIN\\weituo\\国金证券\\xiadan.exe'},
