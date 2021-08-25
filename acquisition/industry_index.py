@@ -65,7 +65,7 @@ def update_index_quote(start_date, end_date=None):
     index_code_list = []
     tdx_home = config.tdx_home
     tdx_index_path = os.path.join(tdx_home, "T0002/hq_cache/tdxzs.cfg")
-    with open(tdx_index_path) as f:
+    with open(tdx_index_path, encoding='gbk') as f:
         for line in f:
             index_code_list.append(line.strip().split('|')[1])
 

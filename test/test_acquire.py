@@ -3,6 +3,7 @@ import os
 import unittest
 
 from acquisition import acquire, quote_db, quote_tdx
+from acquisition import industry_index
 from config import config
 from util import dt
 
@@ -47,6 +48,10 @@ class AcquireTestCase(unittest.TestCase):
         path = os.path.join(config.tdx_home, 'vipdoc/sz/lday/sz300502.day')
         quote = quote_tdx.parse_quote(path)
         print(quote)
+
+    def test_update_index_quote(self):
+        r = industry_index.update_index_quote(datetime.date.today())
+        print(r)
 
 def suite():
     suite = unittest.TestSuite()
