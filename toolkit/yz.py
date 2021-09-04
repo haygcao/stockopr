@@ -26,7 +26,7 @@ sum_yz = {}
 
 count = {}
 
-xlsx = 'icbc20130706-20210813.xls'
+xlsx = 'icbc20130706-20210831.xls'
 workbook = xlrd.open_workbook(xlsx)
 print("There are {} sheets in the workbook".format(workbook.nsheets))
 
@@ -47,6 +47,10 @@ end_date = dt.date(2019, 12, 9)   # -20213.94
 start_date = dt.date(2020, 3, 17)   # 资产 4.46
 end_date = dt.date(2021, 8, 13)   # 资产 632562.8
 zc = 632562.8 - 4.46
+
+start_date = dt.date(1986, 12, 12)
+end_date = dt.date(2021, 8, 31)   # 资产 632562.8
+zc = 243219.39 + 162781.03   # 信用净 + 普通总
 accounts = '中信证券'
 
 # 国金证券
@@ -63,11 +67,11 @@ accounts = '中信证券'
 # ===
 
 # 其他证券
-start_date = dt.date(1986, 12, 12)
-end_date = dt.date.today()
+# start_date = dt.date(1986, 12, 12)
+# end_date = dt.date.today()
 
-zc = 0
-accounts = '中信证券 国金证券'
+# zc = 0
+# accounts = '中信证券 国金证券'
 
 print('日期\t\t证银\t\t银证')
 for booksheet in workbook.sheets():
@@ -88,6 +92,7 @@ for booksheet in workbook.sheets():
 
         date = booksheet.cell(row, 0).value.strip()
         account = booksheet.cell(row, 12).value.strip()
+        account = account[:account.index('证券')+2]
         zy = booksheet.cell(row, 8).value.strip()
         yz = booksheet.cell(row, 9).value.strip()
         
