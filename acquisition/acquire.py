@@ -169,10 +169,10 @@ def save_quote_xl(ignore=True):
         # MySql connection in sqlAlchemy
         engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
         with engine.connect() as con:
-            trade_date = dt.get_pre_trade_date()
+            prev_trade_date = dt.get_pre_trade_date(dt.get_trade_date())
             data = []
             for i in range(10):
-                data.append({"code": df_quote.iloc[i]['code'], 'trade_date': trade_date})
+                data.append({"code": df_quote.iloc[i]['code'], 'trade_date': prev_trade_date})
 
             statement = text("""SELECT close, high, low, open FROM quote WHERE code = :code AND trade_date = :trade_date""")
 
@@ -191,7 +191,7 @@ def save_quote_xl(ignore=True):
                     break
 
         if same_day:
-            logger.info('not updated...')
+            logger.info('quote is same with prev trade date [{}], not updated...'.format(prev_trade_date))
             return
 
         df_quote.loc[:, 'trade_date'] = df_quote.index
