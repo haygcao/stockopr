@@ -12,19 +12,27 @@ from indicator.decorator import computed
 from util.macd import ma
 
 
-def vcp_one_day(quote, low_index, ema_l, ema_m, ema_s, back_day, var_ma='m50'):
-    ema_s = ema_s.loc[low_index:]
+def vcp_one_day(quote, high_index, low_index, ema_s, ema_v_s, back_day):
+    current = -1 - back_day
+    last_trade_date = quote.index[current]
+
+    ema_s = ema_s.loc[high_index: last_trade_date]
+    high_index = ema_s.index[0]
     ema_s_rshift = ema_s.shift(periods=1)
     ema_s_lshift = ema_s.shift(periods=-1)
 
-    low_list = [ema_s.iloc[0]]
-    high_list = []
+    low_list = []
+    low_index_list = []
+    high_list = [ema_s.iloc[0]]
+    high_index_list = [high_index]
     for i in range(1, len(ema_s) - 1):
         if ema_s.iloc[i] < ema_s_lshift.iloc[i] and ema_s.iloc[i] < ema_s_rshift.iloc[i]:
             low_list.append(ema_s.iloc[i])
+            low_index_list.append(ema_s.index[i])
             continue
         if ema_s.iloc[i] > ema_s_lshift.iloc[i] and ema_s.iloc[i] > ema_s_rshift.iloc[i]:
             high_list.append(ema_s.iloc[i])
+            high_index_list.append(ema_s.index[i])
             continue
 
     if len(low_list) < 2:
@@ -36,30 +44,43 @@ def vcp_one_day(quote, low_index, ema_l, ema_m, ema_s, back_day, var_ma='m50'):
         if l != list_sorted:
             return False
 
+    # 确保每一个低点的成交量小于其上一个高点的成交量一定比例, 即回调要缩量
+    r = [0.5, 0.7, 0.8]
+    for i in range(len(low_list)):
+        percent = r[i] if i < len(r) else 0.9
+        if ema_v_s.loc[low_index_list[i]] > ema_v_s.loc[high_index_list[i]] * percent:
+            return False
+
     series = pandas.Series(low_list)
     series_shift = series.shift(periods=1)
     percent = (series / series_shift - 1) * 100
     percent = percent.fillna(1)
     print('\n{}\n{}'.format(quote.code[-1], percent))
 
-    return (percent > 1).all()
+    # 确保底部在提升
+    return (percent.iloc[1:] > 1).all()
 
 
 @computed(column_name='vcp')
-def vcp(quote, period, back_days=125):
+def vcp(quote, period, back_days=10):
     # vcp 使用日数据
-    # ema_s = ma(quote['close'], n=5)['ma']
-    ema_s = quote.close.rolling(5).mean()
-    ema_m = ma(quote['close'], n=20)['ma']
-    ema_l = ma(quote['close'], n=50)['ma']
+    periods = [3, 5, 10, 20]
+    mas = {}
+    for p in periods:
+        mas.update({p: quote.close.rolling(p).mean()})
+
+    ema_v_s = quote.volume.rolling(5).mean()
 
     quote.insert(len(quote.columns), 'vcp', numpy.nan)
     for back_day in range(back_days, 0, -1):
-        low_index = blt.get_blt_low_index(quote, ema_l, ema_m, ema_s, back_day, var_ma='m50')
-        if not low_index:
+        index = blt.get_blt_high_low_index(quote, mas, back_day, var_ma='m50')
+        if not index:
             continue
 
-        if vcp_one_day(quote, low_index, ema_l, ema_m, ema_s, back_day, var_ma='m50'):
+        high_index, low_index = index
+
+        # MA周期越大, 变化越慢, 越平滑, 寻找阶段高低点(水平切线)时, MA周期考虑小一些, 这样变化更敏感一些
+        if vcp_one_day(quote, high_index, low_index, mas[3], ema_v_s, back_day):
             current = -1 - back_day
             quote.vcp.iat[current] = quote.low.iloc[current]
     return quote

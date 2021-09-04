@@ -13,7 +13,7 @@ from util import dt
 
 class SelectorPluginTestCase(unittest.TestCase):
     def setUp(self):
-        self.code = '000065'
+        self.code = '600331'  # vcp
         self.period = 'day'
         count = 1000
         self.quote = quote_db.get_price_info_df_db(self.code, days=count, period_type='D')
@@ -34,11 +34,11 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(ret)
 
     def test_blt(self):
-        ret = blt(self.quote)
+        ret = blt(self.quote, self.period)
         print(ret)
 
     def test_vcp(self):
-        ret = vcp(self.quote)
+        ret = vcp(self.quote, self.period)
         print(ret)
 
     def test_update_candidate_pool(self):

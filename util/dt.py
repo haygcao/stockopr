@@ -86,6 +86,7 @@ def istradeday(day=None):
 
     if isweedend(day) or isholiday(day):
         return False
+
     return True
 
 
