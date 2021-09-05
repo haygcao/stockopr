@@ -70,16 +70,20 @@ def get_high_low_index(quote, emas, vol_ma, back_day, var_ma, first_high='vcp'):
     if first_high == 'vcp':
         # 确定第一个与最后两个high的avg约等的high
         last_high_index = high_low_len - 1 if high_low[-1] > high_low[-2] else high_low_len - 2
-        begin = 0 if high_low[0] > high_low[1] else 1
+        if not util.almost_equal(high_low[last_high_index], high_low[last_high_index - 2], 3):
+            return
+
         avg_high = (high_low[last_high_index] + high_low[last_high_index - 2]) / 2
         max_high = high_low.max()
         if (max_high/avg_high - 1) * 100 > 3:
             return
 
-        for index in range(begin, high_low_len, 2):
+        for index in range(last_high_index - 2, -1, -2):
             if util.almost_equal(high_low[index], avg_high, 3):
-                first_high_index = index
-                break
+                days_ = (last_trade_date - high_low.index[index]).days
+                if days_ >= 15:   # 3周
+                    first_high_index = index
+                    break
     elif first_high == 'blt':
         # 确定第一个跌幅超过x%的high
         high = high_low[0]
@@ -105,7 +109,7 @@ def get_high_low_index(quote, emas, vol_ma, back_day, var_ma, first_high='vcp'):
     high_index = numpy.where(close_series == close_high)[0][0]
     high_date = close_series.index[high_index]
 
-    days = len(close_series) - high_index + len(quote.loc[close_series.index[-1]: quote.index[current + 1]])
+    days = len(close_series) - high_index + len(quote.loc[close_series.index[-1]: quote.index[current + 1]]) - 1
 
     # close_series = quote.close.iloc[current - days + 1: current + 1]
     close_series = emas[2].iloc[current - days + 1: current + 1]

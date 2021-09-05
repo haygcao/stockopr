@@ -171,12 +171,12 @@ def update_candidate_pool(strategy_list, period='day'):
 def select(strategy_name_list, candidate_list=None, period='day'):
     begin = datetime.datetime.now()
 
-    candidate_list = candidate_list if candidate_list else ['super']
-    if config.update_candidate_pool:
-        update_candidate_pool(candidate_list)
-
-    code_list = basic.get_candidate_stock_code(candidate_list)
-    # code_list = basic.get_all_stock_code()
+    if candidate_list:
+        if config.update_candidate_pool:
+            update_candidate_pool(candidate_list)
+        code_list = basic.get_candidate_stock_code(candidate_list)
+    else:
+        code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
     # 科创板
     # code_list = [code for code in code_list if int(code[:2]) <= 60]

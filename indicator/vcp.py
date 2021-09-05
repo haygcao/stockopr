@@ -19,6 +19,10 @@ def vcp_one_day(quote, high_index, low_index, ema_s, ema_v_s, back_day):
     last_trade_date = quote.index[current]
 
     ema_s = ema_s.loc[high_index: last_trade_date]
+    if ema_s.empty:
+        print(quote.code[-1], high_index, low_index)
+        return False
+
     high_index = ema_s.index[0]
     ema_s_rshift = ema_s.shift(periods=1)
     ema_s_lshift = ema_s.shift(periods=-1)

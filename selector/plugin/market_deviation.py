@@ -29,16 +29,20 @@ def check_long_period_dynamical_system(quote):
 
 
 def market_deviation(quote, period):
-    period = 'day'
     column_list = ['force_index_bull_market_deviation_signal_enter', 'macd_bull_market_deviation_signal_enter']
     column_list = ['macd_bull_market_deviation_signal_enter']
 
     days = 3 if period == 'day' else 2
-    if period == 'week' and datetime.datetime.today().weekday() < 4:
-        days += 1
+    if period == 'week':
+        quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+        if datetime.datetime.today().weekday() < 4:
+            days += 1
     for column in column_list:
         quote = signal_market_deviation.signal_enter(quote, period=period, column=column[:column.index('_signal')])
         deviation = quote[column][-days:]
-        if numpy.any(deviation) and check_long_period_dynamical_system(quote):
-            return True
+        if numpy.any(deviation):
+            if period == 'week':
+                return True
+            if check_long_period_dynamical_system(quote):
+                return True
     return False
