@@ -108,7 +108,7 @@ def _select(strategy_name, period, code):
     return ret
 
 
-def select_one_strategy(code_list, strategy_name, period):
+def select_one_strategy(code_list, strategy_name, period, mp=True):
     """
     https://docs.python.org/3/library/multiprocessing.html
     This means that if you try joining that process you may get a deadlock
@@ -119,16 +119,23 @@ def select_one_strategy(code_list, strategy_name, period):
     Note that a queue created using a manager does not have this issue.
     """
 
-    logger.info('{} [{}] to check {}...'.format(datetime.datetime.now(), len(code_list), strategy_name))
+    logger.info('[{}] to check {}...'.format(len(code_list), strategy_name))
 
     select_func = functools.partial(_select, strategy_name, period)
+
+    r = []
+    if not mp:
+        for code in code_list:
+            if not select_func(code):
+                continue
+            r.append(code)
+        return r
 
     nproc = multiprocessing.cpu_count()
     with multiprocessing.Pool(nproc) as p:
         # r = p.map(select_func, [code for code in code_list])
         # code_list = [code for code in r if code]
 
-        r = []
         # for i, _ in enumerate(p.imap_unordered(select_func, [code for code in code_list]), 1):
         #     r.append(_)
         #     if i % 100 == 0:
@@ -139,7 +146,7 @@ def select_one_strategy(code_list, strategy_name, period):
 
         code_list = [code for code in r if code]
 
-    logger.info('{} {}: {}'.format(datetime.datetime.now(), strategy_name, len(code_list)))
+    logger.info('{}: {}'.format(strategy_name, len(code_list)))
 
     return code_list
 
@@ -149,10 +156,10 @@ def update_candidate_pool(strategy_list, period='day'):
     msg = ''
     for strategy in strategy_list:
         code_list = basic.get_all_stock_code()
-        # code_list = ['000065']
-        code_list = select_one_strategy(code_list, strategy, period)
+        # code_list = ['600331']
+        code_list = select_one_strategy(code_list, strategy, period, mp=True)
         # 科创板
-        code_list = [code for code in code_list if not code.startswith('688')]
+        # code_list = [code for code in code_list if not code.startswith('688')]
         msg += '{}: {}\n'.format(strategy, len(code_list))
         basic.upsert_candidate_pool(code_list, 'candidate', strategy, ignore_duplicate=False)
 
@@ -164,15 +171,16 @@ def update_candidate_pool(strategy_list, period='day'):
 def select(strategy_name_list, candidate_list=None, period='day'):
     begin = datetime.datetime.now()
 
-    candidate_list = candidate_list if not candidate_list else ['super']
+    candidate_list = candidate_list if candidate_list else ['super']
     if config.update_candidate_pool:
         update_candidate_pool(candidate_list)
 
     code_list = basic.get_candidate_stock_code(candidate_list)
     # code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
-    code_list = [code for code in code_list if int(code[:2]) <= 60]
-    # code_list = ['300479']
+    # 科创板
+    # code_list = [code for code in code_list if int(code[:2]) <= 60]
+    # code_list = ['600331']
 
     strategy_name_list = config.get_scan_strategy_name_list() if not strategy_name_list else strategy_name_list
     for strategy_name in strategy_name_list:

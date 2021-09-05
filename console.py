@@ -659,6 +659,7 @@ class Panel(QWidget):
         traced_list = [s.text() for s in self.combo_traced.get_selected()]
         print(candidate_list, traced_list, strategy_name_list)
         candidate_list.extend(traced_list)
+        print(candidate_list, strategy_name_list)
         p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, candidate_list, self.period))
         p.start()
 

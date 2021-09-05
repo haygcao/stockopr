@@ -24,11 +24,12 @@ def signal_enter(quote, period=None):
 
     quote_copy.insert(len(quote_copy.columns), 'vcp_signal_enter', quote_copy.vcp)
 
+    # VCP 属于上涨后缩量调整, 实现筹码由弱方到强方的过程
     # 利用 dmi 过滤掉振荡走势中的信号
-    mask1 = quote_copy['adx'] < quote_copy['pdi']
-    mask2 = quote_copy['pdi'] < quote_copy['mdi']
-    mask3 = quote_copy['adx'] < 50
-    mask = mask1 | mask2 | mask3
-    quote_copy['vcp_signal_enter'] = quote_copy['vcp_signal_enter'].mask(mask, numpy.nan)
+    # mask1 = quote_copy['adx'] < quote_copy['pdi']
+    # mask2 = quote_copy['pdi'] < quote_copy['mdi']
+    # mask3 = quote_copy['adx'] < 50
+    # mask = mask1 | mask2   # | mask3
+    # quote_copy['vcp_signal_enter'] = quote_copy['vcp_signal_enter'].mask(mask, numpy.nan)
 
     return quote_copy

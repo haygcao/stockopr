@@ -13,7 +13,7 @@ from util import dt
 
 class SelectorPluginTestCase(unittest.TestCase):
     def setUp(self):
-        self.code = '600331'  # vcp
+        self.code = '300550'  # vcp
         self.period = 'day'
         count = 1000
         self.quote = quote_db.get_price_info_df_db(self.code, days=count, period_type='D')
@@ -22,15 +22,15 @@ class SelectorPluginTestCase(unittest.TestCase):
         pass
 
     def test_second_stage(self):
-        ret = second_stage(self.quote)
+        ret = second_stage(self.quote, self.period)
         print(ret)
 
     def test_super(self):
-        ret = super(self.quote)
+        ret = super(self.quote, self.period)
         print(ret)
 
     def test_strong_breakout(self):
-        ret = base_breakout(self.quote)
+        ret = base_breakout(self.quote, self.period)
         print(ret)
 
     def test_blt(self):
@@ -42,14 +42,15 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(ret)
 
     def test_update_candidate_pool(self):
-        selector.update_candidate_pool(['super'], 'day')
+        strategy_list = ['second_stage']   # super
+        selector.update_candidate_pool(strategy_list, 'day')
 
     def test_get_candidate_pool(self):
         code_list = basic.get_candidate_stock_code(['second_stage'])
         print(code_list)
 
     def test_select(self):
-        code_list = selector.select(['ema_value'], None, ['super'])
+        code_list = selector.select(['vcp'], ['second_stage'])
         print(code_list)
 
 
