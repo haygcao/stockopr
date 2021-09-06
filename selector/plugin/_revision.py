@@ -8,7 +8,7 @@ from util import util
 
 
 # 回调到ma30支撑点
-def ht_ma(quote, maN=config.HT_MA_N, almost=config.ALMOST_EQUAL, range=config.HT_RANGE):
+def revision_ma(quote, maN=config.HT_MA_N, almost=config.ALMOST_EQUAL, range=config.HT_RANGE):
     ma_arr = util.gen_ma(quote)
     r = 100*(ma_arr[0]['ma'][-1] - ma_arr[-1]['ma'][-1])/ma_arr[-1]['ma'][-1]
     if r < range:

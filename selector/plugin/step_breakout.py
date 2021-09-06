@@ -2,7 +2,7 @@
 
 from acquisition import quote_db
 import config.config as config
-from selector.plugin._dt import dt_ma_one_day
+from selector.plugin.bull import bull_ma_one_day
 from selector.plugin.step import step_ma
 
 
@@ -38,7 +38,7 @@ def step_breakout(quote, period, periods=None, almost=1, back_days=20):
 
     for back_day in range(back_day, back_day - 5, -1):
         # ma30, ma60 向上
-        if not dt_ma_one_day(quote, mas, 3, back_day):
+        if not bull_ma_one_day(quote, mas, 3, back_day):
             continue
         if breakout_ma_one_day(quote, mas, back_day):
             break

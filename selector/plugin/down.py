@@ -1,13 +1,14 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import pandas
 import config.config as config
 import util.util as util
 import util.dt   as util_dt
 
+
 # n天跌幅
 # 10天跌15%, ma60向上
-def d(quote, period, percent_exp=config.D_PERCENT_EXP, nday=config.D_NDAY):
+def down(quote, period, percent_exp=config.D_PERCENT_EXP, nday=config.D_NDAY):
     quote = quote[-1*nday:]
     if len(quote) < nday:
         return False
@@ -49,5 +50,6 @@ def d(quote, period, percent_exp=config.D_PERCENT_EXP, nday=config.D_NDAY):
 
     return True
 
-def dd(quote):
-    return d(quote, 50, config.DD_MIN)
+
+def down_p(quote):
+    return down(quote, 50, config.DD_MIN)

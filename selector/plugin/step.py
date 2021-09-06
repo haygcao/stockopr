@@ -32,7 +32,8 @@ def step_ma(quote, mas, almost, back_days):
     for back_day in range(back_days):
         current = -back_day - 1
         up_percent = (slowest_ma[current] / slowest_ma[current - slowest_period] - 1) * 100
-        if up_percent < slowest_period//10 * 5:
+        if up_percent < slowest_period//10 * 2:
+            # print(quote.code[-1], slowest_period, up_percent)
             continue
 
         if not util.almost_equal(mid_ma[current], mid_ma[current - mid_period], 3):

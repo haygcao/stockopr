@@ -3,15 +3,15 @@
 import config.config as config
 import selector.util as util
 
-from selector.plugin._ht import ht_ma
-from selector.plugin._dt import dt_ma
-from selector.plugin.hp  import hp_ma
+from selector.plugin._revision import revision_ma
+from selector.plugin.bull import bull_ma
+from selector.plugin.step import step_ma
 from util import util
 
 
 def second_wave(quote, period):
     # 20天前, 还在整理
-    if not hp_ma(quote, 30, 30, almost=1):
+    if not step_ma(quote, 30, 30, almost=1):
         return False
 
     # if not hp_boll(quote):
@@ -21,12 +21,12 @@ def second_wave(quote, period):
     #     return False
 
     # ma30, ma60 向上
-    if not dt_ma(quote, last_n_maN=2):
+    if not bull_ma(quote, last_n_maN=2):
         return False
 
     # print(quote['code'][-1])
 
-    if not ht_ma(quote, almost=2):
+    if not revision_ma(quote, almost=2):
         return False
 
     return True
@@ -35,7 +35,7 @@ def second_wave(quote, period):
 # ma5 == ma20
 # ma5 - ma60 > 5%
 def second_wave2(quote, begin=config.SECOND_DAY, last_n_maN=config.SECOND_LAST_N_MA):
-    if not hp_ma(quote, 30, 20, almost=1):
+    if not step_ma(quote, 30, 20, almost=1):
         return False
 
     ma_arr_all = util.gen_ma(quote)

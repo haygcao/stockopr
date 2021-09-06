@@ -18,16 +18,16 @@ import selector.plugin.step as step
 import selector.plugin.second_wave as second_wave
 import selector.plugin.step_breakout as step_breakout
 
-import selector.plugin.z as z
-import selector.plugin.d as d
-import selector.plugin.qd as qd
+import selector.plugin.up as up
+import selector.plugin.down as down
+import selector.plugin.strong_variability as strong_variability
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
     base_breakout, blt, vcp, strong_base, amplitude, value_return
 from selector.plugin import ema_value
 from selector.plugin import dynamical_system
 from selector.plugin import force_index
-from util import dt, qt_util
+from util import qt_util
 
 from . import selected
 
@@ -40,11 +40,11 @@ selector = {
     '2nd': second_wave.second_wave,
     '2nd2': second_wave.second_wave2,
     'step_breakout': step_breakout.step_breakout,
-    'qd': qd.qd,
-    'z': z.z,
-    'dz': z.dz,
-    'd': d.d,
-    'dd': d.dd,
+    'qd': strong_variability.strong_variability,
+    'up': up.up,
+    'up_p': up.up_p,
+    'down': down.down,
+    'down_p': down.down_p,
     'amplitude': amplitude.amplitude,
     'bull_deviation': market_deviation.market_deviation,   # 牛市背离
     'ema_value': ema_value.ema_value,   # 价值回归

@@ -6,7 +6,7 @@ import selector.util as util
 from selector.plugin.amplitude import amplitude
 
 
-def qd(quote, period):
+def strong_variability(quote, period):
     nday = config.QD_NDAY
     df_quote = quote[len(quote)-nday:]['close']  # Series
     index_min = df_quote.argmin()

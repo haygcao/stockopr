@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import pandas
 
@@ -11,7 +11,7 @@ Z_NDAY = 5
 
 
 # n天涨幅
-def z(quote, period, percent_exp=config.Z_PERCENT_EXP, nday=Z_NDAY):
+def up(quote, period, percent_exp=config.Z_PERCENT_EXP, nday=Z_NDAY):
     quote = quote[-1*nday:]
     # quote = price.get_price_info_df_db(code, nday)
     if len(quote) < nday:
@@ -41,5 +41,6 @@ def z(quote, period, percent_exp=config.Z_PERCENT_EXP, nday=Z_NDAY):
 
     return True
 
-def dz(quote):
-    return z(quote, 100, config.DZ_MIN)
+
+def up_p(quote):
+    return up(quote, 100, config.DZ_MIN)
