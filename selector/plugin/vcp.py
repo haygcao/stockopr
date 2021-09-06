@@ -5,10 +5,14 @@
 """
 import numpy
 
+from acquisition import quote_db
 from pointor import signal_vcp
 
 
 def vcp(quote, period, back_days=60):
+    if period == 'week':
+        quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+
     quote = signal_vcp.signal_enter(quote, period='day')
     column_list = ['vcp_signal_enter']
 
