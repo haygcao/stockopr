@@ -18,14 +18,12 @@ def step_ma_one_day(quote, mas, almost, back_day):
 
 # boll 曲线中线也许更好一些
 # r 表示取前n个ma
-def step_ma(quote, periods, almost, back_days):
+def step_ma(quote, mas, almost, back_days):
     """检查交易日begin-duration到交易日begin期间,
     每一天的一组MA值的最大差值是否约等
     """
-
-    mas = {}
-    for p in periods:
-        mas.update({p: quote.close.rolling(p).mean()})
+    periods = list(mas.keys())
+    periods.sort()
 
     slowest_period = periods[-1]
     slowest_ma = mas[slowest_period]
@@ -42,8 +40,8 @@ def step_ma(quote, periods, almost, back_days):
 
         if step_ma_one_day(quote, mas, almost, back_day):
             # print('{0}\t{1}\t{2}'.format(l, m, (m-l)*100/l))
-            return True
-    return False
+            return back_day
+    return
 
 
 def step_boll(quote, b=config.STEP_BOLL_BACK, d=config.STEP_BOLL_DURATION):
@@ -71,7 +69,11 @@ def step(quote, period, periods=None, almost=1, back_days=20):
         quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
     if periods is None:
         periods = [5, 10, 20, 30]
-    if not step_ma(quote, periods, almost, back_days):
+
+    mas = {}
+    for p in periods:
+        mas.update({p: quote.close.rolling(p).mean()})
+    if not step_ma(quote, mas, almost, back_days):
         return False
 
     return True

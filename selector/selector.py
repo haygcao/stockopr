@@ -16,7 +16,7 @@ import acquisition.quote_db as quote_db
 
 import selector.plugin.step as step
 import selector.plugin.second_wave as second_wave
-import selector.plugin.tp as tp
+import selector.plugin.step_breakout as step_breakout
 
 import selector.plugin.z as z
 import selector.plugin.d as d
@@ -39,7 +39,7 @@ selector = {
     'step_p': step.step_p,
     '2nd': second_wave.second_wave,
     '2nd2': second_wave.second_wave2,
-    'tp': tp.tp,
+    'step_breakout': step_breakout.step_breakout,
     'qd': qd.qd,
     'z': z.z,
     'dz': z.dz,
