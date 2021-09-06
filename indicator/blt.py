@@ -70,6 +70,7 @@ def get_high_low_index(quote, emas, vol_ma, back_day, var_ma, first_high='vcp'):
     if first_high == 'vcp':
         # 确定第一个与最后两个high的avg约等的high
         last_high_index = high_low_len - 1 if high_low[-1] > high_low[-2] else high_low_len - 2
+
         if not util.almost_equal(high_low[last_high_index], high_low[last_high_index - 2], 3):
             return
 
@@ -81,7 +82,7 @@ def get_high_low_index(quote, emas, vol_ma, back_day, var_ma, first_high='vcp'):
         for index in range(last_high_index - 2, -1, -2):
             if util.almost_equal(high_low[index], avg_high, 3):
                 days_ = (last_trade_date - high_low.index[index]).days
-                if days_ >= 15:   # 3周
+                if days_ >= 10:   # 2周
                     first_high_index = index
                     break
     elif first_high == 'blt':

@@ -50,7 +50,8 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(code_list)
 
     def test_select(self):
-        code_list = selector.select(['vcp'], ['second_stage'])
+        # code_list = selector.select(['vcp'], ['second_stage'])
+        code_list = selector.select(['step'], [], period='week')
         print(code_list)
 
 

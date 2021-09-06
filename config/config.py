@@ -212,7 +212,7 @@ DD_MIN = 120 if T == 'D' else 25
 
 ALMOST_EQUAL = 1
 MA_NUM = 5
-MAS = [5, 10, 20, 30, 60]
+MAS = [5, 10, 20, 30, 60, 120, 250]
 
 # 多头
 DT_DAY = 1
@@ -237,12 +237,12 @@ DZ_PERCENT_LIMIT = 11 if T == 'D' else 61
 DD_PERCENT_LIMIT = 11 if T == 'D' else 41
 
 # 横盘
-HP_BOLL_BACK = 20 if T == 'D' else 4
-HP_BOLL_DURATION = 60 if T == 'D' else 12
+STEP_BOLL_BACK = 20 if T == 'D' else 4
+STEP_BOLL_DURATION = 60 if T == 'D' else 12
 
-HP_DAY = 1
-HP_DURATION = -1
-HP_FIRST_N_MA = 5
+STEP_DAY = 1
+STEP_DURATION = -1
+STEP_FIRST_N_MA = 5
 
 
 SECOND_DAY = 1

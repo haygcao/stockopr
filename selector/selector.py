@@ -14,7 +14,7 @@ from selector import util
 import acquisition.basic as basic
 import acquisition.quote_db as quote_db
 
-import selector.plugin.hp as hp
+import selector.plugin.step as step
 import selector.plugin.second_wave as second_wave
 import selector.plugin.tp as tp
 
@@ -35,10 +35,8 @@ from . import selected
 from util.log import logger
 
 selector = {
-    'hp': hp.hp,
-    'hp_p': hp.hp_p,
-    'hp_pp': hp.hp_pp,
-    'hp_ppp': hp.hp_ppp,
+    'step': step.step,
+    'step_p': step.step_p,
     '2nd': second_wave.second_wave,
     '2nd2': second_wave.second_wave2,
     'tp': tp.tp,
