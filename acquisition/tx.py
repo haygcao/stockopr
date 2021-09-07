@@ -89,7 +89,7 @@ def _parsing_dayprice_json(types=None, page=1):
     # text = text.replace('{symbol', '{"symbol"')
     # jstr = json.dumps(text)
 
-    df = pandas.read_json(text, orient='records', dtype={'code': object})
+    df = pandas.read_json(text, orient='records', dtype={'code': str})
 
     return df
 

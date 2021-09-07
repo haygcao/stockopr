@@ -3,8 +3,11 @@
 import datetime
 import multiprocessing
 import functools
+import os
+import pathlib
 import sys
 
+import pandas
 import tqdm
 
 from acquisition import tx
@@ -27,7 +30,8 @@ from selector.plugin import market_deviation, super, bull_at_bottom, second_stag
 from selector.plugin import ema_value
 from selector.plugin import dynamical_system
 from selector.plugin import force_index
-from util import qt_util
+from util import qt_util, dt
+from util import util as util_util
 
 from . import selected
 
@@ -81,20 +85,43 @@ def is_match(df, strategy_name, period):
     return False
 
 
-def _select(strategy_name, period, code):
+def dump(data, file):
+    # file = gen_cache_path(data.code[-1], datetime.date.today(), period)
+    if os.path.exists(file):
+        os.remove(file)
+
+    if 'date' not in data.columns:
+        data.insert(len(data.columns), 'date', data.index)
+
+    data.to_csv(file)
+
+
+def load(file):
+    # file = gen_cache_path(code, datetime.date.today(), period)
+    data = pandas.read_csv(file, dtype={'code': str})
+
+    data['date'] = pandas.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S')
+    # data['code'] = str(data['code'])
+    # 将日期列作为行索引
+    data.set_index(['date'], inplace=True)
+    # data.sort_index(ascending=True, inplace=True)
+
+    return data
+
+
+def _select(strategy_name, period, code_day_quote):
     import util.mysqlcli as mysqlcli
     # _conn = mysqlcli.get_connection()
 
-    # 无法频繁获取数据
-    # if dt.istradetime():
-    #     df = tx.get_kline_data(code, 'day')
-    # else:
-    #     df = quote_db.get_price_info_df_db(code, days=1000, period_type='D')
-
+    code, day_quote = code_day_quote
     df = quote_db.get_price_info_df_db(code, days=1000, period_type='D')
     if df.empty:
         logger.info(code, 'no quote')
         return
+
+    # 无法频繁获取数据
+    if day_quote is not None:
+        df = df.append(day_quote)
 
     ret = None
     if is_match(df, strategy_name, period):
@@ -119,12 +146,35 @@ def select_one_strategy(code_list, strategy_name, period, mp=True):
 
     logger.info('[{}] to check {}...'.format(len(code_list), strategy_name))
 
+    day_quote = None
+    if dt.istradetime():
+        cache_dir = util_util.get_cache_dir()
+        cache = os.path.join(cache_dir, 'day_quote_{}.csv'.format(datetime.datetime.now().strftime('%Y%m%d')))
+        has_cache = False
+        if os.path.exists(cache):
+            fname = pathlib.Path(cache)
+            if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 5 * 60:
+                os.remove(cache)
+            else:
+                has_cache = True
+
+        if has_cache:
+            day_quote = load(cache)
+        else:
+            day_quote = tx.get_today_all()
+            dump(day_quote, cache)
+
+        df_ = quote_db.get_price_info_df_db('000001', days=1, period_type='D')
+        for column in day_quote.columns:
+            if column not in df_.columns:
+                day_quote = day_quote.drop([column], axis=1)
+
     select_func = functools.partial(_select, strategy_name, period)
 
     r = []
     if not mp:
         for code in code_list:
-            if not select_func(code):
+            if not select_func((code, None if day_quote is None else day_quote.loc[day_quote.code == code])):
                 continue
             r.append(code)
         return r
@@ -138,7 +188,8 @@ def select_one_strategy(code_list, strategy_name, period, mp=True):
         #     r.append(_)
         #     if i % 100 == 0:
         #         sys.stderr.write('\rdone {0:%}'.format(i/len(code_list)))
-        for _ in tqdm.tqdm(p.imap_unordered(select_func, [code for code in code_list]),
+        arg = [(code, None if day_quote is None else day_quote.loc[day_quote.code == code]) for code in code_list]
+        for _ in tqdm.tqdm(p.imap_unordered(select_func, arg),
                            total=len(code_list), ncols=64):
             r.append(_)
 
@@ -182,7 +233,7 @@ def select(strategy_name_list, candidate_list=None, period='day'):
 
     strategy_name_list = config.get_scan_strategy_name_list() if not strategy_name_list else strategy_name_list
     for strategy_name in strategy_name_list:
-        code_list = select_one_strategy(code_list, strategy_name, period)
+        code_list = select_one_strategy(code_list, strategy_name, period, mp=True)
         # for code in code_list:
         #     selected.add_selected(code, strategy_name)
         basic.upsert_candidate_pool(code_list, strategy_map.get(strategy_name, 'allow_buy'), strategy_name)

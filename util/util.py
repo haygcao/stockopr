@@ -80,6 +80,14 @@ def get_root_dir():
     return os.path.abspath(root_dir)
 
 
+def get_cache_dir():
+    root_dir = get_root_dir()
+    dir_name = os.path.join(root_dir, 'data', 'cache')  # , file)
+    if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
+    return dir_name
+
+
 def run_subprocess(script):
     # root_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
     root_dir = get_root_dir()

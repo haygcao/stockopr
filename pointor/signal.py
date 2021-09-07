@@ -53,10 +53,7 @@ signal_func = {
 
 def gen_cache_path(code, date, period):
     file = '{}-{}-{}.csv'.format(code, date.strftime('%Y%m%d'), period)
-    root_dir = util.get_root_dir()
-    dir_name = os.path.join(root_dir, 'data', 'cache')  # , file)
-    if not os.path.exists(dir_name):
-        os.mkdir(dir_name)
+    dir_name = util.get_cache_dir()
 
     return os.path.join(dir_name, file)
 

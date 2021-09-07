@@ -122,8 +122,8 @@ def istradetime():
     if now < start_time_am or now > end_time_pm:
         return False
 
-    if start_time_am + 2 * 3600 < now < end_time_pm - 2 * 3600:
-        return False
+    # if start_time_am + 2 * 3600 < now < end_time_pm - 2 * 3600:
+    #     return False
 
     return True
 
