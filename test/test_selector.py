@@ -51,8 +51,9 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_select(self):
         # code_list = selector.select(['vcp'], ['second_stage'])
-        # code_list = selector.select(['step'], [], period='week')
-        code_list = selector.select(['step_breakout'], [], period='week')
+        code_list = selector.select(['step'], ['second_stage'], period='day')
+        # code_list = selector.select(['step'], ['dyn_sys_green'], period='day')
+        # code_list = selector.select(['step_breakout'], ['second_stage'], period='week')
         print(code_list)
 
 

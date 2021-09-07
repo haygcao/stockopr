@@ -7,8 +7,8 @@ from util import util
 from util.macd import bbands
 
 
-def step_ma_one_day(quote, mas, almost, back_day):
-    one_day_ma_val_list = [v[-back_day - 1] for k, v in mas.items()]
+def step_ma_one_day(quote, mas, slowest_period, almost, back_day):
+    one_day_ma_val_list = [v[-back_day - 1] for k, v in mas.items() if k <= slowest_period]
     l = min(one_day_ma_val_list)
     m = max(one_day_ma_val_list)
     if util.almost_equal(l, m, almost):
@@ -18,30 +18,33 @@ def step_ma_one_day(quote, mas, almost, back_day):
 
 # boll 曲线中线也许更好一些
 # r 表示取前n个ma
-def step_ma(quote, mas, almost, back_days):
+def step_ma(quote, mas, almost, back_days, const_slowest_period=None):
     """检查交易日begin-duration到交易日begin期间,
     每一天的一组MA值的最大差值是否约等
     """
     periods = list(mas.keys())
     periods.sort()
 
-    slowest_period = periods[-1]
-    slowest_ma = mas[slowest_period]
-    mid_period = periods[len(periods)//2]
-    mid_ma = mas[mid_period]
-    for back_day in range(back_days):
-        current = -back_day - 1
-        up_percent = (slowest_ma[current] / slowest_ma[current - slowest_period] - 1) * 100
-        if up_percent < slowest_period//10 * 2:
-            # print(quote.code[-1], slowest_period, up_percent)
+    for max_index in range(2, len(periods)):
+        if const_slowest_period and max_index != const_slowest_period:
             continue
+        slowest_period = periods[max_index]
+        slowest_ma = mas[slowest_period]
+        mid_period = periods[max_index//2]
+        mid_ma = mas[mid_period]
+        for back_day in range(back_days):
+            current = -back_day - 1
+            up_percent = (slowest_ma[current] / slowest_ma[current - slowest_period] - 1) * 100
+            if up_percent < slowest_period//10 * 1:
+                # print(quote.code[-1], slowest_period, up_percent)
+                continue
 
-        if not util.almost_equal(mid_ma[current], mid_ma[current - mid_period], 3):
-            continue
+            if not util.almost_equal(mid_ma[current], mid_ma[current - mid_period], 1):
+                continue
 
-        if step_ma_one_day(quote, mas, almost, back_day):
-            # print('{0}\t{1}\t{2}'.format(l, m, (m-l)*100/l))
-            return back_day
+            if step_ma_one_day(quote, mas, slowest_period, almost, back_day):
+                # print('{0}\t{1}\t{2}'.format(l, m, (m-l)*100/l))
+                return back_day
     return
 
 
@@ -65,32 +68,23 @@ def step_boll(quote, b=config.STEP_BOLL_BACK, d=config.STEP_BOLL_DURATION):
 
 
 # 横盘也很多表现形式
-def step(quote, period, periods=None, almost=1, back_days=20):
+def step(quote, period, periods=None, almost=1, back_days=3, const_slowest_period=None):
     if period == 'week':
         quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
     if periods is None:
-        periods = [5, 10, 20, 30]
+        periods = [5, 10, 20, 30, 60]
 
     mas = {}
     for p in periods:
         mas.update({p: quote.close.rolling(p).mean()})
-    if not step_ma(quote, mas, almost, back_days):
+    if not step_ma(quote, mas, almost, back_days, const_slowest_period):
         return False
 
     return True
 
 
 def step_p(quote, period, periods=None, almost=1, back_days=20):
-    if period == 'week':
-        quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
-    if periods is None:
-        periods = [5, 10, 20, 30]
-    if not step(quote, periods, almost, back_days):
-        return False
-    if not step_boll(quote):
-        return False
-
-    return True
+    return step(quote, period, periods, almost, back_days, const_slowest_period=60)
 
     # day_list = [250, 120, 80, 60, 40, 30, 20, 10, 5]
     # day_list = [80, 60, 40, 30, 20, 10, 5] #5, 横盘中, 突破由监控程序处理

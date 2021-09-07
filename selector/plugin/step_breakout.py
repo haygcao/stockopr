@@ -15,18 +15,18 @@ def breakout_ma_one_day(quote, mas, back_day, breakout_percent=config.TP_RANGE):
     return False
 
 
-def step_breakout(quote, period, periods=None, almost=1, back_days=20):
+def step_breakout(quote, period, periods=None, almost=1, back_days=3, const_slowest_period=None):
     if period == 'week':
         quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
     if periods is None:
-        periods = [5, 10, 20, 30]
+        periods = [5, 10, 20, 30, 60]
 
     mas = {}
     for p in periods:
         mas.update({p: quote.close.rolling(p).mean()})
 
     # 20天前, 还在整理
-    back_day = step_ma(quote, mas, almost, back_days)
+    back_day = step_ma(quote, mas, almost, back_days, const_slowest_period)
     if back_day is None:
         return False
 
@@ -46,3 +46,7 @@ def step_breakout(quote, period, periods=None, almost=1, back_days=20):
         return False
 
     return True
+
+
+def step_breakout_p(quote, period, periods=None, almost=1, back_days=3):
+    return step_breakout(quote, period, periods, almost, back_days, const_slowest_period=60)
