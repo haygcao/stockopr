@@ -1,13 +1,13 @@
 import unittest
 
 from acquisition import tx, quote_db
-from indicator import ad, relative_price_strength
+from indicator import ad, relative_price_strength, step
 
 
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
         code = '300502'
-        period = 'm30'
+        self.period = 'm30'
         # period = 'day'
         count = 250
         # quote = tx.get_kline_data_sina(code, period, count)
@@ -22,6 +22,10 @@ class IndicatorTestCase(unittest.TestCase):
 
     def test_rps(self):
         quote = relative_price_strength.relative_price_strength(self.quote)
+        print(quote[-10:])
+
+    def test_step(self):
+        quote = step.step(self.quote, self.period, 13, 26)
         print(quote[-10:])
 
 

@@ -15,7 +15,7 @@ def ema_value(quote, period, s, l):
     diff = ema_s - ema_l
     diff_shift = ema_s_shift - ema_l_shift
 
-    percent = 100 * (1 - l / s)
+    percent = 100 * (1 - ema_l / ema_s)
 
     mask1 = ema_l >= ema_l_shift
     mask2 = ema_l <= ema_s
