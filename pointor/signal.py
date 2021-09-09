@@ -1,10 +1,9 @@
-#-*- encoding: utf-8 -*-
+# -*- encoding: utf-8 -*-
+
 import os
 import pathlib
 import time
 import datetime
-
-import copy
 
 import numpy
 import pandas
@@ -17,9 +16,8 @@ import dealer.bought as basic
 from config import config
 from indicator import dynamical_system, second_stage
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
-    signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume_ad, signal_blt, signal_vcp
+    signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume_ad, signal_blt, signal_vcp, signal_step
 from util import util
-from util.log import logger
 
 
 signal_func = {
@@ -29,6 +27,7 @@ signal_func = {
     "ema_value_signal_enter": signal_ema_value.signal_enter,
     "blt_signal_enter": signal_blt.signal_enter,
     "vcp_signal_enter": signal_vcp.signal_enter,
+    "step_signal_enter": signal_step.signal_enter,
     "volume_ad_signal_enter": signal_volume_ad.signal_enter,
     "resistance_support_signal_enter": signal_resistance_support.signal_enter,
     "force_index_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,

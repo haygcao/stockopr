@@ -6,6 +6,7 @@ from selector import selector
 from selector.plugin.base_breakout import base_breakout
 from selector.plugin.blt import blt
 from selector.plugin.second_stage import second_stage
+from selector.plugin.step import step
 from selector.plugin.super import super
 from selector.plugin.vcp import vcp
 from util import dt
@@ -39,6 +40,10 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_vcp(self):
         ret = vcp(self.quote, self.period)
+        print(ret)
+
+    def test_step(self):
+        ret = step(self.quote, self.period)
         print(ret)
 
     def test_update_candidate_pool(self):

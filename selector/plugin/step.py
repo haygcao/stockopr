@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import numpy
 
-import config.config as config
-import selector.util as util
 from acquisition import quote_db
+from config import config
+from pointor import signal_step
+from selector import util
 from util import util
 from util.macd import bbands
 
@@ -68,7 +70,7 @@ def step_boll(quote, b=config.STEP_BOLL_BACK, d=config.STEP_BOLL_DURATION):
 
 
 # 横盘也很多表现形式
-def step(quote, period, periods=None, almost=1, back_days=3, const_slowest_period=None):
+def step_old(quote, period, periods=None, almost=1, back_days=3, const_slowest_period=None):
     if period == 'week':
         quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
     if periods is None:
@@ -84,7 +86,7 @@ def step(quote, period, periods=None, almost=1, back_days=3, const_slowest_perio
 
 
 def step_p(quote, period, periods=None, almost=1, back_days=20):
-    return step(quote, period, periods, almost, back_days, const_slowest_period=60)
+    return step_old(quote, period, periods, almost, back_days, const_slowest_period=60)
 
     # day_list = [250, 120, 80, 60, 40, 30, 20, 10, 5]
     # day_list = [80, 60, 40, 30, 20, 10, 5] #5, 横盘中, 突破由监控程序处理
@@ -102,3 +104,17 @@ def step_p(quote, period, periods=None, almost=1, back_days=20):
     #     # 加入监控列表
     #     print(code)
     #     #basic.add_selected(code)
+
+
+def step(quote, period, back_days=3):
+    if period == 'week':
+        quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+
+    quote = signal_step.signal_enter(quote, period='day')
+    column_list = ['step_signal_enter']
+
+    for column in column_list:
+        deviation = quote[column]
+        if numpy.any(deviation[-back_days:]):
+            return True
+    return False
