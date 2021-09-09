@@ -238,18 +238,19 @@ class Panel(QWidget):
 
         for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super']:  # , 'strong_base']:  # potential
             self.combo_candidate.addItem(indicator)
-        self.combo_candidate.select_text('super')
+        self.combo_candidate.select_text('second_stage')
 
         for indicator in ['value_return']:
             self.combo_traced.addItem(indicator)
-        self.combo_traced.select_text('value_return')
+        # self.combo_traced.select_text('value_return')
 
         # self.combo_strategy = QComboBox(self)
 
-        for indicator in ['value_return', 'magic_line', 'blt', 'vcp', 'base_breakout', 'bull_deviation', 'ema_value']:
+        for indicator in ['value_return', 'magic_line', 'blt', 'vcp', 'step', 'base_breakout', 'bull_deviation',
+                          'ema_value']:
             self.combo_strategy.addItem(indicator)
         # self.combo_strategy.setCurrentIndex(1)
-        self.combo_strategy.select_text('magic_line')
+        self.combo_strategy.select_text('step')
 
     def init_ui(self):
         # comboCode.adjustSize()

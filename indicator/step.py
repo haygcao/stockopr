@@ -35,7 +35,7 @@ def step(quote, period):
 
         if slowest == 10:
             mask4 = diff > diff_shift
-            mask = mask & mask4.shift(periods=-1)
+            mask = mask.shift(periods=1) & mask4
 
         quote['step_ma'] = quote['step_ma'].mask(mask & mask_nan & mask_trend, ma_periods_tmp[-1])
         ma_periods_tmp.pop()
