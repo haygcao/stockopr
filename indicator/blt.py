@@ -111,6 +111,8 @@ def get_high_low_index(quote, emas, vol_ma, back_day, var_ma, first_high='vcp'):
     high_date = close_series.index[high_index]
 
     days = len(close_series) - high_index + len(quote.loc[close_series.index[-1]: quote.index[current + 1]]) - 1
+    if days == 0:
+        return
 
     # close_series = quote.close.iloc[current - days + 1: current + 1]
     close_series = emas[2].iloc[current - days + 1: current + 1]
