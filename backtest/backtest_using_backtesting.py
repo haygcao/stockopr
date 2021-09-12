@@ -8,6 +8,7 @@ find . -name "*.py" | xargs -i sed -i 's/Low/low/' {}
 find . -name "*.py" | xargs -i sed -i 's/Open/open/' {}
 find . -name "*.py" | xargs -i sed -i 's/Volume/volume/' {}
 """
+import datetime
 
 from acquisition import quote_db
 from pointor import signal
@@ -38,14 +39,30 @@ class StockOpr(Strategy):
     def init(self):
         code = self.data.code[-1]
         quote = signal.compute_signal(code, 'day', self.data.df)
+
+        fromdate = datetime.datetime(2020, 1, 1)
+        todate = datetime.datetime(2021, 12, 31)
+        len_o = len(quote)
+        quote = quote.loc[fromdate:todate]
+        len_n = len(quote)
+        self.days = len_o - len_n
+        self.open_position_date = quote.signal_enter.first_valid_index()
         self.signal_enter = quote.signal_enter.notna()
         self.signal_exit = quote.signal_exit.notna()
 
     def next(self):
         index = len(self.data.close) - 1
+        if index < self.days:
+            return
+        index -= self.days
+
+        date = self.signal_enter.index[index]
+        if self.signal_enter.index[index] < self.open_position_date:
+            return
+
         if self.signal_enter[index]:
             self.buy()
-        elif self.signal_enter[index]:
+        elif self.signal_exit[index]:
             self.sell()
         # else:
         #     print('no trade signal')

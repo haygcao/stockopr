@@ -193,15 +193,26 @@ if __name__ == '__main__':
     # cerebro.addstrategy(TestStrategyBackTrader)
     # cerebro.addstrategy(StockOprBackTrader)
 
+    fromdate = datetime(2020, 1, 1)
+    todate = datetime(2021, 12, 31)
     # data0 = bt.feeds.YahooFinanceData(dataname='MSFT', fromdate=datetime(2011, 1, 1), todate=datetime(2012, 12, 31))
-    data0 = bt.feeds.PandasData(dataname=quote, fromdate=datetime(2020, 1, 1), todate=datetime(2021, 12, 31))
+    data0 = bt.feeds.PandasData(dataname=quote, fromdate=fromdate, todate=todate)
     cerebro.adddata(data0)
 
     quote = signal.compute_signal(code, 'day', quote)
-    signals = quote.signal_enter.mask(quote.signal_enter.notna(), 1)
-    signals = signals.mask(quote.signal_exit.notna(), -1)
+    quote = quote.loc[fromdate:todate]
+    cash = 100000
+    mask_buy = quote.signal_enter.notna()
+    mask_sell = quote.signal_exit.notna()
+    open_position_date = quote.signal_enter.first_valid_index()
+    close = quote.close[open_position_date]
+    size = cash / close // 100 * 100
+    print(open_position_date, close, size)
+    signals = quote.signal_enter.mask(mask_buy, size)
+    signals = signals.mask(mask_sell, -size)
     # signals = signals.fillna(0)
     signals = signals[signals.notna()]
+    signals = signals if signals.iloc[0] > 0 else signals.iloc[1:]
     closes = quote.close[quote.index.isin(signals.index)]
 
     # t - numpy.datetime64
@@ -215,7 +226,13 @@ if __name__ == '__main__':
     cerebro.add_order_history(orders, notify=True)
 
     # Set our desired cash start
-    cerebro.broker.setcash(100000.0)
+    cerebro.broker.setcash(cash)
 
     cerebro.run()
+    cash = cerebro.broker.getcash()
+    value = cerebro.broker.getvalue()
+    position = cerebro.broker.getposition(data0)
+    positions = cerebro.broker.positions   # {backtrader.feeds.pandafeed.PandasData: Position}
+    print(cash, value, position)
+
     cerebro.plot()
