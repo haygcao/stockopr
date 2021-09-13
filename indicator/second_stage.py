@@ -7,7 +7,90 @@ from indicator.decorator import computed
 from util import macd, dt
 
 
+@computed(column_name='second_stage')
 def second_stage(quote, period):
+    """
+    股票魔法师 - 第二阶段特点
+    1 股票价格在200日(40周)SMA均线以上
+    2 200日均线已呈现上涨趋势
+    3 150均线在200日均线以上
+    4 股票价格有明显上涨趋势, 价格曲线如台阶状上涨
+    5 短期移动平均线在长期移动平均线以上
+    6 相较于价格萎靡不振时, 价格猛增的日子里股票交易量同样增长明显
+    7 交易量较大的同周中, 上涨的交易周数量高于下跌的
+    """
+
+    if period != 'day':
+        return quote
+
+    n = {
+        'xxs': 10,
+        'xs': 20,
+        's': 30,
+        'm': 60,
+        'l': 120,
+        'xl': 150,
+        'xxl': 200
+    }
+
+    ma_xxs = quote.close.rolling(n['xxs']).mean()
+    ma_xs = quote.close.rolling(n['xs']).mean()
+    ma_s = quote.close.rolling(n['s']).mean()
+    ma_m = quote.close.rolling(n['m']).mean()
+    ma_l = quote.close.rolling(n['l']).mean()   # 20W
+    ma_xl = quote.close.rolling(n['xl']).mean()   # 30W
+    ma_xxl = quote.close.rolling(n['xxl']).mean()  # 40W
+
+    mask1 = quote.close > ma_xxl
+
+    ma_xxl_shift = ma_xxl.shift(periods=1)
+    mask2 = ma_xxl > ma_xxl_shift
+
+    mask3 = ma_xxl < ma_xl
+
+    # close up
+    low = quote.close.rolling(n['l']).min()
+    mask4 = quote.close/low - 1 > 0.2
+
+    mask5 = (ma_xl < ma_l) & (ma_l < ma_m)  # & (ma_m < ma_s) & (ma_s < ma_xs) & (ma_xs < ma_xxs)
+
+    mask = mask1 & mask2 & mask3 & mask4 & mask5
+
+    # quote.insert(len(quote.columns), 'second_stage', mask)
+    #
+    # return quote
+
+    up_percent = 7
+    up_day_mask = quote.percent > up_percent
+    other_day_mask = quote.percent < 2
+
+    up_vol = quote.volume.mask(~up_day_mask, numpy.nan)
+    other_vol = quote.volume.mask(~other_day_mask, numpy.nan)
+
+    up_vol_mean = up_vol.rolling(20, min_periods=1).mean()
+    other_vol_mean = other_vol.rolling(20, min_periods=1).mean()
+    mask6 = up_vol_mean < (other_vol_mean * 1.5)
+    mask = mask.mask(mask6, False)
+
+    vol_mean = quote.volume.rolling(20).mean()
+    mask_vol = quote.volume > (vol_mean * 1.5)
+    vol = quote.percent.mask(~mask_vol, numpy.nan)
+    mask_percent = quote.percent > 0
+    mask_vol_percent = mask_vol & mask_percent
+    percent = quote.percent.mask(~mask_vol_percent, numpy.nan)
+
+    vol_count = vol.rolling(20, min_periods=1).count()
+    percent_count = percent.rolling(20, min_periods=1).count()
+
+    mask7 = (percent_count * 2) < vol_count
+    mask = mask.mask(mask7, False)
+
+    quote.insert(len(quote.columns), 'second_stage', mask)
+
+    return quote
+
+
+def second_stage_ex(quote, period):
     """
     股票魔法师 - 第二阶段特点
     1 股票价格在200日(40周)SMA均线以上
@@ -116,9 +199,9 @@ def compute_second_stage(quote, period='day'):
     back_day = 0 if dt.istradetime() else 120
     # back_day = 0
     for day in range(back_day, 0, -1):
-        ret = second_stage(quote[:-day], period)
+        ret = second_stage_ex(quote[:-day], period)
         mask.iat[size - 1 - day] = ret
-    ret = second_stage(quote, period)
+    ret = second_stage_ex(quote, period)
     mask.iat[-1] = ret
     quote.insert(len(quote.columns), 'second_stage', mask)
 

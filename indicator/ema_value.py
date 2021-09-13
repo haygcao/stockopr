@@ -1,10 +1,12 @@
 import numpy
 
+from indicator.decorator import computed
 from util.macd import ema
 
 g_percent = 3
 
 
+@computed(column_name='ema_value')
 def ema_value(quote, period, s, l):
     # 使用以下方式计算 ema 时, 在计算 percent = 100 * (1 - ema_l / ema_s) 后,
     # 会导致 quote['ema_value'] = quote['ema_value'].mask(mask_final, quote['low']) 报错

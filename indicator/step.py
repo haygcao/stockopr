@@ -2,11 +2,12 @@
 import numpy
 import pandas
 
-from util.macd import ema
+from indicator.decorator import computed
 
 g_percent = 3
 
 
+@computed(column_name='step_ma')
 def step(quote, period):
     ma_periods = [5, 10, 20, 30, 60]
     df_mas = pandas.DataFrame()
