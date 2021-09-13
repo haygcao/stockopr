@@ -341,24 +341,25 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             next_negative = negative.index[j]
         negative[temp_negative_index] = temp_negative
 
-    deviation_signals = config.get_signal_enter_deviation(period)
+    # 添加背离信号
+    # deviation_signals = config.get_signal_enter_deviation(period)
     i += 1
     j += 1
     while i < len(positive):
         b = True
-        for deviation in deviation_signals:
-            column = deviation[:deviation.index('_signal')]
-            b &= numpy.isnan(quote_copy.loc[positive.index[i], column])
+        # for deviation in deviation_signals:
+        #     column = deviation[:deviation.index('_signal')]
+        #     b &= numpy.isnan(quote_copy.loc[positive.index[i], column])
         if b:
             positive[i] = numpy.nan
         i += 1
 
-    deviation_signals = config.get_signal_exit_deviation(period)
+    # deviation_signals = config.get_signal_exit_deviation(period)
     while j < len(negative):
         b = True
-        for deviation in deviation_signals:
-            column = deviation[:deviation.index('_signal')]
-            b &= numpy.isnan(quote_copy.loc[negative.index[j], column])
+        # for deviation in deviation_signals:
+        #     column = deviation[:deviation.index('_signal')]
+        #     b &= numpy.isnan(quote_copy.loc[negative.index[j], column])
         if b:
             negative[j] = numpy.nan
         j += 1
