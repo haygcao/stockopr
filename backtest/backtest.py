@@ -183,6 +183,8 @@ class StockOprBackTrader(bt.Strategy):
 
 if __name__ == '__main__':
     code = '300502'
+    # code = '600888'
+    code = '300598'
     period = 'day'
     count = 1000
     quote = quote_db.get_price_info_df_db(code, days=count, period_type='D')
@@ -205,14 +207,17 @@ if __name__ == '__main__':
     mask_buy = quote.signal_enter.notna()
     mask_sell = quote.signal_exit.notna()
     open_position_date = quote.signal_enter.first_valid_index()
+    if open_position_date is None:
+        exit(0)
     close = quote.close[open_position_date]
-    size = cash / close // 100 * 100
+    size = cash / 2 / close // 100 * 100
     print(open_position_date, close, size)
     signals = quote.signal_enter.mask(mask_buy, size)
     signals = signals.mask(mask_sell, -size)
     # signals = signals.fillna(0)
     signals = signals[signals.notna()]
     signals = signals if signals.iloc[0] > 0 else signals.iloc[1:]
+    print(signals)
     closes = quote.close[quote.index.isin(signals.index)]
 
     # t - numpy.datetime64
@@ -222,6 +227,9 @@ if __name__ == '__main__':
 
     orders = zip([numpy.datetime_as_string(t, unit='D') for t in signals.index.values], signals.values,
                  closes.values)
+
+    orders = [(a, b, c) for a, b, c in orders]
+    print(orders)
 
     cerebro.add_order_history(orders, notify=True)
 
