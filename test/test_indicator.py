@@ -1,12 +1,14 @@
 import unittest
 
 from acquisition import tx, quote_db
-from indicator import ad, relative_price_strength, step, second_stage
+from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat
 
 
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
         code = '600888'
+        code = '300502'
+        code = '002739'
         self.period = 'm30'
         # period = 'day'
         count = 250
@@ -30,6 +32,10 @@ class IndicatorTestCase(unittest.TestCase):
 
     def test_second_stage(self):
         quote = second_stage.second_stage(self.quote, 'day')
+        print(quote[-10:])
+
+    def test_market_deviation_mat(self):
+        quote = market_deviation_mat.market_deviation(self.quote, 'day')
         print(quote[-10:])
 
 
