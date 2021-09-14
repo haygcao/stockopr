@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy
 
-from indicator import market_deviation
+from indicator import market_deviation, dynamical_system
 from util import dt
 
 
@@ -43,6 +43,8 @@ def signal_exit(quote, period='day', back_days=125, column=None):
 
 
 def signal_enter_and_exit(quote, period, back_days=125):
+    quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
+
     column_list = ['force_index_bull_market_deviation',
                    'macd_bull_market_deviation',
                    'volume_ad_bull_market_deviation',

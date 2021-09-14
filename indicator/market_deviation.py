@@ -3,7 +3,7 @@ import numpy.ma
 
 from config.config import is_long_period, period_price_diff_ratio_deviation_map
 from indicator import force_index, ad, skdj, rsi
-from indicator.decorator import computed
+from indicator.decorator import computed, dynamic_system_filter
 from util.macd import macd
 
 
@@ -179,6 +179,7 @@ def market_deviation(quote, period, histogram, back, column_name, will, strict):
     return quote, 1
 
 
+@dynamic_system_filter(column_name='macd_bull_market_deviation')
 def market_deviation_macd(quote, back, period, will, strict=True):
     # 价格新低
     # print(quote['close'])
@@ -194,6 +195,7 @@ def market_deviation_macd(quote, back, period, will, strict=True):
     return market_deviation(quote, period, quote['macd_histogram'], back, column_name, will, strict=strict)
 
 
+@dynamic_system_filter(column_name='force_index_bull_market_deviation')
 def market_deviation_force_index(quote, back, period, will, strict=True):
     # import ipdb;
     # ipdb.set_trace()
@@ -206,6 +208,7 @@ def market_deviation_force_index(quote, back, period, will, strict=True):
     return market_deviation(quote, period, quote['force_index'], back, column_name, will, strict=strict)
 
 
+@dynamic_system_filter(column_name='volume_ad_bull_market_deviation')
 def market_deviation_volume_ad(quote, back, period, will, strict=True):
     quote = ad.compute_ad(quote)
 
@@ -214,6 +217,7 @@ def market_deviation_volume_ad(quote, back, period, will, strict=True):
     return market_deviation(quote, period, quote['adosc'], back, column_name, will, strict=strict)
 
 
+@dynamic_system_filter(column_name='skdj_bull_market_deviation')
 def market_deviation_skdj(quote, back, period, will, strict=True):
     quote = skdj.compute_skdj(quote)
 
@@ -222,6 +226,7 @@ def market_deviation_skdj(quote, back, period, will, strict=True):
     return market_deviation(quote, period, quote['d'] - 50, back, column_name, will, strict=strict)
 
 
+@dynamic_system_filter(column_name='rsi_bull_market_deviation')
 def market_deviation_rsi(quote, back, period, will, strict=True):
     quote = rsi.compute_rsi(quote)
 
