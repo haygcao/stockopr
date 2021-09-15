@@ -7,8 +7,9 @@ from indicator import ad, relative_price_strength, step, second_stage, market_de
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
         code = '600888'
-        code = '300502'
+        # code = '300502'
         code = '002739'
+        code = '300598'
         self.period = 'm30'
         # period = 'day'
         count = 250
@@ -36,6 +37,8 @@ class IndicatorTestCase(unittest.TestCase):
 
     def test_market_deviation_mat(self):
         quote = market_deviation_mat.market_deviation(self.quote, 'day')
+        print(quote.max_period[quote.max_period.notna()])
+        print(quote.min_period[quote.min_period.notna()])
         print(quote[-10:])
 
 
