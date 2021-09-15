@@ -358,7 +358,8 @@ class DataFinanceDraw(object):
             self.add_oscillation(data, osc)
 
     def add_resistance_support(self, data):
-        if not config.enabled_signal('resistance_support_signal_exit', self.period):
+        if not config.enabled_signal('resistance_support_signal_exit', self.period)\
+                and not config.enabled_signal('resistance_support_signal_enter', self.period):
             return
 
         data_support = self.data[:]['low'].copy()
@@ -367,21 +368,28 @@ class DataFinanceDraw(object):
         data_resistance[:] = self.data[-60:]['high'].max()
         data_support[:] = self.data[-60:]['low'].min()
 
-        data_resistance_20 = self.data['resistance']
-        # data_resistance_20 = data_resistance_20.mask(data_resistance_20.index < data_resistance_20.index[-60], numpy.nan)
-        # data_resistance_20 = data_resistance_20.mask(data_resistance_20 > 0, data_resistance_20[-1])
-
-        data_support_20 = self.data['support']
-        # data_support_20 = data_support_20.mask(data_support_20.index < data_support_20.index[-60], numpy.nan)
-        # data_support_20 = data_support_20.mask(data_support_20 > 0, data_support_20[-1])
-
         width = 0.5
         color = dimgrey
+        if 'support' in self.data.columns:
+            # data_resistance_20 = data_resistance_20.mask(data_resistance_20.index < data_resistance_20.index[-60], numpy.nan)
+            # data_resistance_20 = data_resistance_20.mask(data_resistance_20 > 0, data_resistance_20[-1])
+
+            data_support_20 = self.data['support']
+            # data_support_20 = data_support_20.mask(data_support_20.index < data_support_20.index[-60], numpy.nan)
+            # data_support_20 = data_support_20.mask(data_support_20 > 0, data_support_20[-1])
+
+            self.add_plot.append(
+                mpf.make_addplot(self.get_window(data_support_20), type='line', width=width, color=color))
+
+        if 'resistance' in self.data.columns:
+            data_resistance_20 = self.data['resistance']
+
+            self.add_plot.append(
+                mpf.make_addplot(self.get_window(data_resistance_20), type='line', width=width, color=color))
+
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(data_resistance), type='line', width=width + 0.3, color=grey),
             mpf.make_addplot(self.get_window(data_support), type='line', width=width + 0.3, color=grey),
-            mpf.make_addplot(self.get_window(data_resistance_20), type='line', width=width, color=color),
-            mpf.make_addplot(self.get_window(data_support_20), type='line', width=width, color=color),
         ])
 
     def add_rps(self, quote, market_index, panel):
@@ -709,10 +717,15 @@ class DataFinanceDraw(object):
                 return
             mask = data1.notnull()
 
+            if len(points) % 2 == 1:
+                points = points.iloc[1:]
+
             # points2 = data2[data2.notnull()]
             if draw_minor:
                 points2 = data2[mask]
                 points2 = points2[points2.notnull()]
+                if len(points2) % 2 == 1:
+                    points2 = points2.iloc[1:]
             else:
                 points2 = None
 
@@ -991,11 +1004,9 @@ if __name__ == "__main__":
 
     code = '000001'
     code = '300502'
-    # code = '603912'
-    # code = '000999'
-    # code = '000625'
-    # code = '600588'
-    # code = '601633'
+    # code = '002202'
+    # code = '600888'
+    # code = '002739'
     # code = '0000001'
     period = 'day'  # m5 m30 day week
     # open_graph(code, period, OscIndicator.FORCE_INDEX.value, 'data/csv/' + code + '.csv')
