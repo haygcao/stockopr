@@ -22,7 +22,9 @@ def signal_enter(quote, period=None):
 
     quote_copy = quote  # .copy()
 
-    quote_copy.insert(len(quote_copy.columns), 'step_signal_enter', quote_copy.step_ma)
+    mask = quote.step_ma.notna()
+    values = quote.step_ma.mask(mask, quote.low[mask])
+    quote_copy.insert(len(quote_copy.columns), 'step_signal_enter', values)
 
     # VCP 属于上涨后缩量调整, 实现筹码由弱方到强方的过程
     # 利用 dmi 过滤掉振荡走势中的信号
