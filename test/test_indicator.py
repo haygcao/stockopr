@@ -36,7 +36,9 @@ class IndicatorTestCase(unittest.TestCase):
         print(quote[-10:])
 
     def test_market_deviation_mat(self):
-        quote = market_deviation_mat.market_deviation(self.quote, 'day')
+        column = 'macd_bull_market_deviation'
+        quote = market_deviation_mat.compute_index(self.quote, 'day', column)
+        # quote = market_deviation_mat.market_deviation(self.quote, 'day')
         print(quote.max_period[quote.max_period.notna()])
         print(quote.min_period[quote.min_period.notna()])
         print(quote[-10:])

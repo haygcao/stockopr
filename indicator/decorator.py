@@ -34,18 +34,10 @@ def ignore_long_period(column_name=None):
 def dynamic_system_filter(column_name=None):
     def decorate(func):
         def inner(*args, **kwargs):
-            if 'deviation' in column_name:
-                quote, _ = func(*args, **kwargs)
-            else:
-                quote = func(*args, **kwargs)
-
+            quote = func(*args, **kwargs)
             mask = compute_enter_mask(quote, kwargs.get('period'))
             quote.loc[:, column_name] = quote[column_name].mask(mask, numpy.nan)
-
-            if 'deviation' in column_name:
-                return quote, _
-            else:
-                return quote
+            return quote
         return inner
 
     return decorate
