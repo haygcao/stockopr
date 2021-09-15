@@ -8,13 +8,14 @@ from indicator.decorator import dynamic_system_filter, computed
 from util.macd import macd
 
 
-def compute_high_low(quote, adj=1):
+def compute_high_low(quote, compute_high=True):
     """
     以高点计算为例
     1 低于往前20天的高点, 忽略   更低的高点
     2 往前10天以内有过高点, 忽略   太近的高点
     3
     """
+    adj = 1 if compute_high else -1
     close = quote.close
     close_lshift = close.shift(periods=1)
     close_rshift = close.shift(periods=-1)
@@ -136,23 +137,23 @@ def reset_invalid_value(close_high_low, i, i_ignore_set, i_prev):
 
 def market_deviation(quote, period, values, will=1):
     if 'max_period' not in quote.columns:
-        quote = compute_high_low(quote, 1)
+        quote = compute_high_low(quote, compute_high=True)
     if 'min_period' not in quote.columns:
-        quote = compute_high_low(quote, -1)
+        quote = compute_high_low(quote, compute_high=False)
 
-    column = 'high' if will == 1 else 'low'
-    val_period_series = quote['{}_period'.format('max' if will == 1 else 'min')]
+    column = 'low' if will == 1 else 'high'
+    val_period_series = quote['{}_period'.format('min' if will == 1 else 'max')]
     val_period_series = val_period_series[val_period_series.notna()]
 
     deviation_series = pandas.Series(numpy.nan, index=quote.index)
-    for i in range(0, len(val_period_series), 2):
+    for i in range(0, len(val_period_series) - 1, 2):
         date1 = val_period_series.index[i]
         date2 = val_period_series.index[i + 1]
 
         val1 = values.loc[date1]
         val2 = values.loc[date2]
 
-        if will * val_period_series[i] < will * val_period_series[i + 1] and will * val1 > will * val2:
+        if will * val_period_series[i] > will * val_period_series[i + 1] and will * val1 < will * val2:
             deviation_series.at[date1] = quote[column].loc[date1]
             deviation_series.at[date2] = quote[column].loc[date2]
 

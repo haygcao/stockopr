@@ -36,7 +36,8 @@ def dynamic_system_filter(column_name=None):
         def inner(*args, **kwargs):
             quote = func(*args, **kwargs)
             mask = compute_enter_mask(quote, kwargs.get('period'))
-            quote.loc[:, column_name] = quote[column_name].mask(mask, numpy.nan)
+            if 'deviation' not in column_name:
+                quote.loc[:, column_name] = quote[column_name].mask(mask, numpy.nan)
             return quote
         return inner
 
