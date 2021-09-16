@@ -104,6 +104,8 @@ def compute_high_low(quote, compute_high=True):
         i += 2
         i_prev = i - 1
 
+        if i_prev >= len(close_high_low):
+            break
         # 当矩阵运算未处理近期高低值时, 需要忽略往前近期的次高低值, 即最值优先
         delta_before = (close_high_low.index[i_prev] - close_high_low.index[i_valid]).days
         if delta_before < days_before // 2:
@@ -114,7 +116,7 @@ def compute_high_low(quote, compute_high=True):
 
     reset_invalid_value(close_high_low, i_valid, i_ignore_set, i_prev_valid)
 
-    if (close_high_low.index[-1] - close_high_low.index[-2]).days > days_before_after:
+    if len(close_high_low) > 1 and (close_high_low.index[-1] - close_high_low.index[-2]).days > days_before_after:
         close_high_low.iat[-1] = numpy.nan
 
     close_high_low = close_high_low[close_high_low.notna()]
