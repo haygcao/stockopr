@@ -30,7 +30,11 @@ def compute_index(quote, period=None):
 
     # quote = quote.assign(signal_enter_merged=numpy.nan)
     # signal_enter_merged = quote['signal_enter_merged']
-    signal_enter_merged = quote['force_index_bull_market_deviation_signal_enter'].copy()
+    if 'force_index_bull_market_deviation_signal_enter' in quote.columns:
+        signal_enter_merged = quote['force_index_bull_market_deviation_signal_enter'].copy()
+    else:
+        signal_enter_merged = pandas.Series(numpy.nan, index=quote.index)
+
 
     # def func(x1, x2):
     #     if numpy.isnan(x1):
@@ -50,6 +54,8 @@ def compute_index(quote, period=None):
     column_list = ['macd_bull_market_deviation_signal_enter', 'ema_value_signal_enter']
     # column_list = ['macd_bull_market_deviation_signal_enter']
     for column in column_list:
+        if column not in quote.columns:
+            continue
         series = quote[column]
         for i in range(0, len(signal_enter_merged)):
             # max(1, nan) -> 1   max(nan, 1) -> nan
@@ -70,6 +76,7 @@ def compute_index(quote, period=None):
     index0 = signal_enter_merged.index[0]
     index_list = signal_enter_merged[signal_enter_merged > 0].index.to_list()
     index_list.append(quote.index[-1])
+
     for index in index_list:
         # 不重算 ATR
         # tmp_quote = indicator.atr.compute_atr(quote.loc[index0:index].copy())

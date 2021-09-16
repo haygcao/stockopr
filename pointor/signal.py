@@ -66,9 +66,9 @@ def get_cache_file(code, period):
     if not fname.exists():
         return
 
-    if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3 * 60:
-        os.remove(cache_file)
-        return
+    # if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3 * 60:
+    #     os.remove(cache_file)
+    #     return
 
     return cache_file
 
@@ -243,7 +243,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     if 'stop_loss_signal_exit' in quote_copy.columns:
         quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
     if 'stop_loss_signal_exit' in signal_list:
-        quote_copy = signal_stop_loss.signal_exit(quote_copy)
+        quote_copy = signal_stop_loss.signal_exit(quote_copy, period=period)
     else:
         quote_copy.insert(len(quote_copy.columns), 'stop_loss_signal_exit', numpy.nan)
 
