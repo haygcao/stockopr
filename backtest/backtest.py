@@ -11,23 +11,30 @@ pip install matplotlib==3.2.2
 
 因为 warnings 属于标准库, 所以直接 import warnings, 问题解决
 """
+import functools
+import json
+import multiprocessing
+import os
+
 import numpy
 import pandas
+import tqdm
 
+from util import util
 from acquisition import quote_db
 from pointor import signal
 
-from datetime import datetime
+import datetime
 import backtrader as bt
 
 
 # https://community.backtrader.com/topic/158/how-to-feed-backtrader-alternative-data/8
+from util.log import logger
+
+
 class CustomDataLoader(bt.feeds.PandasData):
-    lines = ('TOTAL_SCORE','Beta',)
-    params = (('Open_Interest', None),
-        ('TOTAL_SCORE',-1),
-        ('Beta',-1)
-    )
+    lines = ('TOTAL_SCORE', 'Beta',)
+    params = (('Open_Interest', None), ('TOTAL_SCORE', -1), ('Beta', -1))
 
     datafields = bt.feeds.PandasData.datafields + (['TOTAL_SCORE', 'Beta'])
 
@@ -42,7 +49,7 @@ class SmaCross(bt.SignalStrategy):
 class TestStrategy(bt.Strategy):
     def log(self, txt, dt=None):
         ''' Logging function fot this strategy'''
-        dt = dt or self.datas[0].datetime.date(0)
+        dt = dt or self.datas[0].datetime.datetime.date(0)
         print('%s, %s' % (dt.isoformat(), txt))
 
     def __init__(self):
@@ -110,13 +117,13 @@ class StockOprBackTrader(bt.Strategy):
             'close': get(btdata.close),
             'volume': get(btdata.volume)
         }
-        time = [btdata.num2date(x) for x in get(btdata.datetime)]
+        time = [btdata.num2date(x) for x in get(btdata.datetime.datetime)]
 
         return pandas.DataFrame(data=fields, index=time)
 
     def log(self, txt, dt=None):
         ''' Logging function fot this strategy'''
-        dt = dt or self.datas[0].datetime.date(0)
+        dt = dt or self.datas[0].datetime.datetime.date(0)
         print('%s, %s' % (dt.isoformat(), txt))
 
     def __init__(self):
@@ -181,13 +188,11 @@ class StockOprBackTrader(bt.Strategy):
                 self.order = self.sell()
 
 
-if __name__ == '__main__':
-    code = '300502'
-    # code = '600888'
-    code = '300598'
+def _backtest_one(cash, fromdate, todate, code):
     period = 'day'
-    count = 1000
-    quote = quote_db.get_price_info_df_db(code, days=count, period_type='D')
+    days = (todate - fromdate).days + 250
+
+    quote = quote_db.get_price_info_df_db(code, days=days, period_type='D')
     quote = quote[quote.open.notna()]
 
     cerebro = bt.Cerebro()
@@ -195,52 +200,140 @@ if __name__ == '__main__':
     # cerebro.addstrategy(TestStrategyBackTrader)
     # cerebro.addstrategy(StockOprBackTrader)
 
-    fromdate = datetime(2020, 1, 1)
-    todate = datetime(2021, 12, 31)
-    # data0 = bt.feeds.YahooFinanceData(dataname='MSFT', fromdate=datetime(2011, 1, 1), todate=datetime(2012, 12, 31))
+    # data0 = bt.feeds.YahooFinanceData(dataname='MSFT', fromdate=datetime.datetime(2011, 1, 1), todate=datetime.datetime(2012, 12, 31))
     data0 = bt.feeds.PandasData(dataname=quote, fromdate=fromdate, todate=todate)
     cerebro.adddata(data0)
-
-    quote = signal.compute_signal(code, 'day', quote)
+    quote = signal.compute_signal(code, period, quote)
     quote = quote.loc[fromdate:todate]
-    cash = 100000
     mask_buy = quote.signal_enter.notna()
     mask_sell = quote.signal_exit.notna()
     open_position_date = quote.signal_enter.first_valid_index()
     if open_position_date is None:
-        exit(0)
+        return
+
     close = quote.close[open_position_date]
     size = cash / 2 / close // 100 * 100
-    print(open_position_date, close, size)
+
     signals = quote.signal_enter.mask(mask_buy, size)
     signals = signals.mask(mask_sell, -size)
     # signals = signals.fillna(0)
     signals = signals[signals.notna()]
     signals = signals if signals.iloc[0] > 0 else signals.iloc[1:]
-    print(signals)
+
     closes = quote.close[quote.index.isin(signals.index)]
 
-    # t - numpy.datetime64
-    # t1 = t.astype(datetime)   # 1629763200000000000
-    # t2 = numpy.datetime_as_string(t, unit='D')   # 2021-08-24
+    # t - numpy.datetime.datetime64
+    # t1 = t.astype(datetime.datetime)   # 1629763200000000000
+    # t2 = numpy.datetime.datetime_as_string(t, unit='D')   # 2021-08-24
     # t3 = str(t)   # 2021-08-24T00:00:00.000000000
-
     orders = zip([numpy.datetime_as_string(t, unit='D') for t in signals.index.values], signals.values,
                  closes.values)
-
     orders = [(a, b, c) for a, b, c in orders]
-    print(orders)
-
     cerebro.add_order_history(orders, notify=True)
-
     # Set our desired cash start
     cerebro.broker.setcash(cash)
 
     cerebro.run()
-    cash = cerebro.broker.getcash()
-    value = cerebro.broker.getvalue()
-    position = cerebro.broker.getposition(data0)
-    positions = cerebro.broker.positions   # {backtrader.feeds.pandafeed.PandasData: Position}
-    print(cash, value, position)
+
+    return cerebro
+
+
+def backtest_one(cash, fromdate, todate, code):
+    # cerebro.plot()
+    cerebro = _backtest_one(cash, fromdate, todate, code)
+    if not cerebro:
+        return
+
+    broker = cerebro.broker
+    # cash = broker.getcash()   # 现金
+    value = broker.getvalue()   # 总资产
+    # position = broker.getposition(data0)   # 持仓 position.adjbase 现价 position.price 成本价
+    # positions = [p for k, p in broker.positions.items() if isinstance(k, backtrader.feeds.pandafeed.PandasData)]
+    # position = positions[0] if positions else None
+    # assert len(positions) <= 1   # 不曾有过持仓时, positions 为空, 比如, 本金不够买一手贵州茅台
+
+    # 回测采用半仓交易
+    percent = round((value - broker.startingcash) / (broker.startingcash / 2), 3)
+
+    cash = int(broker.startingcash * (1 + percent))
+
+    return code, cash
+
+
+def show_graph(code, fromdate, todate):
+    cash = 100000
+    cerebro = _backtest_one(cash, fromdate, todate, code)
+    if not cerebro:
+        return
 
     cerebro.plot()
+
+
+def backtest_single(cash_start, fromdate, todate, code_list):
+    result = {}
+    for code in code_list:
+        code_cash = backtest_one(cash_start, fromdate, todate, code)
+        if not code_cash:
+            continue
+        print(code_cash)
+        result.update({code_cash[0]: code_cash[1]})
+
+    return result
+
+
+def backtest_mp(cash_start, fromdate, todate, code_list):
+    backtest_func = functools.partial(backtest_one, cash_start, fromdate, todate)
+
+    result = {}
+    nproc = multiprocessing.cpu_count()
+    with multiprocessing.Pool(nproc) as p:
+        for code_cash in tqdm.tqdm(p.imap_unordered(backtest_func, code_list), total=len(code_list), ncols=64):
+            if not code_cash:
+                continue
+            result.update({code_cash[0]: code_cash[1]})
+
+    return result
+
+
+def backtest(cash_start, fromdate, todate, code_list, mp=True):
+    t1 = datetime.datetime.now()
+    if mp:
+        result = backtest_mp(cash_start, fromdate, todate, code_list)
+    else:
+        result = backtest_single(cash_start, fromdate, todate, code_list)
+
+    t2 = datetime.datetime.now()
+    logger.info('backtest [{}] stocks, cost [{}]s'.format(len(code_list), (t2 - t1).seconds))
+
+    cache_path = util.get_cache_dir()
+    cache = os.path.join(cache_path, 'backtest_{}.json'.format(datetime.datetime.now()))
+    with open(cache, 'w') as f:
+        json.dumps(result, f)
+        
+    return result
+
+
+def print_profit(result, cash_start):
+    cash_final = sum(result.values())
+    cash_start_final = cash_start * len(result)
+    profit = cash_final - cash_start_final
+    percent = profit / cash_start_final * 100
+    print('cash_start: {}\ncash: {}\nprofit: {}[{}%]'.format(cash_start_final, cash_final, profit, percent))
+
+
+if __name__ == '__main__':
+    code = '300502'
+    code = '600888'
+    # code = '300598'
+    # code = '002739'
+
+    cash_start = 100000
+
+    fromdate = datetime.datetime(2020, 8, 31)
+    todate = datetime.datetime(2021, 12, 31)
+
+    cash = backtest_one(cash_start, fromdate, todate, code)
+    percent = round((cash / cash_start - 1) * 100, 3)
+
+    print(cash, percent)
+
