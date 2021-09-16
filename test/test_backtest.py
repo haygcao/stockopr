@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import datetime
+import json
+import os
 import unittest
 
 from acquisition import basic
 from backtest import backtest
+from util import util
 
 
 class SelectorPluginTestCase(unittest.TestCase):
@@ -11,7 +14,7 @@ class SelectorPluginTestCase(unittest.TestCase):
         self.code = '300550'  # vcp
         self.period = 'day'
 
-        self.cash_start = 100000
+        self.cash_start = 1000000   # 100W
         self.fromdate = datetime.datetime(2020, 8, 31)
         self.todate = datetime.datetime(2021, 12, 31)
 
@@ -33,8 +36,15 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(cash, percent)
 
     def test_show_graph(self):
-        code = '600519'
-        backtest.show_graph(code, self.fromdate, self.todate)
+        code = '603279'
+        backtest.show_graph(self.cash_start, self.fromdate, self.todate, code)
+
+    def test_analyse(self):
+        cache_path = util.get_cache_dir()
+        cache = os.path.join(cache_path, 'backtest_20210916_195053.json')
+        with open(cache) as f:
+            result = json.load(f)
+            backtest.print_profit(result, self.cash_start)
 
     def test_backtest(self):
         t1 = datetime.datetime.now()
