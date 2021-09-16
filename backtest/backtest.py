@@ -21,6 +21,7 @@ import pandas
 import tqdm
 
 from util import util
+from selector import util as selector_util
 from acquisition import quote_db
 from pointor import signal
 
@@ -193,6 +194,8 @@ def _backtest_one(cash, fromdate, todate, code):
     days = (todate - fromdate).days + 250
 
     quote = quote_db.get_price_info_df_db(code, days=days, period_type='D')
+    if selector_util.filter_quote(quote):
+        return
     quote = quote[quote.open.notna()]
 
     cerebro = bt.Cerebro()
