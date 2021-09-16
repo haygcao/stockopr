@@ -311,7 +311,7 @@ def backtest(cash_start, fromdate, todate, code_list, mp=True):
     cache_path = util.get_cache_dir()
     cache = os.path.join(cache_path, 'backtest_{}.json'.format(datetime.datetime.now()))
     with open(cache, 'w') as f:
-        json.dumps(result, f)
+        json.dump(result, f)
         
     return result
 

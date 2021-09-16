@@ -21,11 +21,13 @@ class SelectorPluginTestCase(unittest.TestCase):
     def test_backtest_one(self):
         code = '300502'
         code = '600888'
-        code = '600519'
         # code = '300598'
         # code = '002739'
 
-        cash = backtest.backtest_one(self.cash_start, self.fromdate, self.todate, code)
+        r = backtest.backtest_one(self.cash_start, self.fromdate, self.todate, code)
+        if not r:
+            return
+        code, cash = r
         percent = round((cash / self.cash_start - 1) * 100, 3)
 
         print(cash, percent)

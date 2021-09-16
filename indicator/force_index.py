@@ -17,6 +17,9 @@ def force_index(quote, n=2):
 
     volume = quote['volume']
     max_vol = max(volume)
+
+    # math.log10(0)
+    # ValueError: math domain error
     digit = int(math.log10(max_vol)) + 1
     volume_adjust = volume / pow(10, digit-1)
     si = si_close * volume_adjust
