@@ -57,22 +57,18 @@ def gen_cache_path(code, date, period):
     return os.path.join(dir_name, file)
 
 
+# signal 计算需要支持 multiprocessing
 def get_cache_file(code, period):
     cache_file = gen_cache_path(code, datetime.date.today(), period)
-    dir_name = os.path.dirname(cache_file)
-    file_list = os.listdir(dir_name)
-    for file in file_list:
-        file = os.path.join(dir_name, file)
-        fname = pathlib.Path(file)
-        if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3 * 60:
-            os.remove(file)
+    # dir_name = os.path.dirname(cache_file)
 
-    if not os.path.exists(cache_file):
+    fname = pathlib.Path(cache_file)
+    if not fname.exists():
         return
 
-    # fname = pathlib.Path(file)
-    # if not fname.exists():
-    #     return
+    if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3 * 60:
+        os.remove(cache_file)
+        return
 
     return cache_file
 
