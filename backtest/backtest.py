@@ -203,22 +203,34 @@ def _backtest_one(cash, fromdate, todate, code):
     # cerebro.addstrategy(TestStrategyBackTrader)
     # cerebro.addstrategy(StockOprBackTrader)
 
-    # data0 = bt.feeds.YahooFinanceData(dataname='MSFT', fromdate=datetime.datetime(2011, 1, 1), todate=datetime.datetime(2012, 12, 31))
+    # data0 = bt.feeds.YahooFinanceData(dataname='MSFT', fromdate=fromdate, todate=todate)
     data0 = bt.feeds.PandasData(dataname=quote, fromdate=fromdate, todate=todate)
     cerebro.adddata(data0)
     quote = signal.compute_signal(code, period, quote)
     quote = quote.loc[fromdate:todate]
-    mask_buy = quote.signal_enter.notna()
-    mask_sell = quote.signal_exit.notna()
     open_position_date = quote.signal_enter.first_valid_index()
     if open_position_date is None:
         return
 
-    close = quote.close[open_position_date]
-    size = cash / 2 / close // 100 * 100
+    mask_buy = quote.signal_enter.notna()
+    mask_sell = quote.signal_exit.notna()
+    mask_sell = mask_sell.mask(mask_sell.index <= open_position_date, False)
 
-    signals = quote.signal_enter.mask(mask_buy, size)
-    signals = signals.mask(mask_sell, -size)
+    size_buy = cash / 2 / quote.close[mask_buy] // 100 * 100
+    if numpy.count_nonzero(size_buy <= 0) > 0:
+        print('{} - could not buy 100'.format(code))
+        return
+    signals = quote.signal_enter.mask(mask_buy, size_buy)
+
+    size_sell_list = (-size_buy).to_list()
+    # numpy.nan/0/False 都不是 nonzero
+    diff = numpy.count_nonzero(mask_buy) - numpy.count_nonzero(mask_sell)
+    for i in range(diff):
+        size_sell_list.pop()
+
+    if size_sell_list:
+        size_sell = pandas.Series(size_sell_list, index=(mask_sell[mask_sell]).index)
+        signals = signals.mask(mask_sell, size_sell)
     # signals = signals.fillna(0)
     signals = signals[signals.notna()]
     signals = signals if signals.iloc[0] > 0 else signals.iloc[1:]
@@ -263,8 +275,7 @@ def backtest_one(cash, fromdate, todate, code):
     return code, cash
 
 
-def show_graph(code, fromdate, todate):
-    cash = 100000
+def show_graph(cash, fromdate, todate, code):
     cerebro = _backtest_one(cash, fromdate, todate, code)
     if not cerebro:
         return
@@ -309,7 +320,7 @@ def backtest(cash_start, fromdate, todate, code_list, mp=True):
     logger.info('backtest [{}] stocks, cost [{}]s'.format(len(code_list), (t2 - t1).seconds))
 
     cache_path = util.get_cache_dir()
-    cache = os.path.join(cache_path, 'backtest_{}.json'.format(datetime.datetime.now()))
+    cache = os.path.join(cache_path, 'backtest_{}.json'.format(datetime.datetime.now().strftime("%Y%m%d_%H%M%S")))
     with open(cache, 'w') as f:
         json.dump(result, f)
         
@@ -317,11 +328,22 @@ def backtest(cash_start, fromdate, todate, code_list, mp=True):
 
 
 def print_profit(result, cash_start):
+    cashs = list(result.values())
+    cashs.sort()
     cash_final = sum(result.values())
     cash_start_final = cash_start * len(result)
     profit = cash_final - cash_start_final
-    percent = profit / cash_start_final * 100
+    percent = round(profit / cash_start_final * 100, 3)
     print('cash_start: {}\ncash: {}\nprofit: {}[{}%]'.format(cash_start_final, cash_final, profit, percent))
+    print('up: {}\ndown: {}'.format(
+        list(map(lambda x: x > cash_start, cashs)).count(True),
+        list(map(lambda x: x < cash_start, cashs)).count(True)))
+    top_earn = cashs[-50:]
+    top_earn.sort(reverse=True)
+    top_loss = cashs[:50]
+    print('top_earn: {}\ntop_loss: {}'.format(
+        list(map(lambda x: round((x/cash_start - 1) * 100, 3), top_earn)),
+        list(map(lambda x: round((x/cash_start - 1) * 100, 3), top_loss))))
 
 
 if __name__ == '__main__':
