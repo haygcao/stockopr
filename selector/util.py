@@ -18,7 +18,7 @@ def filter_quote(quote):
         return True
 
     name = basic.get_stock_name(quote['code'][-1])
-    if 'ST' in name or '退市' in name:
+    if '退市' in name:  # or 'ST' in name:
         return True
 
     min_days = config.WEEK_MIN * 5 if config.USING_LONG_PERIOD else config.DAY_MIN
