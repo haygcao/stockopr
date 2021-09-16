@@ -5,6 +5,7 @@ import pandas
 import pandas as pd
 
 import indicator
+from config import config
 from config.config import is_long_period, stop_loss_atr_ratio, stop_loss_atr_back_days, stop_loss_atr_price
 from indicator.decorator import computed
 
@@ -23,14 +24,14 @@ def function_exit(high, close, stop_loss):
     return numpy.nan
 
 
-def compute_index(quote, period=None):
+def compute_index(quote, period):
     quote = indicator.atr.compute_atr(quote)
 
     # 牛市背离
 
     # quote = quote.assign(signal_enter_merged=numpy.nan)
     # signal_enter_merged = quote['signal_enter_merged']
-    if 'force_index_bull_market_deviation_signal_enter' in quote.columns:
+    if config.enabled_signal('force_index_bull_market_deviation_signal_enter', period):
         signal_enter_merged = quote['force_index_bull_market_deviation_signal_enter'].copy()
     else:
         signal_enter_merged = pandas.Series(numpy.nan, index=quote.index)
@@ -54,7 +55,7 @@ def compute_index(quote, period=None):
     column_list = ['macd_bull_market_deviation_signal_enter', 'ema_value_signal_enter']
     # column_list = ['macd_bull_market_deviation_signal_enter']
     for column in column_list:
-        if column not in quote.columns:
+        if not config.enabled_signal(column, period):
             continue
         series = quote[column]
         for i in range(0, len(signal_enter_merged)):

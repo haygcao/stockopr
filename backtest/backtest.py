@@ -328,6 +328,9 @@ def backtest(cash_start, fromdate, todate, code_list, mp=True):
 
 
 def print_profit(result, cash_start):
+    l = list(result.items())
+    np_result = pandas.Series([i[1] for i in l], index=[i[0] for i in l])
+    np_result = np_result.sort_values()
     cashs = list(result.values())
     cashs.sort()
     cash_final = sum(result.values())

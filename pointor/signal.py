@@ -187,9 +187,9 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     # 第二阶段
     quote = second_stage.second_stage(quote, period)
 
-    # enter signal
-    signal_list = config.get_signal_list(period)
-    for s in signal_list:
+    # 计算所有信号, 缓存以加速回测分析
+    signal_all_list = config.get_all_signal(period)
+    for s in signal_all_list:
         if s not in signal_func:
             continue
         if s == 'stop_loss_signal_exit':
@@ -223,7 +223,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         quote_copy = quote_copy[~quote_copy.index.duplicated(keep='first')]
 
     # 合并
-    # 处理合并看多信号
+    # 处理合并看多信号, 只处理启用的信号
     column_list = config.get_signal_enter_list(period)
     # 'macd_bull_market_deviation',
     # 'force_index_bull_market_deviation']
@@ -242,7 +242,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     # 计算止损数据
     if 'stop_loss_signal_exit' in quote_copy.columns:
         quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
-    if 'stop_loss_signal_exit' in signal_list:
+    if config.enabled_signal('stop_loss_signal_exit', period):
         quote_copy = signal_stop_loss.signal_exit(quote_copy, period=period)
     else:
         quote_copy.insert(len(quote_copy.columns), 'stop_loss_signal_exit', numpy.nan)
