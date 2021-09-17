@@ -211,6 +211,14 @@ class DataFinanceDraw(object):
         # mpl.rcParams['interactive'] = True
         mpl.rcParams['axes.titlesize'] = 1
 
+        # TODO 中文显示方框
+        # mpl.matplotlib_fname()
+        # ~/workspace/stockopr/venv/lib/python3.7/site-packages/matplotlib/mpl-data/matplotlibrc
+        # font.family:  sans-serif   # 本行去掉注释
+        # font.sans-serif: SimHei,    # 本行去掉注释, 添加 SimHei 字体
+        # cp /usr/share/fonts/truetype/msfonts/simsun.ttf mpl-data/fonts/ttf/
+        mpl.rcParams['font.sans-serif'] = 'SimHei'
+
     def fetch_data(self, code):
         count = self.count
         if not is_long_period(self.period):
@@ -274,7 +282,8 @@ class DataFinanceDraw(object):
     def add_oscillation(self, data, osc):
         signal_enabled = config.enabled_signal('{}_signal_exit'.format(osc), self.period)
         signal_deviation_enabled = config.enabled_signal('{}_bear_market_deviation_signal_exit'.format(osc), self.period)
-        if not signal_enabled and not signal_deviation_enabled:
+        # macd
+        if not signal_enabled and not signal_deviation_enabled and osc != oscillatior:
             return
 
         data_column = signal.get_osc_key(osc)
@@ -890,6 +899,10 @@ class DataFinanceDraw(object):
         # plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
         # plt.margins(0, 0)
 
+        # https://stackoverflow.com/questions/14908576/how-to-remove-frame-from-matplotlib-pyplot-figure-vs-matplotlib-figure-frame
+        # ax.patch.set_visible(False)
+        # ax.get_xaxis().set_ticks([])
+
         # axlist[3].fill_between(self.data.index, self.data['force_index'])
 
         self.draw_arrow(axlist, yminor_unit)
@@ -960,6 +973,7 @@ def open_graph(code, peroid, indicator, path=None):
     for i, t in enumerate(timestamp):
         print('{}\t[{}]\t[{}]'.format(info[i], round(timestamp[-2] - t, 2), round(t - timestamp[max(0, i-1)], 2)))
     print('=' * 10)
+    exit(0)
 
 
 def show_indicator(code, period, indicator):
