@@ -1,44 +1,14 @@
 # -*- coding: utf-8 -*-
 import numpy
+import pandas
 
 from config import config
 from indicator import ema
 from indicator.decorator import computed, ignore_long_period, dynamic_system_filter
 
 
-def function_enter_origin(low, close, resistance, dyn_sys_long_period, dyn_sys, dyn_sys_ema13, ema13, ema26, ema26_shift, period, date):
-    if dyn_sys_long_period < 0:  # or dyn_sys < 0:
-        return numpy.nan
-
-    if close < resistance:
-        return numpy.nan
-
-    # ema13 向上, close 回归 ema13 ~ ema26 价值区间
-    # if ema26 >= ema26_shift and (close - resistance) / resistance > config.resistance_over_rate:
-    if (close - resistance) / resistance > config.period_price_diff_ratio_resistance_support_map[period]:
-        return low
-
-    return numpy.nan
-
-
-def function_enter(signal, signal_shift):
-    if numpy.isnan(signal_shift):
-        return signal
-    return numpy.nan
-
-
-def function_exit(high, close, support, dyn_sys_long_period, dyn_sys, dyn_sys_ema13, ema13, ema26, ema26_shift, period, date):
-    if close > support:
-        return numpy.nan
-
-    if (support - close) / support > config.period_price_diff_ratio_resistance_support_map[period]:
-        return high
-
-    return numpy.nan
-
-
 def compute_index(quote, period=None):
-    quote = ema.compute_ema(quote)
+    # quote = ema.compute_ema(quote)
     quote.loc[:, 'resistance_origin'] = quote.loc[:, 'high'].rolling(20, min_periods=1).max()
     quote.loc[:, 'support_origin'] = quote.loc[:, 'low'].rolling(10, min_periods=1).min()
 
@@ -52,18 +22,15 @@ def signal_enter(quote, period=None):
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'resistance'] = quote['resistance_origin'].shift(periods=config.resistance_support_backdays)
-    quote_copy.loc[:, 'ema26_shift'] = quote['ema26'].shift(periods=1)
-    quote_copy.loc[:, 'resistance_support_signal_enter_origin'] = quote_copy.apply(
-        lambda x: function_enter_origin(x.low, x.close, x.resistance, x.dyn_sys_long_period, x.dyn_sys, x.dyn_sys_ema13, x.ema13,
-                                 x.ema26, x.ema26_shift, period, x.name), axis=1)
-    quote_copy.loc[:, 'resistance_support_signal_enter_shift'] = quote_copy['resistance_support_signal_enter_origin'].shift(periods=1)
-    quote_copy.loc[:, 'resistance_support_signal_enter'] = quote_copy.apply(
-        lambda x: function_enter(x.resistance_support_signal_enter_origin, x.resistance_support_signal_enter_shift), axis=1)
 
-    # remove temp data
-    quote_copy.drop(['ema26_shift'], axis=1)
-    quote_copy.drop(['resistance_support_signal_enter_origin'], axis=1)
-    quote_copy.drop(['resistance_support_signal_enter_shift'], axis=1)
+    resistance_support_signal_enter_origin = pandas.Series(numpy.nan, index=quote.index)
+    mask1 = quote_copy.close > quote_copy.resistance
+    mask2 = quote_copy.close / quote_copy.resistance - 1 > config.period_price_diff_ratio_resistance_support_map[period]
+    resistance_support_signal_enter_origin = resistance_support_signal_enter_origin.mask(mask1 & mask2, quote.low)
+
+    resistance_support_signal_enter_shift = resistance_support_signal_enter_origin.shift(periods=1)
+    mask = resistance_support_signal_enter_origin.notna() & resistance_support_signal_enter_shift.notna()
+    quote_copy.loc[:, 'resistance_support_signal_enter'] = resistance_support_signal_enter_origin.mask(mask, numpy.nan)
 
     return quote_copy
 
@@ -74,9 +41,10 @@ def signal_exit(quote, period=None):
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'support'] = quote['support_origin'].shift(periods=config.resistance_support_backdays)
-    quote_copy.loc[:, 'ema26_shift'] = quote['ema26'].shift(periods=1)
-    quote_copy.loc[:, 'resistance_support_signal_exit'] = quote_copy.apply(
-        lambda x: function_exit(x.high, x.close, x.support, x.dyn_sys_long_period, x.dyn_sys, x.dyn_sys_ema13, x.ema13, x.ema26,
-                                 x.ema26_shift, period, x.name), axis=1)
+
+    mask1 = quote_copy.close < quote_copy.support
+    mask2 = 1 - quote_copy.close / quote_copy.support > config.period_price_diff_ratio_resistance_support_map[period]
+    resistance_support_signal_exit = pandas.Series(numpy.nan, index=quote.index)
+    quote_copy.loc[:, 'resistance_support_signal_exit'] = resistance_support_signal_exit.mask(mask1 & mask2, quote.high)
 
     return quote_copy
