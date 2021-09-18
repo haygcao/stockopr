@@ -11,10 +11,11 @@ def computed(column_name=None):
                 return args[0]
             if column_name.endswith('signal_enter') or column_name.endswith('signal_exit'):
                 if not config.enabled_signal(column_name, kwargs.get('period')):
-                    if 'stop_loss' in column_name:
-                        args[0].insert(len(args[0].columns), 'stop_loss', numpy.nan)
-                    args[0].insert(len(args[0].columns), column_name, numpy.nan)
-                    return args[0]
+                    # if 'stop_loss' in column_name:
+                    #     args[0].insert(len(args[0].columns), 'stop_loss', numpy.nan)
+                    # args[0].insert(len(args[0].columns), column_name, numpy.nan)
+                    # return args[0]
+                    pass
             return func(*args, **kwargs)
         return inner
     return decorate
@@ -44,6 +45,20 @@ def dynamic_system_filter(column_name=None):
     return decorate
 
 
+def second_stage_filter(column_name=None):
+    def decorate(func):
+        def inner(*args, **kwargs):
+            quote = func(*args, **kwargs)
+            # 第二阶段
+            mask = ~quote.second_stage
+            if 'deviation' not in column_name:
+                quote.loc[:, column_name] = quote[column_name].mask(mask, numpy.nan)
+            return quote
+        return inner
+
+    return decorate
+
+
 def compute_enter_mask(quote, period):
     mask = quote['dyn_sys_long_period'] < 0
     mask = mask | (quote['dyn_sys'] < 0)
@@ -58,11 +73,5 @@ def compute_enter_mask(quote, period):
     macd_line = ema_fast - ema
     macd_line_shift = macd_line.shift(periods=1)
     mask = mask | (macd_line <= macd_line_shift)
-
-    # 第二阶段
-    if 'second_stage' not in quote.columns:
-        return mask
-
-    mask = mask | (~quote.second_stage)
 
     return mask
