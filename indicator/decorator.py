@@ -60,6 +60,7 @@ def second_stage_filter(column_name=None):
 
 
 def compute_enter_mask(quote, period):
+    # 动量系统
     mask = quote['dyn_sys_long_period'] < 0
     mask = mask | (quote['dyn_sys'] < 0)
 
@@ -69,6 +70,7 @@ def compute_enter_mask(quote, period):
     ema_shift = ema.shift(periods=1)
     mask = mask | (ema <= ema_shift) | (quote.close <= ema)
 
+    # (快均线 - 慢均线) 值增大
     ema_fast = quote.close.ewm(span=int(n / 2)).mean()
     macd_line = ema_fast - ema
     macd_line_shift = macd_line.shift(periods=1)

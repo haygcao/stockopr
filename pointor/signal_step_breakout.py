@@ -9,8 +9,6 @@ from pointor import signal_resistance_support
 
 @computed(column_name='step_breakout_signal_enter')
 # @ignore_long_period(column_name='step_signal_enter')
-@dynamic_system_filter(column_name='step_breakout_signal_enter')
-@second_stage_filter(column_name='step_breakout_signal_enter')
 def signal_enter(quote, period=None):
     quote = step.step(quote, period)
     mask = quote.step_ma.notna()

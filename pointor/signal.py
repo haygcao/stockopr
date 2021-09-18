@@ -14,11 +14,10 @@ import acquisition.quote_www as quote_www
 import pointor.signal_gd as signal_gd
 import dealer.bought as basic
 from config import config
-from config.signal_config import signal_func
+from config.signal_config import signal_func, signal_mask_column
 from indicator import dynamical_system, second_stage
-from pointor import signal_stop_loss
+from pointor import signal_stop_loss, mask
 from util import util
-
 
 
 def gen_cache_path(code, date, period):
@@ -178,6 +177,9 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
                 continue
             quote = signal_func[s](quote, period=period)
 
+        # 信号 mask
+        quote = mask.compute_enter_mask(quote, period)
+
         if 'signal_enter' not in quote.columns:
             quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
         if 'signal_exit' not in quote.columns:
@@ -215,6 +217,9 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         direct = 'signal_enter'
         write_signal_log(direct, code, period, column, n, data, header)
         header = False
+
+        for column_mask in signal_mask_column[column]:
+            quote_copy = mask.mask_signal(quote_copy, column, column_mask)
 
         quote_copy.loc[:, direct] = quote_copy.apply(
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)

@@ -58,7 +58,6 @@ def compute_index(quote, period=None):
 
 @computed(column_name='dynamical_system_signal_enter')
 # @ignore_long_period(column_name='dynamical_system_signal_enter')
-@dynamic_system_filter(column_name='dynamical_system_signal_enter')
 def signal_enter(quote, period=None):
     """
     dynamic system 不处理日内信号

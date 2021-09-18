@@ -16,7 +16,6 @@ def compute_index(quote, period=None):
 
 
 @computed(column_name='resistance_support_signal_enter')
-@dynamic_system_filter(column_name='resistance_support_signal_enter')
 def signal_enter(quote, period=None):
     quote = compute_index(quote, period)
 

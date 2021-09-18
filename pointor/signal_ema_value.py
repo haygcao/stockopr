@@ -30,7 +30,6 @@ def compute_index(quote, period=None):
 
 @computed(column_name='ema_value_signal_enter')
 @ignore_long_period(column_name='ema_value_signal_enter')
-@dynamic_system_filter(column_name='ema_value_signal_enter')
 def signal_enter(quote, period=None):
     quote = compute_index(quote, period)
 

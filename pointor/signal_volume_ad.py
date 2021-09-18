@@ -34,7 +34,6 @@ def signal(quote, direct=1):
 
 @computed(column_name='volume_ad_signal_enter')
 # @ignore_long_period(column_name='force_index_signal_enter')
-@dynamic_system_filter(column_name='volume_ad_signal_enter')
 def signal_enter(quote, period=None):
     # if period.startswith('m'):
     #     quote = quote.assign(force_index_signal_enter=numpy.nan)

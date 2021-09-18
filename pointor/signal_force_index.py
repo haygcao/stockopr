@@ -58,7 +58,6 @@ def compute_index(quote, period=None):
 
 @computed(column_name='force_index_signal_enter')
 @ignore_long_period(column_name='force_index_signal_enter')
-@dynamic_system_filter(column_name='force_index_signal_enter')
 def signal_enter(quote, period=None):
     # if is_long_period(period):
     #     quote = quote.assign(force_index_signal_enter=numpy.nan)
