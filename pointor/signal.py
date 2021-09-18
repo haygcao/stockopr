@@ -14,42 +14,11 @@ import acquisition.quote_www as quote_www
 import pointor.signal_gd as signal_gd
 import dealer.bought as basic
 from config import config
+from config.signal_config import signal_func
 from indicator import dynamical_system, second_stage
-from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
-    signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume_ad, signal_blt, signal_vcp, \
-    signal_step, signal_step_breakout
+from pointor import signal_stop_loss
 from util import util
 
-
-signal_func = {
-    "dynamical_system_signal_enter": signal_dynamical_system.signal_enter,
-    "channel_signal_enter": signal_channel.signal_enter,
-    "force_index_signal_enter": signal_force_index.signal_enter,
-    "ema_value_signal_enter": signal_ema_value.signal_enter,
-    "blt_signal_enter": signal_blt.signal_enter,
-    "vcp_signal_enter": signal_vcp.signal_enter,
-    "step_signal_enter": signal_step.signal_enter,
-    "step_breakout_signal_enter": signal_step_breakout.signal_enter,
-    "volume_ad_signal_enter": signal_volume_ad.signal_enter,
-    "resistance_support_signal_enter": signal_resistance_support.signal_enter,
-    "force_index_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
-    "volume_ad_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
-    "skdj_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
-    "rsi_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
-    "macd_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
-
-    "dynamical_system_signal_exit": signal_dynamical_system.signal_exit,
-    "channel_signal_exit": signal_channel.signal_exit,
-    "force_index_signal_exit": signal_force_index.signal_exit,
-    "volume_ad_signal_exit": signal_volume_ad.signal_exit,
-    "resistance_support_signal_exit": signal_resistance_support.signal_exit,
-    "force_index_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
-    "volume_ad_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
-    "skdj_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
-    "rsi_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
-    "macd_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
-    "stop_loss_signal_exit": signal_stop_loss.signal_exit
-  }
 
 
 def gen_cache_path(code, date, period):
@@ -213,6 +182,8 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
         if 'signal_exit' not in quote.columns:
             quote.insert(len(quote.columns), 'signal_exit', numpy.nan)
+
+        dump(quote, period)
 
     # 处理系统外交易信号
     supplemental_signal_path = config.supplemental_signal_path
@@ -406,9 +377,6 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     # if 'stop_loss_signal_exit' in quote_copy.columns:
     #     quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
     # quote_copy = signal_stop_loss.signal_exit(quote_copy)
-
-    if compute:
-        dump(quote_copy, period)
 
     return quote_copy
 
