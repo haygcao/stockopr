@@ -10,6 +10,8 @@ pip install matplotlib==3.2.2
 但会导致其他问题
 
 因为 warnings 属于标准库, 所以直接 import warnings, 问题解决
+
+功能需要支持, 最终盈亏topN, 最大收益/最大回辙
 """
 import functools
 import json

@@ -289,6 +289,7 @@ class Panel(QWidget):
         self.init_indicator()
 
         ###
+        # TODO 信号下拉复选框点击 ALL 时报错
         h_layout_signal = QHBoxLayout()
 
         for combo in self.combo_signal.values():
@@ -580,6 +581,7 @@ class Panel(QWidget):
             print('stock')
             indicator = self.indicator if self.indicator in g_indicators else g_indicators[0]
         print('{} {} {}'.format(self.code, self.period, indicator))
+        # TODO multiprocessing 不支持, threading 打开图时会重新打开之前关闭的图
         # p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, indicator))
         p = threading.Thread(target=chart.open_graph, args=(self.code, self.period, indicator))
         p.start()

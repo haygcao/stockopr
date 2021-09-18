@@ -344,11 +344,15 @@ def get_price_info_df_db(code, days=0, end_date=None, period_type='D', conn=None
     else:
         df = get_price_info_df_db_day(code, days, end_date, conn)
 
-    price_divisor = basic.get_stock_price_divisor(code)
-    if price_divisor:
-        divisor_date = price_divisor['price_divisor_date']
-        yest_close_adjust = float(price_divisor['price_divisor_adj_price'])
-        df = compute_price_divisor(df, divisor_date=divisor_date, yest_close_adjust=yest_close_adjust)
+    price_divisors = basic.get_stock_price_divisor(code)
+    if price_divisors:
+        divisor_date = None
+        divisor_date_prev = None
+        for price_divisor in price_divisors:
+            divisor_date_prev = divisor_date
+            divisor_date = price_divisor['price_divisor_date']
+            yest_close_adjust = float(price_divisor['price_divisor_adj_price'])
+            df = compute_price_divisor(df, divisor_date, yest_close_adjust, divisor_date_prev)
 
     if period_type == 'D':
         return df
@@ -471,12 +475,14 @@ def compute_price_after_exit_right(close, paixi, songgu):
     return (close - paixi / 10) * 10 / (10 + songgu)
 
 
-def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust=34.34):
-    df = quote.loc[:divisor_date]
+def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust, divisor_date_prev):
+    date_begin = divisor_date_prev + datetime.timedelta(days=1) if divisor_date_prev else None
+    date_begin = None
+    df = quote.loc[date_begin:divisor_date]
     if df.empty:
         return quote
 
-    if df.index[-1] < divisor_date:
+    if df.index[-1] < divisor_date or df.index[0] >= divisor_date:
         return quote
 
     if df.index[-1] != divisor_date:
@@ -496,6 +502,6 @@ def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust=3
         df_copy.loc[:, column] = v
     df_copy.loc[:, 'close'] = apd
 
-    quote.loc[:divisor_date] = df_copy
+    quote.loc[date_begin:divisor_date] = df_copy
 
     return quote

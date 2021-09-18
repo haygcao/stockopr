@@ -66,6 +66,7 @@ def get_cache_file(code, period):
     if not fname.exists():
         return
 
+    # TODO cache 清理
     # if (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds > 3 * 60:
     #     os.remove(cache_file)
     #     return

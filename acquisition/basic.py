@@ -94,13 +94,16 @@ def get_stock_price_divisor(code):
     with mysqlcli.get_cursor() as c:
         sql = "SELECT date price_divisor_date, yest_close price_divisor_adj_price from {} e, {} q " \
               "where category = 1 and e.code = '{}' and q.code = e.code and e.date = q.trade_date " \
-              "order by e.date desc limit 1".format(config.sql_tab_equity, config.sql_tab_quote, code)
+              "order by e.date".format(config.sql_tab_equity, config.sql_tab_quote, code)
 
         c.execute(sql)
-        price_divisor_info = c.fetchone()
-        if not price_divisor_info or not price_divisor_info['price_divisor_date']:
-            return None
-        return price_divisor_info
+        price_divisor_infos = []
+        r = c.fetchall()
+        for price_divisor_info in r:
+            if not price_divisor_info or not price_divisor_info['price_divisor_date']:
+                continue
+            price_divisor_infos.append(price_divisor_info)
+        return price_divisor_infos
 
 
 # insert new row
