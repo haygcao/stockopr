@@ -43,7 +43,8 @@ signal_func = {
 # rps
 # dmi
 
-mask_trend_up = ['mask_dyn_sys_long_period', 'mask_dyn_sys', 'mask_slow_ma_ins', 'mask_diff_fma_sma_ins']
+mask_trend_up = [
+    'mask_dyn_sys_long_period', 'mask_dyn_sys', 'mask_slow_ma_ins', 'mask_diff_fma_sma_ins', 'mask_ad', 'mask_rps']
 
 signal_mask_column = {
   "macd_signal_enter": [],

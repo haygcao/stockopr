@@ -206,7 +206,7 @@ def check_list(quote, period):
         return ERROR.E_WEAKER_THAN_MARKET
 
     quote = ad.compute_ad(quote)
-    if quote['ad'] < quote['ad_ema']:
+    if quote['ad'] < quote['ad_ma']:
         return ERROR.E_AD_INC
 
     return ERROR.OK

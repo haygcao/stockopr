@@ -2,7 +2,7 @@
 import numpy
 
 from config import config
-from indicator import dmi
+from indicator import dmi, ad, relative_price_strength
 
 
 def compute_enter_mask(quote, period):
@@ -49,8 +49,22 @@ def compute_enter_mask(quote, period):
     quote = quote.assign(mask_dmi=mask)
 
     # ad
+    quote = ad.compute_ad(quote)
+    # ad_ma 向上
+    mask1 = quote['ad_ma'] < quote['ad_ma'].shift(periods=1)
+    # ad > ad_ma
+    mask2 = quote['ad'] < quote['ad_ma']
+    mask = mask1 | mask2
+    quote = quote.assign(mask_ad=mask)
 
     # rps
+    quote = relative_price_strength.relative_price_strength(quote)
+    # rps_ma 向上
+    mask1 = quote['erpsmaq'] < quote['erpsmaq'].shift(periods=1)
+    # rps > rps_ma
+    mask2 = quote['rpsmaq'] < quote['erpsmaq']
+    mask = mask1 | mask2
+    quote = quote.assign(mask_rps=mask)
 
     return quote
 

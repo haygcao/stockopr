@@ -18,7 +18,7 @@ def signal(quote, direct=1):
     adosc_shift = quote['adosc'].shift(periods=1)
     # adosc_shift_2 = quote['adosc'].shift(periods=2)
 
-    diff = quote.ad - quote.ad_ema
+    diff = quote.ad - quote.ad_ma
     diff_shift = diff.shift(periods=1)
 
     # mask1 = (direct * adosc_shift_2 < 0) & (direct * adosc_shift >= 0) & (direct * quote.adosc > direct * adosc_shift)
