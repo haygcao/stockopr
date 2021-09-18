@@ -23,7 +23,6 @@ def compute_index(quote, period=None):
     quote = ema_value.ema_value(quote, period, 13, 26)
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
     quote = ema.compute_ema(quote)
-    quote = dmi.compute_dmi(quote)
 
     return quote
 
@@ -35,12 +34,5 @@ def signal_enter(quote, period=None):
 
     quote_copy = quote  # .copy()
     quote_copy.insert(len(quote_copy.columns), 'ema_value_signal_enter', quote_copy.ema_value)
-
-    # 利用 dmi 过滤掉振荡走势中的信号
-    mask1 = quote_copy['adx'] < quote_copy['pdi']
-    mask2 = quote_copy['pdi'] < quote_copy['mdi']
-    mask3 = quote_copy['adx'] < 50
-    mask = mask1 | mask2 | mask3
-    quote_copy['ema_value_signal_enter'] = quote_copy['ema_value_signal_enter'].mask(mask, numpy.nan)
 
     return quote_copy

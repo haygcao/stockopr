@@ -51,8 +51,6 @@ def compute_index(quote, period=None):
     # 强力指数
     quote = force_index.force_index(quote)
 
-    quote = dmi.compute_dmi(quote)
-
     return quote
 
 
@@ -88,14 +86,6 @@ def signal_enter(quote, period=None):
     mask = mask1 & mask2 & mask3  # & mask4
 
     quote_copy[signal_column] = quote_copy[signal_column].mask(mask, quote_copy['low'])
-
-    # 过滤掉振荡走势中的信号
-    # 利用 dmi 过滤掉振荡走势中的信号
-    mask1 = quote_copy['adx'] < quote_copy['pdi']
-    mask2 = quote_copy['pdi'] < quote_copy['mdi']
-    mask3 = quote_copy['adx'] < 50
-    mask = mask1 | mask2 | mask3
-    quote_copy[signal_column] = quote_copy[signal_column].mask(mask, numpy.nan)
 
     # quote_copy.loc[:, 'force_index_signal_enter'] = force_index_signal_enter.mask(
     #     quote_copy['dyn_sys_long_period'] < 0, numpy.nan)

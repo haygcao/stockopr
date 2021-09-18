@@ -6,7 +6,6 @@ from indicator.decorator import computed, dynamic_system_filter
 
 def compute_index(quote, period=None):
     quote = ad.compute_ad(quote)
-    quote = dmi.compute_dmi(quote)
 
     return quote
 
@@ -42,14 +41,6 @@ def signal_enter(quote, period=None):
     quote = compute_index(quote, period)
 
     quote = signal(quote, direct=1)
-
-    signal_column = 'volume_ad_signal_enter'
-    # 利用 dmi 过滤掉振荡走势中的信号
-    mask1 = quote['adx'] < quote['pdi']
-    mask2 = quote['adx'] < quote['mdi']
-    mask3 = quote['pdi'] < quote['mdi']
-    mask = (mask1 & mask2) | mask3
-    quote[signal_column] = quote[signal_column].mask(mask, numpy.nan)
 
     return quote
 

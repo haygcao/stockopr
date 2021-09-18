@@ -158,6 +158,12 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             quote = quote.assign(signal_exit=numpy.nan)
 
     if compute:
+        # 基础指标 - 均线
+        # MA5, MA10, MA20, MA30, MA60, MA120, MA150, MA200, MA12, MA26, MA50, MA100
+        periods = [5, 10, 20, 30, 60, 120, 150, 200, 12, 26, 50, 100]
+        for _p in periods:
+            quote['ma{}'.format(_p)] = quote.close.rolling(_p).mean()
+
         # 基础指标 - 动力系统
         quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 

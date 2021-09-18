@@ -2,6 +2,7 @@
 import numpy
 
 from config import config
+from indicator import dmi
 
 
 def compute_enter_mask(quote, period):
@@ -38,6 +39,14 @@ def compute_enter_mask(quote, period):
     # support
     # pandas.Series.eq()
     quote = quote.assign(mask_support=~(quote.support_signal > config.support_day))
+
+    # dmi
+    quote = dmi.compute_dmi(quote)
+    mask1 = quote['adx'] < quote['pdi']
+    mask2 = quote['pdi'] < quote['mdi']
+    mask3 = quote['adx'] < 50
+    mask = mask1 | mask2 | mask3
+    quote = quote.assign(mask_dmi=mask)
 
     # ad
 
