@@ -17,7 +17,9 @@ import functools
 import json
 import multiprocessing
 import os
+import sys
 
+import matplotlib
 import numpy
 import pandas
 import tqdm
@@ -33,6 +35,9 @@ import backtrader as bt
 
 # https://community.backtrader.com/topic/158/how-to-feed-backtrader-alternative-data/8
 from util.log import logger
+
+
+matplotlib.rcParams['font.sans-serif'] = 'SimHei'
 
 
 class CustomDataLoader(bt.feeds.PandasData):
@@ -208,6 +213,7 @@ def _backtest_one(cash, fromdate, todate, code):
     # data0 = bt.feeds.YahooFinanceData(dataname='MSFT', fromdate=fromdate, todate=todate)
     data0 = bt.feeds.PandasData(dataname=quote, fromdate=fromdate, todate=todate)
     cerebro.adddata(data0)
+
     quote = signal.compute_signal(code, period, quote)
     quote = quote.loc[fromdate:todate]
     open_position_date = quote.signal_enter.first_valid_index()
@@ -218,6 +224,7 @@ def _backtest_one(cash, fromdate, todate, code):
     mask_sell = quote.signal_exit.notna()
     mask_sell = mask_sell.mask(mask_sell.index <= open_position_date, False)
 
+    # 半仓
     size_buy = cash / 2 / quote.close[mask_buy] // 100 * 100
     if numpy.count_nonzero(size_buy <= 0) > 0:
         print('{} - could not buy 100'.format(code))
@@ -256,7 +263,6 @@ def _backtest_one(cash, fromdate, todate, code):
 
 
 def backtest_one(cash, fromdate, todate, code):
-    # cerebro.plot()
     cerebro = _backtest_one(cash, fromdate, todate, code)
     if not cerebro:
         return
@@ -272,9 +278,7 @@ def backtest_one(cash, fromdate, todate, code):
     # 回测采用半仓交易
     percent = round((value - broker.startingcash) / (broker.startingcash / 2), 3)
 
-    cash = int(broker.startingcash * (1 + percent))
-
-    return code, cash
+    return code, percent
 
 
 def show_graph(cash, fromdate, todate, code):
@@ -288,11 +292,11 @@ def show_graph(cash, fromdate, todate, code):
 def backtest_single(cash_start, fromdate, todate, code_list):
     result = {}
     for code in code_list:
-        code_cash = backtest_one(cash_start, fromdate, todate, code)
-        if not code_cash:
+        code_percent = backtest_one(cash_start, fromdate, todate, code)
+        if not code_percent:
             continue
-        print(code_cash)
-        result.update({code_cash[0]: code_cash[1]})
+        print(code_percent)
+        result.update({code_percent[0]: code_percent[1]})
 
     return result
 
@@ -303,10 +307,10 @@ def backtest_mp(cash_start, fromdate, todate, code_list):
     result = {}
     nproc = multiprocessing.cpu_count()
     with multiprocessing.Pool(nproc) as p:
-        for code_cash in tqdm.tqdm(p.imap_unordered(backtest_func, code_list), total=len(code_list), ncols=64):
-            if not code_cash:
+        for code_percent in tqdm.tqdm(p.imap_unordered(backtest_func, code_list), total=len(code_list), ncols=64):
+            if not code_percent:
                 continue
-            result.update({code_cash[0]: code_cash[1]})
+            result.update({code_percent[0]: code_percent[1]})
 
     return result
 
@@ -331,39 +335,40 @@ def backtest(cash_start, fromdate, todate, code_list, mp=True):
 
 def print_profit(result, cash_start):
     l = list(result.items())
-    np_result = pandas.Series([i[1] for i in l], index=[i[0] for i in l])
-    np_result = np_result.sort_values()
-    cashs = list(result.values())
-    cashs.sort()
-    cash_final = sum(result.values())
+    df = pandas.DataFrame([i[1] for i in l], index=[i[0] for i in l], columns=['percent'])
+    df = df.sort_values(by=['percent'])
+    df['cash'] = df['percent'] * cash_start
+
+    cashs = df.cash.to_list()
+    cash_final = df.cash.sum()
     cash_start_final = cash_start * len(result)
     profit = cash_final - cash_start_final
     percent = round(profit / cash_start_final * 100, 3)
     print('cash_start: {}\ncash: {}\nprofit: {}[{}%]'.format(cash_start_final, cash_final, profit, percent))
     print('up: {}\ndown: {}'.format(
-        list(map(lambda x: x > cash_start, cashs)).count(True),
-        list(map(lambda x: x < cash_start, cashs)).count(True)))
-    top_earn = cashs[-50:]
-    top_earn.sort(reverse=True)
-    top_loss = cashs[:50]
-    print('top_earn: {}\ntop_loss: {}'.format(
-        list(map(lambda x: round((x/cash_start - 1) * 100, 3), top_earn)),
-        list(map(lambda x: round((x/cash_start - 1) * 100, 3), top_loss))))
+        numpy.count_nonzero(df.cash > cash_start),
+        numpy.count_nonzero(df.cash < cash_start)))
+
+    top_earn = df.iloc[:30]
+    top_loss = df.iloc[-30:]
+    print('top_earn: {}\ntop_loss: {}'.format(top_earn, top_loss))
 
 
 if __name__ == '__main__':
-    code = '300502'
-    code = '600888'
-    # code = '300598'
-    # code = '002739'
+    if len(sys.argv) > 1:
+        code = sys.argv[1]
+    else:
+        code = '300502'
+        code = '600888'
+        # code = '300598'
+        # code = '002739'
 
-    cash_start = 100000
+    cash_start = 1000000
 
-    fromdate = datetime.datetime(2020, 8, 31)
+    fromdate = datetime.datetime(2019, 1, 1)
     todate = datetime.datetime(2021, 12, 31)
 
-    cash = backtest_one(cash_start, fromdate, todate, code)
-    percent = round((cash / cash_start - 1) * 100, 3)
-
-    print(cash, percent)
-
+    # cash = backtest_one(cash_start, fromdate, todate, code)
+    # percent = round((cash / cash_start - 1) * 100, 3)
+    # print(cash, percent)
+    show_graph(cash_start, fromdate, todate, code)
