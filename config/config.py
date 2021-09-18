@@ -359,10 +359,10 @@ def enabled_signal(signal, period):
 
 
 def enable_signal(signal, enable, period):
-    cache_path = util.util.get_cache_dir()
-    files = glob.glob(os.path.join(cache_path, '[0-9]*-[0-9]*-*.csv'))  # '[0-9]{6}-[0-9]{8}-.*.csv'))
-    for f in files:
-        os.remove(f)
+    # cache_path = util.util.get_cache_dir()
+    # files = glob.glob(os.path.join(cache_path, '[0-9]*-[0-9]*-*.csv'))  # '[0-9]{6}-[0-9]{8}-.*.csv'))
+    # for f in files:
+    #     os.remove(f)
     enable = True if enable else False
     import json
     with open(gen_signal_config_path(period), 'r+') as fp:
