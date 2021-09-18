@@ -16,7 +16,8 @@ import dealer.bought as basic
 from config import config
 from indicator import dynamical_system, second_stage
 from pointor import signal_dynamical_system, signal_channel, signal_market_deviation, signal_force_index, \
-    signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume_ad, signal_blt, signal_vcp, signal_step
+    signal_stop_loss, signal_ema_value, signal_resistance_support, signal_volume_ad, signal_blt, signal_vcp, \
+    signal_step, signal_step_breakout
 from util import util
 
 
@@ -28,6 +29,7 @@ signal_func = {
     "blt_signal_enter": signal_blt.signal_enter,
     "vcp_signal_enter": signal_vcp.signal_enter,
     "step_signal_enter": signal_step.signal_enter,
+    "step_breakout_signal_enter": signal_step_breakout.signal_enter,
     "volume_ad_signal_enter": signal_volume_ad.signal_enter,
     "resistance_support_signal_enter": signal_resistance_support.signal_enter,
     "force_index_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
@@ -178,33 +180,39 @@ def get_date_period(date, period, quote_date_index):
 
 def compute_signal(code, period, quote, supplemental_signal_path=None):
     file = get_cache_file(code, period)
+    compute = True
     if file:
-        data = load(code, period)
-        return data
+        quote_bk = load(code, period)
+        compute = quote_bk.empty
+        if not compute:
+            quote = quote_bk
+            quote = quote.assign(signal_enter=numpy.nan)
+            quote = quote.assign(signal_exit=numpy.nan)
 
-    # 基础指标 - 动力系统
-    quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
+    if compute:
+        # 基础指标 - 动力系统
+        quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
-    # 第二阶段
-    quote = second_stage.second_stage(quote, period)
+        # 第二阶段
+        quote = second_stage.second_stage(quote, period)
 
-    # 计算所有信号, 缓存以加速回测分析
-    signal_all_list = config.get_all_signal(period)
-    for s in signal_all_list:
-        if s not in signal_func:
-            continue
-        if s == 'stop_loss_signal_exit':
-            continue
-        if 'market_deviation' in s:
-            column = s[:s.index('_signal')]
-            quote = signal_func[s](quote, period=period, column=column)
-            continue
-        quote = signal_func[s](quote, period=period)
+        # 计算所有信号, 缓存以加速回测分析
+        signal_all_list = config.get_all_signal(period)
+        for s in signal_all_list:
+            if s not in signal_func:
+                continue
+            if s == 'stop_loss_signal_exit':
+                continue
+            if 'market_deviation' in s:
+                column = s[:s.index('_signal')]
+                quote = signal_func[s](quote, period=period, column=column)
+                continue
+            quote = signal_func[s](quote, period=period)
 
-    if 'signal_enter' not in quote.columns:
-        quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
-    if 'signal_exit' not in quote.columns:
-        quote.insert(len(quote.columns), 'signal_exit', numpy.nan)
+        if 'signal_enter' not in quote.columns:
+            quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
+        if 'signal_exit' not in quote.columns:
+            quote.insert(len(quote.columns), 'signal_exit', numpy.nan)
 
     # 处理系统外交易信号
     supplemental_signal_path = config.supplemental_signal_path
@@ -399,7 +407,8 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     #     quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
     # quote_copy = signal_stop_loss.signal_exit(quote_copy)
 
-    dump(quote_copy, period)
+    if compute:
+        dump(quote_copy, period)
 
     return quote_copy
 
