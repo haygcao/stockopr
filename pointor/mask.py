@@ -1,6 +1,8 @@
 # -*- encoding: utf-8 -*-
 import numpy
 
+from config import config
+
 
 def compute_enter_mask(quote, period):
     # quote.loc[:]['mask_second_stage'] = (quote['second_stage'] == 0)
@@ -26,6 +28,16 @@ def compute_enter_mask(quote, period):
     macd_line_shift = macd_line.shift(periods=1)
     # quote.loc[:]['mask_diff_fma_sma_ins'] = (macd_line <= macd_line_shift)
     quote = quote.assign(mask_diff_fma_sma_ins=(macd_line <= macd_line_shift))
+
+    # step
+    quote = quote.assign(mask_step=(~quote.step_ma.isin(config.step_mas)))
+
+    # resistance
+    quote = quote.assign(mask_resistance=~(quote.resistance_signal > config.resistance_day))
+
+    # support
+    # pandas.Series.eq()
+    quote = quote.assign(mask_support=~(quote.support_signal > config.support_day))
 
     # ad
 

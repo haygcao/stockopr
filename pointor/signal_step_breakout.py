@@ -2,7 +2,7 @@
 import numpy
 import pandas
 
-from indicator import force_index, dynamical_system, ema, dmi, step
+from indicator import step
 from indicator.decorator import computed, ignore_long_period, dynamic_system_filter, second_stage_filter
 from pointor import signal_resistance_support
 

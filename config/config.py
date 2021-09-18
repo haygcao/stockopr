@@ -501,6 +501,10 @@ resistance_over_rate = 0.02
 support_under_rate = 0.02
 resistance_support_backdays = 1
 
+step_mas = [20, 30, 60]
+resistance_day = 60
+support_day = 10
+
 supplemental_signal_path = os.path.join(config_dir, '..', 'data/trade.csv')
 signal_log_path = os.path.join(config_dir, '..', 'log/signal.log')
 scan_log_path = os.path.join(config_dir, '..', 'log/scan.log')

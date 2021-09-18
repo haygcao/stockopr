@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy
 
+from config import config
 from indicator import force_index, dynamical_system, ema, dmi, step
 from indicator.decorator import computed, ignore_long_period, dynamic_system_filter
 
