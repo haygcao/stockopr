@@ -49,16 +49,15 @@ def second_stage(quote, period):
     mask3 = ma_xxl < ma_xl
 
     # close up
-    low = quote.close.rolling(n['l']).min()
-    mask4 = quote.close/low - 1 > 0.2
+    mask4 = ma_xxs/ma_xxl - 1 > 0.2
 
     mask5 = (ma_xl < ma_l) & (ma_l < ma_m)  # & (ma_m < ma_s) & (ma_s < ma_xs) & (ma_xs < ma_xxs)
 
     mask = mask1 & mask2 & mask3 & mask4 & mask5
 
-    # quote.insert(len(quote.columns), 'second_stage', mask)
-    #
-    # return quote
+    quote.insert(len(quote.columns), 'second_stage', mask)
+
+    return quote
 
     up_percent = 7
     up_day_mask = quote.percent > up_percent
