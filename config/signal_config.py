@@ -1,4 +1,4 @@
-from pointor import signal_dynamical_system, signal_channel, signal_force_index, signal_ema_value, signal_blt, \
+from pointor import signal_dynamical_system, signal_channel, signal_force_index, signal_value_return, signal_blt, \
   signal_vcp, signal_step, signal_step_breakout, signal_volume_ad, signal_resistance_support, signal_market_deviation, \
   signal_stop_loss
 
@@ -7,7 +7,7 @@ signal_func = {
     "dynamical_system_signal_enter": signal_dynamical_system.signal_enter,
     "channel_signal_enter": signal_channel.signal_enter,
     "force_index_signal_enter": signal_force_index.signal_enter,
-    "ema_value_signal_enter": signal_ema_value.signal_enter,
+    "value_return_signal_enter": signal_value_return.signal_enter,
     "blt_signal_enter": signal_blt.signal_enter,
     "vcp_signal_enter": signal_vcp.signal_enter,
     "step_signal_enter": signal_step.signal_enter,
@@ -53,7 +53,7 @@ signal_mask_column = {
   "dynamical_system_signal_enter": mask_trend_up,
   "channel_signal_enter": [],
   "resistance_support_signal_enter": ['mask_resistance'] + mask_trend_up + ['mask_second_stage'],
-  "ema_value_signal_enter": mask_trend_up + ['mask_dmi'],
+  "value_return_signal_enter": mask_trend_up + ['mask_dmi'] + ['mask_value_return'],
   "blt_signal_enter": mask_trend_up + ['mask_dmi'],
   "vcp_signal_enter": mask_trend_up,
   "step_signal_enter": ['mask_step'] + mask_trend_up + ['mask_step'],

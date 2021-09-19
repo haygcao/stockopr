@@ -27,7 +27,7 @@ import selector.plugin.strong_variability as strong_variability
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
     base_breakout, blt, vcp, strong_base, amplitude, value_return
-from selector.plugin import ema_value
+from selector.plugin import value_return
 from selector.plugin import dynamical_system
 from selector.plugin import force_index
 from util import qt_util, dt
@@ -51,12 +51,11 @@ selector = {
     'down_p': down.down_p,
     'amplitude': amplitude.amplitude,
     'bull_deviation': market_deviation.market_deviation,   # 牛市背离
-    'ema_value': ema_value.ema_value,   # 价值回归
+    'value_return': value_return.value_return,   # 价值回归
     'super': super.super,
     'second_stage': second_stage.second_stage,   # 第二阶段
     'magic_line': magic_line.magic_line,
     'base_breakout': base_breakout.base_breakout,
-    'value_return': value_return.value_return,
     'blt': blt.blt,
     'vcp': vcp.vcp,
     'strong_base': strong_base.strong_base,

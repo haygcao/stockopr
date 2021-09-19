@@ -501,6 +501,7 @@ resistance_over_rate = 0.02
 support_under_rate = 0.02
 resistance_support_backdays = 1
 
+value_return_mas = [26]
 step_mas = [20, 30, 60]
 resistance_day = 60
 support_day = 10

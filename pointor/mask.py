@@ -31,6 +31,9 @@ def compute_enter_mask(quote, period):
     quote = quote.assign(mask_diff_fma_sma_ins=(macd_line <= macd_line_shift))
 
     # step
+    quote = quote.assign(mask_value_return=(~quote.value_return.isin(config.value_return_mas)))
+
+    # step
     quote = quote.assign(mask_step=(~quote.step_ma.isin(config.step_mas)))
 
     # resistance

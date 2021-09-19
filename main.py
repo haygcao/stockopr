@@ -43,8 +43,8 @@ def test_select():
 def test_select_mp():
     import selector.selector as selector
     import acquisition.basic as basic
-    strategy_name_list = ['ema_value']
-    strategy_name_list = ['hot_strong', 'ema_value']
+    strategy_name_list = ['value_return']
+    strategy_name_list = ['hot_strong', 'value_return']
     strategy_name_list = ['bull_at_bottom']
     stock_list = selector.select(strategy_name_list, ['second_stage'])
     for code, name in stock_list:

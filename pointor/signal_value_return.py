@@ -3,7 +3,7 @@ import numpy
 
 from config import config
 from config.config import is_long_period
-from indicator import force_index, dynamical_system, ema, dmi, ema_value
+from indicator import force_index, dynamical_system, ema, dmi, value_return
 from indicator.decorator import computed, ignore_long_period, dynamic_system_filter
 
 
@@ -20,19 +20,18 @@ def function_enter(low, close, dyn_sys_long_period, dyn_sys, dyn_sys_ema13, ema1
 
 
 def compute_index(quote, period=None):
-    quote = ema_value.ema_value(quote, period, 13, 26)
-    quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
-    quote = ema.compute_ema(quote)
+    quote = value_return.value_return(quote, period)
 
     return quote
 
 
-@computed(column_name='ema_value_signal_enter')
-@ignore_long_period(column_name='ema_value_signal_enter')
+@computed(column_name='value_return_signal_enter')
+@ignore_long_period(column_name='value_return_signal_enter')
 def signal_enter(quote, period=None):
     quote = compute_index(quote, period)
 
     quote_copy = quote  # .copy()
-    quote_copy.insert(len(quote_copy.columns), 'ema_value_signal_enter', quote_copy.ema_value)
+    values = quote_copy.value_return.mask(quote_copy.value_return.notna(), quote_copy.low)
+    quote_copy.insert(len(quote_copy.columns), 'value_return_signal_enter', values)
 
     return quote_copy

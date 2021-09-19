@@ -247,7 +247,7 @@ class Panel(QWidget):
         # self.combo_strategy = QComboBox(self)
 
         for indicator in ['value_return', 'magic_line', 'blt', 'vcp', 'step', 'base_breakout', 'bull_deviation',
-                          'ema_value']:
+                          'value_return']:
             self.combo_strategy.addItem(indicator)
         # self.combo_strategy.setCurrentIndex(1)
         self.combo_strategy.select_text('step')

@@ -52,7 +52,7 @@ def compute_index(quote, period):
     #     deviation = quote['macd_bull_market_deviation_signal_enter']
     #     signal_enter_merged = signal_enter_merged.combine(deviation, func=lambda x1, x2: func(x1, x2))
 
-    column_list = ['macd_bull_market_deviation_signal_enter', 'ema_value_signal_enter']
+    column_list = ['macd_bull_market_deviation_signal_enter', 'value_return_signal_enter']
     # column_list = ['macd_bull_market_deviation_signal_enter']
     for column in column_list:
         if not config.enabled_signal(column, period):
@@ -66,7 +66,7 @@ def compute_index(quote, period):
             if numpy.isnan(series.iloc[i]):
                 continue
 
-            if column != 'ema_value_signal_enter':
+            if column != 'value_return_signal_enter':
                 signal_enter_merged.iloc[i] = series.iloc[i]
                 continue
 
