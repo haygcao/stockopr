@@ -57,7 +57,9 @@ def compute_high_low(quote, compute_high=True, weak=False):
     # for i in range(1, len(close_high_low) - 1, 2):
     close_high_low = filter_high_low(adj, close_high_low, days_before, days_before_after, weak)
 
-    quote['{}_period'.format(agg)] = quote.close.mask(~quote.index.isin(close_high_low.index), numpy.nan)
+    column = '{}_period'.format(agg)
+    column = 'weak_' + column if weak else column
+    quote[column] = quote.close.mask(~quote.index.isin(close_high_low.index), numpy.nan)
 
     return quote
 
@@ -190,7 +192,7 @@ def market_deviation_force_index(quote, period, will):
     # import ipdb;
     # ipdb.set_trace()
     # n = 13 if is_long_period(period) else 2
-    n = 13
+    n = 13 * 5 if period == 'day' else 13
     quote = force_index.force_index(quote, n=n)
 
     column_name = 'force_index_bull_market_deviation' if will == 1 else 'force_index_bear_market_deviation'

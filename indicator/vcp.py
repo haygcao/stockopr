@@ -89,10 +89,10 @@ def vcp_one_day(quote, high_index, low_index, ema_s, ema_v_s, back_day):
 def vcp(quote, period, back_days=60):
     # vcp 使用日数据
     s = 2
-    periods = [s, 5, 10, 20]
-    mas = {}
+    periods = [5, 10, 20]
+    mas = {2: quote.close.rolling(2).mean()}
     for p in periods:
-        mas.update({p: quote.close.rolling(p).mean()})
+        mas.update({p: quote['ma{}'.format(p)]})
 
     ema_v_s = quote.volume.rolling(s).mean()
 

@@ -82,6 +82,7 @@ def mask_signal(quote, column, column_mask):
         return quote
 
     column_op = column.replace('enter', 'exit')
+    column_op = column_op if 'deviation' not in column else column_op.replace('bull', 'bear')
     mask_shift = mask.shift(periods=1)
     quote.loc[:, column_op] = quote[column_op].mask((mask_shift == False) & (mask == True), quote.high)
 

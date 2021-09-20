@@ -142,10 +142,10 @@ def blt_one_day(quote, emas, vol_ma, back_day, var_ma):
 @computed(column_name='blt')
 def blt(quote, period, back_days=125):
     # blt 使用日数据
-    periods = [2, 5, 10, 20]
-    mas = {}
+    periods = [5, 10, 20]
+    mas = {2: quote.close.rolling(2).mean()}
     for p in periods:
-        mas.update({p: quote.close.rolling(p).mean()})
+        mas.update({p: quote['ma{}'.format(p)]})
 
     vol_ma = quote.volume.rolling(2).mean()
     quote.insert(len(quote.columns), 'blt', numpy.nan)

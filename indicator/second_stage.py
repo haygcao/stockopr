@@ -33,13 +33,13 @@ def second_stage(quote, period):
         'xxl': 200
     }
 
-    ma_xxs = quote.close.rolling(n['xxs']).mean()
-    ma_xs = quote.close.rolling(n['xs']).mean()
-    ma_s = quote.close.rolling(n['s']).mean()
-    ma_m = quote.close.rolling(n['m']).mean()
-    ma_l = quote.close.rolling(n['l']).mean()   # 20W
-    ma_xl = quote.close.rolling(n['xl']).mean()   # 30W
-    ma_xxl = quote.close.rolling(n['xxl']).mean()  # 40W
+    ma_xxs = quote['ma{}'.format(n['xxs'])]
+    ma_xs = quote['ma{}'.format(n['xs'])]
+    ma_s = quote['ma{}'.format(n['s'])]
+    ma_m = quote['ma{}'.format(n['m'])]
+    ma_l = quote['ma{}'.format(n['l'])]
+    ma_xl = quote['ma{}'.format(n['xl'])]
+    ma_xxl = quote['ma{}'.format(n['xxl'])]
 
     mask1 = quote.close > ma_xxl
 

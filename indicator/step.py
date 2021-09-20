@@ -23,7 +23,7 @@ def step(quote, period):
     df_mas_shift_1 = pandas.DataFrame()
     df_mas_shift_2 = pandas.DataFrame()
     for p in ma_periods + [120, 150]:
-        df_mas[p] = quote.close.rolling(p).mean()
+        df_mas[p] = quote['ma{}'.format(p)]
         df_mas_shift_1[p] = df_mas[p].shift(periods=1)
         df_mas_shift_2[p] = df_mas[p].shift(periods=2)
         df_mas_shift_p[p] = df_mas[p].shift(periods=p)

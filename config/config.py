@@ -493,7 +493,7 @@ period_price_diff_ratio_resistance_support_map = {
     'm15': 0.01,
     'm30': 0.02,
     'm60': 0.02,
-    'day': 0.02,
+    'day': 0.04,
     'week': 0.04
 }
 
