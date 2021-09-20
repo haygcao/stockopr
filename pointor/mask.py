@@ -7,7 +7,14 @@ from indicator import dmi, ad, relative_price_strength
 
 def compute_enter_mask(quote, period):
     # quote.loc[:]['mask_second_stage'] = (quote['second_stage'] == 0)
-    quote = quote.assign(mask_second_stage=(quote['second_stage'] == 0))
+    # pandas.Series 不能使用 is False, e.g.
+    # >>> s1 is False
+    # False
+    # >>> s1 == False
+    # 2021-09-14    False
+    # 2021-09-15    False
+    # dtype: bool
+    quote = quote.assign(mask_second_stage=(quote['second_stage'] == False))
 
     # 动量系统
     # quote.loc[:]['mask_dyn_sys_long_period'] = (quote['dyn_sys_long_period'] < 0)

@@ -45,7 +45,7 @@ signal_func = {
 # dmi
 
 mask_trend_up = [
-    'mask_dyn_sys_long_period', 'mask_dyn_sys', 'mask_slow_ma_ins', 'mask_diff_fma_sma_ins', 'mask_ad', 'mask_rps']
+    'mask_dyn_sys_long_period', 'mask_dyn_sys', 'mask_slow_ma_ins', 'mask_diff_fma_sma_ins', 'mask_ad', 'mask_rps', 'mask_second_stage']
 
 signal_mask_column = {
     "macd_signal_enter": [],
@@ -60,7 +60,7 @@ signal_mask_column = {
     "step_signal_enter": ['mask_step'] + mask_trend_up + ['mask_step'],
     "step_breakout_signal_enter": ['mask_step'] + mask_trend_up + ['mask_second_stage'] + ['mask_step'],
     "weak_signal_enter": [],  # mask_trend_up,
-    "macd_bull_market_deviation_signal_enter": [],
+    "macd_bull_market_deviation_signal_enter": ['mask_second_stage'],  # ['mask_dyn_sys_long_period'], # ['second_stage'],
     "force_index_bull_market_deviation_signal_enter": [],
     "volume_ad_bull_market_deviation_signal_enter": [],
     "skdj_bull_market_deviation_signal_enter": [],

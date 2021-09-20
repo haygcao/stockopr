@@ -349,8 +349,8 @@ def print_profit(result, cash_start):
         numpy.count_nonzero(df.cash > cash_start),
         numpy.count_nonzero(df.cash < cash_start)))
 
-    top_earn = df.iloc[:30]
-    top_loss = df.iloc[-30:]
+    top_earn = df.iloc[-30:]
+    top_loss = df.iloc[:30]
     print('top_earn: {}\ntop_loss: {}'.format(top_earn, top_loss))
 
 
