@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 import numpy
 
-from config import config
+from config import config, signal_config
 from indicator import dmi, ad, relative_price_strength
 
 
@@ -75,4 +75,14 @@ def compute_enter_mask(quote, period):
 def mask_signal(quote, column, column_mask):
     mask = quote[column_mask]
     quote.loc[:, column] = quote[column].mask(mask, numpy.nan)
+
+    if column_mask not in signal_config.mask_trend_up:
+        return quote
+    if 'exit' in column:
+        return quote
+
+    column_op = column.replace('enter', 'exit')
+    mask_shift = mask.shift(periods=1)
+    quote.loc[:, column_op] = quote[column_op].mask((mask_shift == False) & (mask == True), quote.high)
+
     return quote
