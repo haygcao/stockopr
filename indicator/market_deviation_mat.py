@@ -8,7 +8,7 @@ from indicator.decorator import dynamic_system_filter, computed
 from util.macd import macd
 
 
-def compute_high_low(quote, compute_high=True):
+def compute_high_low(quote, compute_high=True, weak=False):
     """
     以高点计算为例
     1 低于往前20天的高点, 忽略   更低的高点
@@ -55,6 +55,15 @@ def compute_high_low(quote, compute_high=True):
     # days = close_high_low.index - close_high_low_shift.index
 
     # for i in range(1, len(close_high_low) - 1, 2):
+    close_high_low = filter_high_low(adj, close_high_low, days_before, days_before_after, weak)
+
+    quote['{}_period'.format(agg)] = quote.close.mask(~quote.index.isin(close_high_low.index), numpy.nan)
+
+    return quote
+
+
+def filter_high_low(adj, close_high_low, days_before, days_before_after, weak=False):
+    adj = adj if not weak else -adj
     i = 1
     i_prev = i - 1
     i_ignore_set = set()
@@ -113,19 +122,14 @@ def compute_high_low(quote, compute_high=True):
             i_prev += 1
             i = i + 1 if i == i_prev else i
             continue
-
     reset_invalid_value(close_high_low, i_valid, i_ignore_set, i_prev_valid)
-
     if len(close_high_low) > 1 and (close_high_low.index[-1] - close_high_low.index[-2]).days > days_before_after:
         close_high_low.iat[-1] = numpy.nan
-
     close_high_low = close_high_low[close_high_low.notna()]
     if len(close_high_low) % 2 == 1:
         close_high_low = close_high_low.iloc[:-1]
 
-    quote['{}_period'.format(agg)] = quote.close.mask(~quote.index.isin(close_high_low.index), numpy.nan)
-
-    return quote
+    return close_high_low
 
 
 def reset_invalid_value(close_high_low, i, i_ignore_set, i_prev):

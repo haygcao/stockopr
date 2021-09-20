@@ -224,7 +224,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         write_signal_log(direct, code, period, column, n, data, header)
         header = False
 
-        for column_mask in signal_mask_column[column]:
+        for column_mask in signal_mask_column.get(column, []):
             quote_copy = mask.mask_signal(quote_copy, column, column_mask)
 
         quote_copy.loc[:, direct] = quote_copy.apply(
