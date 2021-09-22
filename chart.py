@@ -942,8 +942,9 @@ def open_graph(code, peroid, indicator, path=None):
     print('indicator: {}, oscillatior: {}'.format(indicator, oscillatior))
     candle = DataFinanceDraw(code, peroid)
 
-    if signal.get_cache_file(code, peroid):
-        candle.data_origin = signal.load(code, peroid)
+    file = signal.get_cache_file(code, peroid)
+    if file:
+        candle.data_origin = signal.load(file)
     else:
         if path:
             candle.load_data(path)

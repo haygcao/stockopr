@@ -14,13 +14,15 @@ import acquisition.quote_www as quote_www
 import pointor.signal_gd as signal_gd
 import dealer.bought as basic
 from config import config
-from config.signal_config import signal_func, signal_mask_column
+from config.signal_config import signal_func
+from config.signal_mask import signal_mask_column
 from indicator import dynamical_system, second_stage
 from pointor import signal_stop_loss, mask
 from util import util
 
 
-def gen_cache_path(code, date, period):
+def gen_cache_path(code, date=None, period='day'):
+    date = date if date else datetime.date.today()
     file = '{}-{}-{}.csv'.format(code, date.strftime('%Y%m%d'), period)
     dir_name = util.get_cache_dir()
 
@@ -29,7 +31,7 @@ def gen_cache_path(code, date, period):
 
 # signal 计算需要支持 multiprocessing
 def get_cache_file(code, period):
-    cache_file = gen_cache_path(code, datetime.date.today(), period)
+    cache_file = gen_cache_path(code, period=period)
     # dir_name = os.path.dirname(cache_file)
 
     fname = pathlib.Path(cache_file)
@@ -44,8 +46,7 @@ def get_cache_file(code, period):
     return cache_file
 
 
-def dump(data, period):
-    file = gen_cache_path(data.code[-1], datetime.date.today(), period)
+def dump(data, file):
     if os.path.exists(file):
         os.remove(file)
 
@@ -54,8 +55,7 @@ def dump(data, period):
     data.to_csv(file)
 
 
-def load(code, period):
-    file = gen_cache_path(code, datetime.date.today(), period)
+def load(file):
     data = pandas.read_csv(file)
 
     data['date'] = pandas.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S')
@@ -150,7 +150,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     file = get_cache_file(code, period)
     compute = True
     if file:
-        quote_bk = load(code, period)
+        quote_bk = load(file)
         compute = quote_bk.empty
         if not compute:
             quote = quote_bk
@@ -177,7 +177,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
                 continue
             if s == 'stop_loss_signal_exit':
                 continue
-            if 'market_deviation' in s:
+            if 'market_deviation' in s or 'breakout' in s:
                 column = s[:s.index('_signal')]
                 quote = signal_func[s](quote, period=period, column=column)
                 continue
@@ -191,7 +191,8 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         if 'signal_exit' not in quote.columns:
             quote.insert(len(quote.columns), 'signal_exit', numpy.nan)
 
-        dump(quote, period)
+        file = gen_cache_path(code, period=period)
+        dump(quote, file)
 
     # 处理系统外交易信号
     supplemental_signal_path = config.supplemental_signal_path

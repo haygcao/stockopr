@@ -229,8 +229,9 @@ def update_status(code, data, period):
 
 
 def check_period(code, period):
-    if signal.get_cache_file(code, period):
-        data = signal.load(code, period)
+    file = signal.get_cache_file(code, period)
+    if file:
+        data = signal.load(file)
     else:
         data = get_min_data(code, period)
         data = signal.compute_signal(code, period, data)
