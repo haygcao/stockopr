@@ -93,20 +93,20 @@ def filter_high_low(adj, close_high_low, days_before, days_before_after, weak=Fa
             i_prev += 1
             i = i + 1 if i == i_prev else i
             continue
-        if delta_before < days_before:
-            # 可能不会被忽略
-            i_ignore_set.add(i)
-            i += 1
-
-            # A B C 三个点价格
-            # close_high_low.iat[i_prev] = numpy.nan
-            # i_prev += 1
-            # i = i + 1 if i == i_prev else i
-            continue
         if adj * close_high_low.iloc[i] < adj * close_high_low.iloc[i_prev]:
             # close_high_low.iat[i] = numpy.nan
             i_ignore_set.add(i)
             i += 1
+            continue
+        if delta_before < days_before:
+            # 可能不会被忽略
+            # i_ignore_set.add(i)
+            # i += 1
+
+            # A B C 三个点价格
+            close_high_low.iat[i_prev] = numpy.nan
+            i_prev += 1
+            i = i + 1 if i == i_prev else i
             continue
 
         reset_invalid_value(close_high_low, i, i_ignore_set, i_prev)
