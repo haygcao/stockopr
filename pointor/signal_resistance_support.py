@@ -16,6 +16,7 @@ def compute_index(quote, period=None):
     quote.loc[:, 'resistance_20'] = quote.loc[:, 'high'].rolling(20, min_periods=1).max()
     quote.loc[:, 'support_10'] = quote.loc[:, 'low'].rolling(10, min_periods=1).min()
     quote.loc[:, 'support_5'] = quote.loc[:, 'low'].rolling(5, min_periods=1).min()
+    quote.loc[:, 'support_2'] = quote.loc[:, 'low'].rolling(2, min_periods=1).min()
 
     return quote
 

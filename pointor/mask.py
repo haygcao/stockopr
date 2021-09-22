@@ -1,8 +1,9 @@
 # -*- encoding: utf-8 -*-
 import numpy
 
-from config import config, signal_config
-from indicator import dmi, ad, relative_price_strength
+from config import config, signal_mask
+from indicator import ad, relative_price_strength
+from util import macd
 
 
 def compute_enter_mask(quote, period):
@@ -51,10 +52,10 @@ def compute_enter_mask(quote, period):
     quote = quote.assign(mask_support=~(quote.support_signal > config.support_day))
 
     # dmi
-    quote = dmi.compute_dmi(quote)
-    mask1 = quote['adx'] < quote['pdi']
-    mask2 = quote['pdi'] < quote['mdi']
-    mask3 = quote['adx'] < 50
+    df = macd.dmi(quote)
+    mask1 = df['adx'] < df['pdi']
+    mask2 = df['pdi'] < df['mdi']
+    mask3 = df['adx'] < 50
     mask = mask1 | mask2 | mask3
     quote = quote.assign(mask_dmi=mask)
 
@@ -83,14 +84,15 @@ def mask_signal(quote, column, column_mask):
     mask = quote[column_mask]
     quote.loc[:, column] = quote[column].mask(mask, numpy.nan)
 
-    if column_mask not in signal_config.mask_trend_up:
+    if column_mask not in signal_mask.mask_trend_up:
         return quote
     if 'exit' in column:
         return quote
 
-    column_op = column.replace('enter', 'exit')
-    column_op = column_op if 'deviation' not in column else column_op.replace('bull', 'bear')
+    column_mask_exit = 'mask_signal_exit'
+    if column_mask_exit not in quote.columns:
+        quote[column_mask_exit] = numpy.nan
     mask_shift = mask.shift(periods=1)
-    quote.loc[:, column_op] = quote[column_op].mask((mask_shift == False) & (mask == True), quote.high)
+    quote.loc[:, column_mask_exit] = quote[column_mask_exit].mask((mask_shift == False) & (mask == True), quote.high)
 
     return quote
