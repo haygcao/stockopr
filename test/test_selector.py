@@ -10,7 +10,6 @@ from selector.plugin.second_stage import second_stage
 from selector.plugin.step import step
 from selector.plugin.super import super
 from selector.plugin.vcp import vcp
-from util import dt
 
 
 class SelectorPluginTestCase(unittest.TestCase):
@@ -24,20 +23,28 @@ class SelectorPluginTestCase(unittest.TestCase):
         pass
 
     def test_query_one_fund(self):
-        df = fund.query_one_fund()
+        df = fund.query_fund()
         print(df)
 
     def test_query_funds(self):
-        df = fund.query_funds()
-        print(df)
+        fund_date = datetime.date(2021, 6, 30)
+        r = fund.query_funds(fund_date)
+        print(r)
 
     def test_query_stocks(self):
-        df = fund.query_stocks()
+        fund_date = '2021-06-30'
+        df = fund.query_stocks(fund_date)
         print(df)
+
+    def test_query_stocks_fund_market_value_diff(self):
+        fund_date_prev = '2021-03-31'
+        fund_date_next = '2021-06-30'
+        df_diff = fund.query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next)
+        print(df_diff)
 
     def test_query_one_stock(self):
         df = fund.query_one_stock_lite()
-        df1 = fund.query_one_stock()
+        df1 = fund.query_stock()
         intersection = df.index.intersection(df1.index)
         print(df.index[~df.index.isin(intersection)])
         print(df1.index[~df1.index.isin(intersection)])
