@@ -53,6 +53,7 @@ CREATE TABLE future_variety (
 
 -- 日期 开盘价 最高价 最低价 收盘价 成交量(手) 成交金额(万元)
 -- 昨收 涨跌额 涨跌幅(%) 振幅(%) 换手率(%) 量比
+-- 总市值 mktcap(万元) 流通市值 nmc(万元)
 -- create table if not exists quote (code varchar(8), trade_date date, open float, high float, low float, close float, volume bigint, turnover bigint);
 -- xr 即 exit right, 除权
 create table if not exists quote (
@@ -196,6 +197,7 @@ create unique index quote_code_trade_date on quote(code,trade_date);
 create table fund_basic (code varchar(8), name varchar(32), scale decimal(10, 2), `date` date);
 create unique index fund_basic_code_date on fund_basic(code, date);
 
+-- 持股数（万股）	持仓市值（万元）
 create table fund_stock (
     fund_code varchar(8),
     fund_date date,
