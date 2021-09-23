@@ -532,6 +532,8 @@ period_ema26_oscillation_threshold_map = {
     'week': 1.1
 }
 
+SELECTOR_FUND_STOCK_NMC_MAX = 10 * 1000 * 1000 * 1000  # 100万亿  单位万元
+
 stamp_duty = 0.001   # 印花税 卖方
 commission = 0.0002   # 佣金 - 中信证券 双向
 transfer_fee = 0.00002   # 过户费 上海证券交易所收取 双向

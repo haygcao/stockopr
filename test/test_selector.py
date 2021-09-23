@@ -3,6 +3,7 @@ import unittest
 
 from acquisition import quote_db, basic
 from selector import selector
+from selector.plugin import fund
 from selector.plugin.base_breakout import base_breakout
 from selector.plugin.blt import blt
 from selector.plugin.second_stage import second_stage
@@ -21,6 +22,25 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_query_one_fund(self):
+        df = fund.query_one_fund()
+        print(df)
+
+    def test_query_funds(self):
+        df = fund.query_funds()
+        print(df)
+
+    def test_query_stocks(self):
+        df = fund.query_stocks()
+        print(df)
+
+    def test_query_one_stock(self):
+        df = fund.query_one_stock_lite()
+        df1 = fund.query_one_stock()
+        intersection = df.index.intersection(df1.index)
+        print(df.index[~df.index.isin(intersection)])
+        print(df1.index[~df1.index.isin(intersection)])
 
     def test_second_stage(self):
         ret = second_stage(self.quote, self.period)
