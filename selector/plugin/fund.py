@@ -47,7 +47,7 @@ def query_stock():
     return df
 
 
-def query_stocks(fund_date, sort=False):
+def query_stocks(fund_date, fund_list=None, sort=False):
     sort_by = 'fmvp'
     trade_date = dt.get_pre_trade_date()
     scale = 10
@@ -56,9 +56,14 @@ def query_stocks(fund_date, sort=False):
     sql = "select fs.code, bi.name, count(fs.code) fc, sum(fs.market_value) fmv, q.nmc nmc, q.close " \
           "from fund_basic fb, fund_stock fs, basic_info bi, quote q " \
           "where q.code = bi.code and fb.code = fs.fund_code and bi.code = fs.code and fb.`date` = fund_date " \
-          "and q.trade_date = %s and fund_date = %s and fb.`scale` > %s and nmc < %s " \
-          "group by fs.code" \
-          # "order by q.nmc"
+          "and q.trade_date = %s and fund_date = %s and fb.`scale` > %s and nmc < %s "
+    group_by = "group by fs.code "
+    order_by = "order by q.nmc "
+
+    if fund_list:
+        sql += " and fb.code in ('{}') ".format(','.join(fund_list))
+    sql += group_by
+
     val = (trade_date, fund_date, scale, nmc * 10000)
     with mysqlcli.get_connection() as c:
         df = pandas.read_sql(sql, c, params=val, index_col=['code'])
@@ -94,16 +99,30 @@ def query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next):
     return df
 
 
-def query_fund():
+def query_fund(fund_name=None):
     trade_date = dt.get_pre_trade_date()
     fund_date = '2021-06-30'
     fund_code = '001283'
     sql = "select fund_code, fb.scale, fs.code, bi.name, q.nmc nmc, q.close, fs.market_value " \
           "from fund_basic fb, fund_stock fs, basic_info bi, quote q " \
           "where q.code = bi.code and fb.code = fs.fund_code and bi.code = fs.code and fb.`date` = fund_date " \
-          "and q.trade_date = %s and fund_date = %s and fb.code = %s" \
+          "and q.trade_date = %s and fund_date = %s and fb.code = %s "
+    val = [trade_date, fund_date, fund_code]
+    with mysqlcli.get_connection() as c:
+        df = pandas.read_sql(sql, c, params=val, index_col=['fund_code'])
+    return df
 
-    val = (trade_date, fund_date, fund_code)
+
+def query_funds(fund_date, fund_name=None):
+    trade_date = dt.get_pre_trade_date()
+    sql = "select fund_code, fb.scale, fs.code, bi.name, q.nmc nmc, q.close, fs.market_value " \
+          "from fund_basic fb, fund_stock fs, basic_info bi, quote q " \
+          "where q.code = bi.code and fb.code = fs.fund_code and bi.code = fs.code and fb.`date` = fund_date " \
+          "and q.trade_date = %s and fund_date = %s "
+    val = [trade_date, fund_date]
+    if fund_name:
+        sql += "and fb.name like %s "
+        val.append('%{}%'.format(fund_name))
     with mysqlcli.get_connection() as c:
         df = pandas.read_sql(sql, c, params=val, index_col=['fund_code'])
     return df
@@ -170,7 +189,7 @@ def query_stock_days(code_list):
     return df
 
 
-def query_funds(fund_date):
+def query_fund_stat(fund_date):
     count = query_funds_count(fund_date)
     scale = query_funds_scale(fund_date)
     market_value = query_funds_market_value(fund_date)

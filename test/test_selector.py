@@ -1,6 +1,8 @@
 import datetime
 import unittest
 
+import pandas
+
 from acquisition import quote_db, basic
 from selector import selector
 from selector.plugin import fund
@@ -22,13 +24,34 @@ class SelectorPluginTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_query_one_fund(self):
+    def test_query_fund(self):
         df = fund.query_fund()
         print(df)
 
     def test_query_funds(self):
         fund_date = datetime.date(2021, 6, 30)
-        r = fund.query_funds(fund_date)
+        fund_name = '能源'
+        df = fund.query_funds(fund_date, fund_name)
+        df_group = df.groupby(['code'])
+
+        df = df.reset_index(drop=True)
+        df = df.set_index('code')
+
+        df_stock = df[['name', 'nmc', 'close']]
+        df_stock = df_stock.drop_duplicates()
+        df_stock = df_stock.sort_index()
+
+        df_mkt = df_group['market_value'].sum()
+        df_mkt = df_mkt.sort_index()
+        df_final = pandas.concat([df_stock, df_mkt], axis=1)
+        df_final['fmvp'] = round(df_final['market_value'] / df_final['nmc'], 3)
+        df_final = df_final.sort_values(by=['fmvp'], ascending=False)
+        print(df_final)
+
+
+    def test_query_fund_stat(self):
+        fund_date = datetime.date(2021, 6, 30)
+        r = fund.query_fund_stat(fund_date)
         print(r)
 
     def test_query_stocks(self):
@@ -42,7 +65,7 @@ class SelectorPluginTestCase(unittest.TestCase):
         df_diff = fund.query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next)
         print(df_diff)
 
-    def test_query_one_stock(self):
+    def test_query_stock(self):
         df = fund.query_one_stock_lite()
         df1 = fund.query_stock()
         intersection = df.index.intersection(df1.index)
