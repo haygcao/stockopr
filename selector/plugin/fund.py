@@ -61,17 +61,17 @@ def query_stocks(fund_date, fund_list=None, sort=False):
     order_by = "order by q.nmc "
 
     if fund_list:
-        sql += " and fb.code in ('{}') ".format(','.join(fund_list))
+        sql += " and fb.code in ('{}') ".format("','".join(fund_list))
     sql += group_by
 
     val = (trade_date, fund_date, scale, nmc * 10000)
     with mysqlcli.get_connection() as c:
         df = pandas.read_sql(sql, c, params=val, index_col=['code'])
-        df['fmvp'] = 100 * round(df['fmv'] / df['nmc'], 3)
-        if sort:
-            df = df.sort_values(by=[sort_by], ascending=False)
+        df['fmvp'] = round(df['fmv'] / df['nmc'], 3)
 
     df = filter_new_stocks(df)
+    if sort:
+        df = df.sort_values(by=[sort_by], ascending=False)
     return df
 
 
@@ -99,6 +99,29 @@ def query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next):
     return df
 
 
+def query_stocks_fund_theme_specified(fund_date, fund_name):
+    df = query_funds(fund_date, fund_name)
+    # fund_list = df.index.drop_duplicates().to_list()
+    # df1 = query_stocks(fund_date, fund_list, sort=True)
+    # return df1
+
+    df_group = df.groupby(['code'])
+
+    df = df.reset_index(drop=True)
+    df = df.set_index('code')
+
+    df_stock = df[['name', 'nmc', 'close']]
+    df_stock = df_stock.drop_duplicates()
+    df_stock = df_stock.sort_index()
+
+    df_mkt = df_group['market_value'].sum()
+    df_mkt = df_mkt.sort_index()
+    df_final = pandas.concat([df_stock, df_mkt], axis=1)
+    df_final['fmvp'] = round(df_final['market_value'] / df_final['nmc'], 3)
+    df_final = df_final.sort_values(by=['fmvp'], ascending=False)
+    return df_final
+
+
 def query_fund(fund_name=None):
     trade_date = dt.get_pre_trade_date()
     fund_date = '2021-06-30'
@@ -114,12 +137,13 @@ def query_fund(fund_name=None):
 
 
 def query_funds(fund_date, fund_name=None):
+    scale = 10
     trade_date = dt.get_pre_trade_date()
     sql = "select fund_code, fb.scale, fs.code, bi.name, q.nmc nmc, q.close, fs.market_value " \
           "from fund_basic fb, fund_stock fs, basic_info bi, quote q " \
           "where q.code = bi.code and fb.code = fs.fund_code and bi.code = fs.code and fb.`date` = fund_date " \
-          "and q.trade_date = %s and fund_date = %s "
-    val = [trade_date, fund_date]
+          "and q.trade_date = %s and fund_date = %s and fb.scale > %s "
+    val = [trade_date, fund_date, scale]
     if fund_name:
         sql += "and fb.name like %s "
         val.append('%{}%'.format(fund_name))

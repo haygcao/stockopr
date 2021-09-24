@@ -32,21 +32,13 @@ class SelectorPluginTestCase(unittest.TestCase):
         fund_date = datetime.date(2021, 6, 30)
         fund_name = '能源'
         df = fund.query_funds(fund_date, fund_name)
-        df_group = df.groupby(['code'])
+        print(df)
 
-        df = df.reset_index(drop=True)
-        df = df.set_index('code')
-
-        df_stock = df[['name', 'nmc', 'close']]
-        df_stock = df_stock.drop_duplicates()
-        df_stock = df_stock.sort_index()
-
-        df_mkt = df_group['market_value'].sum()
-        df_mkt = df_mkt.sort_index()
-        df_final = pandas.concat([df_stock, df_mkt], axis=1)
-        df_final['fmvp'] = round(df_final['market_value'] / df_final['nmc'], 3)
-        df_final = df_final.sort_values(by=['fmvp'], ascending=False)
-        print(df_final)
+    def test_query_stocks_fund_theme_specified(self):
+        fund_date = datetime.date(2021, 6, 30)
+        fund_name = '能源'
+        df = fund.query_stocks_fund_theme_specified(fund_date, fund_name)
+        print(df)
 
 
     def test_query_fund_stat(self):
