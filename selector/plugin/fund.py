@@ -10,6 +10,15 @@ from config import config
 from util import mysqlcli, dt
 
 
+def filter_new_stocks(df_data):
+    df_stock_days = query_stock_days(df_data.index.to_list())
+    series = df_stock_days['count']
+
+    df_data = df_data.sort_index()
+    df_data = df_data[series > 250]
+    return df_data
+
+
 def query_one_stock_lite():
     fund_date = '2021-06-30'
     code = '600519'
@@ -38,7 +47,7 @@ def query_stock():
     return df
 
 
-def query_stocks(fund_date):
+def query_stocks(fund_date, sort=False):
     sort_by = 'fmvp'
     trade_date = dt.get_pre_trade_date()
     scale = 10
@@ -54,7 +63,10 @@ def query_stocks(fund_date):
     with mysqlcli.get_connection() as c:
         df = pandas.read_sql(sql, c, params=val, index_col=['code'])
         df['fmvp'] = 100 * round(df['fmv'] / df['nmc'], 3)
-        df = df.sort_values(by=[sort_by], ascending=False)
+        if sort:
+            df = df.sort_values(by=[sort_by], ascending=False)
+
+    df = filter_new_stocks(df)
     return df
 
 
@@ -78,6 +90,7 @@ def query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next):
     df = pandas.DataFrame(fmvp, index=fmvp.index)
     df = df.assign(name=df_next['name'])
     df.name = df.name.mask(df.name.isna(), df_prev.name)
+
     return df
 
 
@@ -146,6 +159,15 @@ def query_market_value(fund_date):
     val = (trade_date,)
     r = query_stat(sql, val)
     return r['mktcap']
+
+
+def query_stock_days(code_list):
+    sql_tmp = "select code, count(*) count from quote where code in ('{}') group by code"
+    val_code_list = "','".join(code_list)
+    sql = sql_tmp.format(val_code_list)
+    with mysqlcli.get_connection() as c:
+        df = pandas.read_sql(sql, c, index_col=['code'])
+    return df
 
 
 def query_funds(fund_date):
