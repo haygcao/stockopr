@@ -4,6 +4,7 @@
 """
 import datetime
 
+import numpy
 import pandas
 
 from config import config
@@ -28,6 +29,38 @@ def query_one_stock_lite():
     with mysqlcli.get_connection() as c:
         df = pandas.read_sql(sql, c, params=val, index_col=['fund_code'])
     return df
+
+
+def query_stocks_percent(code_list):
+    val_code = "','".join(code_list)
+
+    today = dt.get_trade_date()
+    date_list = [today]
+
+    for date in [7, 15, 30, 91, 183, 365]:
+        date_list.append(dt.get_pre_trade_date(today - datetime.timedelta(days=date)))
+    val_date = "','".join(map(lambda x: str(x), date_list))
+    sql_tpl = "select code, date(trade_date) trade_date, close from quote where code in ('{}') and trade_date in ('{}')"
+    sql = sql_tpl.format(val_code, val_date)
+
+    with mysqlcli.get_connection() as c:
+        df = pandas.read_sql(sql, c, index_col=['code'])
+    df = df.reset_index()
+    df = df.pivot(index='code', columns='trade_date', values='close')
+    # df2 = df.unstack('trade_date')
+
+    # print(df.columns, type(df.columns[0]))
+    current_close = pandas.DataFrame([[df.loc[j][today] for i in df.columns] for j in df.index],
+                                     index=df.index, columns=df.columns)
+    df = current_close.div(df) - 1
+
+    return df
+
+
+def supplement_percent(df):
+    df_percent = query_stocks_percent(df.index.to_list())
+    df_final = pandas.concat([df, df_percent], axis=1)
+    return df_final
 
 
 def query_stock():
@@ -81,20 +114,22 @@ def query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next):
     df_prev.sort_index(inplace=True)
     df_next.sort_index(inplace=True)
 
-    fmvp = df_next['fmvp'] - df_prev['fmvp']
-    mask1 = fmvp.isna()
+    fmvp_diff = df_next['fmvp'] - df_prev['fmvp']
+    mask1 = fmvp_diff.isna()
     mask2 = df_next['fmvp'] >= 0
-    fmvp = fmvp.mask(mask1 & mask2, df_next['fmvp'])
+    fmvp_diff = fmvp_diff.mask(mask1 & mask2, df_next['fmvp'])
 
-    mask1 = fmvp.isna()
+    mask1 = fmvp_diff.isna()
     mask2 = df_prev['fmvp'] >= 0
-    fmvp = fmvp.mask(mask1 & mask2, -df_prev['fmvp'])
+    fmvp_diff = fmvp_diff.mask(mask1 & mask2, -df_prev['fmvp'])
 
-    fmvp = fmvp.sort_values(ascending=False)
+    fmvp_diff = fmvp_diff.sort_values(ascending=False)
 
-    df = pandas.DataFrame(fmvp, index=fmvp.index)
-    df = df.assign(name=df_next['name'])
+    df = pandas.DataFrame(fmvp_diff, index=fmvp_diff.index)
+    df.insert(0, 'name', df_next['name'])
+    # df = df.assign(name=df_next['name'])
     df.name = df.name.mask(df.name.isna(), df_prev.name)
+    df = df.rename(columns={'fmvp': 'fmvp_diff'})
 
     return df
 

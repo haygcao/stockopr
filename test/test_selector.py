@@ -38,8 +38,8 @@ class SelectorPluginTestCase(unittest.TestCase):
         fund_date = datetime.date(2021, 6, 30)
         fund_name = '能源'
         df = fund.query_stocks_fund_theme_specified(fund_date, fund_name)
+        df = fund.supplement_percent(df)
         print(df)
-
 
     def test_query_fund_stat(self):
         fund_date = datetime.date(2021, 6, 30)
@@ -55,7 +55,13 @@ class SelectorPluginTestCase(unittest.TestCase):
         fund_date_prev = '2021-03-31'
         fund_date_next = '2021-06-30'
         df_diff = fund.query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next)
+        df_diff = fund.supplement_percent(df_diff)
         print(df_diff)
+
+    def test_query_stocks_percent(self):
+        code_list = ['002739', '300502']
+        df = fund.query_stocks_percent(code_list)
+        print(df)
 
     def test_query_stock(self):
         df = fund.query_one_stock_lite()
