@@ -68,9 +68,16 @@ def query_operation_detail(code=None):
     return detail_list
 
 
-def order(direct, code, count, price_limited=0, auto=False):
+def order(account_type, op_type, direct, code, count, price_limited=0, auto=False):
     url = 'http://{}/order'.format(base_url)
-    data = {'code': code, 'direct': direct, 'count': count, 'auto': auto}
+    data = {
+        'account_type': account_type,
+        'op_type': op_type,
+        'code': code,
+        'direct': direct,
+        'count': count,
+        'auto': auto
+    }
 
     response = requests.post(url, data=json.dumps(data), headers=headers)
 

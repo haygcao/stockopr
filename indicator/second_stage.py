@@ -3,6 +3,7 @@ import numpy
 import pandas
 
 from acquisition import quote_db
+from indicator import ma
 from indicator.decorator import computed
 from util import macd, dt
 
@@ -32,6 +33,8 @@ def second_stage(quote, period):
         'xl': 150,
         'xxl': 200
     }
+
+    quote = ma.compute_ma(quote)
 
     ma_xxs = quote['ma{}'.format(n['xxs'])]
     ma_xs = quote['ma{}'.format(n['xs'])]

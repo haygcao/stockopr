@@ -1,6 +1,6 @@
-pos_position = (36, 258)
-pos_asset = (45, 354)
-pos_detail = (36, 456)
+# pos_position = (36, 258)
+# pos_asset = (45, 354)
+# pos_detail = (36, 456)
 
 # 1080 x 768
 pos_position = (64, 256)
@@ -17,4 +17,25 @@ pos_withdraw_last = (550, 80)
 pos_buy_and_sell = (25, 159)
 pos_centre = (256, 365)
 
+# 信用
+pos_pt = (10, 680)   # 普通
+pos_xy = (130, 680)  # 信用
+pos_rz = (32, 155)
+pos_rz_buy = (32, 175)
+pos_rz_sell = (32, 195)
+pos_rq = (32, 235)
+pos_rq_buy = (32, 275)
+pos_rq_sell = (32, 255)
+
+# 弹窗
+popup_text = '可选更新传送 不工作'   # win7 未激活
 port = 8080
+
+# 账户类型
+ACCOUNT_TYPE_PT = 1
+ACCOUNT_TYPE_XY = 2
+
+OP_TYPE_PT = 0
+OP_TYPE_DBP = 1
+OP_TYPE_RZ = 3
+OP_TYPE_RQ = 5

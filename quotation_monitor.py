@@ -253,10 +253,15 @@ def check(code, periods):
 
 def order(trade_singal: TradeSignal):
     logger.info('{} {}'.format(trade_singal.command, trade_singal.code))
+
+    from server import config as svr_config
+    account_type = svr_config.ACCOUNT_TYPE_XY
+    op_type = svr_config.OP_TYPE_DBP
+
     if trade_singal.command == 'B':
-        trade_manager.buy(trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period, policy=trade_singal.policy)
+        trade_manager.buy(account_type, op_type, trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period, policy=trade_singal.policy)
     else:
-        trade_manager.sell(trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period)
+        trade_manager.sell(account_type, op_type, trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period)
 
 
 def notify(trade_singal: TradeSignal):

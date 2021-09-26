@@ -285,14 +285,16 @@ def get_kline_data(code, period='day', count=250):
     if code not in g_price_divisor_cache:
         price_divisor = basic.get_stock_price_divisor(code)
         g_price_divisor_cache[code] = price_divisor
-    price_divisor = g_price_divisor_cache[code]
+    price_divisors = g_price_divisor_cache[code]
 
-    if price_divisor:
-        divisor_date = price_divisor['price_divisor_date']
-        if divisor_date <= quote.index[0]:
-            return quote
-        yest_close_adjust = float(price_divisor['price_divisor_adj_price'])
-        quote = quote_db.compute_price_divisor(quote, divisor_date=divisor_date, yest_close_adjust=yest_close_adjust)
+    if price_divisors:
+        divisor_date = None
+        divisor_date_prev = None
+        for price_divisor in price_divisors:
+            divisor_date_prev = divisor_date
+            divisor_date = price_divisor['price_divisor_date']
+            yest_close_adjust = float(price_divisor['price_divisor_adj_price'])
+            quote = quote_db.compute_price_divisor(quote, divisor_date, yest_close_adjust, divisor_date_prev)
     return quote
 
 

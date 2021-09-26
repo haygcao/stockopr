@@ -686,7 +686,11 @@ class Panel(QWidget):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, 0)
         quote = tx.get_realtime_data_sina(self.code)
-        trade_manager.sell(self.code,
+
+        from server import config as svr_config
+        account_type = svr_config.ACCOUNT_TYPE_XY
+        op_type = svr_config.OP_TYPE_DBP
+        trade_manager.sell(account_type, op_type, self.code,
                            price_trade=quote['close'][-1],
                            count=int(self.count_or_price[1]),
                            period=self.period,

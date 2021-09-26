@@ -56,18 +56,23 @@ class TradeManagerTestCase(unittest.TestCase):
         print(detail_list)
 
     def test_order(self):
+        from server import config as svr_config
+        account_type = svr_config.ACCOUNT_TYPE_XY
+        op_type = svr_config.OP_TYPE_DBP
+
         code = '300502'
         count = 0
         # tradeapi.order('B', code, count, auto=False)
-        trade_manager.buy(code, count, period='day')
+        trade_manager.buy(account_type, op_type, code, count, period='day')
 
         code = '300501'
         count = 100
         # tradeapi.order('B', code, count, auto=False)
-        trade_manager.buy(code, count, period='day')
+        trade_manager.buy(account_type, op_type, code, count, period='day')
 
         # trade_manager.buy('300502')
-        trade_manager.order('B', '300502', 1500)
+
+        trade_manager.order(account_type, op_type, 'B', '300502', 1500)
 
     def test_query_order(self):
         code = '300502'

@@ -179,7 +179,8 @@ def update_operation_detail(detail):
 
 def check_list(quote, period):
     from indicator import second_stage as second_stage_indicator
-    if not second_stage_indicator.second_stage(quote, period):
+    quote = second_stage_indicator.second_stage(quote, period)
+    if not quote['second_stage'][-1]:
         return ERROR.E_SECOND_STAGE
 
     quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
@@ -212,7 +213,7 @@ def check_list(quote, period):
     return ERROR.OK
 
 
-def buy(code, price_trade=0, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
+def buy(account_type, op_type, code, price_trade=0, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -253,13 +254,13 @@ def buy(code, price_trade=0, price_limited=0, count=0, period='day', policy: Pol
     if count <= 0:
         count = min(max_position, avail_position)
 
-    order('B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
+    order(account_type, op_type, 'B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
     position = position if position else trade_data.Position(code, count, 0)
     db_handler.save_positions([position])
 
 
-def sell(code, price_trade, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
+def sell(account_type, op_type, code, price_trade, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
@@ -295,20 +296,20 @@ def sell(code, price_trade, price_limited=0, count=0, period='day', policy: Poli
         count = to_position
     # operation = TradeManager.get_operation()
     # operation.__sell(code, count, price, auto=auto)
-    order('S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
+    order(account_type, op_type, 'S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
 
-def order(direct, code, price_trade, price_limited=0, count=0, auto=False):
+def order(account_type, op_type, direct, code, price_trade, price_limited=0, count=0, auto=False):
     try:
         count = count // 100 * 100
-        tradeapi.order(direct, code, count, price_limited, auto)
+        tradeapi.order(account_type, op_type, direct, code, count, price_limited, auto)
         now = datetime.datetime.now()
         price = 0   # 成交的价格
         count = count * (1 if direct == 'B' else -1)
         detail = trade_data.OperationDetail(now, code, price, price_trade, price_limited, count)
 
         if auto and price_limited == 0:
-            threading.Thread(target=assure_finish, args=(code, count, now)).start()
+            threading.Thread(target=assure_finish, args=(account_type, op_type, code, count, now)).start()
         if not auto:
             popup_warning_message_box_mp('更新 operation detail?', update_operation_detail, detail)
         # update_operation_detail(detail)
@@ -316,13 +317,13 @@ def order(direct, code, price_trade, price_limited=0, count=0, auto=False):
         print(e)
 
 
-def assure_finish(direct, code, count, trade_time):
+def assure_finish(account_type, op_type, direct, code, count, trade_time):
     for i in range(10):
         time.sleep(5)
         count_to = wait_finish(direct, code, count, trade_time)
         if count_to == 0:
             return
-        re_order(direct, code, count)
+        re_order(account_type, op_type, direct, code, count)
     logger.warning(direct, code, count, trade_time, 'unfinished')
 
 
@@ -351,13 +352,13 @@ def withdraw(direct='last'):
         print(e)
 
 
-def re_order(direct, code, count):
+def re_order(account_type, op_type, direct, code, count):
     # details = db_handler.query_operation_details(date=datetime.date.today())
     # details = [detail for detail in details if detail.price_limited == 0 and detail.count > 0]
 
     # notify()
     withdraw()
-    tradeapi.order(direct, code, count=count, auto=True)
+    tradeapi.order(account_type, op_type, direct, code, count=count, auto=True)
 
 
 def compute_stop_profit(quote):

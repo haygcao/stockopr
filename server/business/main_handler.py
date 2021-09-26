@@ -4,7 +4,8 @@ import json
 
 import tornado.web
 
-from ..component import tradeapi
+from .. import config
+from ..component import tradeapi, tradeapi_credit
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -48,8 +49,12 @@ class OrderHandler(BaseHandler):
         count = param['count']
         auto = param['auto']
 
-        tradeapi.order(direct, code, count, auto=auto)
-
+        account_type = param['account_type']
+        if account_type == config.ACCOUNT_TYPE_PT:
+            tradeapi.order(direct, code, count, auto=auto)
+        else:
+            op_type = param['op_type']
+            tradeapi_credit.order(op_type, direct, code, count, auto=auto)
         self.write("Hello, world")
 
 
