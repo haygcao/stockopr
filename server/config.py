@@ -27,6 +27,13 @@ pos_rq = (32, 235)
 pos_rq_buy = (32, 275)
 pos_rq_sell = (32, 255)
 
+# 填单edit控件, 高18
+pos_edit_code = (300, 115)
+pos_edit_price = (300, 150)
+pos_edit_count = (300, 205)
+pos_edit_count_rq_buy = (300, 225)
+pos_edit_count_rz_sell = (300, 275)
+
 # 弹窗
 popup_text = '可选更新传送 不工作'   # win7 未激活
 port = 8080

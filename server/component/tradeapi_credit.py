@@ -311,18 +311,28 @@ def order(op_type, direct, code, count, price=0, auto=False):
 
     active_sub_window(op_type, direct, main_window)
 
+    pywinauto.mouse.double_click(coords=config.pos_edit_code)
     main_window.type_keys(str(code))
-    main_window.type_keys('{TAB}')
+    # main_window.type_keys('{TAB}')
     if price > 0:
+        time.sleep(0.2)
+        pywinauto.mouse.double_click(coords=config.pos_edit_price)
         main_window.type_keys(str(price))
-    main_window.type_keys('{TAB}')
+    # main_window.type_keys('{TAB}')
+    pos = config.pos_edit_count
+    if op_type == config.OP_TYPE_RZ and direct == 'S':
+        pos = config.pos_edit_count_rz_sell
+    elif op_type == config.OP_TYPE_RQ and direct == 'B':
+        pos = config.pos_edit_count_rq_buy
+    time.sleep(0.2)
+    pywinauto.mouse.double_click(coords=pos)
     main_window.type_keys(str(count))
     main_window.type_keys('{TAB}')
     main_window.type_keys('{ENTER}')
     if auto:
-        time.sleep(0.5)
+        time.sleep(0.2)
         pywinauto.keyboard.send_keys('{ENTER}')
-        time.sleep(0.5)
+        time.sleep(0.2)
         pywinauto.keyboard.send_keys('{ENTER}')
 
 
