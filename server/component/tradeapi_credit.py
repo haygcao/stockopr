@@ -330,9 +330,9 @@ def order(op_type, direct, code, count, price=0, auto=False):
     main_window.type_keys('{TAB}')
     main_window.type_keys('{ENTER}')
     if auto:
-        time.sleep(0.2)
+        time.sleep(0.5)
         pywinauto.keyboard.send_keys('{ENTER}')
-        time.sleep(0.2)
+        time.sleep(0.5)
         pywinauto.keyboard.send_keys('{ENTER}')
 
 
