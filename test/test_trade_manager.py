@@ -24,18 +24,20 @@ class TradeManagerTestCase(unittest.TestCase):
         trade_manager.withdraw()
 
     def test_query_money(self):
-        menoy = trade_manager.query_money()
+        accout_type = svr_config.ACCOUNT_TYPE_XY
+        menoy = trade_manager.query_money(accout_type)
         print(menoy)
         db_handler.save_money(menoy)
         money = db_handler.query_money()
         print(money)
 
     def test_get_position(self):
+        account_id = svr_config.ACCOUNT_TYPE_XY
         code = '300502'
 
         pre_position = trade_manager.query_position(code)
-        db_handler.save_positions([pre_position])
-        position = db_handler.query_position(code)
+        db_handler.save_positions(account_id, [pre_position])
+        position = db_handler.query_position(account_id, code)
         print(position)
 
 
@@ -57,7 +59,7 @@ class TradeManagerTestCase(unittest.TestCase):
         print(detail_list)
 
     def test_order(self):
-        account_type = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_TYPE_XY
         op_type = svr_config.OP_TYPE_DBP
         # op_type = svr_config.OP_TYPE_RZ
         # op_type = svr_config.OP_TYPE_RQ
@@ -65,16 +67,16 @@ class TradeManagerTestCase(unittest.TestCase):
         # code = '300502'
         # count = 0
         # # tradeapi.order('B', code, count, auto=False)
-        # trade_manager.buy(account_type, op_type, code, count, period='day')
+        # trade_manager.buy(account_id, op_type, code, count, period='day')
         #
         # code = '300501'
         # count = 100
         # # tradeapi.order('B', code, count, auto=False)
-        # trade_manager.buy(account_type, op_type, code, count, period='day')
+        # trade_manager.buy(account_id, op_type, code, count, period='day')
 
         # trade_manager.buy('300502')
 
-        trade_manager.order(account_type, op_type, 'B', '300502', 1500)
+        trade_manager.order(account_id, op_type, 'B', '300502', 1500)
 
     def test_query_order(self):
         code = '300502'
@@ -82,8 +84,9 @@ class TradeManagerTestCase(unittest.TestCase):
         print(order_list[0])
 
     def test_create_trade_order(self):
+        account_id = svr_config.ACCOUNT_TYPE_XY
         code = '300502'
-        trade_manager.create_trade_order(code)
+        trade_manager.create_trade_order(account_id, code)
 
     def test_patrol(self):
         trade_manager.patrol()

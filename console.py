@@ -42,6 +42,7 @@ from config import config
 from indicator import relative_price_strength
 from pointor.signal import write_supplemental_signal
 from selector import selector
+from server import config as svr_config
 from trade_manager import trade_manager
 from util import util, dt, qt_util
 from util.QComboCheckBox import QComboCheckBox
@@ -687,17 +688,17 @@ class Panel(QWidget):
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, 0)
         quote = tx.get_realtime_data_sina(self.code)
 
-        from server import config as svr_config
-        account_type = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_TYPE_XY
         op_type = svr_config.OP_TYPE_DBP
-        trade_manager.sell(account_type, op_type, self.code,
+        trade_manager.sell(account_id, op_type, self.code,
                            price_trade=quote['close'][-1],
                            count=int(self.count_or_price[1]),
                            period=self.period,
                            auto=True)
 
     def new_trade_order(self):
-        trade_manager.create_trade_order(self.code, price_limited=self.count_or_price[0])
+        account_id = svr_config.ACCOUNT_TYPE_XY
+        trade_manager.create_trade_order(account_id, self.code, price_limited=self.count_or_price[0])
 
     def check(self):
         pid_prev_check = None

@@ -10,12 +10,12 @@ base_url = config.get_tradeapi_server()
 headers = {"Content-Type": "application/json"}
 
 
-def get_asset(account_type):
+def get_asset(account_id):
     """
     获取资金明细
     """
     url = 'http://{}/query_money'.format(base_url)
-    data = {'account_type': account_type}
+    data = {'account_id': account_id}
     response = requests.post(url, data=json.dumps(data), headers=headers)
     d = json.loads(response.content)
     asset = trade_data.Asset(d['total_money'], d['avail_money'])
@@ -23,7 +23,7 @@ def get_asset(account_type):
     return asset
 
 
-def query_position(account_type, code=None):
+def query_position(account_id, code=None):
     """
     可以卖的股数
     还可以买的股数
@@ -31,7 +31,7 @@ def query_position(account_type, code=None):
     url = 'http://{}/query_position'.format(base_url)
     data = {
         'code': code,
-        'account_type': account_type
+        'account_id': account_id
     }
     response = requests.post(url, data=json.dumps(data), headers=headers)
     json_str = response.content
@@ -52,14 +52,14 @@ def query_position(account_type, code=None):
     return position_list
 
 
-def query_operation_detail(account_type, code=None):
+def query_operation_detail(account_id, code=None):
     """
     获取对账单
     """
     url = 'http://{}/query_operation_detail'.format(base_url)
     data = {
         'code': code,
-        'account_type': account_type
+        'account_id': account_id
     }
     response = requests.post(url, data=json.dumps(data), headers=headers)
 
@@ -74,10 +74,10 @@ def query_operation_detail(account_type, code=None):
     return detail_list
 
 
-def order(account_type, op_type, direct, code, count, price_limited=0, auto=False):
+def order(account_id, op_type, direct, code, count, price_limited=0, auto=False):
     url = 'http://{}/order'.format(base_url)
     data = {
-        'account_type': account_type,
+        'account_id': account_id,
         'op_type': op_type,
         'code': code,
         'direct': direct,
@@ -90,13 +90,13 @@ def order(account_type, op_type, direct, code, count, price_limited=0, auto=Fals
     return response.ok
 
 
-def query_withdraw_order(account_type):
+def query_withdraw_order(account_id):
     """
     查询未成交的委托单
     direct: 证券买入/证券卖出
     """
     url = 'http://{}/query_withdraw_order'.format(base_url)
-    data = {'account_type': account_type}
+    data = {'account_id': account_id}
     response = requests.post(url, data=json.dumps(data), headers=headers)
 
     order_list = []

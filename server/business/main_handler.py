@@ -49,8 +49,8 @@ class OrderHandler(BaseHandler):
         count = param['count']
         auto = param['auto']
 
-        account_type = param['account_type']
-        if account_type == config.ACCOUNT_TYPE_PT:
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_TYPE_PT:
             tradeapi.order(direct, code, count, auto=auto)
         else:
             op_type = param['op_type']
@@ -79,8 +79,8 @@ class QueryMoneyHandler(BaseHandler):
     def post(self):
         param = self.request.body.decode('utf-8')
         param = json.loads(param)
-        account_type = param['account_type']
-        if account_type == config.ACCOUNT_TYPE_PT:
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_TYPE_PT:
             r = tradeapi.get_asset()
         else:
             r = tradeapi_credit.get_asset()
@@ -101,8 +101,8 @@ class QueryPositionHandler(BaseHandler):
         else:
             code = None
 
-        account_type = param['account_type']
-        if account_type == config.ACCOUNT_TYPE_PT:
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_TYPE_PT:
             position = tradeapi.query_position(code)
         else:
             position = tradeapi_credit.query_position(code)
@@ -123,8 +123,8 @@ class QueryOperationDetailHandler(BaseHandler):
         else:
             code = None
 
-        account_type = param['account_type']
-        if account_type == config.ACCOUNT_TYPE_PT:
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_TYPE_PT:
             detail_list = tradeapi.get_operation_detail(code)
         else:
             detail_list = tradeapi_credit.get_operation_detail(code)
@@ -138,8 +138,8 @@ class QueryWithdrawOrderHandler(BaseHandler):
     def post(self):
         param = self.request.body.decode('utf-8')
         param = json.loads(param)
-        account_type = param['account_type']
-        if account_type == config.ACCOUNT_TYPE_PT:
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_TYPE_PT:
             order_list = tradeapi.get_order()
         else:
             order_list = tradeapi_credit.get_order()

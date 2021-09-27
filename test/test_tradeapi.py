@@ -14,20 +14,21 @@ class TradeApiTestCase(unittest.TestCase):
     def test_query_position(self):
         code = '300502'
         code = ''
-        account_type = svr_config.ACCOUNT_TYPE_XY
-        ret = tradeapi.query_position(account_type, code)
+        account_id = svr_config.ACCOUNT_TYPE_XY
+        ret = tradeapi.query_position(account_id, code)
         print(ret)
 
     def test_query_detail(self):
         code = '300502'
         code = ''
-        account_type = svr_config.ACCOUNT_TYPE_XY
-        ret = tradeapi.query_operation_detail(account_type, code)
+        account_id = svr_config.ACCOUNT_TYPE_XY
+        ret = tradeapi.query_operation_detail(account_id, code)
         print(ret)
 
     def test_query_asset(self):
-        account_type = svr_config.ACCOUNT_TYPE_XY
-        ret = tradeapi.get_asset(account_type)
+        account_id = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_TYPE_PT
+        ret = tradeapi.get_asset(account_id)
         print(ret)
 
 

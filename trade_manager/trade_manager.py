@@ -10,6 +10,7 @@ from config.config import Policy, ERROR
 from data_structure import trade_data
 from indicator import atr, ema, dynamical_system, relative_price_strength, ad
 from pointor import signal
+from server import config as svr_config
 import selector
 from trade_manager import tradeapi, db_handler
 from util import mysqlcli, dt, qt_util
@@ -33,8 +34,8 @@ class TradeManager:
         # return cls.operation
 
 
-def query_withdraw_order(account_type):
-    order_list = tradeapi.query_withdraw_order(account_type)
+def query_withdraw_order(account_id):
+    order_list = tradeapi.query_withdraw_order(account_id)
     return order_list
 
 
@@ -47,51 +48,51 @@ def compute_unsync(position: trade_data.Position):
     position.current_position += sold_position_in_operation_detail
 
 
-def query_position(code):
+def query_position(account_id, code):
     """
     可以卖的股数
     还可以买的股数
     """
-    position = db_handler.query_position(code)
+    position = db_handler.query_position(account_id, code)
     compute_unsync(position)
 
     return position
 
 
-def query_current_position():
+def query_current_position(account_id):
     """
     可以卖的股数
     还可以买的股数
     """
-    position_list = db_handler.query_current_position()
+    position_list = db_handler.query_current_position(account_id)
     for position in position_list:
         compute_unsync(position)
 
     return position_list
 
 
-def query_money():
-    money = db_handler.query_money()
-    money_in_operation_detail = query_money_in_operation_detail()
+def query_money(account_id):
+    money = db_handler.query_money(account_id)
+    money_in_operation_detail = query_money_in_operation_detail(account_id)
     money.avail_money -= money_in_operation_detail
 
     return money
 
 
-def query_operation_detail(code=None):
+def query_operation_detail(account_id, code=None):
     """
     可以卖的股数
     还可以买的股数
     """
-    detail_list = db_handler.query_operation_details(code)
+    detail_list = db_handler.query_operation_details(account_id, code)
 
     return detail_list
 
 
-def query_money_in_operation_detail(code=None, trade_date=None):
+def query_money_in_operation_detail(account_id, code=None, trade_date=None):
     if not trade_date:
         trade_date = datetime.date.today()
-    detail_list = db_handler.query_operation_details(trade_date)
+    detail_list = db_handler.query_operation_details(account_id, trade_date)
 
     money = 0
     for detail in detail_list:
@@ -100,10 +101,10 @@ def query_money_in_operation_detail(code=None, trade_date=None):
     return money
 
 
-def query_position_in_operation_detail(code=None, trade_date=None, direct='S'):
+def query_position_in_operation_detail(account_id, code=None, trade_date=None, direct='S'):
     if not trade_date:
         trade_date = datetime.date.today()
-    detail_list = db_handler.query_operation_details(code, trade_date)
+    detail_list = db_handler.query_operation_details(account_id, code, trade_date)
 
     position = 0
     for detail in detail_list:
@@ -119,7 +120,7 @@ def query_position_in_operation_detail(code=None, trade_date=None, direct='S'):
     return position
 
 
-def sync_impl(trade_date, account_type):
+def sync_impl(account_id, trade_date):
     """
     sync previous trade date's data
     run at 9:00 on trade day
@@ -129,44 +130,52 @@ def sync_impl(trade_date, account_type):
     #     return
 
     # money
-    money = tradeapi.get_asset(account_type)
-    db_handler.save_money(money, sync=True)
+    money = tradeapi.get_asset(account_id)
+    db_handler.save_money(account_id, money, sync=True)
     logger.info('sync money')
 
     # position
-    position_list = tradeapi.query_position(account_type)
-    db_handler.save_positions(position_list, sync=True)
+    position_list = tradeapi.query_position(account_id)
+    db_handler.save_positions(account_id, position_list, sync=True)
     logger.info('sync position')
 
-    order_map = trade_manager.db_handler.query_trade_order_map(status='ING')
+    order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='ING')
     for code, trade_order in order_map.items():
         if code not in [position.code for position in position_list]:
-            db_handler.update_trade_order_status(trade_order.date, code, 'ED')
+            db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
     logger.info('update trade order')
 
     # operation detail
-    operation_detail = tradeapi.query_operation_detail(account_type)
+    operation_detail = tradeapi.query_operation_detail(account_id)
 
     # trade_date = datetime.date(2021, 7, 1)
     operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date]
-    db_handler.save_operation_details(operation_detail, trade_date, sync=True)
+    db_handler.save_operation_details(account_id, operation_detail, trade_date, sync=True)
     logger.info('sync operation detail')
 
 
 def sync():
+    r = False
+    m_date = ''
+    p_date = ''
     trade_date = dt.get_trade_date()
-    from server import config as svr_config
-    for account_type in [svr_config.ACCOUNT_TYPE_PT, svr_config.ACCOUNT_TYPE_XY]:
-        sync_impl(trade_date, account_type)
+    for account_id in [svr_config.ACCOUNT_TYPE_PT, svr_config.ACCOUNT_TYPE_XY]:
+        if account_id == svr_config.ACCOUNT_TYPE_PT:
+            continue
+        sync_impl(account_id, trade_date)
 
-    m = db_handler.query_money()
-    ps = db_handler.query_current_position()
-    p = ps[0] if ps else None
+        m = db_handler.query_money(account_id)
+        ps = db_handler.query_current_position(account_id)
+        p = ps[0] if ps else None
+        if (m and m.date == trade_date) and (not p or p.date == trade_date):
+            r = True
+            m_date = m.date
+            p_date = p.date
     # o = db_handler.query_operation_details()
-    if m.date == trade_date and (not p or p.date == trade_date):
-        qt_util.popup_info_message_box_mp('[{}] [{}]\nsync account OK'.format(m.date, p.date if p else ''))
+    if r:
+        qt_util.popup_info_message_box_mp('[{}] [{}]\nsync account OK'.format(m_date, p_date))
     else:
-        qt_util.popup_warning_message_box_mp('[{}] [{}]\nsync account FAILED'.format(m.date, p.date if p else ''))
+        qt_util.popup_warning_message_box_mp('[{}] [{}]\nsync account FAILED'.format(m_date, p_date))
 
 
 def check_quota(code, direction):
@@ -220,7 +229,7 @@ def check_list(quote, period):
     return ERROR.OK
 
 
-def buy(account_type, op_type, code, price_trade=0, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
+def buy(account_id, op_type, code, price_trade=0, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -245,7 +254,7 @@ def buy(account_type, op_type, code, price_trade=0, price_limited=0, count=0, pe
         return
 
     # quote = tx.get_realtime_data_sina(code)
-    money = query_money()
+    money = query_money(account_id)
     max_position = money.avail_money / (price_limited if price_limited > 0 else price_trade * 1.01) // 100 * 100
 
     trade_config = config.get_trade_config(code)
@@ -261,13 +270,13 @@ def buy(account_type, op_type, code, price_trade=0, price_limited=0, count=0, pe
     if count <= 0:
         count = min(max_position, avail_position)
 
-    order(account_type, op_type, 'B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
+    order(account_id, op_type, 'B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
     position = position if position else trade_data.Position(code, count, 0)
     db_handler.save_positions([position])
 
 
-def sell(account_type, op_type, code, price_trade, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
+def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
@@ -303,20 +312,20 @@ def sell(account_type, op_type, code, price_trade, price_limited=0, count=0, per
         count = to_position
     # operation = TradeManager.get_operation()
     # operation.__sell(code, count, price, auto=auto)
-    order(account_type, op_type, 'S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
+    order(account_id, op_type, 'S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
 
-def order(account_type, op_type, direct, code, price_trade, price_limited=0, count=0, auto=False):
+def order(account_id, op_type, direct, code, price_trade, price_limited=0, count=0, auto=False):
     try:
         count = count // 100 * 100
-        tradeapi.order(account_type, op_type, direct, code, count, price_limited, auto)
+        tradeapi.order(account_id, op_type, direct, code, count, price_limited, auto)
         now = datetime.datetime.now()
         price = 0   # 成交的价格
         count = count * (1 if direct == 'B' else -1)
         detail = trade_data.OperationDetail(now, code, price, price_trade, price_limited, count)
 
         if auto and price_limited == 0:
-            threading.Thread(target=assure_finish, args=(account_type, op_type, code, count, now)).start()
+            threading.Thread(target=assure_finish, args=(account_id, op_type, code, count, now)).start()
         if not auto:
             popup_warning_message_box_mp('更新 operation detail?', update_operation_detail, detail)
         # update_operation_detail(detail)
@@ -324,20 +333,20 @@ def order(account_type, op_type, direct, code, price_trade, price_limited=0, cou
         print(e)
 
 
-def assure_finish(account_type, op_type, direct, code, count, trade_time):
+def assure_finish(account_id, op_type, direct, code, count, trade_time):
     for i in range(10):
         time.sleep(5)
-        count_to = wait_finish(account_type, op_type, direct, code, count, trade_time)
+        count_to = wait_finish(account_id, op_type, direct, code, count, trade_time)
         if count_to == 0:
             return
-        re_order(account_type, op_type, direct, code, count)
+        re_order(account_id, op_type, direct, code, count)
     logger.warning(direct, code, count, trade_time, 'unfinished')
 
 
-def wait_finish(account_type, op_type, direct, code, count, trade_time):
+def wait_finish(account_id, op_type, direct, code, count, trade_time):
     count_to = 0
 
-    orders: [trade_data.WithdrawOrder] = query_withdraw_order(account_type)
+    orders: [trade_data.WithdrawOrder] = query_withdraw_order(account_id)
     for row in orders:
         if row.direct != direct or row.code != code or row.trade_time < trade_time:
             continue
@@ -359,13 +368,13 @@ def withdraw(direct='last'):
         print(e)
 
 
-def re_order(account_type, op_type, direct, code, count):
+def re_order(account_id, op_type, direct, code, count):
     # details = db_handler.query_operation_details(date=datetime.date.today())
     # details = [detail for detail in details if detail.price_limited == 0 and detail.count > 0]
 
     # notify()
     withdraw()
-    tradeapi.order(account_type, op_type, direct, code, count=count, auto=True)
+    tradeapi.order(account_id, op_type, direct, code, count=count, auto=True)
 
 
 def compute_stop_profit(quote):
@@ -382,7 +391,7 @@ def compute_stop_profit(quote):
     return stop_profit
 
 
-def create_trade_order(code, price_limited=0):
+def create_trade_order(account_id, code, price_limited=0):
     """
     单个股持仓交易风险率 <= 1%
     总持仓风险率 <= 6%
@@ -395,7 +404,7 @@ def create_trade_order(code, price_limited=0):
     price = quote['close'].iloc[-1] if price_limited == 0 else price_limited
     stop_loss = quote['stop_loss_full'].iloc[-1]
 
-    money = query_money()
+    money = query_money(account_id)
     # total money, begin of month
     # total_money = money.total_money
     trade_config = config.get_trade_config(code)
@@ -403,7 +412,7 @@ def create_trade_order(code, price_limited=0):
     avail_money = money.avail_money
 
     loss = total_money * config.one_risk_rate
-    total_loss_used = trade_manager.db_handler.query_total_risk_amount()
+    total_loss_used = trade_manager.db_handler.query_total_risk_amount(account_id)
     total_loss_remain = total_money * config.total_risk_rate - total_loss_used
 
     loss = min(loss, total_loss_remain)

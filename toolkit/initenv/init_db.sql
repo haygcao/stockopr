@@ -224,7 +224,8 @@ create table trade_order (
   risk_rate decimal(5, 2),
   stop_profit decimal(5, 2) not null,
   profitability_ratios decimal(6, 3),
-  status varchar(8)
+  status varchar(8),
+  account_id varchar(32)
   PRIMARY key (id)
 );
 
@@ -240,7 +241,8 @@ create table asset(
   position_percent decimal(6, 3),
   total_profit decimal(10, 3),
   total_profit_percent decimal(6, 3),
-  today_profit decimal(10, 3)
+  today_profit decimal(10, 3),
+  account_id varchar(32)
 );
 
 
@@ -259,7 +261,9 @@ create table `position` (
   today_profit decimal(10, 3),
   today_profit_percent decimal(6, 3),
   position_percent decimal(6, 3),
-  open_date timestamp
+  open_date timestamp,
+  account_id varchar(32),
+  op_type varchar(32)
 );
 
 -- 逐次更新
@@ -275,13 +279,16 @@ create table operation_detail(
   amount int,
   cost decimal(10, 3),
   position_remain int,
-  profit decimal(10, 3)
+  profit decimal(10, 3),
+  account_id varchar(32),
+  op_type varchar(32)
 );
 
-create unique index asset_date on asset(date);
-create unique index trade_order_code_date on trade_order(code, date);
-create unique index position_code_date on `position`(code, date);
-create unique index operation_detail_code_date on operation_detail(code, time);
+-- alter table asset drop index asset_date;
+create unique index asset_date_account_id on asset(date, account_id);
+create unique index trade_order_code_date_account_id on trade_order(code, date, account_id);
+create unique index position_code_date_account_id on `position`(code, date, account_id);
+create unique index operation_detail_code_date_account_id on operation_detail(code, time, account_id);
 create index operation_detail_order_id on operation_detail(order_id);
 
 -- 市场数据
