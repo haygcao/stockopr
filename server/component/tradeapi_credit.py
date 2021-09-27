@@ -10,7 +10,8 @@ import pywinauto.clipboard
 import pywinauto.application
 
 from .. import config
-from ..config import pos_centre, pos_asset, pos_position, pos_detail, pos_detail2, pos_refresh
+from ..config import pos_centre, pos_asset, pos_position, pos_detail, pos_detail2, pos_refresh, pos_down_arrow, \
+    pos_scroll_middle, pos_detail_cre, pos_asset_cre, pos_up_arrow
 
 g_main_window = None
 
@@ -98,6 +99,13 @@ def refresh():
     time.sleep(0.5)
 
 
+def scroll_bottom():
+    # pywinauto.mouse.press(coords=pos_down_arrow)
+    pywinauto.mouse.press(coords=pos_scroll_middle)
+    time.sleep(1)
+    pywinauto.mouse.release(coords=pos_down_arrow)
+
+
 def get_order():
     """
     获取未成交的委托
@@ -139,12 +147,16 @@ def get_asset():
     获取资金明细
     """
     active_window()
+    scroll_bottom()
+    for i in range(3):
+        time.sleep(0.1)
+        pywinauto.mouse.click(coords=pos_up_arrow)
+    time.sleep(0.3)
 
-    columns = ['资金帐户', '银行名称', '币种', '资金余额', '可用资金', '可取资金', '交易冻结', '委托买入冻结金额', '证券市值', '多金融产品市值', '现金资产', '总资产',
-               '预计利息', '利息税']
-    columns = ['资金帐户', '银行名称', '币种', '资金余额', '可用资金', '可取资金', '交易冻结', '委托买入冻结金额', '证券市值', '多金融产品市值', '现金资产', '总资产',
-               '预计利息', '利息税']
-    pywinauto.mouse.click(coords=pos_asset)
+    columns = ['发生日期', '成交时间', '业务名称', '证券代码', '证券名称', '成交价格', '成交数量', '成交金额', '股份余额', '手续费', '印花税', '过户费', '交易所清算费',
+               '发生金额', '资金本次余额', '委托编号', '股东代码', '资金帐号', '币种']
+
+    pywinauto.mouse.click(coords=pos_asset_cre)
     # pywinauto.mouse.release(coords=pos_asset)
     time.sleep(0.2)
     refresh()
@@ -172,11 +184,10 @@ def get_positions():
     """
     active_window()
 
-    columns = ['证券代码', '证券名称', '股份余额', '实际数量', '可用股份', '冻结数量', '成本价1', '当前价', '浮动盈亏', '盈亏比例(%)', '最新市值', '交易市场']
-    columns = ['证券代码', '证券名称', '股份余额', '实际数量', '可用股份', '冻结数量', '成本价1', '当前价', '浮动盈亏', '盈亏比例(%)', '当日盈亏', '当日盈亏比(%)',
-               '最新市值', '仓位占比(%)', '交易市场']
-    pywinauto.mouse.click(coords=pos_position)
+    columns = ['证券代码', '证券名称', '可用股份', '股份余额', '当前价', '浮动盈亏', '盈亏比例(%)', '最新市值', '交易市场', '股东代码', '参考持股', '成本价', '当前成本', '冻结数量', '卖出成交数量', '在途股份(买入成交)', '资金帐户']
+    # pywinauto.mouse.click(coords=pos_position)
     # pywinauto.mouse.release(coords=pos_asset)
+    pywinauto.keyboard.send_keys('{F4}')
     time.sleep(0.2)
     refresh()
 
@@ -196,7 +207,7 @@ def get_positions():
         current_position = int(float(row[columns.index('股份余额')]))
         avail_position = int(float(row[columns.index('可用股份')]))
         price = float(row[columns.index('当前价')])
-        price_cost = float(row[columns.index('成本价1')])
+        price_cost = float(row[columns.index('成本价')])
         profit_total = float(row[columns.index('浮动盈亏')])
 
         # position = n.Position(row[0], current_position, avail_position)
@@ -236,12 +247,11 @@ def get_operation_detail(code_in=None):
     获取对账单
     """
     active_window()
+    scroll_bottom()
+    time.sleep(0.3)
 
-    columns = ['成交时间', '发生日期', '证券代码', '证券名称', '业务名称', '发生金额', '资金本次余额', '股份余额', '成交数量', '成交价格', '成交金额', '手续费', '印花税',
-               '附加费', '委托编号', '股东代码', '币种', '过户费', '交易所清算费', '资金帐号', '备注', '费用备注']
-    columns = ['发生日期', '成交时间', '证券代码', '证券名称', '业务名称', '成交数量', '成交价格', '成交金额', '余额', '清算金额', '手续费', '印花税', '附加费',
-               '资金本次余额', '委托编号', '股东代码', '过户费', '交易所清算费', '资金帐号', '币种', '费用备注']
-    pywinauto.mouse.click(coords=pos_detail2)
+    columns = ['发生日期', '成交时间', '业务名称', '证券代码', '证券名称', '成交价格', '成交数量', '成交金额', '股份余额', '手续费', '印花税', '过户费', '交易所清算费', '发生金额', '资金本次余额', '委托编号', '股东代码', '资金帐号', '币种']
+    pywinauto.mouse.click(coords=pos_detail_cre)
     # pywinauto.mouse.release(coords=pos_detail)
     time.sleep(0.2)
     refresh()

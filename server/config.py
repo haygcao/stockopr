@@ -18,6 +18,10 @@ pos_buy_and_sell = (25, 159)
 pos_centre = (256, 365)
 
 # 信用
+pos_asset_cre = (30, 73)
+pos_detail_cre = (30, 275)
+pos_refresh_cre = (161, 32)
+
 pos_pt = (10, 680)   # 普通
 pos_xy = (130, 680)  # 信用
 pos_rz = (32, 155)
@@ -33,6 +37,11 @@ pos_edit_price = (300, 150)
 pos_edit_count = (300, 205)
 pos_edit_count_rq_buy = (300, 225)
 pos_edit_count_rz_sell = (300, 275)
+
+#
+pos_up_arrow = (190, 73)
+pos_down_arrow = (190, 655)
+pos_scroll_middle = (190, 350)
 
 # 弹窗
 popup_text = '可选更新传送 不工作'   # win7 未激活

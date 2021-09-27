@@ -4,6 +4,7 @@ import unittest
 
 import util.qt_util
 from acquisition import tx
+from server import config as svr_config
 from trade_manager import trade_manager, db_handler
 
 
@@ -56,7 +57,6 @@ class TradeManagerTestCase(unittest.TestCase):
         print(detail_list)
 
     def test_order(self):
-        from server import config as svr_config
         account_type = svr_config.ACCOUNT_TYPE_XY
         op_type = svr_config.OP_TYPE_DBP
         # op_type = svr_config.OP_TYPE_RZ

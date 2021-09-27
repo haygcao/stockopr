@@ -77,7 +77,13 @@ class QueryMoneyHandler(BaseHandler):
         self.write("Hello, world")
         
     def post(self):
-        r = tradeapi.get_asset()
+        param = self.request.body.decode('utf-8')
+        param = json.loads(param)
+        account_type = param['account_type']
+        if account_type == config.ACCOUNT_TYPE_PT:
+            r = tradeapi.get_asset()
+        else:
+            r = tradeapi_credit.get_asset()
         print(r)
         self.write(r)
 
@@ -94,8 +100,12 @@ class QueryPositionHandler(BaseHandler):
             code = param['code']
         else:
             code = None
-            
-        position = tradeapi.query_position(code)
+
+        account_type = param['account_type']
+        if account_type == config.ACCOUNT_TYPE_PT:
+            position = tradeapi.query_position(code)
+        else:
+            position = tradeapi_credit.query_position(code)
         print(position)
         self.write(json.dumps(position))
 
@@ -113,7 +123,11 @@ class QueryOperationDetailHandler(BaseHandler):
         else:
             code = None
 
-        detail_list = tradeapi.get_operation_detail(code)
+        account_type = param['account_type']
+        if account_type == config.ACCOUNT_TYPE_PT:
+            detail_list = tradeapi.get_operation_detail(code)
+        else:
+            detail_list = tradeapi_credit.get_operation_detail(code)
         self.write(json.dumps(detail_list))
 
 
@@ -122,7 +136,13 @@ class QueryWithdrawOrderHandler(BaseHandler):
         self.write("Hello, world")
 
     def post(self):
-        order_list = tradeapi.get_order()
+        param = self.request.body.decode('utf-8')
+        param = json.loads(param)
+        account_type = param['account_type']
+        if account_type == config.ACCOUNT_TYPE_PT:
+            order_list = tradeapi.get_order()
+        else:
+            order_list = tradeapi_credit.get_order()
         self.write(json.dumps(order_list))
 
 

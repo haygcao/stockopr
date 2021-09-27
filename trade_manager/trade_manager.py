@@ -33,8 +33,8 @@ class TradeManager:
         # return cls.operation
 
 
-def query_withdraw_order():
-    order_list = tradeapi.query_withdraw_order()
+def query_withdraw_order(account_type):
+    order_list = tradeapi.query_withdraw_order(account_type)
     return order_list
 
 
@@ -119,7 +119,7 @@ def query_position_in_operation_detail(code=None, trade_date=None, direct='S'):
     return position
 
 
-def sync():
+def sync_impl(trade_date, account_type):
     """
     sync previous trade date's data
     run at 9:00 on trade day
@@ -129,12 +129,12 @@ def sync():
     #     return
 
     # money
-    money = tradeapi.get_asset()
+    money = tradeapi.get_asset(account_type)
     db_handler.save_money(money, sync=True)
     logger.info('sync money')
 
     # position
-    position_list = tradeapi.query_position()
+    position_list = tradeapi.query_position(account_type)
     db_handler.save_positions(position_list, sync=True)
     logger.info('sync position')
 
@@ -145,12 +145,19 @@ def sync():
     logger.info('update trade order')
 
     # operation detail
-    operation_detail = tradeapi.query_operation_detail()
-    trade_date = dt.get_trade_date()
+    operation_detail = tradeapi.query_operation_detail(account_type)
+
     # trade_date = datetime.date(2021, 7, 1)
     operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date]
     db_handler.save_operation_details(operation_detail, trade_date, sync=True)
     logger.info('sync operation detail')
+
+
+def sync():
+    trade_date = dt.get_trade_date()
+    from server import config as svr_config
+    for account_type in [svr_config.ACCOUNT_TYPE_PT, svr_config.ACCOUNT_TYPE_XY]:
+        sync_impl(trade_date, account_type)
 
     m = db_handler.query_money()
     ps = db_handler.query_current_position()
@@ -320,17 +327,17 @@ def order(account_type, op_type, direct, code, price_trade, price_limited=0, cou
 def assure_finish(account_type, op_type, direct, code, count, trade_time):
     for i in range(10):
         time.sleep(5)
-        count_to = wait_finish(direct, code, count, trade_time)
+        count_to = wait_finish(account_type, op_type, direct, code, count, trade_time)
         if count_to == 0:
             return
         re_order(account_type, op_type, direct, code, count)
     logger.warning(direct, code, count, trade_time, 'unfinished')
 
 
-def wait_finish(direct, code, count, trade_time):
+def wait_finish(account_type, op_type, direct, code, count, trade_time):
     count_to = 0
 
-    orders: [trade_data.WithdrawOrder] = query_withdraw_order()
+    orders: [trade_data.WithdrawOrder] = query_withdraw_order(account_type)
     for row in orders:
         if row.direct != direct or row.code != code or row.trade_time < trade_time:
             continue
