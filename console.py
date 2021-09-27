@@ -701,13 +701,14 @@ class Panel(QWidget):
         trade_manager.create_trade_order(account_id, self.code, price_limited=self.count_or_price[0])
 
     def check(self):
+        account_id = svr_config.ACCOUNT_TYPE_XY
         pid_prev_check = None
         update_time = datetime.datetime(2021, 6, 18, 0, 0, 0)
         while self.running:
             now = datetime.datetime.now()
             if now - update_time > datetime.timedelta(seconds=60):
                 latest_quote_date = quote_db.get_latest_trade_date()
-                latest_sync_date = trade_manager.db_handler.query_money().date
+                latest_sync_date = trade_manager.db_handler.query_money(account_id).date
                 # self.log.setText('latest quote:\t{}\nlatest sync:\t{}'.format(latest_quote_date, latest_sync_date))
                 if latest_sync_date != dt.get_trade_date():
                     # self.log.setStyleSheet("color : red")

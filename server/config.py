@@ -24,10 +24,15 @@ pos_refresh_cre = (161, 32)
 
 pos_pt = (10, 680)   # 普通
 pos_xy = (130, 680)  # 信用
-pos_rz = (32, 155)
+pos_dbp = (32, 73)
+pos_dbp_buy = (32, 93)
+pos_dbp_sell = (32, 103)
+pos_rz = (32, 93)
+pos_rz2 = (32, 155)
 pos_rz_buy = (32, 175)
 pos_rz_sell = (32, 195)
-pos_rq = (32, 235)
+pos_rq = (32, 115)
+pos_rq2 = (32, 235)
 pos_rq_buy = (32, 275)
 pos_rq_sell = (32, 255)
 

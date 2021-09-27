@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+import pathlib
 
 import psutil
 import win32api
@@ -9,109 +10,38 @@ import pywinauto
 import pywinauto.clipboard
 import pywinauto.application
 
+from . import helper
 from .. import config
-from ..config import pos_centre, pos_asset, pos_position, pos_detail, pos_detail2, pos_refresh, pos_down_arrow, \
-    pos_scroll_middle, pos_detail_cre, pos_asset_cre, pos_up_arrow, pos_xy
+
 
 g_main_window = None
 
 
-def get_pid_by_exec(exec_path):
-    exec = exec_path.split('\\')[-1].lower()
-    proc_list = [proc for proc in psutil.process_iter() if exec == proc.name().lower()]
-    return proc_list[0].pid if proc_list else -1
-
-
-def max_window(window):
-    if window.get_show_state() != 3:
-        window.maximize()
-    window.set_focus()
-
-
-def active_window():
-    global g_main_window
-    try:
-        if not g_main_window:
-            max_window(g_main_window)
-            return g_main_window
-    except:
-        g_main_window = None
-
-    pid = get_pid_by_exec('C:\\同花顺下单\\xiadan.exe')
-
-    if pid < 0:
-        app = pywinauto.Application(backend="win32").start('C:\\同花顺下单\\xiadan.exe')
-    else:
-        app = pywinauto.Application(backend="win32").connect(process=pid)
-
-    main_window = app.window(title='网上股票交易系统5.0')
-    max_window(main_window)
-
-    g_main_window = main_window
-
-    return main_window
-
-
-def copy_to_clipboard():
-    """
-    # https://pywinauto.readthedocs.io/en/latest/code/pywinauto.keyboard.html
-    '+': {VK_SHIFT}
-    '^': {VK_CONTROL}
-    '%': {VK_MENU} a.k.a. Alt key
-    """
-    pywinauto.mouse.click(coords=pos_centre)
-    # pywinauto.mouse.release(coords=pos_centre)
-    time.sleep(0.2)
-
-    # pywinauto.mouse.right_click(coords=pos_centre)
-    # pywinauto.mouse.release(coords=pos_centre)
-    # time.sleep(0.2)
-    # pywinauto.keyboard.send_keys('C')
-
-    pywinauto.keyboard.send_keys('^c')
-    time.sleep(0.2)
-
-
-def clean_clipboard_data(data, cols):
-    """
-    清洗剪贴板数据
-    :param data: 数据
-    :param cols: 列数
-    :return: 清洗后的数据，返回列表
-    """
-    lst = data.strip().split()[:-1]
-    matrix = []
-    for i in range(0, len(lst) // cols):
-        matrix.append(lst[i * cols:(i + 1) * cols])
-    return matrix[1:]
-
-
-def get_screen_size():
-    return win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1)
-
-
-def get_cursor_pos():
-    return win32api.GetCursorPos()
-
-
 def refresh():
-    pywinauto.mouse.click(coords=pos_refresh)
+    pywinauto.mouse.click(coords=config.pos_refresh)
     time.sleep(0.5)
 
 
+def scroll_top():
+    # pywinauto.mouse.press(coords=config.pos_down_arrow)
+    pywinauto.mouse.press(coords=config.pos_scroll_middle)
+    time.sleep(0.1)
+    pywinauto.mouse.release(coords=config.pos_up_arrow)
+
+
 def scroll_bottom():
-    # pywinauto.mouse.press(coords=pos_down_arrow)
-    pywinauto.mouse.press(coords=pos_scroll_middle)
-    time.sleep(1)
-    pywinauto.mouse.release(coords=pos_down_arrow)
+    # pywinauto.mouse.press(coords=config.pos_down_arrow)
+    pywinauto.mouse.press(coords=config.pos_scroll_middle)
+    time.sleep(0.1)
+    pywinauto.mouse.release(coords=config.pos_down_arrow)
 
 
 def get_order():
     """
     获取未成交的委托
     """
-    main_window = active_window()
-    pywinauto.mouse.click(coords=pos_xy)
+    main_window = helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
 
     columns = ['委托时间', '证券代码', '证券名称', '买卖', '委托状态', '委托数量', '成交数量', '委托价格', '成交价格', '已撤数量', '合同编号', '交易市场', '股东代码']
 
@@ -119,7 +49,7 @@ def get_order():
     time.sleep(0.2)
     refresh()
 
-    copy_to_clipboard()
+    helper.copy_to_clipboard()
 
     data = pywinauto.clipboard.GetData()
     end_pos = data.find('\n')
@@ -147,23 +77,23 @@ def get_asset():
     """
     获取资金明细
     """
-    active_window()
-    pywinauto.mouse.click(coords=pos_xy)
+    helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
     scroll_bottom()
     for i in range(3):
         time.sleep(0.1)
-        pywinauto.mouse.click(coords=pos_up_arrow)
+        pywinauto.mouse.click(coords=config.pos_up_arrow)
     time.sleep(0.3)
 
     columns = ['发生日期', '成交时间', '业务名称', '证券代码', '证券名称', '成交价格', '成交数量', '成交金额', '股份余额', '手续费', '印花税', '过户费', '交易所清算费',
                '发生金额', '资金本次余额', '委托编号', '股东代码', '资金帐号', '币种']
 
-    pywinauto.mouse.click(coords=pos_asset_cre)
+    pywinauto.mouse.click(coords=config.pos_asset_cre)
     # pywinauto.mouse.release(coords=pos_asset)
     time.sleep(0.2)
     refresh()
 
-    copy_to_clipboard()
+    helper.copy_to_clipboard()
 
     data = pywinauto.clipboard.GetData()
     data = pywinauto.clipboard.GetData()
@@ -184,8 +114,8 @@ def get_positions():
     获取持仓
     :return:
     """
-    active_window()
-    pywinauto.mouse.click(coords=pos_xy)
+    helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
 
     columns = ['证券代码', '证券名称', '可用股份', '股份余额', '当前价', '浮动盈亏', '盈亏比例(%)', '最新市值', '交易市场', '股东代码', '参考持股', '成本价', '当前成本', '冻结数量', '卖出成交数量', '在途股份(买入成交)', '资金帐户']
     # pywinauto.mouse.click(coords=pos_position)
@@ -194,7 +124,7 @@ def get_positions():
     time.sleep(0.2)
     refresh()
 
-    copy_to_clipboard()
+    helper.copy_to_clipboard()
 
     position_list = []
     data = pywinauto.clipboard.GetData()
@@ -233,8 +163,8 @@ def query_position(code):
     可以卖的股数
     还可以买的股数
     """
-    active_window()
-    pywinauto.mouse.click(coords=pos_xy)
+    helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
 
     position_list = get_positions()
     if not code:
@@ -250,19 +180,19 @@ def get_operation_detail(code_in=None):
     """
     获取对账单
     """
-    active_window()
-    pywinauto.mouse.click(coords=pos_xy)
+    helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
 
     scroll_bottom()
     time.sleep(0.3)
 
     columns = ['发生日期', '成交时间', '业务名称', '证券代码', '证券名称', '成交价格', '成交数量', '成交金额', '股份余额', '手续费', '印花税', '过户费', '交易所清算费', '发生金额', '资金本次余额', '委托编号', '股东代码', '资金帐号', '币种']
-    pywinauto.mouse.click(coords=pos_detail_cre)
+    pywinauto.mouse.click(coords=config.pos_detail_cre)
     # pywinauto.mouse.release(coords=pos_detail)
     time.sleep(0.2)
     refresh()
 
-    copy_to_clipboard()
+    helper.copy_to_clipboard()
 
     data = pywinauto.clipboard.GetData()
     end_pos = data.find('\n')
@@ -300,7 +230,24 @@ def get_operation_detail(code_in=None):
     return detail_list
 
 
+def unfold_gui():
+    tmp = 'unfold_gui.tmp'
+    path = pathlib.Path(tmp)
+    today = datetime.date.today()
+    if path.exists() and datetime.datetime.fromtimestamp(path.stat().st_mtime).date() == today:
+        return
+    with open(tmp, 'w') as f:
+        f.write(str(today))
+
+    pywinauto.mouse.click(coords=config.pos_dbp)
+    pywinauto.mouse.click(coords=config.pos_rz)
+    pywinauto.mouse.click(coords=config.pos_rz2)
+    pywinauto.mouse.click(coords=config.pos_rq)
+    pywinauto.mouse.click(coords=config.pos_rq2)
+
+
 def active_sub_window(op_type, direct, main_window):
+    unfold_gui()
     if op_type == config.OP_TYPE_DBP:
         hotkey_buy = '{F1}'
         hotkey_sell = '{F2}'
@@ -316,12 +263,14 @@ def active_sub_window(op_type, direct, main_window):
         pos = config.pos_rz_buy if direct == 'B' else config.pos_rz_sell
     else:
         pos = config.pos_rq_buy if direct == 'B' else config.pos_rq_sell
+
+    scroll_top()
     pywinauto.mouse.click(coords=pos)
 
 
 def order(op_type, direct, code, count, price=0, auto=False):
-    main_window = active_window()
-    pywinauto.mouse.click(coords=pos_xy)
+    main_window = helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
 
     # pywinauto.mouse.click(coords=pos_asset)
     # time.sleep(0.2)
@@ -374,8 +323,8 @@ def withdraw(direct):
 
     print('direct is - {}, command is - {}'.format(direct, command))
 
-    main_window = active_window()
-    pywinauto.mouse.click(coords=pos_xy)
+    main_window = helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
 
     main_window.type_keys('{F3}')
 

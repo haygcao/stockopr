@@ -31,6 +31,13 @@ class TradeApiTestCase(unittest.TestCase):
         ret = tradeapi.get_asset(account_id)
         print(ret)
 
+    def test_query_order(self):
+        account_id = svr_config.ACCOUNT_TYPE_XY
+        op_type = svr_config.OP_TYPE_RZ
+        direct = 'B'
+        ret = tradeapi.order(account_id, op_type, direct, '300502', 1, auto=False)
+        print(ret)
+
 
 def suite():
     suite = unittest.TestSuite()
