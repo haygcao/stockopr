@@ -25,14 +25,14 @@ def refresh():
 def scroll_top():
     # pywinauto.mouse.press(coords=config.pos_down_arrow)
     pywinauto.mouse.press(coords=config.pos_scroll_middle)
-    time.sleep(0.1)
+    # time.sleep(0.1)
     pywinauto.mouse.release(coords=config.pos_up_arrow)
 
 
 def scroll_bottom():
     # pywinauto.mouse.press(coords=config.pos_down_arrow)
     pywinauto.mouse.press(coords=config.pos_scroll_middle)
-    time.sleep(0.1)
+    # time.sleep(0.1)
     pywinauto.mouse.release(coords=config.pos_down_arrow)
 
 

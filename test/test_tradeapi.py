@@ -31,11 +31,16 @@ class TradeApiTestCase(unittest.TestCase):
         ret = tradeapi.get_asset(account_id)
         print(ret)
 
-    def test_query_order(self):
+    def test_order(self):
         account_id = svr_config.ACCOUNT_TYPE_XY
-        op_type = svr_config.OP_TYPE_RZ
+        op_type = svr_config.OP_TYPE_DBP
         direct = 'B'
-        ret = tradeapi.order(account_id, op_type, direct, '300502', 1, auto=False)
+        ret = tradeapi.order(account_id, op_type, direct, '300502', 100, auto=True)
+        print(ret)
+
+    def test_query_withdraw_order(self):
+        account_id = svr_config.ACCOUNT_TYPE_XY
+        ret = tradeapi.query_withdraw_order(account_id)
         print(ret)
 
 

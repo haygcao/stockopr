@@ -131,27 +131,36 @@ def sync_impl(account_id, trade_date):
 
     # money
     money = tradeapi.get_asset(account_id)
-    db_handler.save_money(account_id, money, sync=True)
-    logger.info('sync money')
+    if money:
+        db_handler.save_money(account_id, money, sync=True)
+        logger.info('sync money ok')
+    else:
+        logger.warning('sync money failed')
 
     # position
     position_list = tradeapi.query_position(account_id)
-    db_handler.save_positions(account_id, position_list, sync=True)
-    logger.info('sync position')
+    if position_list:
+        db_handler.save_positions(account_id, position_list, sync=True)
+        logger.info('sync position ok')
+    else:
+        logger.warning('sync position failed')
 
     order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='ING')
-    for code, trade_order in order_map.items():
-        if code not in [position.code for position in position_list]:
-            db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
-    logger.info('update trade order')
+    if order_map:
+        for code, trade_order in order_map.items():
+            if code not in [position.code for position in position_list]:
+                db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
+        logger.info('update trade order')
 
     # operation detail
     operation_detail = tradeapi.query_operation_detail(account_id)
-
-    # trade_date = datetime.date(2021, 7, 1)
-    operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date]
-    db_handler.save_operation_details(account_id, operation_detail, trade_date, sync=True)
-    logger.info('sync operation detail')
+    if operation_detail:
+        # trade_date = datetime.date(2021, 7, 1)
+        operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date]
+        db_handler.save_operation_details(account_id, operation_detail, trade_date, sync=True)
+        logger.info('sync operation detail ok')
+    else:
+        logger.warning('sync operation detail failed')
 
 
 def sync():
@@ -337,8 +346,9 @@ def assure_finish(account_id, op_type, direct, code, count, trade_time):
     for i in range(10):
         time.sleep(5)
         count_to = wait_finish(account_id, op_type, direct, code, count, trade_time)
-        if count_to == 0:
-            return
+        if count_to == -1:
+            logger.warning('something error, continue')
+            continue
         re_order(account_id, op_type, direct, code, count)
     logger.warning(direct, code, count, trade_time, 'unfinished')
 
@@ -347,6 +357,9 @@ def wait_finish(account_id, op_type, direct, code, count, trade_time):
     count_to = 0
 
     orders: [trade_data.WithdrawOrder] = query_withdraw_order(account_id)
+    if not orders:
+        return -1
+
     for row in orders:
         if row.direct != direct or row.code != code or row.trade_time < trade_time:
             continue

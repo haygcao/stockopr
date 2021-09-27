@@ -1,13 +1,24 @@
 # -*- coding: utf-8 -*-
 import datetime
+import inspect
 import json
+import os
+import sys
+
 import requests
 
 from config import config
 from data_structure import trade_data
+from util.log import logger
 
 base_url = config.get_tradeapi_server()
 headers = {"Content-Type": "application/json"}
+
+
+def handle_err(data):
+    if 'ret_code' in data and data['ret_code'] == -1:
+        return True
+    return False
 
 
 def get_asset(account_id):
@@ -18,8 +29,11 @@ def get_asset(account_id):
     data = {'account_id': account_id}
     response = requests.post(url, data=json.dumps(data), headers=headers)
     d = json.loads(response.content)
-    asset = trade_data.Asset(d['total_money'], d['avail_money'])
+    if handle_err(d):
+        logger.error(d['err_msg'], inspect.currentframe().f_code.co_name)
+        return
 
+    asset = trade_data.Asset(d['total_money'], d['avail_money'])
     return asset
 
 
@@ -35,12 +49,13 @@ def query_position(account_id, code=None):
     }
     response = requests.post(url, data=json.dumps(data), headers=headers)
     json_str = response.content
-    if not json_str:
-        return None
+    d = json.loads(json_str)
+    if handle_err(d):
+        logger.error(d['err_msg'], inspect.currentframe().f_code.co_name)
+        return
 
     position_list = []
     try:
-        d = json.loads(json_str)
         for row in d:
             position = trade_data.Position(row['code'], row['current_position'], row['avail_position'],
                                            row['price_cost'], row['price'], row['profit_total'])
@@ -62,11 +77,15 @@ def query_operation_detail(account_id, code=None):
         'account_id': account_id
     }
     response = requests.post(url, data=json.dumps(data), headers=headers)
+    d = json.loads(response.content)
+    if handle_err(d):
+        logger.error(d['err_msg'], inspect.currentframe().f_code.co_name)
+        return
 
     detail_list = []
     price_trade = 0
     price_limited = 0
-    for row in json.loads(response.content):
+    for row in d:
         detail = trade_data.OperationDetail(row['trade_time'], row['code'], row['price'], price_trade, price_limited,
                                             row['count'])
         detail_list.append(detail)
@@ -98,10 +117,14 @@ def query_withdraw_order(account_id):
     url = 'http://{}/query_withdraw_order'.format(base_url)
     data = {'account_id': account_id}
     response = requests.post(url, data=json.dumps(data), headers=headers)
+    d = json.loads(response.content)
+    if handle_err(d):
+        logger.error(d['err_msg'], inspect.currentframe().f_code.co_name)
+        return
 
     order_list = []
     today_str = datetime.date.today().strftime('%Y-%m-%d')
-    for row in json.loads(response.content):
+    for row in d:
         trade_time = datetime.datetime.strptime('{} {}'.format(today_str, row['trade_time']), '%Y-%m-%d %H:%M:%S')
         direct = 'B' if '买入' in row['direct'] else 'S'
         withdraw_order = trade_data.WithdrawOrder(trade_time, row['code'], direct, row['count'],

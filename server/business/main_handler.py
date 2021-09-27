@@ -8,6 +8,20 @@ from .. import config
 from ..component import tradeapi, tradeapi_credit
 
 
+def trade_time_filter(func):
+    def wrapper(self, *args, **kwargs):
+        now = datetime.datetime.now()
+        w_day = now.isoweekday()
+        hour = now.hour
+        if w_day <= 5 and hour <= 15:
+            self.write({'ret_code': -1, 'err_msg': ''})
+            return
+
+        return func(self, *args, **kwargs)
+
+    return wrapper
+
+
 class BaseHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         # The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. Origin 'http://localhost:4200' is therefore not allowed access. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.
@@ -34,7 +48,7 @@ class MainHandler(BaseHandler):
         self.write("Hello, world")
 
     def post(self):
-        self.write("Hello, world")
+        self.write({})
 
 
 class OrderHandler(BaseHandler):
@@ -55,7 +69,7 @@ class OrderHandler(BaseHandler):
         else:
             op_type = param['op_type']
             tradeapi_credit.order(op_type, direct, code, count, auto=auto)
-        self.write("Hello, world")
+        self.write({})
 
 
 class WithdrawHandler(BaseHandler):
@@ -69,66 +83,7 @@ class WithdrawHandler(BaseHandler):
 
         tradeapi.withdraw(direct)
 
-        self.write("Hello, world")
-
-
-class QueryMoneyHandler(BaseHandler):
-    def get(self):
-        self.write("Hello, world")
-        
-    def post(self):
-        param = self.request.body.decode('utf-8')
-        param = json.loads(param)
-        account_id = param['account_id']
-        if account_id == config.ACCOUNT_TYPE_PT:
-            r = tradeapi.get_asset()
-        else:
-            r = tradeapi_credit.get_asset()
-        print(r)
-        self.write(r)
-
-
-class QueryPositionHandler(BaseHandler):
-    def get(self):
-        self.write("Hello, world")
-        
-    def post(self):
-        param = self.request.body.decode('utf-8')
-        print(param)
-        param = json.loads(param)
-        if 'code' in param and param['code']:
-            code = param['code']
-        else:
-            code = None
-
-        account_id = param['account_id']
-        if account_id == config.ACCOUNT_TYPE_PT:
-            position = tradeapi.query_position(code)
-        else:
-            position = tradeapi_credit.query_position(code)
-        print(position)
-        self.write(json.dumps(position))
-
-
-class QueryOperationDetailHandler(BaseHandler):
-    def get(self):
-        self.write("Hello, world")
-        
-    def post(self):
-        param = self.request.body.decode('utf-8')
-        print(param)
-        param = json.loads(param)
-        if 'code' in param and param['code']:
-            code = param['code']
-        else:
-            code = None
-
-        account_id = param['account_id']
-        if account_id == config.ACCOUNT_TYPE_PT:
-            detail_list = tradeapi.get_operation_detail(code)
-        else:
-            detail_list = tradeapi_credit.get_operation_detail(code)
-        self.write(json.dumps(detail_list))
+        self.write({})
 
 
 class QueryWithdrawOrderHandler(BaseHandler):
@@ -144,6 +99,67 @@ class QueryWithdrawOrderHandler(BaseHandler):
         else:
             order_list = tradeapi_credit.get_order()
         self.write(json.dumps(order_list))
+
+
+class QueryMoneyHandler(BaseHandler):
+    def get(self):
+        self.write("Hello, world")
+
+    @trade_time_filter
+    def post(self):
+        param = self.request.body.decode('utf-8')
+        param = json.loads(param)
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_TYPE_PT:
+            r = tradeapi.get_asset()
+        else:
+            r = tradeapi_credit.get_asset()
+        self.write(r)
+
+
+class QueryPositionHandler(BaseHandler):
+    def get(self):
+        self.write("Hello, world")
+
+    @trade_time_filter
+    def post(self):
+        param = self.request.body.decode('utf-8')
+        print(param)
+        param = json.loads(param)
+        if 'code' in param and param['code']:
+            code = param['code']
+        else:
+            code = None
+
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_TYPE_PT:
+            position = tradeapi.query_position(code)
+        else:
+            position = tradeapi_credit.query_position(code)
+
+        self.write(json.dumps(position))
+
+
+class QueryOperationDetailHandler(BaseHandler):
+    def get(self):
+        self.write("Hello, world")
+
+    @trade_time_filter
+    def post(self):
+        param = self.request.body.decode('utf-8')
+        print(param)
+        param = json.loads(param)
+        if 'code' in param and param['code']:
+            code = param['code']
+        else:
+            code = None
+
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_TYPE_PT:
+            detail_list = tradeapi.get_operation_detail(code)
+        else:
+            detail_list = tradeapi_credit.get_operation_detail(code)
+        self.write(json.dumps(detail_list))
 
 
 class QueryTradeSignalHandler(BaseHandler):
