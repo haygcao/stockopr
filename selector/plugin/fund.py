@@ -20,9 +20,7 @@ def filter_new_stocks(df_data):
     return df_data
 
 
-def query_one_stock_lite():
-    fund_date = '2021-06-30'
-    code = '600519'
+def query_one_stock_lite(code, fund_date):
     sql = "select fund_code from fund_stock where fund_date = %s and code = %s"
 
     val = (fund_date, code)
@@ -63,13 +61,11 @@ def supplement_percent(df):
     return df_final
 
 
-def query_stock():
+def query_stock(code, fund_date):
     trade_date = dt.get_pre_trade_date()
-    fund_date = '2021-06-30'
     scale = 0  # 10
     nmc = config.SELECTOR_FUND_STOCK_NMC_MAX  # 50
-    code = '600519'
-    sql = "select fund_code, fs.code, bi.name, q.nmc nmc, q.close " \
+    sql = "select fund_code, fs.code, bi.name, fs.market_value fmv, q.nmc nmc, q.close " \
           "from fund_basic fb, fund_stock fs, basic_info bi, quote q " \
           "where q.code = bi.code and fb.code = fs.fund_code and bi.code = fs.code and fb.`date` = fund_date " \
           "and q.trade_date = %s and fund_date = %s and fb.`scale` > %s and nmc < %s and q.code = %s" \

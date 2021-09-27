@@ -64,8 +64,12 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(df)
 
     def test_query_stock(self):
-        df = fund.query_one_stock_lite()
-        df1 = fund.query_stock()
+        fund_date = '2021-06-30'
+        code = '600519'
+        df = fund.query_one_stock_lite(code, fund_date)
+        df1 = fund.query_stock(code, fund_date)
+        fmvp = df1.fmv.sum() / df1.nmc[-1]
+
         intersection = df.index.intersection(df1.index)
         print(df.index[~df.index.isin(intersection)])
         print(df1.index[~df1.index.isin(intersection)])
