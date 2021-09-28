@@ -31,8 +31,8 @@ def get_order():
     columns = ['委托时间', '证券代码', '证券名称', '买卖', '委托状态', '委托数量', '成交数量', '委托价格', '成交价格', '已撤数量', '合同编号', '交易市场', '股东代码']
     
     main_window.type_keys('{F3}')
-    time.sleep(0.2)
-    refresh()
+    # time.sleep(0.2)
+    # refresh()
     
     helper.copy_to_clipboard()
 
@@ -69,8 +69,8 @@ def get_asset():
     columns = ['资金帐户', '银行名称', '币种', '资金余额', '可用资金', '可取资金', '交易冻结', '委托买入冻结金额', '证券市值', '多金融产品市值', '现金资产', '总资产', '预计利息', '利息税']
     pywinauto.mouse.click(coords=config.pos_asset)
     # pywinauto.mouse.release(coords=config.pos_asset)
-    time.sleep(0.2)
-    refresh()
+    # time.sleep(0.2)
+    # refresh()
     
     helper.copy_to_clipboard()
 
@@ -100,8 +100,8 @@ def get_positions():
     columns = ['证券代码', '证券名称', '股份余额', '实际数量', '可用股份', '冻结数量', '成本价1', '当前价', '浮动盈亏', '盈亏比例(%)', '当日盈亏', '当日盈亏比(%)', '最新市值', '仓位占比(%)', '交易市场']
     pywinauto.mouse.click(coords=config.pos_position)
     # pywinauto.mouse.release(coords=config.pos_asset)
-    time.sleep(0.2)
-    refresh()
+    # time.sleep(0.2)
+    # refresh()
     
     helper.copy_to_clipboard()
 
@@ -166,8 +166,8 @@ def get_operation_detail(code_in=None):
     columns = ['发生日期', '成交时间', '证券代码', '证券名称', '业务名称', '成交数量', '成交价格', '成交金额', '余额', '清算金额', '手续费', '印花税', '附加费', '资金本次余额', '委托编号', '股东代码', '过户费', '交易所清算费', '资金帐号', '币种', '费用备注']
     pywinauto.mouse.click(coords=config.pos_detail2)
     # pywinauto.mouse.release(coords=config.pos_detail)
-    time.sleep(0.2)
-    refresh()
+    # time.sleep(0.2)
+    # refresh()
     
     helper.copy_to_clipboard()
 

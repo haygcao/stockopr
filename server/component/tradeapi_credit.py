@@ -1,4 +1,19 @@
 # -*- coding: utf-8 -*-
+"""
+网上股票交易系统5.0
+[快速交易]
+自动弹出窗口停留时间(秒)
+是否弹出成交回报提示窗口
+撤单前是否需要确认
+委托前是否需要确认
+委托成功后是否弹出提示对话框
+
+[界面设置]
+下单窗口总在最前面
+查询界面自动刷新时间(秒)
+显示悬浮工具栏
+
+"""
 import datetime
 import pathlib
 
@@ -46,8 +61,8 @@ def get_order():
     columns = ['委托时间', '证券代码', '证券名称', '买卖', '委托状态', '委托数量', '成交数量', '委托价格', '成交价格', '已撤数量', '合同编号', '交易市场', '股东代码']
 
     main_window.type_keys('{F3}')
-    time.sleep(0.2)
-    refresh()
+    # time.sleep(0.2)
+    # refresh()
 
     helper.copy_to_clipboard()
 
@@ -90,8 +105,8 @@ def get_asset():
 
     pywinauto.mouse.click(coords=config.pos_asset_cre)
     # pywinauto.mouse.release(coords=pos_asset)
-    time.sleep(0.2)
-    refresh()
+    # time.sleep(0.2)
+    # refresh()
 
     helper.copy_to_clipboard()
 
@@ -122,8 +137,8 @@ def get_positions():
     # pywinauto.mouse.click(coords=pos_position)
     # pywinauto.mouse.release(coords=pos_asset)
     pywinauto.keyboard.send_keys('{F4}')
-    time.sleep(0.2)
-    refresh()
+    # time.sleep(0.2)
+    # refresh()
 
     helper.copy_to_clipboard()
 
@@ -190,8 +205,8 @@ def get_operation_detail(code_in=None):
     columns = ['发生日期', '成交时间', '业务名称', '证券代码', '证券名称', '成交价格', '成交数量', '成交金额', '股份余额', '手续费', '印花税', '过户费', '交易所清算费', '发生金额', '资金本次余额', '委托编号', '股东代码', '资金帐号', '币种']
     pywinauto.mouse.click(coords=config.pos_detail_cre)
     # pywinauto.mouse.release(coords=pos_detail)
-    time.sleep(0.2)
-    refresh()
+    # time.sleep(0.2)
+    # refresh()
 
     helper.copy_to_clipboard()
 
