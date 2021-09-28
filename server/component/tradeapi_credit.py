@@ -95,7 +95,8 @@ def get_asset():
 
     helper.copy_to_clipboard()
 
-    data = pywinauto.clipboard.GetData()
+    scroll_top()
+
     data = pywinauto.clipboard.GetData()
     end_pos = data.find('\n')
     columns = data[:end_pos].split()
@@ -194,6 +195,8 @@ def get_operation_detail(code_in=None):
 
     helper.copy_to_clipboard()
 
+    scroll_top()
+
     data = pywinauto.clipboard.GetData()
     end_pos = data.find('\n')
     columns = data[:end_pos].split()
@@ -264,7 +267,6 @@ def active_sub_window(op_type, direct, main_window):
     else:
         pos = config.pos_rq_buy if direct == 'B' else config.pos_rq_sell
 
-    scroll_top()
     pywinauto.mouse.click(coords=pos)
 
 
