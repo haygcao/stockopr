@@ -132,6 +132,11 @@ def sync_impl(account_id, trade_date):
     # money
     money = tradeapi.get_asset(account_id)
     if money:
+        trade_config = config.get_trade_config()
+        money.origin = trade_config['total_money'][account_id]
+        money.period = datetime.datetime.strptime(trade_config['period'], '%Y-%m-%d').date()
+        money.profit = money.total_money - money.origin
+        money.profit_percent = round(100 * money.profit / money.origin, 3)
         db_handler.save_money(account_id, money, sync=True)
         logger.info('sync money ok')
     else:
@@ -152,7 +157,7 @@ def sync_impl(account_id, trade_date):
                 db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
         logger.info('update trade order')
 
-    # operation detail
+    # operation detailtotal_money
     operation_detail = tradeapi.query_operation_detail(account_id)
     if operation_detail:
         # trade_date = datetime.date(2021, 7, 1)
@@ -168,9 +173,7 @@ def sync():
     m_date = ''
     p_date = ''
     trade_date = dt.get_trade_date()
-    for account_id in [svr_config.ACCOUNT_TYPE_PT, svr_config.ACCOUNT_TYPE_XY]:
-        if account_id == svr_config.ACCOUNT_TYPE_PT:
-            continue
+    for account_id in [svr_config.ACCOUNT_ID_PT, svr_config.ACCOUNT_ID_XY]:
         sync_impl(account_id, trade_date)
 
         m = db_handler.query_money(account_id)
@@ -421,7 +424,7 @@ def create_trade_order(account_id, code, price_limited=0):
     # total money, begin of month
     # total_money = money.total_money
     trade_config = config.get_trade_config(code)
-    total_money = trade_config['total_money']
+    total_money = trade_config['total_money'][account_id]
     avail_money = money.avail_money
 
     loss = total_money * config.one_risk_rate

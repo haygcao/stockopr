@@ -30,15 +30,10 @@ class Asset(TradeData):
 
     def __init__(self, total_money, avail_money, date=None):
         self.date = dt.get_trade_date() if not date else date
-        trade_config = config.get_trade_config()
-        self.period = datetime.datetime.strptime(trade_config['period'], '%Y-%m-%d').date()
-        self.origin = trade_config['total_money']
         self.total_money = float(total_money)
         self.avail_money = float(avail_money)
         self.market_value = self.total_money - self.avail_money
         self.position_percent = round(100 * self.market_value / self.total_money, 3)
-        self.profit = self.total_money - self.origin
-        self.profit_percent = round(100 * self.profit / self.origin, 3)
 
 
 @dataclass

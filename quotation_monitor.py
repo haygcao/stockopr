@@ -255,7 +255,7 @@ def order(trade_singal: TradeSignal):
     logger.info('{} {}'.format(trade_singal.command, trade_singal.code))
 
     from server import config as svr_config
-    account_id = svr_config.ACCOUNT_TYPE_XY
+    account_id = svr_config.ACCOUNT_ID_XY
     op_type = svr_config.OP_TYPE_DBP
 
     if trade_singal.command == 'B':

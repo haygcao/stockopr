@@ -57,8 +57,8 @@ popup_text = '可选更新传送 不工作'   # win7 未激活
 port = 8080
 
 # 账户类型
-ACCOUNT_TYPE_PT = 1
-ACCOUNT_TYPE_XY = 2
+ACCOUNT_ID_PT = "1"
+ACCOUNT_ID_XY = "2"
 
 OP_TYPE_PT = 0
 OP_TYPE_DBP = 1

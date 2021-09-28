@@ -24,7 +24,7 @@ class TradeManagerTestCase(unittest.TestCase):
         trade_manager.withdraw()
 
     def test_query_money(self):
-        accout_type = svr_config.ACCOUNT_TYPE_XY
+        accout_type = svr_config.ACCOUNT_ID_XY
         menoy = trade_manager.query_money(accout_type)
         print(menoy)
         db_handler.save_money(menoy)
@@ -32,7 +32,7 @@ class TradeManagerTestCase(unittest.TestCase):
         print(money)
 
     def test_get_position(self):
-        account_id = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_ID_XY
         code = '300502'
 
         pre_position = trade_manager.query_position(code)
@@ -59,7 +59,7 @@ class TradeManagerTestCase(unittest.TestCase):
         print(detail_list)
 
     def test_order(self):
-        account_id = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_ID_XY
         op_type = svr_config.OP_TYPE_DBP
         # op_type = svr_config.OP_TYPE_RZ
         # op_type = svr_config.OP_TYPE_RQ
@@ -84,7 +84,7 @@ class TradeManagerTestCase(unittest.TestCase):
         print(order_list[0])
 
     def test_create_trade_order(self):
-        account_id = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_ID_XY
         code = '300502'
         trade_manager.create_trade_order(account_id, code)
 

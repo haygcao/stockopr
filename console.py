@@ -688,7 +688,7 @@ class Panel(QWidget):
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, 0)
         quote = tx.get_realtime_data_sina(self.code)
 
-        account_id = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_ID_XY
         op_type = svr_config.OP_TYPE_DBP
         trade_manager.sell(account_id, op_type, self.code,
                            price_trade=quote['close'][-1],
@@ -697,11 +697,11 @@ class Panel(QWidget):
                            auto=True)
 
     def new_trade_order(self):
-        account_id = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_ID_XY
         trade_manager.create_trade_order(account_id, self.code, price_limited=self.count_or_price[0])
 
     def check(self):
-        account_id = svr_config.ACCOUNT_TYPE_XY
+        account_id = svr_config.ACCOUNT_ID_XY
         pid_prev_check = None
         update_time = datetime.datetime(2021, 6, 18, 0, 0, 0)
         while self.running:

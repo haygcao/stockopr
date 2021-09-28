@@ -2,8 +2,8 @@
   "global": {
     "auto_buy": false,
     "auto_sell": false,
-    "period": "2021-08-30",
-    "total_money": 540000,
+    "period": "2021-09-30",
+    "total_money": {"1": 210000, "2": 540000},
     "position_unit": 40000
   },
   "scan": {
