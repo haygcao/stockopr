@@ -1,3 +1,6 @@
+ths_home = 'C:\\同花顺下单'
+ths_main_window_title = '网上股票交易系统5.0'
+
 # pos_position = (36, 258)
 # pos_asset = (45, 354)
 # pos_detail = (36, 456)
@@ -19,7 +22,8 @@ pos_centre = (256, 365)
 
 # 信用
 pos_asset_cre = (30, 73)
-pos_detail_cre = (30, 275)
+pos_detail_cre = (30, 275)  # 对账单
+# pos_detail_cre = (30, 295)  # 交割单
 pos_refresh_cre = (161, 32)
 
 pos_pt = (10, 680)   # 普通

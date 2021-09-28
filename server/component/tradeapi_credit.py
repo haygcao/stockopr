@@ -15,6 +15,7 @@
 
 """
 import datetime
+import os
 import pathlib
 
 import psutil
@@ -49,6 +50,45 @@ def scroll_bottom():
     pywinauto.mouse.press(coords=config.pos_scroll_middle)
     # time.sleep(0.1)
     pywinauto.mouse.release(coords=config.pos_down_arrow)
+
+
+def unfold_gui():
+    root_dir = os.path.join(os.path.dirname(__file__), '..')
+    root_dir = os.path.abspath(root_dir)
+    tmp = os.path.join(root_dir, 'unfold_gui.txt')
+    path = pathlib.Path(tmp)
+    today = datetime.date.today()
+    if path.exists() and datetime.datetime.fromtimestamp(path.stat().st_mtime).date() == today:
+        return
+    with open(tmp, 'w') as f:
+        f.write(str(today))
+
+    pywinauto.mouse.click(coords=config.pos_dbp)
+    pywinauto.mouse.click(coords=config.pos_rz)
+    pywinauto.mouse.click(coords=config.pos_rz2)
+    pywinauto.mouse.click(coords=config.pos_rq)
+    pywinauto.mouse.click(coords=config.pos_rq2)
+
+
+def active_sub_window(op_type, direct, main_window):
+    unfold_gui()
+    if op_type == config.OP_TYPE_DBP:
+        hotkey_buy = '{F1}'
+        hotkey_sell = '{F2}'
+        if direct == 'B':
+            main_window.type_keys(hotkey_sell)
+            main_window.type_keys(hotkey_buy)
+        else:
+            main_window.type_keys(hotkey_buy)
+            main_window.type_keys(hotkey_sell)
+        return
+
+    if op_type == config.OP_TYPE_RZ:
+        pos = config.pos_rz_buy if direct == 'B' else config.pos_rz_sell
+    else:
+        pos = config.pos_rq_buy if direct == 'B' else config.pos_rq_sell
+
+    pywinauto.mouse.click(coords=pos)
 
 
 def get_order():
@@ -96,9 +136,9 @@ def get_asset():
     pywinauto.mouse.click(coords=config.pos_xy)
     scroll_bottom()
     for i in range(3):
-        time.sleep(0.1)
+        # time.sleep(0.1)
         pywinauto.mouse.click(coords=config.pos_up_arrow)
-    time.sleep(0.3)
+    # time.sleep(0.3)
 
     columns = ['发生日期', '成交时间', '业务名称', '证券代码', '证券名称', '成交价格', '成交数量', '成交金额', '股份余额', '手续费', '印花税', '过户费', '交易所清算费',
                '发生金额', '资金本次余额', '委托编号', '股东代码', '资金帐号', '币种']
@@ -200,7 +240,7 @@ def get_operation_detail(code_in=None):
     pywinauto.mouse.click(coords=config.pos_xy)
 
     scroll_bottom()
-    time.sleep(0.3)
+    # time.sleep(0.3)
 
     columns = ['发生日期', '成交时间', '业务名称', '证券代码', '证券名称', '成交价格', '成交数量', '成交金额', '股份余额', '手续费', '印花税', '过户费', '交易所清算费', '发生金额', '资金本次余额', '委托编号', '股东代码', '资金帐号', '币种']
     pywinauto.mouse.click(coords=config.pos_detail_cre)
@@ -248,43 +288,6 @@ def get_operation_detail(code_in=None):
     return detail_list
 
 
-def unfold_gui():
-    tmp = 'unfold_gui.tmp'
-    path = pathlib.Path(tmp)
-    today = datetime.date.today()
-    if path.exists() and datetime.datetime.fromtimestamp(path.stat().st_mtime).date() == today:
-        return
-    with open(tmp, 'w') as f:
-        f.write(str(today))
-
-    pywinauto.mouse.click(coords=config.pos_dbp)
-    pywinauto.mouse.click(coords=config.pos_rz)
-    pywinauto.mouse.click(coords=config.pos_rz2)
-    pywinauto.mouse.click(coords=config.pos_rq)
-    pywinauto.mouse.click(coords=config.pos_rq2)
-
-
-def active_sub_window(op_type, direct, main_window):
-    unfold_gui()
-    if op_type == config.OP_TYPE_DBP:
-        hotkey_buy = '{F1}'
-        hotkey_sell = '{F2}'
-        if direct == 'B':
-            main_window.type_keys(hotkey_sell)
-            main_window.type_keys(hotkey_buy)
-        else:
-            main_window.type_keys(hotkey_buy)
-            main_window.type_keys(hotkey_sell)
-        return
-
-    if op_type == config.OP_TYPE_RZ:
-        pos = config.pos_rz_buy if direct == 'B' else config.pos_rz_sell
-    else:
-        pos = config.pos_rq_buy if direct == 'B' else config.pos_rq_sell
-
-    pywinauto.mouse.click(coords=pos)
-
-
 def order(op_type, direct, code, count, price=0, auto=False):
     main_window = helper.active_window()
     pywinauto.mouse.click(coords=config.pos_xy)
@@ -298,7 +301,7 @@ def order(op_type, direct, code, count, price=0, auto=False):
     main_window.type_keys(str(code))
     # main_window.type_keys('{TAB}')
     if price > 0:
-        time.sleep(0.2)
+        # time.sleep(0.2)
         pywinauto.mouse.double_click(coords=config.pos_edit_price)
         main_window.type_keys(str(price))
     # main_window.type_keys('{TAB}')
@@ -307,7 +310,7 @@ def order(op_type, direct, code, count, price=0, auto=False):
         pos = config.pos_edit_count_rz_sell
     elif op_type == config.OP_TYPE_RQ and direct == 'B':
         pos = config.pos_edit_count_rq_buy
-    time.sleep(0.2)
+    # time.sleep(0.2)
     pywinauto.mouse.double_click(coords=pos)
     main_window.type_keys(str(count))
     main_window.type_keys('{TAB}')

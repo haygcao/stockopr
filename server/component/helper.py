@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import time
 
 import psutil
@@ -12,10 +13,11 @@ def is_foreground():
     w = win32gui.GetForegroundWindow()
     text = win32gui.GetWindowText(w)
 
-    return '网上股票交易系统5.0' in text
+    return config.ths_main_window_title in text
 
 
 def get_pid_by_exec(exec_path):
+    # os.path.join() 在 windows 下生成的路径分割符是 '\'
     exec = exec_path.split('\\')[-1].lower()
     proc_list = [proc for proc in psutil.process_iter() if exec == proc.name().lower()]
     return proc_list[0].pid if proc_list else -1
@@ -36,14 +38,15 @@ def active_window():
     except:
         g_main_window = None
 
-    pid = get_pid_by_exec('C:\\同花顺下单\\xiadan.exe')
+    ths_exe = os.path.join(config.ths_home, 'xiadan.exe')
+    pid = get_pid_by_exec(ths_exe)
 
     if pid < 0:
-        app = pywinauto.Application(backend="win32").start('C:\\同花顺下单\\xiadan.exe')
+        app = pywinauto.Application(backend="win32").start(ths_exe)
     else:
         app = pywinauto.Application(backend="win32").connect(process=pid)
 
-    main_window = app.window(title='网上股票交易系统5.0')
+    main_window = app.window(title=config.ths_main_window_title)
     max_window(main_window)
 
     pywinauto.mouse.click(coords=config.pos_centre)
