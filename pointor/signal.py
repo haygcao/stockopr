@@ -156,6 +156,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             quote = quote_bk
             quote = quote.assign(signal_enter=numpy.nan)
             quote = quote.assign(signal_exit=numpy.nan)
+            quote = quote.assign(mask_signal_exit=numpy.nan)
 
     if compute:
         # 基础指标 - 均线
@@ -184,6 +185,8 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         # 信号 mask
         quote = mask.compute_enter_mask(quote, period)
 
+        if 'mask_signal_exit' not in quote.columns:
+            quote.insert(len(quote.columns), 'mask_signal_exit', numpy.nan)
         if 'signal_enter' not in quote.columns:
             quote.insert(len(quote.columns), 'signal_enter', numpy.nan)
         if 'signal_exit' not in quote.columns:

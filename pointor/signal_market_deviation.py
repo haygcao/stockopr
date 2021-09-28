@@ -19,7 +19,12 @@ def signal_one(quote_copy, column):
 
     for i in range(len(deviation) - 1, 0, -2):
         # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
-        quote_copy.loc[deviation.index[i], signal_column] = quote_copy.loc[deviation.index[i], column]
+        index_date = deviation.index[i]
+        index = numpy.where(quote_copy.index == index_date)[0][0]
+        if index == len(quote_copy.index) - 1:
+            continue
+        index_date_next = quote_copy.index[index + 1]
+        quote_copy.loc[index_date_next, signal_column] = quote_copy.loc[index_date_next, 'low']
         # print(deviation.index[i], '0')
 
     return quote_copy

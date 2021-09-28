@@ -950,7 +950,7 @@ def open_graph(code, peroid, indicator, path=None):
             candle.load_data(path)
         else:
             candle.fetch_data(code)
-        candle.data_origin = signal.compute_signal(code, peroid, candle.data_origin)
+    candle.data_origin = signal.compute_signal(code, peroid, candle.data_origin)
 
     update(candle)
     show(candle)
