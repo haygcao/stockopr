@@ -160,7 +160,7 @@ def sync_impl(account_id, trade_date):
     # operation detailtotal_money
     operation_detail = tradeapi.query_operation_detail(account_id)
     if operation_detail:
-        # trade_date = datetime.date(2021, 7, 1)
+        # trade_date = datetime.date(2021, 9, 28)
         operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date]
         db_handler.save_operation_details(account_id, operation_detail, trade_date, sync=True)
         logger.info('sync operation detail ok')
@@ -174,6 +174,8 @@ def sync():
     p_date = ''
     trade_date = dt.get_trade_date()
     for account_id in [svr_config.ACCOUNT_ID_PT, svr_config.ACCOUNT_ID_XY]:
+        # if account_id == svr_config.ACCOUNT_ID_XY:
+        #     continue
         sync_impl(account_id, trade_date)
 
         m = db_handler.query_money(account_id)

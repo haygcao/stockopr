@@ -171,7 +171,8 @@ def save_operation_details(account_id, details, trade_date=None, sync=False):
     with mysqlcli.get_cursor() as c:
         try:
             if sync:
-                c.execute("delete from {} where date(time) = %s".format(config.sql_tab_operation_detail), trade_date)
+                sql_delete = "delete from {} where account_id = %s and date(time) = %s".format(config.sql_tab_operation_detail)
+                c.execute(sql_delete, (account_id, trade_date))
 
             if not details:
                 return

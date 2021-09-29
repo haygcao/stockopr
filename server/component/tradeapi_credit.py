@@ -60,8 +60,8 @@ def unfold_gui():
     today = datetime.date.today()
     if path.exists() and datetime.datetime.fromtimestamp(path.stat().st_mtime).date() == today:
         return
-    with open(tmp, 'w') as f:
-        f.write(str(today))
+    with open(tmp, 'wb') as f:
+        f.write(str(today).encode('utf8'))
 
     pywinauto.mouse.click(coords=config.pos_dbp)
     pywinauto.mouse.click(coords=config.pos_rz)
