@@ -17,7 +17,7 @@ signal_mask_column = {
     "dynamical_system_signal_enter": mask_trend_up,
     "channel_signal_enter": [],
     "resistance_support_signal_enter": ['mask_resistance'] + mask_trend_up + ['mask_second_stage'],
-    "value_return_signal_enter": mask_trend_up + ['mask_dmi'] + ['mask_value_return'],
+    "value_return_signal_enter": ['mask_slow_ma_ins', 'mask_diff_fma_sma_positive', 'mask_dmi'] + ['mask_value_return'],
     "blt_signal_enter": mask_trend_up + ['mask_dmi'],
     "vcp_signal_enter": mask_trend_up,
     "step_signal_enter": ['mask_step'] + mask_trend_up + ['mask_step'],
