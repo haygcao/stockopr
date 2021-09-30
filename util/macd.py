@@ -190,8 +190,8 @@ def dmi(prices):
     df = pd.DataFrame()
     df['pdi'] = PLUS_DI(prices, timeperiod=14)
     df['mdi'] = MINUS_DI(prices, timeperiod=14)
-    df['adx'] = ADX(prices, timeperiod=14)
-    df['adxr'] = ADXR(prices, timeperiod=14)
+    df['adx'] = ADX(prices, timeperiod=6)   # 通达信, 同花顺均为 14/6, 以交易为生中是 13/13
+    df['adxr'] = ADXR(prices, timeperiod=6)
 
     return df
 
