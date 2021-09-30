@@ -2,7 +2,7 @@
 import numpy
 
 from config import config, signal_mask
-from indicator import ad, relative_price_strength
+from indicator import ad, relative_price_strength, dmi
 from util import macd
 
 
@@ -29,7 +29,7 @@ def compute_enter_mask(quote, period):
     ema = quote.close.ewm(span=n).mean()
     ema_shift = ema.shift(periods=1)
     # quote.loc[:]['mask_slow_ma_ins'] = (ema <= ema_shift) | (quote.close <= ema)
-    quote = quote.assign(mask_slow_ma_ins=(ema <= ema_shift) | (quote.close <= ema))
+    quote = quote.assign(mask_slow_ma_ins=(ema <= ema_shift))  # | (quote.close <= ema)
 
     # (快均线 - 慢均线) 值增大
     ema_fast = quote.close.ewm(span=int(n / 2)).mean()
@@ -37,6 +37,9 @@ def compute_enter_mask(quote, period):
     macd_line_shift = macd_line.shift(periods=1)
     # quote.loc[:]['mask_diff_fma_sma_ins'] = (macd_line <= macd_line_shift)
     quote = quote.assign(mask_diff_fma_sma_ins=(macd_line <= macd_line_shift))
+
+    # (快均线 - 慢均线) 值 > 0
+    quote = quote.assign(mask_diff_fma_sma_positive=(macd_line <= 0))
 
     # step
     quote = quote.assign(mask_value_return=(~quote.value_return.isin(config.value_return_mas)))
@@ -52,12 +55,21 @@ def compute_enter_mask(quote, period):
     quote = quote.assign(mask_support=~(quote.support_signal > config.support_day))
 
     # dmi
-    df = macd.dmi(quote)
-    mask1 = df['adx'] < df['pdi']
-    mask2 = df['pdi'] < df['mdi']
-    mask3 = df['adx'] < 50
-    mask = mask1 | mask2 | mask3
+    # df = macd.dmi(quote)
+    df = dmi.compute_dmi(quote)
+    mask1 = df['pdi'] < df['mdi']
+    # mask2 = df['adx'] < df['mdi']
+    # mask3 = df['adx'] < 50
+    # mask4 = df['adx'] < df['adx'].shift(periods=1)
+    # mask = mask1 | mask2  # | mask3
+    mask = mask1
     quote = quote.assign(mask_dmi=mask)
+
+    # # pdi > mdi
+    # quote = quote.assign(mask_diff_pdi_mdi_positive=mask1)
+    #
+    # # adx > mdi
+    # quote = quote.assign(mask_diff_adx_mdi_positive=mask2)
 
     # ad
     quote = ad.compute_ad(quote)
