@@ -60,8 +60,8 @@ def unfold_gui():
     today = datetime.date.today()
     if path.exists() and datetime.datetime.fromtimestamp(path.stat().st_mtime).date() == today:
         return
-    with open(tmp, 'wb') as f:
-        f.write(str(today).encode('utf8'))
+    with open(tmp, 'w') as f:
+        f.write(str(today))
 
     pywinauto.mouse.click(coords=config.pos_dbp)
     pywinauto.mouse.click(coords=config.pos_rz)
@@ -69,9 +69,10 @@ def unfold_gui():
     pywinauto.mouse.click(coords=config.pos_rq)
     pywinauto.mouse.click(coords=config.pos_rq2)
 
+    pywinauto.keyboard.send_keys('{F4}')
+
 
 def active_sub_window(op_type, direct, main_window):
-    unfold_gui()
     if op_type == config.OP_TYPE_DBP:
         hotkey_buy = '{F1}'
         hotkey_sell = '{F2}'
@@ -97,6 +98,7 @@ def get_order():
     """
     main_window = helper.active_window()
     pywinauto.mouse.click(coords=config.pos_xy)
+    unfold_gui()
 
     columns = ['委托时间', '证券代码', '证券名称', '买卖', '委托状态', '委托数量', '成交数量', '委托价格', '成交价格', '已撤数量', '合同编号', '交易市场', '股东代码']
 
@@ -134,6 +136,7 @@ def get_asset():
     """
     helper.active_window()
     pywinauto.mouse.click(coords=config.pos_xy)
+    unfold_gui()
     scroll_bottom()
     for i in range(3):
         # time.sleep(0.1)
@@ -172,6 +175,7 @@ def get_positions():
     """
     helper.active_window()
     pywinauto.mouse.click(coords=config.pos_xy)
+    unfold_gui()
 
     columns = ['证券代码', '证券名称', '可用股份', '股份余额', '当前价', '浮动盈亏', '盈亏比例(%)', '最新市值', '交易市场', '股东代码', '参考持股', '成本价', '当前成本', '冻结数量', '卖出成交数量', '在途股份(买入成交)', '资金帐户']
     # pywinauto.mouse.click(coords=pos_position)
@@ -221,6 +225,7 @@ def query_position(code):
     """
     helper.active_window()
     pywinauto.mouse.click(coords=config.pos_xy)
+    unfold_gui()
 
     position_list = get_positions()
     if not code:
@@ -238,6 +243,7 @@ def get_operation_detail(code_in=None):
     """
     helper.active_window()
     pywinauto.mouse.click(coords=config.pos_xy)
+    unfold_gui()
 
     scroll_bottom()
     # time.sleep(0.3)
@@ -291,6 +297,7 @@ def get_operation_detail(code_in=None):
 def order(op_type, direct, code, count, price=0, auto=False):
     main_window = helper.active_window()
     pywinauto.mouse.click(coords=config.pos_xy)
+    unfold_gui()
 
     # pywinauto.mouse.click(coords=pos_asset)
     # time.sleep(0.2)

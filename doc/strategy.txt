@@ -1,0 +1,68 @@
+振荡识别
+	ADX < PDI & ADX < MDI
+
+底部识别
+	ADX < PDI & ADX < MDI & ADX 向上 +4
+顶部识别
+	ADX > PDI & ADX > MDI & ADX 向下
+
+趋势识别
+	MA30 向上
+	MACD > 0
+	PDI > MDI
+	ADX 向上
+	A/D
+	ASI
+
+	趋势线
+	通道线
+
+ADX 向下, 说明走势正在减弱
+PDI < MDI 时, 坚决清仓
+
+MACD ~= 0 & MACD-HIS ~= 0   说明, 股价已经经过较长时间振荡, 上涨/下跌阶段后振荡可能已经完成, 且近期出现至少2次 MACD 上/下穿 0
+牌局 MACD ~= 0 MACD-SIGNAL ~= 0 就是洗牌, 下一局要开始了
+
+底部买入   趋势反转
+	条件
+		长期大幅下跌(6个月以上(8个月以上更好), 50%以上)后
+		MACD-HIS 底背离
+		周线 FI13 背离   注意除权的影响
+		CCI 底背后 上穿 -100
+		A/D  受除权影响, 成交量放大而换手率没有放大
+
+		多重底, 头肩底, 长下影线
+
+		通道 - close_yest < 下通道 & close > 下通道  通道近期出现走平
+
+	卖出策略
+		通道 - close_yest > 上通道 & close < 上通道
+
+价值回归买入  长周期向上
+	条件
+		MA30 向上
+		MACD > 0
+		# MACD-HIS > 0   回调时, MACD-HIS < 0 往往是不错的买点
+		PDI > MDI & ADX > MDI  确保上回调, 而非反弹
+
+	卖出策略
+		通道 - close_yest > 上通道 & close < 上通道  陡峭上涨(抛物线上涨, 5日涨幅 > 30%)
+		MACD-HIS 背离
+		MA26 向下   趋势结束
+
+	价值回归, 其实指的就是 MACD线 > 0 & 先变小再变大
+
+平台突破买入
+	条件
+		MACD > 0
+		MACD-HIS ~= 0
+		# MACD 向上
+
+	卖出策略
+		通道 - close_yest > 上通道 & close < 上通道  陡峭上涨(抛物线上涨, 5日涨幅 > 30%)
+		MACD-HIS 背离
+		MA26 向下   趋势结束
+
+
+上升走势 - 强: (PDI > MDI) & (ADX > MDI) & (ADX 向上)
+	MA30 向上 & MACD > 0(MA12 > MA26)
