@@ -52,17 +52,20 @@ def signal_exit(quote, period='day', back_days=125, column=None):
 def signal_enter_and_exit(quote, period, back_days=125):
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
-    column_list = ['force_index_bull_market_deviation',
-                   'macd_bull_market_deviation',
-                   'volume_ad_bull_market_deviation',
-                   'skdj_bull_market_deviation',
-                   'rsi_bull_market_deviation',
-                   'force_index_bear_market_deviation',
-                   'macd_bear_market_deviation',
-                   'volume_ad_bear_market_deviation',
-                   'skdj_bear_market_deviation',
-                   'rsi_bear_market_deviation',
-                   ]
+    column_list = [
+        'asi_bull_market_deviation',
+        'force_index_bull_market_deviation',
+        'macd_bull_market_deviation',
+        'volume_ad_bull_market_deviation',
+        'skdj_bull_market_deviation',
+        'rsi_bull_market_deviation',
+        'asi_bear_market_deviation',
+        'force_index_bear_market_deviation',
+        'macd_bear_market_deviation',
+        'volume_ad_bear_market_deviation',
+        'skdj_bear_market_deviation',
+        'rsi_bear_market_deviation',
+    ]
     for column in column_list:
         # quote = market_deviation.compute_index(quote, period, back_days, column)
         quote = market_deviation_mat.compute_index(quote, period, column)

@@ -3,7 +3,7 @@
 import numpy
 import pandas
 
-from indicator import dynamical_system, second_stage, force_index, ad, skdj, rsi
+from indicator import dynamical_system, second_stage, force_index, ad, skdj, rsi, asi
 from indicator.decorator import dynamic_system_filter, computed
 from util.macd import macd
 
@@ -168,7 +168,6 @@ def market_deviation(quote, period, values, will=1):
     return deviation_series
 
 
-@dynamic_system_filter(column_name='macd_bull_market_deviation')
 def market_deviation_macd(quote, period, will):
     # 价格新低
     # print(quote['close'])
@@ -187,7 +186,17 @@ def market_deviation_macd(quote, period, will):
     return quote
 
 
-@dynamic_system_filter(column_name='force_index_bull_market_deviation')
+def market_deviation_asi(quote, period, will):
+    quote = asi.compute_asi(quote)
+
+    column_name = 'asi_bull_market_deviation' if will == 1 else 'asi_bear_market_deviation'
+
+    deviation_series = market_deviation(quote, period, quote['asi'], will)
+    quote.insert(len(quote.columns), column_name, deviation_series)
+
+    return quote
+
+
 def market_deviation_force_index(quote, period, will):
     # import ipdb;
     # ipdb.set_trace()
@@ -202,7 +211,6 @@ def market_deviation_force_index(quote, period, will):
     return quote
 
 
-@dynamic_system_filter(column_name='volume_ad_bull_market_deviation')
 def market_deviation_volume_ad(quote, period, will):
     quote = ad.compute_ad(quote)
 
@@ -214,7 +222,6 @@ def market_deviation_volume_ad(quote, period, will):
     return quote
 
 
-@dynamic_system_filter(column_name='skdj_bull_market_deviation')
 def market_deviation_skdj(quote, period, will):
     quote = skdj.compute_skdj(quote)
 
@@ -226,7 +233,6 @@ def market_deviation_skdj(quote, period, will):
     return quote
 
 
-@dynamic_system_filter(column_name='rsi_bull_market_deviation')
 def market_deviation_rsi(quote, period, will):
     quote = rsi.compute_rsi(quote)
 
@@ -239,6 +245,7 @@ def market_deviation_rsi(quote, period, will):
 
 
 indicator_func = {
+    'asi': market_deviation_asi,
     'force_index': market_deviation_force_index,
     'macd': market_deviation_macd,
     'volume_ad': market_deviation_volume_ad,
