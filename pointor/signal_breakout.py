@@ -2,8 +2,29 @@
 import numpy
 import pandas
 
-from indicator import step, strong_base, resistance_support
+from indicator import step, strong_base, resistance_support, asi
 from indicator.decorator import computed
+
+
+@computed(column_name='asi_resistance_breakout_signal_enter')
+def asi_resistance_breakout_signal_enter(quote, period):
+    quote = asi.compute_asi(quote, period, m1=0)
+    quote = resistance_support.compute_index_resistance_asi(quote, period)
+    quote_copy = quote
+    mask = quote_copy['asi_resistance_signal'].notna()
+    quote_copy.loc[:, 'asi_resistance_breakout_signal_enter'] = quote_copy['asi_resistance_signal'].mask(
+        mask, quote_copy.high)
+    return quote_copy
+
+
+@computed(column_name='asi_support_breakout_signal_exit')
+def asi_support_breakout_signal_exit(quote, period):
+    quote = asi.compute_asi(quote, period, m1=0)
+    quote = resistance_support.compute_index_support_asi(quote, period)
+    quote_copy = quote
+    mask = quote_copy['asi_support_signal'].notna()
+    quote_copy.loc[:, 'asi_support_breakout_signal_exit'] = quote_copy['asi_support_signal'].mask(mask, quote_copy.high)
+    return quote_copy
 
 
 @computed(column_name='resistance_breakout_signal_enter')
@@ -63,6 +84,7 @@ def step_breakout_signal_enter(quote, period):
 
 def signal_enter(quote, period, column):
     m = {
+        'asi_resistance_breakout': asi_resistance_breakout_signal_enter,
         'resistance_breakout': resistance_breakout_signal_enter,
         'step_breakout': step_breakout_signal_enter,
         'strong_base_breakout': strong_base_breakout_signal_enter,
@@ -74,5 +96,10 @@ def signal_enter(quote, period, column):
 
 
 def signal_exit(quote, period, column):
-    quote = support_breakout_signal_exit(quote, period=period)
+    m = {
+        'asi_support_breakout': asi_support_breakout_signal_exit,
+        'support_breakout': support_breakout_signal_exit,
+    }
+
+    quote = m[column](quote, period=period)
     return quote

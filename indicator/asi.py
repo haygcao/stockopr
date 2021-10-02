@@ -22,10 +22,14 @@ ASIT:MA(ASI,M2);  # 10
 import numpy
 import pandas
 
+from indicator.decorator import computed
 
-def compute_asi(quote, m1=26, m2=10):
+
+@computed(column_name='asi')
+def compute_asi(quote, period, m1=26):
     """
     同花顺默认参数 26, 10
+    通达信默认参数未知 暂确定为 0, 13
     背离信号通达信不容易出现, 同花顺更容易些
     """
     yest_close = quote.close.shift(periods=1)
@@ -66,15 +70,12 @@ def compute_asi(quote, m1=26, m2=10):
     df['k'] = k
 
     # ths
-    # si = 16 * (x/r) * k  # ths
-    # asi = si.rolling(m1).sum()  # ths
-
-    # tdx
-    si = 8 * (x / r) * k  # tdx
-    asi = si.cumsum()  # tdx
+    factor = 16 if m1 > 0 else 8
+    si = factor * (x/r) * k  # ths
+    asi = si.rolling(m1).sum() if m1 > 0 else si.cumsum()
 
     df['si'] = si
-    m2 = 13  # tdx  #
+    m2 = 10 if m1 > 0 else 13
     masi = asi.rolling(m2).mean()
 
     df['asi'] = asi

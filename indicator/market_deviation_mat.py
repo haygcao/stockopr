@@ -187,7 +187,7 @@ def market_deviation_macd(quote, period, will):
 
 
 def market_deviation_asi(quote, period, will):
-    quote = asi.compute_asi(quote)
+    quote = asi.compute_asi(quote, period)
 
     column_name = 'asi_bull_market_deviation' if will == 1 else 'asi_bear_market_deviation'
 
