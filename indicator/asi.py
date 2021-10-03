@@ -3,6 +3,15 @@
 """
 趋势型 振动升降指标 Accumulation Swing Index
 
+价格突破 v ASI突破 v   真
+价格突破 v ASI突破 x   假
+价格突破 x ASI突破 v   即将突破
+
+价格新高 v ASI新高 x   熊市背离
+价格新低 v ASI新低 x   牛市背离
+
+ASI向上 反转向下跌破 N 形转折点   止损信号
+
 同花顺公式
 LC=REF(CLOSE,1);
 AA=ABS(HIGH-LC);

@@ -6,6 +6,34 @@ from indicator import step, strong_base, resistance_support, asi
 from indicator.decorator import computed
 
 
+@computed(column_name='asi_ex_resistance_breakout_signal_enter')
+def asi_ex_resistance_breakout_signal_enter(quote, period):
+    quote = asi.compute_asi(quote, period, m1=0)
+    quote = resistance_support.compute_index_resistance_asi(quote, period)
+    quote = resistance_support.compute_index_resistance(quote, period)
+    quote_copy = quote
+    mask = quote_copy['asi_resistance_signal'].notna()
+    mask2 = quote_copy['resistance_signal'].notna()
+    mask = mask.mask(mask2, False)
+    series = pandas.Series(numpy.nan, index=quote.index)
+    quote_copy.loc[:, 'asi_ex_resistance_breakout_signal_enter'] = series.mask(mask, quote_copy.high)
+    return quote_copy
+
+
+@computed(column_name='asi_ex_support_breakout_signal_exit')
+def asi_ex_support_breakout_signal_exit(quote, period):
+    quote = asi.compute_asi(quote, period, m1=0)
+    quote = resistance_support.compute_index_support_asi(quote, period)
+    quote = resistance_support.compute_index_support(quote, period)
+    quote_copy = quote
+    mask = quote_copy['asi_support_signal'].notna()
+    mask2 = quote_copy['support_signal'].notna()
+    mask = mask.mask(mask2, False)
+    series = pandas.Series(numpy.nan, index=quote.index)
+    quote_copy.loc[:, 'asi_ex_support_breakout_signal_exit'] = series.mask(mask, quote_copy.high)
+    return quote_copy
+
+
 @computed(column_name='asi_resistance_breakout_signal_enter')
 def asi_resistance_breakout_signal_enter(quote, period):
     quote = asi.compute_asi(quote, period, m1=0)
@@ -48,8 +76,8 @@ def support_breakout_signal_exit(quote, period):
 def compute_breakout(quote, period, mask):
     mask_base = mask.rolling(10, min_periods=1).max().astype(bool)
 
-    quote = resistance_breakout_signal_enter(quote, period)
-    mask = quote.resistance_breakout_signal_enter.notna()
+    quote = asi_resistance_breakout_signal_enter(quote, period)
+    mask = quote.asi_resistance_breakout_signal_enter.notna()
     mask &= mask_base
 
     values = pandas.Series(numpy.nan, index=quote.index)
@@ -84,6 +112,7 @@ def step_breakout_signal_enter(quote, period):
 
 def signal_enter(quote, period, column):
     m = {
+        'asi_ex_resistance_breakout': asi_ex_resistance_breakout_signal_enter,
         'asi_resistance_breakout': asi_resistance_breakout_signal_enter,
         'resistance_breakout': resistance_breakout_signal_enter,
         'step_breakout': step_breakout_signal_enter,
@@ -97,6 +126,7 @@ def signal_enter(quote, period, column):
 
 def signal_exit(quote, period, column):
     m = {
+        'asi_ex_support_breakout': asi_ex_support_breakout_signal_exit,
         'asi_support_breakout': asi_support_breakout_signal_exit,
         'support_breakout': support_breakout_signal_exit,
     }
