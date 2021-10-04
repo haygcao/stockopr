@@ -16,7 +16,7 @@ def asi_ex_resistance_breakout_signal_enter(quote, period):
     mask2 = quote_copy['resistance_signal'].notna()
     mask = mask.mask(mask2, False)
     series = pandas.Series(numpy.nan, index=quote.index)
-    quote_copy.loc[:, 'asi_ex_resistance_breakout_signal_enter'] = series.mask(mask, quote_copy.high)
+    quote_copy.loc[:, 'asi_ex_resistance_breakout_signal_enter'] = series.mask(mask, quote_copy.low)
     return quote_copy
 
 
@@ -41,7 +41,7 @@ def asi_resistance_breakout_signal_enter(quote, period):
     quote_copy = quote
     mask = quote_copy['asi_resistance_signal'].notna()
     quote_copy.loc[:, 'asi_resistance_breakout_signal_enter'] = quote_copy['asi_resistance_signal'].mask(
-        mask, quote_copy.high)
+        mask, quote_copy.low)
     return quote_copy
 
 
