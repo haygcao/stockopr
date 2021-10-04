@@ -21,7 +21,6 @@ def compute_high_low(quote, compute_high=True, weak=False):
     close_rshift = close.shift(periods=-1)
 
     days_before = 20
-    days_before_after = 60
     agg = 'max' if adj == 1 else 'min'
     mask = (adj * close > adj * close_lshift) & (adj * close >= adj * close_rshift)
 
@@ -55,7 +54,7 @@ def compute_high_low(quote, compute_high=True, weak=False):
     # days = close_high_low.index - close_high_low_shift.index
 
     # for i in range(1, len(close_high_low) - 1, 2):
-    close_high_low = filter_high_low(adj, close_high_low, days_before, days_before_after, weak)
+    close_high_low = filter_high_low(adj, close_high_low, days_before, weak)
 
     column = '{}_period'.format(agg)
     column = 'weak_' + column if weak else column
@@ -64,7 +63,8 @@ def compute_high_low(quote, compute_high=True, weak=False):
     return quote
 
 
-def filter_high_low(adj, close_high_low, days_before, days_before_after, weak=False):
+def filter_high_low(adj, close_high_low, days_before, weak=False):
+    days_before_after = 80
     adj = adj if not weak else -adj
     i = 1
     i_prev = i - 1
@@ -94,11 +94,15 @@ def filter_high_low(adj, close_high_low, days_before, days_before_after, weak=Fa
             i = i + 1 if i == i_prev else i
             continue
         if adj * close_high_low.iloc[i] < adj * close_high_low.iloc[i_prev]:
-            # close_high_low.iat[i] = numpy.nan
+            if weak:
+                close_high_low.iat[i_prev] = numpy.nan
+                i_prev += 1
+                i = i + 1 if i == i_prev else i
+                continue
             i_ignore_set.add(i)
             i += 1
             continue
-        if delta_before < days_before:
+        if delta_before < days_before // 2:
             # 可能不会被忽略
             # i_ignore_set.add(i)
             # i += 1
@@ -124,6 +128,7 @@ def filter_high_low(adj, close_high_low, days_before, days_before_after, weak=Fa
             i_prev += 1
             i = i + 1 if i == i_prev else i
             continue
+
     reset_invalid_value(close_high_low, i_valid, i_ignore_set, i_prev_valid)
     if len(close_high_low) > 1 and (close_high_low.index[-1] - close_high_low.index[-2]).days > days_before_after:
         close_high_low.iat[-1] = numpy.nan
