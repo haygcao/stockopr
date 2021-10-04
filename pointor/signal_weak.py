@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy
 
+import indicator.high_low
 from indicator import market_deviation_mat
 
 
@@ -8,11 +9,11 @@ def signal_one(quote, enter):
     if enter:
         high_low_column = 'weak_min_period'
         signal_column = 'weak_signal_enter'
-        quote = market_deviation_mat.compute_high_low(quote, compute_high=False, weak=True)
+        quote = indicator.high_low.compute_high_low(quote, compute_high=False, weak=True)
     else:
         high_low_column = 'weak_max_period'
         signal_column = 'weak_signal_exit'
-        quote = market_deviation_mat.compute_high_low(quote, compute_high=True, weak=True)
+        quote = indicator.high_low.compute_high_low(quote, compute_high=True, weak=True)
     high_low = quote[high_low_column]
     high_low = high_low[high_low.notna()]
 
