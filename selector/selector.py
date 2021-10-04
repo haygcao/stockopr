@@ -5,7 +5,6 @@ import multiprocessing
 import functools
 import os
 import pathlib
-import sys
 
 import pandas
 import tqdm
@@ -26,7 +25,7 @@ import selector.plugin.down as down
 import selector.plugin.strong_variability as strong_variability
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
-    base_breakout, blt, vcp, strong_base, amplitude, value_return
+    base_breakout, blt, vcp, strong_base, amplitude, signal_config
 from selector.plugin import value_return
 from selector.plugin import dynamical_system
 from selector.plugin import force_index
@@ -39,6 +38,8 @@ from . import selected
 from util.log import logger
 
 selector = {
+    'trend_up': signal_config.mask_config,
+    'signal_config': signal_config.signal_config,
     'step': step.step,
     'step_p': step.step_p,
     '2nd': second_wave.second_wave,

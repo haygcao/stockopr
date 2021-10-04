@@ -39,7 +39,7 @@ panel_ratios = {
 
 oscillatior = 'force_index'
 # oscillatior = 'volume_ad'
-oscillatior_list = ['macd', 'force_index', 'volume_ad', 'skdj', 'rsi']
+oscillatior_list = ['macd', 'asi', 'force_index', 'volume_ad', 'skdj', 'rsi']
 # oscillatior_list = ['force_index']
 show_long_period_dynamical_system = False
 show_signal_detail = False
@@ -1018,7 +1018,7 @@ if __name__ == "__main__":
     # exit(0)
 
     code = '000001'
-    code = '300502'
+    code = '300598'
     # code = '002202'
     # code = '600888'
     # code = '002739'

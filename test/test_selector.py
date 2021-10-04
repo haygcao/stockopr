@@ -113,6 +113,14 @@ class SelectorPluginTestCase(unittest.TestCase):
         # code_list = selector.select(['step_breakout'], ['second_stage'], period='week')
         print(code_list)
 
+    def test_update_candidate_pool_using_signal_config(self):
+        strategy_list = ['trend_up']
+        selector.update_candidate_pool(strategy_list, 'day')
+
+    def test_select_using_signal_config(self):
+        code_list = selector.select(['signal_config'], ['trend_up'], period='day')
+        print(code_list)
+
 
 def suite():
     suite = unittest.TestSuite()
