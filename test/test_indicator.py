@@ -1,14 +1,11 @@
 import unittest
 
 from acquisition import tx, quote_db
-from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat
+from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat, cci
 
 
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
-        code = '600888'
-        # code = '300502'
-        code = '002739'
         code = '300598'
         self.period = 'm30'
         # period = 'day'
@@ -18,6 +15,10 @@ class IndicatorTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_cci(self):
+        quote = cci.compute_cci(self.quote, self.period)
+        print(quote[-10:])
 
     def test_ad(self):
         quote = ad.compute_ad(self.quote)
