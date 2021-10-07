@@ -1,5 +1,6 @@
 {
   "signal_enter": {
+    "default_signal_enter": true,
     "macd_signal_enter": false,
     "force_index_signal_enter": false,
     "volume_ad_signal_enter": false,
@@ -23,6 +24,7 @@
     "rsi_bull_market_deviation_signal_enter": false
   },
   "signal_exit": {
+    "default_signal_exit": true,
     "macd_signal_exit": false,
     "force_index_signal_exit": false,
     "volume_ad_signal_exit": false,

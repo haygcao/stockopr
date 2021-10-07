@@ -6,8 +6,10 @@ CCI:(TYP-MA(TYP,N))*1000/(15*AVEDEV(TYP,N));
 
 与 talib.abstract.CCI 计算结果一致
 """
+from indicator.decorator import computed
 
 
+@computed(column_name='cci')
 def compute_cci(quote, period):
     n = 14
     typ = (quote.high + quote.low + quote.close) / 3

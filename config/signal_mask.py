@@ -18,6 +18,7 @@ mask_trend_up = [
 ]
 
 signal_mask_column = {
+    "default_signal_enter": ['mask_slow_ma_ins', 'mask_diff_fma_sma_positive'],
     "macd_signal_enter": [],
     "force_index_signal_enter": mask_trend_up + ['mask_dmi'],
     "volume_ad_signal_enter": mask_trend_up + ['mask_dmi'],

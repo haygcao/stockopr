@@ -1,8 +1,9 @@
 from pointor import signal_dynamical_system, signal_channel, signal_force_index, signal_value_return, signal_blt, \
     signal_vcp, signal_step, signal_breakout, signal_volume_ad, signal_resistance_support, signal_market_deviation, \
-    signal_stop_loss, signal_weak
+    signal_stop_loss, signal_weak, signal_default
 
 signal_func = {
+    "default_signal_enter": signal_default.signal_enter,
     "dynamical_system_signal_enter": signal_dynamical_system.signal_enter,
     "channel_signal_enter": signal_channel.signal_enter,
     "force_index_signal_enter": signal_force_index.signal_enter,
@@ -24,6 +25,7 @@ signal_func = {
     "rsi_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
     "macd_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
 
+    "default_signal_exit": signal_default.signal_exit,
     "dynamical_system_signal_exit": signal_dynamical_system.signal_exit,
     "channel_signal_exit": signal_channel.signal_exit,
     "force_index_signal_exit": signal_force_index.signal_exit,
