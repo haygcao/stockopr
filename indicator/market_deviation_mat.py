@@ -3,7 +3,7 @@
 import numpy
 import pandas
 
-from indicator import dynamical_system, second_stage, force_index, ad, skdj, rsi, asi
+from indicator import dynamical_system, second_stage, force_index, ad, skdj, rsi, asi, cci
 from indicator.high_low import compute_high_low
 from util.macd import macd
 
@@ -46,6 +46,19 @@ def market_deviation_macd(quote, period, will):
     column_name = 'macd_bull_market_deviation' if will == 1 else 'macd_bear_market_deviation'
 
     deviation_series = market_deviation(quote, period, quote['macd_histogram'], will)
+    quote.insert(len(quote.columns), column_name, deviation_series)
+
+    return quote
+
+
+def market_deviation_cci(quote, period, will):
+    quote = cci.compute_cci(quote, period)
+
+    column_name = 'cci_bull_market_deviation' if will == 1 else 'cci_bear_market_deviation'
+
+    hist = quote['cci']
+    hist = hist.mask((hist < 100) & (hist > -100), numpy.nan)
+    deviation_series = market_deviation(quote, period, hist, will)
     quote.insert(len(quote.columns), column_name, deviation_series)
 
     return quote
@@ -113,6 +126,7 @@ indicator_func = {
     'asi': market_deviation_asi,
     'force_index': market_deviation_force_index,
     'macd': market_deviation_macd,
+    'cci': market_deviation_cci,
     'volume_ad': market_deviation_volume_ad,
     'skdj': market_deviation_skdj,
     'rsi': market_deviation_rsi

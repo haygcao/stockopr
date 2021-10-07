@@ -24,6 +24,7 @@ signal_func = {
     "skdj_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
     "rsi_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
     "macd_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
+    "cci_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,
 
     "default_signal_exit": signal_default.signal_exit,
     "dynamical_system_signal_exit": signal_dynamical_system.signal_exit,
@@ -40,5 +41,6 @@ signal_func = {
     "skdj_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
     "rsi_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
     "macd_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
+    "cci_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
     "stop_loss_signal_exit": signal_stop_loss.signal_exit,
   }
