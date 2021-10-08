@@ -68,6 +68,19 @@ def compute_enter_mask(quote, period):
     mask = mask1 | mask1.shift(periods=2).fillna(True) | mask2 | mask2.shift(periods=2).fillna(True)
     quote = quote.assign(mask_dmi=mask)
 
+    mask = df['adx'] > 50
+    mask = mask.rolling(30).max() > 0
+    quote = quote.assign(mask_adx_less_n=~mask)
+
+    ma_shift = quote.ma30.shift(periods=120)
+    percent = 100 * (quote.close / ma_shift - 1)
+    mask = (percent > 50)  # & (percent2.abs() > 50)
+    quote = quote.assign(mask_bias_bear=~mask)
+
+    percent = 100 * (1 - quote.close / ma_shift)
+    mask = (percent > 45)
+    quote = quote.assign(mask_bias_bull=~mask)
+
     # # pdi > mdi
     # quote = quote.assign(mask_diff_pdi_mdi_positive=mask1)
     #

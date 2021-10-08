@@ -35,7 +35,7 @@ signal_func = {
     "asi_support_breakout_signal_exit": signal_breakout.signal_exit,
     "support_breakout_signal_exit": signal_breakout.signal_exit,
     "weak_signal_exit": signal_weak.signal_exit,
-    "asi_bear_market_deviation_signal_enter": signal_market_deviation.signal_exit,
+    "asi_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
     "force_index_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
     "volume_ad_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
     "skdj_bear_market_deviation_signal_exit": signal_market_deviation.signal_exit,
