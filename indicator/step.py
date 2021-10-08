@@ -2,6 +2,7 @@
 import numpy
 import pandas
 
+from indicator import boll
 from indicator.decorator import computed
 
 g_percent = 3
@@ -50,6 +51,18 @@ def step(quote, period):
 
     ma_periods_tmp = ma_periods.copy()
 
+    # boll
+    quote = boll.compute_boll(quote, period)
+    boll_diff = quote.boll_u - quote.boll_l
+    boll_diff_ma = boll_diff.rolling(5).mean()
+    u = boll_diff_ma.rolling(10).max()
+    l = boll_diff_ma.rolling(10).min()
+    percent = (u - l) / quote.ma20
+    mask_boll = (percent < 0.05).shift(periods=1)
+    # mask_boll[:] = True
+    # mask = boll_diff_ma > boll_diff_ma.shift(periods=1)
+    # mask = mask.rolling(10).max() > 0
+
     # 处理 ma20/ma30/ma60
     for i in range(len(ma_periods) - 3):
         df_mas['ma_max'] = df_mas[ma_periods_tmp[-3:-1]].max(axis=1)
@@ -84,7 +97,7 @@ def step(quote, period):
         # 当前ma 约等于 ma120 或者 > ma120 15%
         # mask &= ((df_mas[slowest] / df_mas[120] - 1 > 0.15) | ((df_mas[slowest] - df_mas[120]).abs() / df_mas[120] < 0.02))
 
-        quote['step_ma'] = quote['step_ma'].mask(mask & mask_nan, ma_periods_tmp[-2])
+        quote['step_ma'] = quote['step_ma'].mask(mask & mask_nan & mask_boll, ma_periods_tmp[-2])
         ma_periods_tmp.pop()
 
     return quote

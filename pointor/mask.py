@@ -43,7 +43,7 @@ def compute_enter_mask(quote, period):
     # (快均线 - 慢均线) 值 > 0
     quote = quote.assign(mask_diff_fma_sma_positive=(macd_line < 0))
 
-    # step
+    # value_return
     quote = quote.assign(mask_value_return=(~quote.value_return.isin(config.value_return_mas)))
 
     # step
