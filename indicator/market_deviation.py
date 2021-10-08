@@ -228,7 +228,7 @@ def market_deviation_skdj(quote, back, period, will, strict=True):
 
 @dynamic_system_filter(column_name='rsi_bull_market_deviation')
 def market_deviation_rsi(quote, back, period, will, strict=True):
-    quote = rsi.compute_rsi(quote)
+    quote = rsi.compute_rsi(quote, period)
 
     column_name = 'rsi_bull_market_deviation' if will == 1 else 'rsi_bear_market_deviation'
 

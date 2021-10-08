@@ -7,7 +7,7 @@ from util.macd import dmi
 
 
 @computed(column_name='adx')
-def compute_dmi(quote):
+def compute_dmi(quote, period):
     """
     通达信公式
     MTR:=SUM(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);

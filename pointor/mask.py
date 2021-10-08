@@ -3,7 +3,6 @@ import numpy
 
 from config import config, signal_mask
 from indicator import ad, relative_price_strength, dmi
-from util import macd
 
 
 def compute_enter_mask(quote, period):
@@ -58,7 +57,7 @@ def compute_enter_mask(quote, period):
 
     # dmi
     # df = macd.dmi(quote)
-    df = dmi.compute_dmi(quote)
+    df = dmi.compute_dmi(quote, period)
     mask1 = df['pdi'] < df['mdi']
     mask2 = df['adx'] < df['mdi']
     # mask3 = df['adx'] < 50

@@ -1,7 +1,7 @@
 import unittest
 
 from acquisition import tx, quote_db
-from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat, cci, boll
+from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat, cci, boll, rsi
 
 
 class IndicatorTestCase(unittest.TestCase):
@@ -15,6 +15,10 @@ class IndicatorTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_rsi(self):
+        quote = rsi.compute_rsi(self.quote, self.period)
+        print(quote[-10:])
 
     def test_boll(self):
         self.quote['ma20'] = self.quote.close.rolling(20).mean()
