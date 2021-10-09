@@ -9,7 +9,7 @@ from acquisition import quote_db
 from pointor import signal_vcp
 
 
-def vcp(quote, period, back_days=60):
+def vcp(quote, period, back_days=5):
     if period == 'week':
         quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
 

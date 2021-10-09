@@ -7,8 +7,8 @@ from indicator.decorator import computed, ignore_long_period, dynamic_system_fil
 
 def compute_index(quote, period=None):
     quote = vcp.vcp(quote, period)
-    quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
-    quote = ema.compute_ema(quote)
+    # quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
+    # quote = ema.compute_ema(quote)
 
     return quote
 

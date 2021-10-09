@@ -1,20 +1,24 @@
 import unittest
 
 from acquisition import tx, quote_db
-from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat, cci, boll, rsi
+from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat, cci, boll, rsi, vcp
 
 
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
-        code = '300598'
+        code = '688519'
         self.period = 'm30'
         # period = 'day'
         count = 250
         # quote = tx.get_kline_data_sina(code, period, count)
-        self.quote = quote_db.get_price_info_df_db_day(code, days=250)
+        self.quote = quote_db.get_price_info_df_db_day(code, days=1000)  # days=250)
 
     def tearDown(self):
         pass
+
+    def test_vcp(self):
+        quote = vcp.vcp(self.quote, self.period)
+        print(quote[-10:])
 
     def test_rsi(self):
         quote = rsi.compute_rsi(self.quote, self.period)

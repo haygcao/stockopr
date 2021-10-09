@@ -6,12 +6,79 @@
 import numpy
 import pandas
 
-from indicator import blt
+from indicator import blt, ma
 from indicator.decorator import computed
 from util import util
-from util.log import logger
 
-from util.macd import ma
+
+def vcp(quote, period):
+    current_close = quote['close']
+    ytd_close = quote['close'].shift(periods=1)
+    turnover = quote['volume'] * quote['close']
+    # true_range_10d = (max(quote['close'][-10:-1]) - min(quote['close'][-10:-1]))
+    true_range_10d = current_close.rolling(10).max() - current_close.rolling(10).min()
+
+    # Compute RS ratings of the stock in 3 ways
+    # rs_rating, rs_rating2, rs_rating3 = compute_rs_rating(quote)
+    
+    # Compute SMA & high/low
+    quote = ma.compute_ma(quote)
+    mov_avg_20 = quote['ma20']
+    mov_avg_50 = quote['ma50']
+    mov_avg_150 = quote['ma150']
+    mov_avg_200 = quote['ma200']
+    mov_avg_200_20 = quote['ma200'].shift(periods=32)  # SMA 200 1 month before (for calculating trending condition)
+    low_of_52week = current_close.rolling(250).min()  # min(quote['close'][-250:])
+    high_of_52week = current_close.rolling(250).max()  # max(quote['close'][-250:])
+
+    # Condition checks
+    # Condition 1: Current Price > 150 SMA and > 200 SMA
+    condit_1 = (current_close > mov_avg_150) & (mov_avg_150 > mov_avg_200)
+
+    # Condition 2: 50 SMA > 200 SMA
+    condit_2 = (mov_avg_50 > mov_avg_200)
+
+    # Condition 3: 200 SMA trending up for at least 1 month (ideally 4-5 months)
+    condit_3 = (mov_avg_200 > mov_avg_200_20)
+
+    # Condition 4: 50 SMA > 150 SMA and 150 SMA > 200 SMA
+    condit_4 = (mov_avg_50 > mov_avg_150) & (mov_avg_150 > mov_avg_200)
+
+    # Condition 5: Current Price > 50 SMA
+    condit_5 = (current_close > mov_avg_50)
+
+    # Condition 6: Current Price is at least 40% above 52 week low
+    # Many of the best are up 100-300% before coming out of consolidation
+    condit_6 = (current_close >= (2 * low_of_52week))
+
+    # Condition 7: Current Price is within 25% of 52 week high
+    condit_7 = (current_close >= (0.75 * high_of_52week))
+
+    # Condition 8: Turnover is larger than 2 million
+    condit_8 = (turnover >= 2000000)
+
+    # Condition 9: true range in the last 10 days is less than 8% of current price (consolidation)
+    # Should we use the std instead?
+    condit_9 = (true_range_10d < current_close * 0.08)
+
+    # Condition 10: Close above 20 days moving average
+    condit_10 = (current_close > mov_avg_20)
+
+    # Condition 11: Current price > $10
+    condit_11 = (current_close > 10)
+
+    # Condition 12: 20 SMA > 50 SMA
+    condit_12 = (mov_avg_20 > mov_avg_50)
+
+    condit = condit_1 & condit_2 & condit_3 & condit_4 & condit_5 & \
+             condit_6 & condit_7 & condit_8 & condit_9 & \
+             condit_11 & condit_12
+
+    quote['vcp'] = numpy.nan
+
+    quote['vcp'] = quote['vcp'].mask(condit, quote.low)
+
+    return quote
 
 
 def vcp_one_day(quote, high_index, low_index, ema_s, ema_v_s, back_day):
@@ -33,7 +100,7 @@ def vcp_one_day(quote, high_index, low_index, ema_s, ema_v_s, back_day):
     high_index_list = [high_index]
     high_ignored = False
     for i in range(1, len(ema_s) - 1):
-        if ema_s.iloc[i] < ema_s_lshift.iloc[i] and ema_s.iloc[i] <= ema_s_rshift.iloc[i]:
+        if ema_s.iloc[i] < ema_s_lshift.iloc[i] & ema_s.iloc[i] <= ema_s_rshift.iloc[i]:
             if high_ignored:
                 high_ignored = False
                 if low_list[-1] <= ema_s.iloc[i]:
@@ -45,7 +112,7 @@ def vcp_one_day(quote, high_index, low_index, ema_s, ema_v_s, back_day):
             low_index_list.append(ema_s.index[i])
             continue
 
-        if ema_s.iloc[i] >= ema_s_lshift.iloc[i] and ema_s.iloc[i] > ema_s_rshift.iloc[i]:
+        if ema_s.iloc[i] >= ema_s_lshift.iloc[i] & ema_s.iloc[i] > ema_s_rshift.iloc[i]:
             if not low_index_list:
                 # print(quote.code[-1], high_index, low_index)
                 continue
@@ -86,7 +153,7 @@ def vcp_one_day(quote, high_index, low_index, ema_s, ema_v_s, back_day):
 
 
 @computed(column_name='vcp')
-def vcp(quote, period, back_days=60):
+def vcp_old(quote, period, back_days=60):
     # vcp 使用日数据
     s = 2
     periods = [5, 10, 20]
