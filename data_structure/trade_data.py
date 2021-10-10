@@ -22,18 +22,22 @@ class Asset(TradeData):
     period: datetime.date
     origin = 0
     total_money = 0
+    net_money = 0
     avail_money = 0
+    deposit = 0
     market_value = 0
     position_percent = 0
     profit = 0
     profit_percent = 0
 
-    def __init__(self, total_money, avail_money, date=None):
+    def __init__(self, total_money, avail_money, net_money=0, deposit=0, market_value=0, date=None):
         self.date = dt.get_trade_date() if not date else date
         self.total_money = float(total_money)
+        self.net_money = net_money
         self.avail_money = float(avail_money)
-        self.market_value = self.total_money - self.avail_money
-        self.position_percent = round(100 * self.market_value / self.total_money, 3)
+        self.deposit = deposit
+        self.market_value = market_value  if market_value > 0 else self.total_money - self.avail_money
+        self.position_percent = round(100 * self.market_value / self.net_money, 3)
 
 
 @dataclass

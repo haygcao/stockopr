@@ -9,6 +9,7 @@ import requests
 
 from config import config
 from data_structure import trade_data
+from server import config as config_svr
 from util.log import logger
 
 base_url = config.get_tradeapi_server()
@@ -33,7 +34,10 @@ def get_asset(account_id):
         logger.error(d['err_msg'], inspect.currentframe().f_code.co_name)
         return
 
-    asset = trade_data.Asset(d['total_money'], d['avail_money'])
+    if account_id == config_svr.ACCOUNT_ID_XY:
+        asset = trade_data.Asset(d['total_money'], d['avail_money'], d['net_money'], d['deposit'], d['market_value'])
+    else:
+        asset = trade_data.Asset(d['total_money'], d['avail_money'])
     return asset
 
 

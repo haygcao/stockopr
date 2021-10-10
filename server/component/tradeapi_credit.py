@@ -165,7 +165,15 @@ def get_asset():
         if i == 0:
             continue
         row = row_str.split('\t')
-        return {'total_money': float(row[columns.index('总资产')]), 'avail_money': float(row[columns.index('可用资金')])}
+        return {
+            'total_money': float(row[columns.index('总资产')]),
+            'avail_money': float(row[columns.index('可用资金')]),
+            # TODO
+            'net_money': 0,
+            'deposit': 0,
+            'market_value': 0
+
+        }
 
 
 def get_positions():

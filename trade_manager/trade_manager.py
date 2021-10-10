@@ -174,8 +174,8 @@ def sync():
     p_date = ''
     trade_date = dt.get_trade_date()
     for account_id in [svr_config.ACCOUNT_ID_PT, svr_config.ACCOUNT_ID_XY]:
-        # if account_id == svr_config.ACCOUNT_ID_XY:
-        #     continue
+        if account_id == svr_config.ACCOUNT_ID_PT:
+            continue
         sync_impl(account_id, trade_date)
 
         m = db_handler.query_money(account_id)
