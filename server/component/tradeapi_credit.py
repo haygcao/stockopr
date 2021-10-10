@@ -130,7 +130,7 @@ def get_order():
     return order_list
 
 
-def get_asset():
+def get_asset_old():
     """
     获取资金明细
     """
@@ -160,7 +160,6 @@ def get_asset():
     columns = data[:end_pos].split()
     # val_1st_row = data[end_pos + 1: end_pos + 1 + data[end_pos + 1:].find('\n')].split()
 
-    detail_list = []
     for i, row_str in enumerate(data.split('\n')):
         if i == 0:
             continue
@@ -171,9 +170,59 @@ def get_asset():
             # TODO
             'net_money': 0,
             'deposit': 0,
-            'market_value': 0
-
+            'market_value': float(row[columns.index('证券市值')])
         }
+
+
+def get_asset():
+    """
+    获取资金明细
+    """
+    helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
+    unfold_gui()
+
+    pywinauto.keyboard.send_keys('{F4}')
+
+    r = {}
+    pos_list = [config.pos_asset_asset_cre, config.pos_asset_money_cre]
+    for index, pos in enumerate(pos_list):
+        helper.copy_to_clipboard(pos)
+
+        data = pywinauto.clipboard.GetData()
+        end_pos = data.find('\n')
+        columns = data[:end_pos].split()
+        # val_1st_row = data[end_pos + 1: end_pos + 1 + data[end_pos + 1:].find('\n')].split()
+
+        arr = data.split('\n')[1:]
+
+        d = {
+            '总资产': -1,
+            '净资产': -2,
+            '标的券市值': 0,
+            '参考市值': 1,
+            '两融总负债': 6,
+            '两融总盈亏': 7,
+
+            '可用保证金': 3,
+            '可用金额': 4,
+        }
+
+        if index == 0:
+            r.update({
+                'total_money': float(arr[d['总资产']].split('\t')[1]),
+                'net_money': float(arr[d['净资产']].split('\t')[1]),
+                'market_value': float(arr[d['参考市值']].split('\t')[1]),
+                'market_value_r': float(arr[d['标的券市值']].split('\t')[1]),
+                'debt': float(arr[d['两融总负债']].split('\t')[1]),
+                'debt_profit': float(arr[d['两融总盈亏']].split('\t')[1]),
+            })
+        else:
+            r.update({
+                'avail_money': float(arr[d['可用金额']].split('\t')[1]),
+                'deposit': float(arr[d['可用保证金']].split('\t')[1]),
+            })
+    return r
 
 
 def get_positions():

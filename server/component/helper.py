@@ -5,8 +5,15 @@ import time
 import psutil
 import pywinauto
 import win32gui
+from PIL import ImageGrab
+# https://digi.bib.uni-mannheim.de/tesseract/
+from pytesseract import image_to_string
 
 from .. import config
+
+
+g_main_window = None
+g_app = None
 
 
 def is_foreground():
@@ -30,7 +37,9 @@ def max_window(window):
 
 
 def active_window():
+    global g_app
     global g_main_window
+
     try:
         if not g_main_window:
             max_window(g_main_window)
@@ -42,11 +51,11 @@ def active_window():
     pid = get_pid_by_exec(ths_exe)
 
     if pid < 0:
-        app = pywinauto.Application(backend="win32").start(ths_exe)
+        g_app = pywinauto.Application(backend="win32").start(ths_exe)
     else:
-        app = pywinauto.Application(backend="win32").connect(process=pid)
+        g_app = pywinauto.Application(backend="win32").connect(process=pid)
 
-    main_window = app.window(title=config.ths_main_window_title)
+    main_window = g_app.window(title=config.ths_main_window_title)
     max_window(main_window)
 
     pywinauto.mouse.click(coords=config.pos_centre)
@@ -60,16 +69,48 @@ def active_window():
     return main_window
 
 
-def copy_to_clipboard():
+def _copy_authentication(app, trade_win):
+    popup_hwnd = trade_win.popup_window()
+    if not popup_hwnd:
+        return
+
+    for i in range(10):
+        popup_window = app.window(handle=popup_hwnd)
+        popup_window.set_focus()
+        rect = popup_window['Static2'].rectangle()
+        img = ImageGrab.grab((rect.left, rect.top, rect.right, rect.bottom))
+
+        code = image_to_string(img)
+        if len(code) >= 4:
+            code = code[:4]
+            # not enough to use EM_REPLACESEL - 需要用 admin 运行下单程序, 但仍然无法输入验证码
+            # Use the EM_REPLACESEL message to replace only a portion of the text in an edit control.
+            # To replace all of the text, use the WM_SETTEXT message.
+            # popup_window['Edit'].set_edit_text(code)
+            # time.sleep(0.1)
+
+            pywinauto.mouse.click(coords=config.pos_verify)
+            pywinauto.keyboard.send_keys(code)
+
+            popup_window.type_keys('{ENTER}')
+
+        popup_hwnd = trade_win.popup_window()
+        if not popup_window:
+            return
+        time.sleep(0.1)
+
+
+def copy_to_clipboard(pos=None):
     """
     # https://pywinauto.readthedocs.io/en/latest/code/pywinauto.keyboard.html
     '+': {VK_SHIFT}
     '^': {VK_CONTROL}
     '%': {VK_MENU} a.k.a. Alt key
     """
-    pywinauto.mouse.click(coords=config.pos_centre)
+    pos = pos if pos else config.pos_centre
+    pywinauto.mouse.click(coords=pos)
     # pywinauto.mouse.release(coords=pos_centre)
-    time.sleep(0.2)
+    # time.sleep(0.2)
 
     # pywinauto.mouse.right_click(coords=pos_centre)
     # pywinauto.mouse.release(coords=pos_centre)
@@ -77,7 +118,12 @@ def copy_to_clipboard():
     # pywinauto.keyboard.send_keys('C')
 
     pywinauto.keyboard.send_keys('^c')
-    time.sleep(0.2)
+
+    global g_app
+    global g_main_window
+    _copy_authentication(g_app, g_main_window)
+
+    # time.sleep(0.2)
 
 
 def clean_clipboard_data(data, cols):

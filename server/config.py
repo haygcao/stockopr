@@ -47,6 +47,11 @@ pos_edit_count = (300, 205)
 pos_edit_count_rq_buy = (300, 225)
 pos_edit_count_rz_sell = (300, 275)
 
+pos_asset_asset_cre = (270, 100)
+pos_asset_money_cre = (450, 100)
+
+pos_verify = (458, 372)
+
 #
 pos_up_arrow = (190, 73)
 pos_down_arrow = (190, 655)
