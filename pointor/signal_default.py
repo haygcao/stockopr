@@ -20,12 +20,17 @@ def signal_enter(quote, period):
 
     # dmi
     quote = dmi.compute_dmi(quote, period)
-    mask_pdi = quote.pdi < 5
-    mask_mdi = quote.mdi > 50
+    mask_di = quote.pdi < quote.mdi
     mask_adx = quote.adx > 70
     adx_shift = quote.adx.shift(periods=1)
     mask_adx2 = (quote.adx < adx_shift) & (adx_shift >= quote.adx.shift(periods=2))
-    cond |= mask_pdi & mask_mdi & mask_adx & mask_adx2
+    cond |= mask_di & mask_adx & mask_adx2
+
+    mdi_shift = quote.mdi.shift(periods=1)
+    mask_pdi = quote.pdi < 5
+    mask_mdi = mdi_shift > 50
+    mask_mdi2 = (quote.mdi < mdi_shift) & (mdi_shift >= quote.mdi.shift(periods=2))
+    cond |= mask_pdi & mask_mdi & mask_mdi2
 
     # rsi
     quote = rsi.compute_rsi(quote, period)
@@ -61,12 +66,17 @@ def signal_exit(quote, period):
 
     # dmi
     quote = dmi.compute_dmi(quote, period)
-    mask_pdi = quote.pdi > 50
-    mask_mdi = quote.mdi < 5
+    mask_di = quote.pdi > quote.mdi
     mask_adx = quote.adx > 70
     adx_shift = quote.adx.shift(periods=1)
     mask_adx2 = (quote.adx < adx_shift) & (adx_shift >= quote.adx.shift(periods=2))
-    cond |= mask_pdi & mask_mdi & mask_adx & mask_adx2
+    cond |= mask_di & mask_adx & mask_adx2
+
+    pdi_shift = quote.pdi.shift(periods=1)
+    mask_mdi = quote.mdi < 5
+    mask_pdi = pdi_shift > 50
+    mask_pdi2 = (quote.pdi < pdi_shift) & (pdi_shift >= quote.pdi.shift(periods=2))
+    cond |= mask_pdi & mask_mdi & mask_pdi2
 
     # rsi
     quote = rsi.compute_rsi(quote, period)
