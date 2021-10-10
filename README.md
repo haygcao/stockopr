@@ -1,3 +1,7 @@
+> 说明, 本 README 写于 2014/2015, 此后没有再更新
+
+------
+
 # Stock Operator
 --Stock Investment Suite
 
