@@ -33,10 +33,10 @@ class Asset(TradeData):
     def __init__(self, total_money, avail_money, net_money=0, deposit=0, market_value=0, date=None):
         self.date = dt.get_trade_date() if not date else date
         self.total_money = float(total_money)
-        self.net_money = net_money
+        self.net_money = net_money if net_money > 0 else total_money
         self.avail_money = float(avail_money)
         self.deposit = deposit
-        self.market_value = market_value  if market_value > 0 else self.total_money - self.avail_money
+        self.market_value = market_value if market_value > 0 else self.total_money - self.avail_money
         self.position_percent = round(100 * self.market_value / self.net_money, 3)
 
 

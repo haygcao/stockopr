@@ -8,8 +8,8 @@ from util.log import logger
 
 
 def query_money(account_id):
-    sql = "select date, total, avail from {} where account_id = {} order by date desc limit 1".format(
-        config.sql_tab_asset, account_id)
+    sql = "select date, total, avail, net, deposit, market_value from {} where account_id = {} " \
+          "order by date desc limit 1".format(config.sql_tab_asset, account_id)
     with mysqlcli.get_cursor() as c:
         try:
             c.execute(sql)
@@ -19,7 +19,7 @@ def query_money(account_id):
 
     asset = None
     if r:
-        asset = trade_data.Asset(r['total'], r['avail'], date=r['date'])
+        asset = trade_data.Asset(r['total'], r['avail'], r['net'], r['deposit'], r['market_value'], date=r['date'])
 
     return asset
 
@@ -28,14 +28,14 @@ def save_money(account_id, money: trade_data.Asset, sync=False):
     if not money:
         return
 
-    keys = ['date', 'period', 'origin', 'total', 'avail', 'market_value', 'position_percent',
+    keys = ['date', 'period', 'origin', 'total', 'avail', 'net', 'deposit', 'market_value', 'position_percent',
             'total_profit', 'total_profit_percent', 'account_id']
 
     key = ', '.join(keys)
     fmt_list = ['%s' for i in keys]
     fmt = ', '.join(fmt_list)
 
-    val = (money.date, money.period, money.origin, money.total_money, money.avail_money,
+    val = (money.date, money.period, money.origin, money.total_money, money.avail_money, money.net_money, money.deposit,
            money.market_value, money.position_percent, money.profit, money.profit_percent, account_id,
            money.total_money, money.avail_money)
 

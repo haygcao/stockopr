@@ -94,10 +94,11 @@ def _copy_authentication(app, trade_win):
 
             popup_window.type_keys('{ENTER}')
 
+        time.sleep(0.1)
+
         popup_hwnd = trade_win.popup_window()
         if not popup_window:
             return
-        time.sleep(0.1)
 
 
 def copy_to_clipboard(pos=None):
