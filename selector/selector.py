@@ -70,7 +70,7 @@ selector = {
 }
 
 strategy_map = {
-    'value_return': 'traced'
+    # 'value_return': 'traced'
 }
 
 
@@ -229,14 +229,16 @@ def select(strategy_name_list, candidate_list=None, period='day'):
     # code_list = future.get_future_contract_list()
     # 科创板
     # code_list = [code for code in code_list if int(code[:2]) <= 60]
-    # code_list = ['600331']
+    # code_list = ['000408']
 
     strategy_name_list = config.get_scan_strategy_name_list() if not strategy_name_list else strategy_name_list
     for strategy_name in strategy_name_list:
         code_list = select_one_strategy(code_list, strategy_name, period, mp=True)
         # for code in code_list:
         #     selected.add_selected(code, strategy_name)
-        basic.upsert_candidate_pool(code_list, strategy_map.get(strategy_name, 'allow_buy'), strategy_name)
+        # code_list = ['002109']
+        basic.upsert_candidate_pool(
+            code_list, strategy_map.get(strategy_name, 'allow_buy'), strategy_name, ignore_duplicate=False)
         logger.info(strategy_name, code_list)
 
     # code_list.append('300502')

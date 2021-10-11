@@ -25,14 +25,20 @@ def upsert_candidate_pool(code_list, status, strategy, ignore_duplicate=True):
         value_list = []
         for code in code_list:
             value_list.append((code, strategy, status))
+            # value_list.append((code, strategy, status, strategy, status))
 
         try:
             if not ignore_duplicate:
                 cursor.executemany(sql_str, value_list)
-                sql_str = u"delete from portfolio where class = %s and status = %s"
-                cursor.execute(sql_str, (strategy, status))
+                sql_str = u"delete from portfolio where class = %s"  # and status = %s"
+                # cursor.execute(sql_str, (strategy, status))
+                cursor.execute(sql_str, (strategy, ))
 
             sql_str = u"INSERT IGNORE INTO portfolio (code, class, status) VALUES (%s, %s, %s)"
+            # not all arguments converted during string formatting
+            # sql_str = u"INSERT INTO portfolio (code, class, status) VALUES (%s, %s, %s) "\
+            #           "ON DUPLICATE KEY update class = %s, status = %s"
+
             cursor.executemany(sql_str, value_list)
 
         except pymysql.err.IntegrityError as e:
