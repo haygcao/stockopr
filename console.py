@@ -584,9 +584,10 @@ class Panel(QWidget):
         print('{} {} {}'.format(self.code, self.period, indicator))
         # TODO multiprocessing 不支持, threading 打开图时会重新打开之前关闭的图
         # p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, indicator))
-        p = threading.Thread(target=chart.open_graph, args=(self.code, self.period, indicator))
-        p.start()
-        p.join(timeout=1)
+        # p = threading.Thread(target=chart.open_graph, args=(self.code, self.period, indicator))
+        # p.start()
+        # p.join(timeout=1)
+        util.run_subprocess('chart.py', [self.code, self.period, indicator])
         # open_graph(self.code, self.period)
 
     def show_f10(self):

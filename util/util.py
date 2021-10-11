@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 
 import psutil
 import datetime
@@ -88,14 +89,18 @@ def get_cache_dir():
     return dir_name
 
 
-def run_subprocess(script):
+def run_subprocess(script, argv=None):
     # root_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
     root_dir = get_root_dir()
     monitor_path = os.path.join(root_dir, script)
     os.environ['PYTHONPATH'] = root_dir
-    py = str(os.path.join(root_dir, 'venv', 'Scripts', 'python.exe'))
-    # subprocess.run([py, monitor_path])
-    subprocess.Popen([py, monitor_path])
+    if sys.platform == 'win32':
+        py = str(os.path.join(root_dir, 'venv', 'Scripts', 'python.exe'))
+    else:
+        py = str(os.path.join(root_dir, 'venv', 'bin', 'python'))
+
+    argv = argv if argv else []
+    subprocess.Popen([py, monitor_path] + argv)  # , creationflags=subprocess.DETACHED_PROCESS)  # new in 3.7
 
 
 def print_stock_info(stock_info):

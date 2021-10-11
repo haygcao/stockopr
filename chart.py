@@ -7,6 +7,7 @@ http://www.cjzzc.com/web_color.html
 import datetime
 import functools
 import os
+import sys
 
 from config import config
 from config.config import is_long_period, OscIndicator
@@ -1014,29 +1015,7 @@ def show_indicator(code, period, indicator):
 
 
 if __name__ == "__main__":
-    # show_market('day')
-    # exit(0)
-
-    # code = 'maq'
-    # # code = '300502'
-    # open_graph(code, 'day', 'nhnl')
-    # # show_indicator(code, 'week', relative_price_strength.relative_price_strength)
-    # exit(0)
-
-    code = '000001'
-    code = '300502'
-    # code = '002202'
-    # code = '600888'
-    # code = '002739'
-    # code = '0000001'
-    period = 'day'  # m5 m30 day week
+    code, period, index = (sys.argv[1], sys.argv[2], sys.argv[3]) if len(sys.argv) == 4 else ('300502', 'day', 'rps')
+    open_graph(code, period, index)
     # open_graph(code, period, OscIndicator.FORCE_INDEX.value, 'data/csv/' + code + '.csv')
     open_graph(code, period, 'rps')
-
-    # code = '000001'
-    # candle = DataFinanceDraw(code)
-    # candle.load_data('data/' + code + '.csv')
-    # t = threading.Thread(target=update, args=(candle,))
-    # t.start()
-    # show()
-    # t.join()
