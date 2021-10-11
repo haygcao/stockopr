@@ -10,11 +10,12 @@ from util.macd import macd
 
 def market_deviation(quote, period, values, will=1):
     if 'max_period' not in quote.columns:
-        quote = compute_high_low(quote, compute_high=True)
+        quote = compute_high_low(quote, column='high', compute_high=True)
     if 'min_period' not in quote.columns:
-        quote = compute_high_low(quote, compute_high=False)
+        quote = compute_high_low(quote, column='low', compute_high=False)
 
     column = 'low' if will == 1 else 'high'
+    values = values.rolling(5).min() if will == 1 else values.rolling(5).max()
     val_period_series = quote['{}_period'.format('min' if will == 1 else 'max')]
     val_period_series = val_period_series[val_period_series.notna()]
 

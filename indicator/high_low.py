@@ -41,7 +41,6 @@ def compute_high_low(quote, column='close', compute_high=True, weak=False):
     # mask.at[date] = False
     # close_high_low_adj = close_high_low_adj.mask(mask, numpy.nan)
 
-    close_high_low = close_high_low_adj[close_high_low_adj.notna()]
     # index 不会 shift, 只是值 shift
     # close_high_low_shift = close_high_low.shift(periods=1)
     # days = close_high_low.index - close_high_low_shift.index
@@ -57,16 +56,26 @@ def compute_high_low(quote, column='close', compute_high=True, weak=False):
 
 
 def filter_high_low(adj, close_high_low, days_before, weak=False):
+    index_full = close_high_low.index
+
     days_before_after = 80
     adj = adj if not weak else -adj
     i = 1
     i_prev = i - 1
+    i_ignored = i_prev
     i_ignore_set = set()
     i_valid = -1
     i_prev_valid = -1
+
+    close_high_low = close_high_low[close_high_low.notna()]
+    index = close_high_low.index
+
     while i < len(close_high_low):
-        delta_before = (close_high_low.index[i] - close_high_low.index[i_prev]).days
-        # delta_after = (close_high_low.index[i + 1] - close_high_low.index[i]).days
+        # delta_before = (index[i] - index[i_prev]).days
+        # delta_before_ignored = (index[i] - index[i_ignored]).days
+        delta_before = index_full.get_loc(index[i]) - index_full.get_loc(index[i_prev]) + 1
+        delta_before_ignored = index_full.get_loc(index[i]) - index_full.get_loc(index[i_ignored]) + 1
+        # delta_after = (index[i + 1] - index[i]).days
         if delta_before > days_before_after:  # and delta_after > days_before_after:
             # 忽略曾经的值, 应该是没有问题的
             # 比如 A B C D E 中 C 会被忽略
@@ -85,7 +94,10 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
             # i += 1
             i_prev += 1
             i = i + 1 if i == i_prev else i
+            i_ignored = i_prev
             continue
+
+        # 未创出新高/新低
         if adj * close_high_low.iloc[i] < adj * close_high_low.iloc[i_prev]:
             if weak:
                 close_high_low.iat[i_prev] = numpy.nan
@@ -93,9 +105,12 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
                 i = i + 1 if i == i_prev else i
                 continue
             i_ignore_set.add(i)
+            i_ignored = i
             i += 1
             continue
-        if delta_before < days_before // 2:
+
+        # 间隔时间太短
+        if delta_before_ignored < 5 or delta_before < days_before // 2:
             # 可能不会被忽略
             # i_ignore_set.add(i)
             # i += 1
@@ -104,6 +119,7 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
             close_high_low.iat[i_prev] = numpy.nan
             i_prev += 1
             i = i + 1 if i == i_prev else i
+            i_ignored = i_prev
             continue
 
         reset_invalid_value(close_high_low, i, i_ignore_set, i_prev)
@@ -111,19 +127,22 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
         i_prev_valid = i_prev
         i += 2
         i_prev = i - 1
+        i_ignored = i_prev
 
         if i_prev >= len(close_high_low):
             break
         # 当矩阵运算未处理近期高低值时, 需要忽略往前近期的次高低值, 即最值优先
-        delta_before = (close_high_low.index[i_prev] - close_high_low.index[i_valid]).days
-        if delta_before < days_before // 2:
+        # delta_before = (close_high_low.index[i_prev] - close_high_low.index[i_valid]).days
+        delta_before = index_full.get_loc(index[i]) - index_full.get_loc(index[i_prev]) + 1
+        if delta_before < 5:  # days_before // 2:
             close_high_low.iat[i_prev] = numpy.nan
             i_prev += 1
             i = i + 1 if i == i_prev else i
+            i_ignored = i_prev
             continue
 
     reset_invalid_value(close_high_low, i_valid, i_ignore_set, i_prev_valid)
-    if len(close_high_low) > 1 and (close_high_low.index[-1] - close_high_low.index[-2]).days > days_before_after:
+    if len(close_high_low) > 1 and (index[-1] - index[-2]).days > days_before_after:
         close_high_low.iat[-1] = numpy.nan
     close_high_low = close_high_low[close_high_low.notna()]
     if len(close_high_low) % 2 == 1:
