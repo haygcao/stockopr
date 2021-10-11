@@ -129,7 +129,7 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
         i_prev = i - 1
         i_ignored = i_prev
 
-        if i_prev >= len(close_high_low):
+        if i >= len(close_high_low):
             break
         # 当矩阵运算未处理近期高低值时, 需要忽略往前近期的次高低值, 即最值优先
         # delta_before = (close_high_low.index[i_prev] - close_high_low.index[i_valid]).days
