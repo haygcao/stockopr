@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+https://matplotlib.org/stable/gallery/lines_bars_and_markers/marker_reference.html
+http://www.cjzzc.com/web_color.html
+"""
+
 import datetime
 import functools
 import os
@@ -28,7 +33,6 @@ import logging
 from util import dt, util
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
-# http://www.cjzzc.com/web_color.html
 
 panel_ratios = {
     3: (8, 0.2, 1.8),
@@ -646,6 +650,8 @@ class DataFinanceDraw(object):
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(exp13), type='line', width=width + 0.2, color=dimgrey),
             mpf.make_addplot(self.get_window(exp26), type='line', width=width + 0.1, color=black),
+            mpf.make_addplot(self.get_window(data.min_period), type='scatter', marker='_', width=1, color=green),
+            mpf.make_addplot(self.get_window(data.max_period), type='scatter', marker='_', width=1, color=red),
         ])
 
         if is_market_index(self.code):
@@ -1018,7 +1024,7 @@ if __name__ == "__main__":
     # exit(0)
 
     code = '000001'
-    code = '300598'
+    code = '300502'
     # code = '002202'
     # code = '600888'
     # code = '002739'
