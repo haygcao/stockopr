@@ -71,13 +71,13 @@ def compute_enter_mask(quote, period):
     mask = mask.rolling(30).max() > 0
     quote = quote.assign(mask_adx_less_n=~mask)
 
-    ma_min = quote.ma30.rolling(120).min()
+    ma_min = quote.low.rolling(120).min()
     percent = 100 * (quote.close / ma_min - 1)
     percent = percent.rolling(5).max()
     mask = (percent > 50)  # & (percent2.abs() > 50)
     quote = quote.assign(mask_bias_bear=~mask)
 
-    ma_max = quote.ma30.rolling(120).max()
+    ma_max = quote.high.rolling(120).max()
     percent = 100 * (1 - quote.close / ma_max)
     percent = percent.rolling(5).max()
     mask = (percent > 45)
