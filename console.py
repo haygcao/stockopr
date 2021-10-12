@@ -31,7 +31,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow, QDesktopWidget,
-                             QHBoxLayout, QVBoxLayout, QShortcut)
+                             QHBoxLayout, QVBoxLayout, QShortcut, QTextBrowser, QListWidget)
 import system_hotkey
 # import win32api
 
@@ -46,6 +46,7 @@ from server import config as svr_config
 from trade_manager import trade_manager
 from util import util, dt, qt_util
 from util.QComboCheckBox import QComboCheckBox
+from util.log import logger
 from util.pywinauto_util import max_window
 
 # pywinauto
@@ -124,7 +125,7 @@ class Widget(QWidget):
 
 
 class Panel(QWidget):
-    # sig_keyhot = pyqtSignal(str)
+    sig_keyhot = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -152,8 +153,9 @@ class Panel(QWidget):
         self.rlock = threading.RLock()
         self.running = True
         self.count_or_price = [0, 0]   # [price, count]
+        self.log_lines = []
 
-        # self.sig_keyhot.connect(self.MKey_pressEvent)
+        self.sig_keyhot.connect(self.MKey_pressEvent)
 
         self.hk_tdx_l = system_hotkey.SystemHotkey()
         self.hk_tdx_r = system_hotkey.SystemHotkey()
@@ -207,20 +209,23 @@ class Panel(QWidget):
 
         self.btn_delete = QPushButton('delete', self)
 
-        # self.log = QLabel("this for log", self)
+        self.log = QListWidget(self)  # QTextBrowser(self)  # QLabel("this for log", self)
+        widget = self.geometry()
+        # self.log.resize(600, 500)
+        self.log.setFixedHeight(250)
 
         self.init_ui()
         threading.Thread(target=self.check, args=()).start()
 
         self.show()
 
-    # # 热键处理函数
-    # def MKey_pressEvent(self, i_str):
-    #     print("按下的按键是%s" % (i_str,))
-    #
-    # # 热键信号发送函数(将外部信号，转化成qt信号)
-    # def send_key_event(self, i_str):
-    #     self.sig_keyhot.emit(i_str)
+    # 热键处理函数
+    def MKey_pressEvent(self, i_str):
+        self.refresh_log()
+
+    # 热键信号发送函数(将外部信号，转化成qt信号)
+    def send_key_event(self, i_str):
+        self.sig_keyhot.emit(i_str)
 
     def init_period(self):
         for period in g_periods:
@@ -363,6 +368,8 @@ class Panel(QWidget):
         layout.addStretch(2)
         layout.addLayout(grid)
         layout.addLayout(h_layout_signal)
+
+        layout.addWidget(self.log)
 
         # self.load()
 
@@ -528,19 +535,19 @@ class Panel(QWidget):
 
         if 'candidate' in classification_list:
             candidate_list = [i.text() for i in self.combo_candidate.get_selected()]
-            print('load ', candidate_list)
+            logger.info('load ', candidate_list)
             code_list_tmp = basic.get_candidate_stock_code(candidate_list)
             code_list.extend(code_list_tmp)
 
         if 'traced' in classification_list:
             traced_list = [i.text() for i in self.combo_traced.get_selected()]
-            print('load ', traced_list)
+            logger.info('load ', traced_list)
             code_list_tmp = basic.get_traced_stock_code(traced_list)
             code_list.extend(code_list_tmp)
 
         if 'allow_buy' in classification_list:
             strategy_list = [i.text() for i in self.combo_strategy.get_selected()]
-            print('load ', strategy_list)
+            logger.info('load ', strategy_list)
             code_list_tmp = basic.get_allowed_to_buy_stock_code(strategy_list)
             code_list.extend(code_list_tmp)
 
@@ -579,12 +586,12 @@ class Panel(QWidget):
 
     def show_chart(self):
         if self.code == 'maq' or len(self.code) == 7:
-            print('market index')
+            logger.info('market index')
             indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
         else:
-            print('stock')
+            logger.info('stock')
             indicator = self.indicator if self.indicator in g_indicators else g_indicators[0]
-        print('{} {} {}'.format(self.code, self.period, indicator))
+        logger.info('{} {} {}'.format(self.code, self.period, indicator))
         # TODO multiprocessing 不支持, threading 打开图时会重新打开之前关闭的图
         # p = multiprocessing.Process(target=chart.open_graph, args=(self.code, self.period, indicator))
         # p = threading.Thread(target=chart.open_graph, args=(self.code, self.period, indicator))
@@ -596,18 +603,18 @@ class Panel(QWidget):
     def show_f10(self):
         code = self.code
         url = 'http://basic.10jqka.com.cn/' + code
-        cmd = ['/usr/bin/browser', '--tabs', url]
+        cmd = ['/usr/bin/self.log', '--tabs', url]
         subprocess.Popen(cmd)
 
     def show_indicator(self):
-        print('{} {}'.format(self.code, self.period))
+        logger.info('{} {}'.format(self.code, self.period))
         p = multiprocessing.Process(target=chart.show_indicator,
                                     args=(self.code, self.period, relative_price_strength.relative_price_strength))
         p.start()
         p.join(timeout=1)
 
     def show_market(self):
-        print('{} {}'.format(self.code, self.period))
+        logger.info('{} {}'.format(self.code, self.period))
         indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
         p = multiprocessing.Process(target=chart.show_market, args=(self.period, indicator))
         p.start()
@@ -618,7 +625,7 @@ class Panel(QWidget):
             pid = util.get_pid_of_python_proc('watch_dog')
             # if self.btn_monitor.isChecked():
             if pid > 0:
-                print('stop watch dog')
+                logger.info('stop watch dog')
                 self.btn_monitor.setStyleSheet("background-color : red")
                 # self.btn_monitor.setCheckable(False)
                 # self.monitor_proc.terminate()
@@ -627,7 +634,7 @@ class Panel(QWidget):
                 # os.kill(pid, signal.CTRL_C_EVENT)
                 psutil.Process(pid=pid).terminate()
             else:
-                print('start watch dog')
+                logger.info('start watch dog')
                 self.btn_monitor.setStyleSheet("background-color : green")
                 # self.btn_monitor.setCheckable(True)
                 # self.monitor_proc = multiprocessing.Process(target=watch_dog.monitor, args=())
@@ -638,36 +645,36 @@ class Panel(QWidget):
     def update_quote(self):
         p = multiprocessing.Process(target=acquire.save_quote, args=())
         p.start()
-        print('update quote started')
+        logger.info('update quote started')
 
     def sync(self):
         p = multiprocessing.Process(target=trade_manager.sync, args=())
         p.start()
-        print('sync started')
+        logger.info('sync started')
 
     def update_candidate(self):
-        print('update candidate started')
+        logger.info('update candidate started')
         selected_list = [s.text() for s in self.combo_candidate.get_selected()]
-        print(selected_list)
+        logger.info(selected_list)
         p = multiprocessing.Process(target=selector.update_candidate_pool, args=(selected_list, self.period))
         p.start()
 
     def update_traced(self):
-        print('update traced started')
+        logger.info('update traced started')
         traced_list = [s.text() for s in self.combo_traced.get_selected()]
         candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
-        print(candidate_list, traced_list)
+        logger.info(candidate_list, traced_list)
         p = multiprocessing.Process(target=selector.select, args=(traced_list, candidate_list, self.period))
         p.start()
 
     def scan(self):
-        print('scan started')
+        logger.info('scan started')
         strategy_name_list = [s.text() for s in self.combo_strategy.get_selected()]
         candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
         traced_list = [s.text() for s in self.combo_traced.get_selected()]
-        print(candidate_list, traced_list, strategy_name_list)
+        logger.info(candidate_list, traced_list, strategy_name_list)
         candidate_list.extend(traced_list)
-        print(candidate_list, strategy_name_list)
+        logger.info(candidate_list, strategy_name_list)
         p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, candidate_list, self.period))
         p.start()
 
@@ -704,18 +711,32 @@ class Panel(QWidget):
         account_id = svr_config.ACCOUNT_ID_XY
         trade_manager.create_trade_order(account_id, self.code, price_limited=self.count_or_price[0])
 
+    def refresh_log(self):
+        lines = util.read_last_lines('log/run.log')
+        if lines != self.log_lines:
+            self.log.clear()
+            self.log.addItems([line[:-1] for line in lines])
+            self.log.setCurrentRow(self.log.count() - 1)
+
+            # QTextBrowser
+            # self.log.setText(''.join(lines))
+            # self.log.ensureCursorVisible()  # 游标可用
+            # cursor = self.log.textCursor()  # 设置游标
+            # pos = len(self.log.toPlainText())  # 获取文本尾部的位置
+            # cursor.setPosition(pos - 1)  # 游标位置设置为尾部
+            # self.log.setTextCursor(cursor)  # 滚动到游标位置
+
     def check(self):
         account_id = svr_config.ACCOUNT_ID_XY
         pid_prev_check = None
         update_time = datetime.datetime(2021, 6, 18, 0, 0, 0)
         while self.running:
+            self.send_key_event('xxx')
             now = datetime.datetime.now()
             if now - update_time > datetime.timedelta(seconds=60):
                 latest_quote_date = quote_db.get_latest_trade_date()
                 latest_sync_date = trade_manager.db_handler.query_money(account_id).date
-                # self.log.setText('latest quote:\t{}\nlatest sync:\t{}'.format(latest_quote_date, latest_sync_date))
                 if latest_sync_date != dt.get_trade_date():
-                    # self.log.setStyleSheet("color : red")
                     self.btn_sync.setStyleSheet("color : red")
                 else:
                     self.btn_sync.setStyleSheet("color : black")
@@ -739,12 +760,12 @@ class Panel(QWidget):
             else:
                 color = 'green'
 
-            print('check watch dog', color)
+            logger.info('check watch dog', color)
             with self.rlock:
                 self.btn_monitor.setText(txt)
                 self.btn_monitor.setStyleSheet("background-color : {}".format(color))
 
-        print('check thread exit')
+        logger.info('check thread exit')
 
     def stop_check_thread(self):
         ex.running = False
@@ -752,7 +773,7 @@ class Panel(QWidget):
     def stop_watch_dog(self):
         pid = util.get_pid_of_python_proc('watch_dog')
         if pid > 0:
-            print('send signal.CTRL_C_EVENT')
+            logger.info('send signal.CTRL_C_EVENT')
             os.kill(pid, signal.CTRL_C_EVENT)
             # psutil.Process(pid).terminate()
 
@@ -776,7 +797,7 @@ if __name__ == '__main__':
     # ex = Widget()
     ex = Panel()
     ex.location_on_the_screen()
-    print('width: {}\theight: {}'.format(ex.width(), ex.height()))
+    logger.info('width: {}\theight: {}'.format(ex.width(), ex.height()))
 
     rc = app.exec_()
     ex.stop_check_thread()

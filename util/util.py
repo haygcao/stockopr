@@ -142,6 +142,19 @@ def get_diff_days(day1, day2):
     return (date2 - date1).days
 
 
+def read_last_lines(fname, n=30):
+    lines = []
+    # opening file using with() method
+    # so that file get closed
+    # after completing work
+    with open(fname) as file:
+        # loop to read iterate
+        # last n lines and print it
+        for line in (file.readlines()[-n:]):
+            lines.append(line)
+    return lines
+
+
 if __name__ == '__main__':
     # r = get_day('2015-12-31', 1)
     r = get_diff_days('2015-12-31', '2016-01-10')
