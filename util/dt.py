@@ -1,4 +1,49 @@
 # -*- encoding: utf-8 -*-
+"""
+➜  ~ cal 12 2021
+      十二月 2021            一月 2022
+日  一  二 三 四  五 六    日  一 二  三 四  五 六
+          1  2  3  4                       1
+ 5  6  7  8  9 10 11     2  3  4  5  6  7  8
+12 13 14 15 16 17 18     9 10 11 12 13 14 15
+19 20 21 22 23 24 25    16 17 18 19 20 21 22
+26 27 28 29 30 31       23 24 25 26 27 28 29
+
+%u 每周的第几天，星期一为第一天 （值从1到7，星期一为1）
+%U 第年的第几周，把星期日作为第一天（值从0到53）
+%w 十进制表示的星期几（值从0到6，星期天为0）
+%W 每年的第几周，把星期一做为第一天（值从0到53）
+%V 每年的第几周，使用基于周的年
+
+datetime.date(2021, 12, 31).strftime('%W')
+'52'
+datetime.date(2021, 12, 31).strftime('%U')
+'52'
+
+datetime.date(2022, 1, 1).strftime('%W')
+'00'
+datetime.date(2022, 1, 1).strftime('%U')
+'00'
+datetime.date(2022, 1, 1).strftime('%V')
+'52'
+
+
+# %U %W
+datetime.date(2022, 1, 2).strftime('%W')
+'00'
+datetime.date(2022, 1, 2).strftime('%U')
+'01'
+datetime.date(2022, 1, 2).strftime('%V')
+'52'
+
+datetime.date(2022, 1, 3).strftime('%W')
+'01'
+datetime.date(2022, 1, 3).strftime('%U')
+'01'
+datetime.date(2022, 1, 3).strftime('%V')
+'01'
+"""
+
 import re
 import time
 import datetime

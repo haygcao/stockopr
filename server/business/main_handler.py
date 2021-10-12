@@ -13,7 +13,8 @@ def trade_time_filter(func):
         now = datetime.datetime.now()
         w_day = now.isoweekday()
         hour = now.hour
-        if w_day <= 5 and hour <= 15:
+        minute = now.minute
+        if w_day <= 5 and (hour < 15 and (hour > 9 or (hour == 9 and minute >= 15))):
             self.write({'ret_code': -1, 'err_msg': ''})
             return
 
