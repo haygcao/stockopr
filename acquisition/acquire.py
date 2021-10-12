@@ -229,7 +229,7 @@ def save_quote_xl(ignore=True):
 
         # df_quote.to_csv('2021-06-07.csv')
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 def save_quote_tx_one_day(trade_day):
@@ -268,13 +268,16 @@ def save_quote_tx_one_day(trade_day):
         # Do not insert the row number (index=False)
         df_quote.to_sql(name='quote', con=engine, if_exists='append', index=False, chunksize=20000)
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 def save_quote_impl(trade_date=None, xls=None):
-    # save_quote_tx(xls)
-    save_quote_xl()
-    # save_quote_wy()
+    try:
+        # save_quote_tx(xls)
+        save_quote_xl()
+        # save_quote_wy()
+    except Exception as e:
+        logger.error(e)
 
 
 def save_quote():
