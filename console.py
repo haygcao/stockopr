@@ -44,7 +44,7 @@ from pointor.signal import write_supplemental_signal
 from selector import selector
 from server import config as svr_config
 from trade_manager import trade_manager
-from util import util, dt, qt_util
+from util import util, dt, qt_util, singleten
 from util.QComboCheckBox import QComboCheckBox
 from util.log import logger
 from util.pywinauto_util import max_window
@@ -791,6 +791,8 @@ class Panel(QWidget):
 
 
 if __name__ == '__main__':
+    me = singleten.SingleInstance()
+
     app = QApplication(sys.argv)
 
     # ex = Main()

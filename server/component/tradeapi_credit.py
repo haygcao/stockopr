@@ -120,11 +120,12 @@ def get_order():
         order_list.append({
             'trade_time': row[columns.index('委托时间')],
             'code': row[columns.index('证券代码')],
-            'direct': row[columns.index('买卖')],
-            'count': int(row[columns.index('委托数量')]),
+            'direct': row[columns.index('买卖')],  # 买卖标志
+            'count_to': int(row[columns.index('委托数量')]),
             'count_ed': int(row[columns.index('成交数量')]),
-            'price': float(row[columns.index('委托价格')]),
-            'price_ed': float(row[columns.index('成交价格')]),
+            'price_to': float(row[columns.index('委托价格')]),
+            'price_ed': float(row[columns.index('成交价格')]),  # 成交均价
+            'amount': float(row[columns.index('成交金额')]),
             'count_withdraw': int(row[columns.index('已撤数量')]),
         })
     return order_list
@@ -342,6 +343,69 @@ def get_operation_detail(code_in=None):
             'code': code,
             'price': price,
             'count': count
+        }
+
+        detail_list.append(detail)
+    for row in data.split('\n'):
+        val_list = row.split('\t')
+
+    return detail_list
+
+
+def get_today_order(code_in=None):
+    """
+    获取对账单
+    """
+    helper.active_window()
+    pywinauto.mouse.click(coords=config.pos_xy)
+    unfold_gui()
+
+    pywinauto.mouse.click(coords=config.pos_order_cre)
+    # refresh()
+
+    helper.copy_to_clipboard()
+
+    scroll_top()
+
+    data = pywinauto.clipboard.GetData()
+    end_pos = data.find('\n')
+    columns = data[:end_pos].split()
+    # val_1st_row = data[end_pos + 1: end_pos + 1 + data[end_pos + 1:].find('\n')].split()
+
+    detail_list = []
+    for i, row_str in enumerate(data.split('\n')):
+        if i == 0:
+            continue
+        row = row_str.split('\t')
+        code = row[columns.index('证券代码')]
+        if not code:
+            continue
+
+        if code_in and code_in != code:
+            continue
+        trade_time = row[columns.index('委托时间')]
+        trade_date = row[columns.index('委托日期')]  # datetime.date.today().strftime('%Y-%m-%d')
+        direct = row[columns.index('买卖')]
+        trade_time = datetime.datetime.strptime('{} {}'.format(trade_date, trade_time), '%Y%m%d %H:%M:%S')
+        price_to = float(row[columns.index('委托价格')])
+        price_ed = float(row[columns.index('成交价格')])  # 成交均价
+        count_to = int(float(row[columns.index('委托数量')]))
+        count_ed = int(float(row[columns.index('成交数量')]))
+        amount = float(row[columns.index('成交金额')])
+        count_cancel = int(float(row[columns.index('已撤数量')]))
+        trade_status = row[columns.index('委托状态')]
+
+        detail = {
+            'trade_time': trade_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'code': code,
+            'direct': direct,
+            'price_to': price_to,
+            'price_ed': price_ed,
+            'amount': amount,
+            'count_to': count_to,
+            'count_ed': count_ed,
+            'count_withdraw': count_cancel,
+            'status': trade_status
         }
 
         detail_list.append(detail)

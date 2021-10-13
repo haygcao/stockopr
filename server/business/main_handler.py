@@ -163,6 +163,28 @@ class QueryOperationDetailHandler(BaseHandler):
         self.write(json.dumps(detail_list))
 
 
+class QueryTodayOrderHandler(BaseHandler):
+    def get(self):
+        self.write("Hello, world")
+
+    @trade_time_filter
+    def post(self):
+        param = self.request.body.decode('utf-8')
+        print(param)
+        param = json.loads(param)
+        if 'code' in param and param['code']:
+            code = param['code']
+        else:
+            code = None
+
+        account_id = param['account_id']
+        if account_id == config.ACCOUNT_ID_PT:
+            detail_list = tradeapi.get_operation_detail(code)
+        else:
+            detail_list = tradeapi_credit.get_today_order(code)
+        self.write(json.dumps(detail_list))
+
+
 class QueryTradeSignalHandler(BaseHandler):
     def get(self):
         self.write("Hello, world")

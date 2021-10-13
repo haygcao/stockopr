@@ -16,6 +16,7 @@ handlers = [
     (r"/api/query_money", QueryMoneyHandler),
     (r"/api/query_position", QueryPositionHandler),
     (r"/api/query_operation_detail", QueryOperationDetailHandler),
+    (r"/api/query_today_order", QueryTodayOrderHandler),
     (r"/api/query_withdraw_order", QueryWithdrawOrderHandler),
     (r"/api/withdraw", WithdrawHandler),
     (r"/api/query_trade_signal", QueryTradeSignalHandler)

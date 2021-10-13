@@ -131,8 +131,8 @@ def query_withdraw_order(account_id):
     for row in d:
         trade_time = datetime.datetime.strptime('{} {}'.format(today_str, row['trade_time']), '%Y-%m-%d %H:%M:%S')
         direct = 'B' if '买入' in row['direct'] else 'S'
-        withdraw_order = trade_data.WithdrawOrder(trade_time, row['code'], direct, row['count'],
-                                                  row['count_ed'], row['price'], row['price_ed'], row['count_withdraw'])
+        withdraw_order = trade_data.WithdrawOrder(trade_time, row['code'], direct, row['count_to'], row['count_ed'],
+                                                  row['price_to'], row['price_ed'], row['count_withdraw'])
         order_list.append(withdraw_order)
 
     return order_list
@@ -145,3 +145,31 @@ def withdraw(direct):
     response = requests.post(url, data=json.dumps(data), headers=headers)
 
     return response.ok
+
+
+def query_today_order(account_id, code=None):
+    """
+    获取对账单
+    """
+    url = 'http://{}/query_today_order'.format(base_url)
+    data = {
+        'code': code,
+        'account_id': account_id
+    }
+    response = requests.post(url, data=json.dumps(data), headers=headers)
+    d = json.loads(response.content)
+    if handle_err(d):
+        logger.error(d['err_msg'], inspect.currentframe().f_code.co_name)
+        return
+
+    order_list = []
+    today_str = datetime.date.today().strftime('%Y-%m-%d')
+    for row in d:
+        trade_time = datetime.datetime.strptime('{} {}'.format(today_str, row['trade_time']), '%Y-%m-%d %H:%M:%S')
+        direct = 'B' if '买入' in row['direct'] else 'S'
+        price_ed = round(row['amount'] / row['count_ed'], 3)
+        withdraw_order = trade_data.WithdrawOrder(trade_time, row['code'], direct, row['count_to'], row['count_ed'],
+                                                  row['price_to'], price_ed, row['count_withdraw'])
+        order_list.append(withdraw_order)
+
+    return order_list
