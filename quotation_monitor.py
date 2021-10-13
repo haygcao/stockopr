@@ -280,12 +280,18 @@ def query_trade_order_code_list():
 
 
 def monitor_today():
+    now = datetime.datetime.now()
+    if not dt.istradeday() or now.hour >= 15:
+        return
+
+    me = singleten.SingleInstance()
+
     atexit.register(goodbye)
     periods = []
 
     logger.info(TradeSignalManager.signal_map)
 
-    while True:
+    while now.hour < 15:
         now = datetime.datetime.now()
         begin1 = datetime.datetime(now.year, now.month, now.day, 9, 30, 0)
         end1 = datetime.datetime(now.year, now.month, now.day, 11, 30, 0)
@@ -345,6 +351,4 @@ def monitor_today():
 
 
 if __name__ == '__main__':
-    me = singleten.SingleInstance()
-
     monitor_today()

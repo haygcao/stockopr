@@ -8,7 +8,7 @@ import time
 
 import psutil
 
-from util import util, singleten
+from util import util, singleten, dt
 from util.log import logger
 
 g_quotation_monitor_pid = -1
@@ -43,8 +43,8 @@ def monitor():
     global g_quotation_monitor_pid, g_scheduler_pid
     while True:
         now = datetime.datetime.now()
-        # if now.hour >= 15:
-        #     return
+        if now.hour >= 15:
+            return
 
         g_quotation_monitor_pid = util.get_pid_of_python_proc('quotation_monitor')
         if g_quotation_monitor_pid < 0:
@@ -60,6 +60,10 @@ def monitor():
 
 
 if __name__ == '__main__':
+    now = datetime.datetime.now()
+    if not dt.istradeday() or now.hour >= 15:
+        exit(0)
+
     me = singleten.SingleInstance()
 
     # p = psutil.Process()   # 当前进程
