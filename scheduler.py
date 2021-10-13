@@ -5,6 +5,7 @@ import time
 
 from acquisition import acquire
 from trade_manager import trade_manager
+from util import singleten
 from util.log import logger
 
 
@@ -48,8 +49,9 @@ def schedule_task():
     # schedule.every(10).seconds.do(job)
     # schedule.every(10).minutes.do(job)
     # schedule.every().hour.do(job)
-    schedule.every().day.at("21:00").do(sync)
-    schedule.every().day.at("21:05").do(save_quote)
+    schedule.every().day.at("09:00").do(sync)
+    # 通达信盘后数据在 15:45 后才能下载
+    schedule.every().day.at("15:50").do(save_quote)
     # schedule.every(5).to(10).minutes.do(job)
     # schedule.every().monday.do(job)
     # schedule.every().wednesday.at("13:15").do(job)
@@ -64,6 +66,8 @@ def schedule_task():
 
 
 if __name__ == '__main__':
+    me = singleten.SingleInstance()
+
     logger.info('scheduler is running')
     schedule_task()
     logger.info('scheduler is stopped')

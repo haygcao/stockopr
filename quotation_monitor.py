@@ -20,7 +20,7 @@ from pointor import signal_channel
 
 from acquisition import tx, quote_db
 from trade_manager import trade_manager
-from util import dt
+from util import dt, singleten
 from util.log import logger
 
 
@@ -345,4 +345,6 @@ def monitor_today():
 
 
 if __name__ == '__main__':
+    me = singleten.SingleInstance()
+
     monitor_today()

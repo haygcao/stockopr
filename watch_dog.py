@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import atexit
 import datetime
 import signal
@@ -7,7 +8,7 @@ import time
 
 import psutil
 
-from util import util
+from util import util, singleten
 from util.log import logger
 
 g_quotation_monitor_pid = -1
@@ -59,6 +60,8 @@ def monitor():
 
 
 if __name__ == '__main__':
+    me = singleten.SingleInstance()
+
     # p = psutil.Process()   # 当前进程
     # print(p.cmdline())
     monitor()
