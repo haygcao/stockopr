@@ -27,6 +27,10 @@ class UtilTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_get_pid_by_exec(self):
+        ret = util.get_pid_by_exec('tdxw.exe')
+        print(ret)
+
     def test_is_holiday(self):
         day = datetime.date(2021, 10, 1)
         ret = dt.isholiday(day)
