@@ -227,13 +227,14 @@ def order(direct, code, count, price=0, auto=False):
         main_window.type_keys(str(price))
     main_window.type_keys('{TAB}')
     main_window.type_keys(str(count))
-    main_window.type_keys('{TAB}')
-    main_window.type_keys('{ENTER}')
+
     if auto:
-        time.sleep(0.5)
-        pywinauto.keyboard.send_keys('{ENTER}')
-        time.sleep(0.5)
-        pywinauto.keyboard.send_keys('{ENTER}')
+        main_window.type_keys('{TAB}')
+        main_window.type_keys('{ENTER}')
+        # time.sleep(0.5)
+        # pywinauto.keyboard.send_keys('{ENTER}')
+        # time.sleep(0.5)
+        # pywinauto.keyboard.send_keys('{ENTER}')
 
 
 def withdraw(direct):
