@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+"""
+http://pypi.python.org/pypi/tendo
+"""
+
 import logging
 import os
 import sys
@@ -44,6 +50,11 @@ class SingleInstance(object):
                 print(e.errno)
                 raise
         else:  # non Windows
+            # Using `os.open` ensures that the file pointer won't be closed
+            # by Python's garbage collector after the function's scope is exited.
+            #
+            # The lock will be released when the program exits, or could be
+            # released if the file pointer were closed.
             self.fp = open(self.lockfile, 'w')
             self.fp.flush()
             try:

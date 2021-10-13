@@ -1,8 +1,13 @@
 import os
 import struct
 import datetime
+import subprocess
+import time
 
 import pandas
+
+from util import pylinuxauto, util
+from util.log import logger
 
 
 def basic_info(filepath):
@@ -83,3 +88,70 @@ def parse_quote(filepath, start_date=None, end_date=None):
 
         df = pandas.DataFrame(quote, columns=['code', 'trade_date', 'open', 'high', 'low', 'close', 'amount', 'volume'])
         return df
+
+
+def download_quote():
+    # now = datetime.datetime.now()
+    # if now.hour < 15:
+    #     return
+
+    if util.get_pid_by_exec('tdxw.exe') < 0:
+        logger.info('tdx is stopped, start...')
+        subprocess.Popen(['playonlinux', '--run', 'tdxw'])
+
+    tdx_window_name = '通达信金融终端V7.56'
+    tdx_version = 'V7.56'
+    handle = pylinuxauto.search_window_handle(tdx_window_name)
+    while not handle:
+        time.sleep(1)
+        handle = pylinuxauto.search_window_handle(tdx_window_name)
+    time.sleep(10)
+    logger.info('tdx is running')
+
+    name = pylinuxauto.get_window_name(handle)
+    if name[-5:] == tdx_version:
+        # 登录
+        logger.info('tdx login...')
+        pylinuxauto.send_key('Return')
+        while name[-5:] == tdx_version:
+            handle = pylinuxauto.search_window_handle(tdx_window_name)
+            name = pylinuxauto.get_window_name(handle)
+            time.sleep(1)
+        time.sleep(10)
+        logger.info('tdx login succeed')
+
+    pylinuxauto.active_window_by_name(tdx_window_name)
+
+    # 方案一
+    pylinuxauto.send_key('alt+F4')
+    time.sleep(1)
+    pylinuxauto.send_key('Return')
+    time.sleep(1)
+    pylinuxauto.send_key('Return')
+
+    while util.get_pid_by_exec('tdxw.exe') > 0:
+        time.sleep(5)
+
+    logger.info('tdx quote is downloaded')
+
+    return
+
+    # 方案二
+    # if pylinuxauto.has_popup('tdx'):
+    #     pylinuxauto.close_popup()
+    #
+    # pos_option = ('1562', '19')
+    # pos_download = ('1625', '240')
+    # pylinuxauto.mouse_move(pos_option)
+    # time.sleep(0.3)
+    # pylinuxauto.click_left()
+    # time.sleep(0.3)
+    # pylinuxauto.mouse_move(pos_download)
+    # pylinuxauto.click_left()
+    # time.sleep(0.3)
+    # pylinuxauto.send_key('space')
+    # time.sleep(0.3)
+    # pylinuxauto.send_key('Return')
+    #
+    # while pylinuxauto.has_popup('tdx'):
+    #     time.sleep(5)
