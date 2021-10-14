@@ -17,7 +17,7 @@ import acquisition.quote_db as quote_db
 import acquisition.quote_www as quote_www
 
 # timeout in seconds
-from acquisition import industry_index
+from acquisition import industry_index, quote_tdx
 from util import dt
 from util.log import logger
 from util import qt_util
@@ -274,6 +274,7 @@ def save_quote_tx_one_day(trade_day):
 def save_quote_impl(trade_date=None, xls=None):
     try:
         # save_quote_tx(xls)
+        quote_tdx.download_quote()
         save_quote_xl()
         # save_quote_wy()
     except Exception as e:

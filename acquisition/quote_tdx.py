@@ -102,10 +102,11 @@ def download_quote():
     tdx_window_name = '通达信金融终端V7.56'
     tdx_version = 'V7.56'
     handle = pylinuxauto.search_window_handle(tdx_window_name)
-    while not handle:
-        time.sleep(1)
-        handle = pylinuxauto.search_window_handle(tdx_window_name)
-    time.sleep(10)
+    if not handle:
+        while not handle:
+            time.sleep(1)
+            handle = pylinuxauto.search_window_handle(tdx_window_name)
+        time.sleep(10)
     logger.info('tdx is running')
 
     name = pylinuxauto.get_window_name(handle)
