@@ -131,8 +131,9 @@ def query_withdraw_order(account_id):
     for row in d:
         trade_time = datetime.datetime.strptime('{} {}'.format(today_str, row['trade_time']), '%Y-%m-%d %H:%M:%S')
         direct = 'B' if '买入' in row['direct'] else 'S'
-        withdraw_order = trade_data.WithdrawOrder(trade_time, row['code'], direct, row['count_to'], row['count_ed'],
-                                                  row['price_to'], row['price_ed'], row['count_withdraw'])
+        withdraw_order = trade_data.WithdrawOrder(
+            trade_time, row['code'], direct, row['count_to'], row['count_ed'], row['price_to'], row['price_ed'],
+            row['count_withdraw'], row['status'])
         order_list.append(withdraw_order)
 
     return order_list
@@ -169,7 +170,7 @@ def query_today_order(account_id, code=None):
         # price_ed = round(row['amount'] / row['count_ed'], 3)
         price_ed = row['price_ed']
         withdraw_order = trade_data.WithdrawOrder(trade_time, row['code'], direct, row['count_to'], row['count_ed'],
-                                                  row['price_to'], price_ed, row['count_withdraw'])
+                                                  row['price_to'], price_ed, row['count_withdraw'], row['status'])
         order_list.append(withdraw_order)
 
     return order_list

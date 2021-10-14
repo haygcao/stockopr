@@ -131,8 +131,9 @@ class WithdrawOrder(TradeData):
     price: float
     price_ed: float
     count_withdraw: int
+    status: str
 
-    def __init__(self, trade_time, code, direct, count, count_ed, price, price_ed, count_withdraw):
+    def __init__(self, trade_time, code, direct, count, count_ed, price, price_ed, count_withdraw, status):
         self.trade_time = trade_time
         self.code = code
         self.direct = direct
@@ -141,3 +142,4 @@ class WithdrawOrder(TradeData):
         self.price = price
         self.price_ed = price_ed
         self.count_withdraw = count_withdraw
+        self.status = status

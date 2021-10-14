@@ -127,6 +127,7 @@ def get_order():
             'price_ed': float(row[columns.index('成交价格')]),  # 成交均价
             'amount': float(row[columns.index('成交金额')]),
             'count_withdraw': int(row[columns.index('已撤数量')]),
+            'status': row[columns.index('委托状态')]
         })
     return order_list
 
