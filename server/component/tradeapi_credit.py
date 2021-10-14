@@ -384,7 +384,7 @@ def get_today_order(code_in=None):
         if code_in and code_in != code:
             continue
         trade_time = row[columns.index('委托时间')]
-        trade_date = row[columns.index('委托日期')]  # datetime.date.today().strftime('%Y-%m-%d')
+        trade_date = datetime.date.today().strftime('%Y%m%d')  # row[columns.index('委托日期')]
         direct = row[columns.index('买卖')]
         trade_time = datetime.datetime.strptime('{} {}'.format(trade_date, trade_time), '%Y%m%d %H:%M:%S')
         price_to = float(row[columns.index('委托价格')])

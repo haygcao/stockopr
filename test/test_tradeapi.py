@@ -43,6 +43,13 @@ class TradeApiTestCase(unittest.TestCase):
         ret = tradeapi.query_withdraw_order(account_id)
         print(ret)
 
+    def test_query_today_order(self):
+        code = '300502'
+        code = ''
+        account_id = svr_config.ACCOUNT_ID_XY
+        ret = tradeapi.query_today_order(account_id, code)
+        print(ret)
+
 
 def suite():
     suite = unittest.TestSuite()

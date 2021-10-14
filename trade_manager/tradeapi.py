@@ -163,11 +163,11 @@ def query_today_order(account_id, code=None):
         return
 
     order_list = []
-    today_str = datetime.date.today().strftime('%Y-%m-%d')
     for row in d:
-        trade_time = datetime.datetime.strptime('{} {}'.format(today_str, row['trade_time']), '%Y-%m-%d %H:%M:%S')
+        trade_time = datetime.datetime.strptime(row['trade_time'], '%Y-%m-%d %H:%M:%S')
         direct = 'B' if '买入' in row['direct'] else 'S'
-        price_ed = round(row['amount'] / row['count_ed'], 3)
+        # price_ed = round(row['amount'] / row['count_ed'], 3)
+        price_ed = row['price_ed']
         withdraw_order = trade_data.WithdrawOrder(trade_time, row['code'], direct, row['count_to'], row['count_ed'],
                                                   row['price_to'], price_ed, row['count_withdraw'])
         order_list.append(withdraw_order)
