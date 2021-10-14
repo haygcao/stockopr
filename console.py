@@ -518,7 +518,8 @@ class Panel(QWidget):
             position_list = trade_manager.db_handler.query_current_position()
             code_list.extend([position.code for position in position_list])
 
-            code_name_map = trade_manager.db_handler.query_trade_order_map()
+            account_id = svr_config.ACCOUNT_ID_XY
+            code_name_map = trade_manager.db_handler.query_trade_order_map(account_id)
             code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
             code_list_tmp.sort()
             code_list.extend(code_list_tmp)

@@ -73,3 +73,27 @@ urllib.request.urlopen('http://api.money.126.net/data/feed/{0},money.api'.format
 https://qt.gtimg.cn/q=sh000001,sz399001,sz399006,sh000688
 v_sh000001="1~上证指数~000001~3525.50~3553.72~3557.22~350877857~175438929~175438929~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~~20210708153055~-28.22~-0.79~3558.68~3521.06~3525.50/350877857/526858672970~350877857~52685867~0.82~14.22~~3558.68~3521.06~1.06~391991.96~500621.27~0.00~-1~-1~1.17~0~3539.03~~~~~~52685867.2970~0.0000~0~ ~ZS~1.51~-1.76~~~~3731.69~3174.66~-1.15~-1.83~2.17~~~-6.48"; v_sz399001="51~深证成指~399001~14882.90~14940.05~14984.25~439891607~219945803~219945803~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~~20210708153103~-57.15~-0.38~15033.34~14856.93~14882.90/439891607/670259718552~439891607~67025972~2.25~36.20~~15033.34~14856.93~1.18~285513.82~377561.75~0.00~-1~-1~1.16~0~14945.75~~~~~~67025971.8552~0.0000~0~ ~ZS~2.85~-1.04~~~~16293.09~12702.62~0.66~1.12~7.74~~~-8.21"; v_sz399006="51~创业板指~399006~3432.96~3409.59~3435.31~153752824~76876412~76876412~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~~20210708153103~23.37~0.69~3469.60~3418.70~3432.96/153752824/290177193728~153752824~29017719~4.07~82.31~~3469.60~3418.70~1.49~86678.89~129700.54~0.00~-1~-1~1.18~0~3442.51~~~~~~29017719.3728~0.0000~0~ ~ZS~15.73~-0.65~~~~3500.74~2474.70~4.69~7.02~23.34~~~0.82"; v_sh000688="1~科创50~000688~1610.77~1570.03~1577.50~11734788~5867394~5867394~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~0.00~0~~20210708153059~40.74~2.59~1616.70~1577.41~1610.77/11734788/66145754568~11734788~6614575~2.67~105.67~~1616.70~1577.41~2.50~9357.55~28540.42~0.00~-1~-1~1.15~0~1601.61~~~~~~6614575.4568~0.0000~0~ ~ZS~15.63~1.96~~~~1726.19~1212.34~7.04~12.85~26.69~~~-38.25";
 """
+
+"""
+requests.get(url=) 可获取到结果
+返回说明:
+url 中参数带了 jQuery112309207099259936209_1634192174602( 时, 返回结果为 "jQuery112309207099259936209_1634192174602( json )"
+url 中参数不带 jQuery112309207099259936209_1634192174602( 时, 返回结果为 json, {"version": ..., "result": {"pages":2,"data":[]} }
+
+两融
+http://datacenter-web.eastmoney.com/api/data/get?callback=datatable7889269&type=RPTA_WEB_RZRQ_GGMX&sty=ALL&source=WEB&p=2&ps=50&st=RZJME&sr=-1&filter=(date='2021-10-13')&pageNo=2&pageNum=2&pageNumber=2&_=1634188585959
+https://datacenter-web.eastmoney.com/api/data/get?type=RPTA_WEB_RZRQ_GGMX&sty=ALL&source=WEB&p=1&ps=50&st=RZJME&sr=-1&filter=(date=%272021-10-13%27)
+
+北向
+http://datacenter-web.eastmoney.com/api/data/v1/get?callback=jQuery1123008784431323063169_1634189178773&sortColumns=ADD_MARKET_CAP&sortTypes=-1&pageSize=50&pageNumber=2&reportName=RPT_MUTUAL_STOCK_NORTHSTA&columns=ALL&source=WEB&client=WEB&filter=(TRADE_DATE='2021-10-12')(INTERVAL_TYPE="1")
+https://datacenter-web.eastmoney.com/api/data/v1/get?pageSize=50&pageNumber=2&reportName=RPT_MUTUAL_STOCK_NORTHSTA&columns=ALL&filter=(TRADE_DATE=%272021-10-12%27)(INTERVAL_TYPE=%221%22)
+
+机构调研
+http://datacenter-web.eastmoney.com/api/data/v1/get?callback=jQuery112307016057843016501_1634189562292&sortColumns=NOTICE_DATE&sortTypes=-1&pageSize=50&pageNumber=1&reportName=RPT_ORG_SURVEY&columns=ALL&quoteColumns=f2~01~SECURITY_CODE~CLOSE_PRICE,f3~01~SECURITY_CODE~CHANGE_RATE&source=WEB&client=WEB&filter=(NUMBERNEW="1")(IS_SOURCE="1")(SECURITY_CODE="300598")(RECEIVE_START_DATE>'2018-10-14')
+
+两融-个股
+http://datacenter-web.eastmoney.com/api/data/get?callback=datatable3471941&type=RPTA_WEB_RZRQ_GGMX&sty=ALL&source=WEB&st=date&sr=-1&p=2&ps=50&filter=(scode="300598")&pageNo=2&pageNum=2&pageNumber=2&_=1634192022163
+
+北向-个股
+http://datacenter-web.eastmoney.com/api/data/v1/get?callback=jQuery112309207099259936209_1634192174602&sortColumns=TRADE_DATE&sortTypes=-1&pageSize=50&pageNumber=2&reportName=RPT_MUTUAL_HOLDSTOCKNORTH_STA&columns=ALL&source=WEB&client=WEB&filter=(SECURITY_CODE="300598")(TRADE_DATE>='2021-07-14')
+"""

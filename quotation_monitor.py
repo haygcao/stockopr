@@ -19,6 +19,7 @@ from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
 
 from acquisition import tx, quote_db
+from server import config as svr_config
 from trade_manager import trade_manager
 from util import dt, singleten
 from util.log import logger
@@ -59,7 +60,8 @@ class TradeSignalManager:
 
     @classmethod
     def reload_trade_order(cls):
-        cls.trade_order_map = trade_manager.db_handler.query_trade_order_map()
+        account_id = svr_config.ACCOUNT_ID_XY
+        cls.trade_order_map = trade_manager.db_handler.query_trade_order_map(account_id)
 
         position_list = trade_manager.db_handler.query_current_position()
         code_list = [position.code for position in position_list]
@@ -275,7 +277,8 @@ def notify(trade_singal: TradeSignal):
 
 
 def query_trade_order_code_list():
-    r = trade_manager.db_handler.query_trade_order_map()
+    account_id = svr_config.ACCOUNT_ID_XY
+    r = trade_manager.db_handler.query_trade_order_map(account_id)
     return [code for code, name in r.items()]
 
 

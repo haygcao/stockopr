@@ -46,15 +46,17 @@
       "macd_bear_market_deviation_signal_exit": true
     }
   },
-  "300502": {
+  "603726": {
     "auto_buy": false,
     "auto_sell": false,
-    "count": 0
+    "count": 0,
+    "price_cost": 15.63
   },
   "002739": {
     "auto_buy": false,
     "auto_sell": false,
-    "count": 0
+    "count": 0,
+    "price_cost": 19.35
   },
   "tradeapi_server": {
     "base_url": "127.0.0.1:8080/api"

@@ -145,6 +145,12 @@ def sync_impl(account_id, trade_date):
     # position
     position_list = tradeapi.query_position(account_id)
     if position_list:
+        for i in range(len(position_list)):
+            position = position_list[i]
+            code = position.code
+            trade_config = config.get_trade_config(code)
+            if 'price_cost' in trade_config:
+                position_list[i].update_price_cost(trade_config['price_cost'])
         db_handler.save_positions(account_id, position_list, sync=True)
         logger.info('sync position ok')
     else:
@@ -161,7 +167,8 @@ def sync_impl(account_id, trade_date):
     operation_detail = tradeapi.query_operation_detail(account_id)
     if operation_detail:
         # trade_date = datetime.date(2021, 9, 28)
-        operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date]
+        trade_date_prev = dt.get_pre_trade_date(trade_date)
+        operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date_prev]
         db_handler.save_operation_details(account_id, operation_detail, trade_date, sync=True)
         logger.info('sync operation detail ok')
     else:
@@ -243,7 +250,7 @@ def check_list(quote, period):
     return ERROR.OK
 
 
-def buy(account_id, op_type, code, price_trade=0, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
+def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=False):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -290,7 +297,7 @@ def buy(account_id, op_type, code, price_trade=0, price_limited=0, count=0, peri
     db_handler.save_positions([position])
 
 
-def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy: Policy = None, auto=None):
+def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=False):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
@@ -502,7 +509,8 @@ def patrol():
 
 
 def create_position_price_limited():
-    order_map = trade_manager.db_handler.query_trade_order_map(status='TO')
+    account_id = svr_config.ACCOUNT_ID_XY
+    order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='TO')
     for code, trade_order in order_map.items():
         quote = tx.get_realtime_data_sina(code)
         close = quote['close'][-1]

@@ -66,6 +66,12 @@ class Position(TradeData):
         self.market_value = round(self.price * self.current_position, 3)
         self.profit_total_percent = round(100 * self.profit_total / self.cost, 3)
 
+    def update_price_cost(self, price_cost):
+        self.price_cost = price_cost
+        self.cost = round(self.price_cost * self.current_position, 3)
+        self.profit_total = self.market_value - self.cost
+        self.profit_total_percent = round(100 * self.profit_total / self.cost, 3)
+
 
 @dataclass
 class OperationDetail(TradeData):
