@@ -61,15 +61,16 @@ class OrderHandler(BaseHandler):
         param = json.loads(param)
         code = param['code']
         direct = param['direct']
+        price = param['price']
         count = param['count']
         auto = param['auto']
 
         account_id = param['account_id']
         if account_id == config.ACCOUNT_ID_PT:
-            tradeapi.order(direct, code, count, auto=auto)
+            tradeapi.order(direct, code, count, price, auto=auto)
         else:
             op_type = param['op_type']
-            tradeapi_credit.order(op_type, direct, code, count, auto=auto)
+            tradeapi_credit.order(op_type, direct, code, count, price, auto=auto)
         self.write({})
 
 

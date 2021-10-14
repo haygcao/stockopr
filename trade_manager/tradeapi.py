@@ -104,6 +104,7 @@ def order(account_id, op_type, direct, code, count, price_limited=0, auto=False)
         'op_type': op_type,
         'code': code,
         'direct': direct,
+        'price': price_limited,
         'count': count,
         'auto': auto
     }
