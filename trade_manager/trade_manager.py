@@ -334,9 +334,9 @@ def order(account_id, op_type, direct, code, price_trade, price_limited=0, count
         count = count // 100 * 100
         tradeapi.order(account_id, op_type, direct, code, count, price_limited, auto)
         now = datetime.datetime.now()
-        price = 0   # 成交的价格
+        price_ed = 0   # 成交的价格
         count = count * (1 if direct == 'B' else -1)
-        detail = trade_data.OperationDetail(now, code, price, price_trade, price_limited, count)
+        detail = trade_data.OperationDetail(now, code, price_ed, price_trade, price_limited, count)
 
         if auto and price_limited == 0:
             threading.Thread(target=assure_finish, args=(account_id, op_type, code, count, now)).start()
