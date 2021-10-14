@@ -151,6 +151,7 @@ def sync_impl(account_id, trade_date):
             trade_config = config.get_trade_config(code)
             if 'price_cost' in trade_config:
                 position_list[i].update_price_cost(trade_config['price_cost'])
+            position_list[i].avail_position = position.current_position
         db_handler.save_positions(account_id, position_list, sync=True)
         logger.info('sync position ok')
     else:
