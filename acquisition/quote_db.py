@@ -461,6 +461,14 @@ def get_latest_trade_date():
         return list(r.values())[0].date()
 
 
+def get_quote_count(trade_date):
+    with mysqlcli.get_cursor() as c:
+        sql = 'select count(*) c from quote where trade_date = %s'
+        c.execute(sql, (trade_date,))
+        r = c.fetchone()
+        return r['c']
+
+
 def compute_price_after_exit_right(close, paixi, songgu):
     """
     paixi: 每10股派现金

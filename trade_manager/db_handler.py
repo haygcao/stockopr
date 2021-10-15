@@ -8,7 +8,7 @@ from util.log import logger
 
 
 def query_money(account_id):
-    sql = "select date, total, avail, net, deposit, market_value from {} where account_id = {} " \
+    sql = "select date, period, origin, total, avail, net, deposit, market_value from {} where account_id = {} " \
           "order by date desc limit 1".format(config.sql_tab_asset, account_id)
     with mysqlcli.get_cursor() as c:
         try:
@@ -20,6 +20,7 @@ def query_money(account_id):
     asset = None
     if r:
         asset = trade_data.Asset(r['total'], r['avail'], r['net'], r['deposit'], r['market_value'], date=r['date'])
+        asset.update_origin(r['origin'], r['period'].strftime('%Y-%m-%d'))
 
     return asset
 

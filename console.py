@@ -28,7 +28,7 @@ import psutil
 import pyautogui
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QIcon, QKeySequence
+from PyQt5.QtGui import QIcon, QKeySequence, QPalette
 from PyQt5.QtWidgets import (QWidget, QLabel,
                              QComboBox, QApplication, QLineEdit, QGridLayout, QPushButton, QMainWindow, QDesktopWidget,
                              QHBoxLayout, QVBoxLayout, QShortcut, QTextBrowser, QListWidget)
@@ -195,6 +195,12 @@ class Panel(QWidget):
         self.btn_monitor = QPushButton('watch dog', self)
         self.btn_update_quote = QPushButton('update', self)
         self.btn_sync = QPushButton('sync', self)
+        self.lbl_account = QLabel('-', self)
+        self.lbl_account.setAutoFillBackground(True)  # 允许自动填充背景
+        palette = QPalette()  # 定义一个调色板实例
+        palette.setColor(QPalette.Window, Qt.blue)  # 配置调色板
+        self.lbl_account.setPalette(palette)  # 使用配置好的调色板
+        self.lbl_account.setAlignment(Qt.AlignCenter)  # 设置文本居中
 
         self.btn_update_candidate = QPushButton('u cnd', self)
         self.btn_update_traced = QPushButton('u trc', self)
@@ -312,23 +318,6 @@ class Panel(QWidget):
         grid = QGridLayout()
 
         grid.setSpacing(10)
-        grid.addWidget(self.lbl, 4, 0)
-        grid.addWidget(self.combo_code, 2, 0)
-        grid.addWidget(self.combo_period, 2, 1)
-        grid.addWidget(self.combo_indictor, 2, 2)
-
-        h_layout_show_chart = QHBoxLayout()
-        # h_layout_show_chart.addWidget(self.btn_show_chart_prev)
-        h_layout_show_chart.addWidget(self.btn_tdx)
-        h_layout_show_chart.addWidget(self.btn_f10)
-        h_layout_show_chart.addWidget(self.btn_show_chart)
-        # h_layout_show_chart.addWidget(self.btn_show_chart_next)
-        grid.addLayout(h_layout_show_chart, 3, 3)
-
-        h_layout_tdx = QHBoxLayout()
-        h_layout_tdx.addWidget(self.btn_tdx_prev)
-        h_layout_tdx.addWidget(self.btn_tdx_next)
-        grid.addLayout(h_layout_tdx, 2, 3)
 
         grid.addWidget(self.combo_classification, 1, 0)
         grid.addWidget(self.combo_candidate, 1, 1)
@@ -345,10 +334,30 @@ class Panel(QWidget):
         h_layout_analyse.addWidget(self.btn_load)
         grid.addLayout(h_layout_analyse, 2, 4)
 
+        grid.addWidget(self.qle_code, 3, 0)
+        grid.addWidget(self.qle_count_or_price, 3, 1)
+
         h_layout_order = QHBoxLayout()
         h_layout_order.addWidget(self.btn_buy)
         h_layout_order.addWidget(self.btn_sell)
         grid.addLayout(h_layout_order, 3, 2)
+
+        grid.addWidget(self.combo_code, 2, 0)
+        grid.addWidget(self.combo_period, 2, 1)
+        grid.addWidget(self.combo_indictor, 2, 2)
+
+        h_layout_tdx = QHBoxLayout()
+        h_layout_tdx.addWidget(self.btn_tdx_prev)
+        h_layout_tdx.addWidget(self.btn_tdx_next)
+        grid.addLayout(h_layout_tdx, 2, 3)
+
+        h_layout_show_chart = QHBoxLayout()
+        # h_layout_show_chart.addWidget(self.btn_show_chart_prev)
+        h_layout_show_chart.addWidget(self.btn_tdx)
+        h_layout_show_chart.addWidget(self.btn_f10)
+        h_layout_show_chart.addWidget(self.btn_show_chart)
+        # h_layout_show_chart.addWidget(self.btn_show_chart_next)
+        grid.addLayout(h_layout_show_chart, 3, 3)
 
         h_layout_op = QHBoxLayout()
         h_layout_op.addWidget(self.btn_delete)
@@ -358,11 +367,10 @@ class Panel(QWidget):
         h_layout_data = QHBoxLayout()
         h_layout_data.addWidget(self.btn_update_quote)
         h_layout_data.addWidget(self.btn_sync)
+        grid.addWidget(self.lbl, 4, 0)
+        grid.addWidget(self.lbl_account, 4, 2)
         grid.addLayout(h_layout_data, 4, 3)
         grid.addWidget(self.btn_monitor, 4, 4)
-
-        grid.addWidget(self.qle_code, 3, 0)
-        grid.addWidget(self.qle_count_or_price, 3, 1)
 
         layout = QVBoxLayout()
         layout.addStretch(2)
@@ -729,21 +737,33 @@ class Panel(QWidget):
         account_id = svr_config.ACCOUNT_ID_XY
         pid_prev_check = None
         update_time = datetime.datetime(2021, 6, 18, 0, 0, 0)
+        trade_date = dt.get_trade_date()
+        quote_updated = False
+        account_updated = False
         while self.running:
             self.send_key_event('xxx')
             now = datetime.datetime.now()
             if now - update_time > datetime.timedelta(seconds=60):
-                latest_quote_date = quote_db.get_latest_trade_date()
-                latest_sync_date = trade_manager.db_handler.query_money(account_id).date
-                if latest_sync_date != dt.get_trade_date():
+                if not account_updated:
                     self.btn_sync.setStyleSheet("color : red")
+                    latest_sync_date = trade_manager.db_handler.query_money(account_id).date
+                    account_updated = latest_sync_date == trade_date
+
                 else:
                     self.btn_sync.setStyleSheet("color : black")
 
-                if latest_quote_date != dt.get_trade_date():
+                if not quote_updated:
                     self.btn_update_quote.setStyleSheet("color : red")
+                    latest_quote_date = quote_db.get_latest_trade_date()
+                    quote_updated = latest_quote_date == trade_date
                 else:
                     self.btn_update_quote.setStyleSheet("color : black")
+
+                asset = trade_manager.db_handler.query_money(account_id)
+                self.lbl_account.setText('{}%'.format(asset.position_percent))
+                if asset.position_percent > 80:
+                    self.lbl_account.setStyleSheet("background-color : red")
+                    # self.lbl_account.setStyleSheet("color : red")
 
                 update_time = now
 
