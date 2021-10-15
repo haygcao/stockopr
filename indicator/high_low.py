@@ -62,7 +62,8 @@ def compute_high_low(quote, column='close', compute_high=True, weak=False):
     close_high_low = filter_high_low(adj, close_high_low, days_before, weak)
 
     hl_column = '{}_period'.format(agg)
-    hl_column = 'weak_' + hl_column if weak else hl_column
+    if weak:
+        hl_column = 'weak_bear' if compute_high else 'weak_bull'
     quote[hl_column] = quote[column].mask(~quote.index.isin(close_high_low.index), numpy.nan)
 
     return quote

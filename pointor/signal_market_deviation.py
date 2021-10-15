@@ -5,7 +5,7 @@ from indicator import market_deviation, dynamical_system, market_deviation_mat, 
 from util import dt
 
 
-def signal_one(quote_copy, column, weak=False):
+def signal_one(quote_copy, deviation, column, weak=False):
     deviation = quote_copy[column]
     # deviation = deviation[deviation < 0] if 'bull' in column else deviation[deviation < 0]
     if 'bull' in column:
@@ -23,14 +23,15 @@ def signal_one(quote_copy, column, weak=False):
     if signal_column not in quote_copy.columns:
         quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
 
-    quote_copy = dmi.compute_dmi(quote_copy)
-    mask = quote_copy['adx'] > 50
-    cond = mask.rolling(3).max() > 0
+    if not weak:
+        quote_copy = dmi.compute_dmi(quote_copy)
+        mask = quote_copy['adx'] > 50
+        cond = mask.rolling(5).max() > 0
 
     for i in range(len(deviation) - 1, 0, -2):
         # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
         index_date_1st = deviation.index[i - 1]
-        if not cond.loc[index_date_1st]:
+        if not weak and not cond.loc[index_date_1st]:
             continue
 
         index_date_2nd = deviation.index[i]
@@ -57,7 +58,7 @@ def signal(quote, column, period, back_days):
     quote = market_deviation_mat.compute_index(quote, period, column)
 
     quote_copy = quote.copy()
-    quote_copy = signal_one(quote_copy, column)
+    quote_copy = signal_one(quote_copy, quote[column], column)
 
     return quote_copy
 

@@ -587,10 +587,8 @@ class Panel(QWidget):
 
     def show_chart(self):
         if self.code == 'maq' or len(self.code) == 7:
-            logger.info('market index')
             indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
         else:
-            logger.info('stock')
             indicator = self.indicator if self.indicator in g_indicators else g_indicators[0]
         logger.info('{} {} {}'.format(self.code, self.period, indicator))
         # TODO multiprocessing 不支持, threading 打开图时会重新打开之前关闭的图
