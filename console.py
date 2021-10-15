@@ -748,15 +748,18 @@ class Panel(QWidget):
                 if not account_updated:
                     self.btn_sync.setStyleSheet("color : red")
                     latest_sync_date = trade_manager.db_handler.query_money(account_id).date
+                    logger.info('account: {}'.format(latest_sync_date))
                     account_updated = latest_sync_date == trade_date
-
                 else:
                     self.btn_sync.setStyleSheet("color : black")
 
                 if not quote_updated:
                     self.btn_update_quote.setStyleSheet("color : red")
-                    latest_quote_date = quote_db.get_latest_trade_date()
-                    quote_updated = latest_quote_date == trade_date
+                    # latest_quote_date = quote_db.get_latest_trade_date()
+                    # quote_updated = latest_quote_date == trade_date
+                    count = quote_db.get_quote_count(trade_date)
+                    logger.info('quote: {}   {}'.format(trade_date, count))
+                    quote_updated = count > 4000
                 else:
                     self.btn_update_quote.setStyleSheet("color : black")
 
