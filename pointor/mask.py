@@ -80,7 +80,7 @@ def compute_enter_mask(quote, period):
     ma_max = quote.high.rolling(120).max()
     percent = 100 * (1 - quote.close / ma_max)
     percent = percent.rolling(5).max()
-    mask = (percent > 45)
+    mask = (percent > 25)
     quote = quote.assign(mask_bias_bull=~mask)
 
     # # pdi > mdi

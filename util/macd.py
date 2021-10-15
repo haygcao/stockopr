@@ -98,8 +98,6 @@ MACD Histogram: MACD Line - Signal Line
 # close
 def macd(prices):
     df = MACD(prices, fastperiod=12, slowperiod=26, signalperiod=9)
-    #print(type(df)) # <class 'pandas.core.frame.DataFrame'>
-    #return adjust(df, prices)
 
     return df
 

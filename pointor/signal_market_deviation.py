@@ -1,29 +1,50 @@
 # -*- coding: utf-8 -*-
 import numpy
 
-from indicator import market_deviation, dynamical_system, market_deviation_mat
+from indicator import market_deviation, dynamical_system, market_deviation_mat, dmi
 from util import dt
 
 
-def signal_one(quote_copy, column):
+def signal_one(quote_copy, column, weak=False):
     deviation = quote_copy[column]
     # deviation = deviation[deviation < 0] if 'bull' in column else deviation[deviation < 0]
     if 'bull' in column:
         deviation = deviation[deviation > 0]
         signal_column = '{}_signal_enter'.format(column)
+        price_column = 'close'  # 'low'
+        factor = 0.96
+        adj = 1
     else:
         deviation = deviation[deviation > 0]
         signal_column = '{}_signal_exit'.format(column)
+        price_column = 'close'  # 'high'
+        factor = 1.04
+        adj = -1
     if signal_column not in quote_copy.columns:
         quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
 
+    quote_copy = dmi.compute_dmi(quote_copy)
+    mask = quote_copy['adx'] > 50
+    cond = mask.rolling(3).max() > 0
+
     for i in range(len(deviation) - 1, 0, -2):
         # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
-        index_date = deviation.index[i]
-        index = numpy.where(quote_copy.index == index_date)[0][0]
-        if index == len(quote_copy.index) - 2:
+        index_date_1st = deviation.index[i - 1]
+        if not cond.loc[index_date_1st]:
             continue
-        index_date_next = quote_copy.index[index + 2]
+
+        index_date_2nd = deviation.index[i]
+        index = numpy.where(quote_copy.index == index_date_2nd)[0][0]
+
+        loc = quote_copy.index.get_loc(index_date_2nd)
+        if adj * quote_copy[price_column][loc] < adj * quote_copy[price_column][loc + 1] * factor:
+            back_day = 1
+        else:
+            back_day = 2
+
+        if index == len(quote_copy.index) - back_day:
+            continue
+        index_date_next = quote_copy.index[index + back_day]
         quote_copy.loc[index_date_next, signal_column] = quote_copy.loc[index_date_next, 'low']
         # print(deviation.index[i], '0')
 

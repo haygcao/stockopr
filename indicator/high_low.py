@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy
 
 
@@ -9,16 +11,24 @@ def compute_high_low(quote, column='close', compute_high=True, weak=False):
     3
     """
     adj = 1 if compute_high else -1
-    close = quote[column]
-    close_lshift = close.shift(periods=1)
-    close_rshift = close.shift(periods=-1)
-    close_rshift2 = close.shift(periods=-2)
+    price = quote[column]
+    price_lshift = price.shift(periods=1)
+    price_rshift = price.shift(periods=-1)
+    price_rshift2 = price.shift(periods=-2)
 
-    days_before = 20
-    agg = 'max' if adj == 1 else 'min'
-    mask = (adj * close > adj * close_lshift) & \
-           (adj * close >= adj * close_rshift) & \
-           (adj * close_rshift >= adj * close_rshift2)
+    if column == 'close':
+        close = price
+        close_rshift = price_rshift
+    else:
+        close = quote['close']
+        close_rshift = close.shift(periods=-1)
+
+    days_before = 15
+    agg, factor = ('max', 1.04) if adj == 1 else ('min', 0.96)
+    mask = (adj * price > adj * price_lshift) & \
+           ((adj * close >= adj * close_rshift * factor) |
+            ((adj * price >= adj * price_rshift) &
+             (adj * price_rshift >= adj * price_rshift2)))
 
     close_high_low = quote[column].mask(~mask, numpy.nan)
 
@@ -61,7 +71,7 @@ def compute_high_low(quote, column='close', compute_high=True, weak=False):
 def filter_high_low(adj, close_high_low, days_before, weak=False):
     index_full = close_high_low.index
 
-    days_before_after = 80
+    days_before_after = 60
     adj = adj if not weak else -adj
     i = 1
     i_prev = i - 1
@@ -113,11 +123,10 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
                 i = i + 1 if i == i_prev else i
                 continue
 
-            if delta_before < days_before:
-                i_ignore_set.add(i)
-                i_ignored = i
-                i += 1
-                continue
+            i_ignore_set.add(i)
+            i_ignored = i
+            i += 1
+            continue
 
         # 间隔时间太短
         if delta_before_ignored < 5 or delta_before < days_before:

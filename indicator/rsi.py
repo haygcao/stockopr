@@ -11,7 +11,7 @@ from indicator.decorator import computed
 
 @computed(column_name='rsi')
 def compute_rsi(quote, period):
-    N = 12
+    N = 6
     M = 1
     close = quote.close
     close_yest = quote.close.shift(periods=1)

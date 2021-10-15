@@ -435,13 +435,11 @@ class DataFinanceDraw(object):
         ])
 
     def add_macd(self, data, panel):
-        exp12 = data['close'].ewm(span=12, adjust=False).mean()
-        exp26 = data['close'].ewm(span=26, adjust=False).mean()
-        macd = exp12 - exp26
-        macd_signal = macd.ewm(span=9, adjust=False).mean()
+        macd = data['macd_line']
+        macd_signal = data['macd_signal']
 
         # 添加macd子图
-        histogram = macd - macd_signal
+        histogram = data['macd_histogram']
         self.histogram_macd = histogram
 
         # macd panel

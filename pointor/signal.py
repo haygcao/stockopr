@@ -16,7 +16,7 @@ import dealer.bought as basic
 from config import config
 from config.signal_config import signal_func
 from config.signal_mask import signal_mask_column
-from indicator import dynamical_system, second_stage, ma
+from indicator import dynamical_system, second_stage, ma, macd, dmi
 from pointor import signal_stop_loss, mask
 from util import util
 
@@ -162,6 +162,9 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         # 基础指标 - 均线
         # MA5, MA10, MA20, MA30, MA60, MA120, MA150, MA200, MA12, MA26, MA50, MA100
         quote = ma.compute_ma(quote)
+
+        quote = macd.compute_macd(quote)
+        quote = dmi.compute_dmi(quote, period)
 
         # 基础指标 - 动力系统
         quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
