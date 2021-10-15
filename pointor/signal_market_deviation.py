@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy
 
+from config import signal_mask
 from indicator import market_deviation, dynamical_system, market_deviation_mat, dmi
 from util import dt
 
@@ -23,7 +24,8 @@ def signal_one(quote_copy, deviation, column, weak=False):
     if signal_column not in quote_copy.columns:
         quote_copy.insert(len(quote_copy.columns), signal_column, numpy.nan)
 
-    if not weak:
+    adx_mask = 'mask_adx_less_n' in signal_mask.signal_mask_column[signal_column]
+    if adx_mask:
         quote_copy = dmi.compute_dmi(quote_copy)
         mask = quote_copy['adx'] > 50
         cond = mask.rolling(5).max() > 0
@@ -31,7 +33,7 @@ def signal_one(quote_copy, deviation, column, weak=False):
     for i in range(len(deviation) - 1, 0, -2):
         # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
         index_date_1st = deviation.index[i - 1]
-        if not weak and not cond.loc[index_date_1st]:
+        if adx_mask and not cond.loc[index_date_1st]:
             continue
 
         index_date_2nd = deviation.index[i]
