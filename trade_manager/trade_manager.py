@@ -129,19 +129,6 @@ def sync_impl(account_id, trade_date):
     # if now.hour > 9 or (now.hour == 9 and now.minute > 14):
     #     return
 
-    # money
-    money = tradeapi.get_asset(account_id)
-    if money:
-        trade_config = config.get_trade_config()
-        money.origin = trade_config['total_money'][account_id]
-        money.period = datetime.datetime.strptime(trade_config['period'], '%Y-%m-%d').date()
-        money.profit = money.total_money - money.origin
-        money.profit_percent = round(100 * money.profit / money.origin, 3)
-        db_handler.save_money(account_id, money, sync=True)
-        logger.info('sync money ok')
-    else:
-        logger.warning('sync money failed')
-
     # position
     position_list = tradeapi.query_position(account_id)
     if position_list:
@@ -149,13 +136,27 @@ def sync_impl(account_id, trade_date):
             position = position_list[i]
             code = position.code
             trade_config = config.get_trade_config(code)
-            if 'price_cost' in trade_config:
-                position_list[i].update_price_cost(trade_config['price_cost'])
+            if 'profit' in trade_config:
+                position_list[i].add_profile(trade_config['profit'])
             position_list[i].avail_position = position.current_position
         db_handler.save_positions(account_id, position_list, sync=True)
         logger.info('sync position ok')
     else:
         logger.warning('sync position failed')
+
+    # money
+    money = tradeapi.get_asset(account_id)
+    if money:
+        ps = db_handler.query_current_position(account_id)
+        money.profit = float(sum([p.profit_total for p in ps]))
+
+        trade_config = config.get_trade_config()
+        money.update_origin(money.net_money - money.profit - trade_config['debt'][account_id], trade_config['period'])
+
+        db_handler.save_money(account_id, money, sync=True)
+        logger.info('sync money ok')
+    else:
+        logger.warning('sync money failed')
 
     order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='ING')
     if order_map:

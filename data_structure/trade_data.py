@@ -39,6 +39,13 @@ class Asset(TradeData):
         self.market_value = market_value if market_value > 0 else self.total_money - self.avail_money
         self.position_percent = round(100 * self.market_value / self.net_money, 3)
 
+    def update_origin(self, origin, period):
+        self.origin = origin
+        self.period = datetime.datetime.strptime(period, '%Y-%m-%d').date()
+
+        self.profit_percent = round(100 * self.profit / self.origin, 3)
+        self.position_percent = round(100 * (self.market_value / self.origin), 3)
+
 
 @dataclass
 class Position(TradeData):
@@ -71,6 +78,11 @@ class Position(TradeData):
         self.cost = round(self.price_cost * self.current_position, 3)
         self.profit_total = self.market_value - self.cost
         self.profit_total_percent = round(100 * self.profit_total / self.cost, 3)
+
+    def add_profile(self, profit):
+        self.profit_total += profit
+        self.profit_total_percent = round(100 * self.profit_total / self.cost, 3)
+        self.price_cost = round(self.price - self.profit_total / self.current_position, 3)
 
 
 @dataclass
