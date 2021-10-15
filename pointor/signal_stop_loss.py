@@ -1,8 +1,7 @@
-import datetime
+# -*- encoding: utf-8 -*-
 
 import numpy
 import pandas
-import pandas as pd
 
 import indicator
 from config import config

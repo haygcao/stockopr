@@ -40,8 +40,6 @@ class TradeManagerTestCase(unittest.TestCase):
         position = db_handler.query_position(account_id, code)
         print(position)
 
-
-
         # detail = trade_manager.query_operation_detail()
         # print(detail)
         # pre_position = cur_position
@@ -57,6 +55,11 @@ class TradeManagerTestCase(unittest.TestCase):
         print(detail_list)
         detail_list = db_handler.query_operation_details()
         print(detail_list)
+
+    def test_query_trade_order(self):
+        account_id = svr_config.ACCOUNT_ID_XY
+        r = db_handler.query_trade_order_map(account_id)
+        print(r)
 
     def test_order(self):
         account_id = svr_config.ACCOUNT_ID_XY

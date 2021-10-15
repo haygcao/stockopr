@@ -70,7 +70,13 @@ def active_window():
 
 
 def _copy_authentication(app, trade_win):
-    popup_hwnd = trade_win.popup_window()
+    popup_hwnd = None
+    for i in range(10):
+        popup_hwnd = trade_win.popup_window()
+        if popup_hwnd:
+            break
+        time.sleep(0.1)
+
     if not popup_hwnd:
         return
 

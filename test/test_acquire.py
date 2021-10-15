@@ -15,6 +15,9 @@ class AcquireTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_save_quote(self):
+        acquire.save_quote()
+
     def test_check_quote(self):
         trade_date = dt.get_trade_date()
         trade_date = datetime.date(2021, 6, 17)

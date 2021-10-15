@@ -17,7 +17,7 @@ from config import config
 from config.signal_config import signal_func
 from config.signal_mask import signal_mask_column
 from indicator import dynamical_system, second_stage, ma, macd, dmi
-from pointor import signal_stop_loss, mask
+from pointor import signal_stop_loss, mask, signal_nday
 from util import util
 
 
@@ -177,7 +177,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         for s in signal_all_list:
             if s not in signal_func:
                 continue
-            if s == 'stop_loss_signal_exit':
+            if s == 'stop_loss_signal_exit' or s == 'nday_signal_exit':
                 continue
             if 'market_deviation' in s or 'breakout' in s:
                 column = s[:s.index('_signal')]
@@ -236,12 +236,13 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
 
     # 计算止损数据
-    if 'stop_loss_signal_exit' in quote_copy.columns:
-        quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
-    if config.enabled_signal('stop_loss_signal_exit', period):
-        quote_copy = signal_stop_loss.signal_exit(quote_copy, period=period)
-    else:
-        quote_copy.insert(len(quote_copy.columns), 'stop_loss_signal_exit', numpy.nan)
+    for s in ['stop_loss_signal_exit', 'nday_signal_exit']:
+        if s in quote_copy.columns:
+            quote_copy = quote_copy.drop([s], axis=1)
+        if config.enabled_signal(s, period):
+            quote_copy = signal_func[s](quote_copy, period=period)
+        else:
+            quote_copy.insert(len(quote_copy.columns), s, numpy.nan)
 
     # 处理合并看空信号
     column_list = config.get_signal_exit_list(period)
