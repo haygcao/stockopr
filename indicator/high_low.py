@@ -12,17 +12,20 @@ def compute_high_low(quote, column='close', compute_high=True, weak=False):
     close = quote[column]
     close_lshift = close.shift(periods=1)
     close_rshift = close.shift(periods=-1)
+    close_rshift2 = close.shift(periods=-2)
 
     days_before = 20
     agg = 'max' if adj == 1 else 'min'
-    mask = (adj * close > adj * close_lshift) & (adj * close >= adj * close_rshift)
+    mask = (adj * close > adj * close_lshift) & \
+           (adj * close >= adj * close_rshift) & \
+           (adj * close_rshift >= adj * close_rshift2)
 
     close_high_low = quote[column].mask(~mask, numpy.nan)
 
     # 若往前 20 日已有更大/小值, 则忽略当前值
-    close_high_low_agg = eval('close_high_low.rolling({}, min_periods=1).{}()'.format(days_before, agg))
-    mask = adj * close_high_low < adj * close_high_low_agg
-    close_high_low_adj = close_high_low.mask(mask, numpy.nan)
+    # close_high_low_agg = eval('close_high_low.rolling({}, min_periods=1).{}()'.format(days_before, agg))
+    # mask = adj * close_high_low < adj * close_high_low_agg
+    # close_high_low_adj = close_high_low.mask(mask, numpy.nan)
 
     # 若往前 20 日已有值, 则忽略当前值, 即保留最早的值(非最值), 忽略后面的更高/低的值, 即时间优先
     # close_high_low_adj_shift = close_high_low_adj.shift(periods=1)
@@ -73,6 +76,11 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
     while i < len(close_high_low):
         # delta_before = (index[i] - index[i_prev]).days
         # delta_before_ignored = (index[i] - index[i_ignored]).days
+
+        # 调试时使用
+        # date_prev = index[i_prev]
+        # date = index[i]
+
         delta_before = index_full.get_loc(index[i]) - index_full.get_loc(index[i_prev]) + 1
         delta_before_ignored = index_full.get_loc(index[i]) - index_full.get_loc(index[i_ignored]) + 1
         # delta_after = (index[i + 1] - index[i]).days
@@ -104,13 +112,15 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
                 i_prev += 1
                 i = i + 1 if i == i_prev else i
                 continue
-            i_ignore_set.add(i)
-            i_ignored = i
-            i += 1
-            continue
+
+            if delta_before < days_before:
+                i_ignore_set.add(i)
+                i_ignored = i
+                i += 1
+                continue
 
         # 间隔时间太短
-        if delta_before_ignored < 5 or delta_before < days_before // 2:
+        if delta_before_ignored < 5 or delta_before < days_before:
             # 可能不会被忽略
             # i_ignore_set.add(i)
             # i += 1
@@ -133,8 +143,8 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
             break
         # 当矩阵运算未处理近期高低值时, 需要忽略往前近期的次高低值, 即最值优先
         # delta_before = (close_high_low.index[i_prev] - close_high_low.index[i_valid]).days
-        delta_before = index_full.get_loc(index[i]) - index_full.get_loc(index[i_prev]) + 1
-        if delta_before < 5:  # days_before // 2:
+        delta_before = index_full.get_loc(index[i_valid]) - index_full.get_loc(index[i_prev]) + 1
+        if delta_before < 5:
             close_high_low.iat[i_prev] = numpy.nan
             i_prev += 1
             i = i + 1 if i == i_prev else i
