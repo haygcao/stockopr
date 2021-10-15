@@ -69,26 +69,33 @@ def active_window():
     return main_window
 
 
-def _copy_authentication(app, trade_win):
-    popup_hwnd = None
-    for i in range(10):
-        popup_hwnd = trade_win.popup_window()
-        if popup_hwnd:
-            break
-        time.sleep(0.1)
+def get_foreground_window():
+    handle = win32gui.GetForegroundWindow()
+    name = win32gui.GetWindowText(handle)
+    return name
 
+
+def verify_authentication_impl(app, trade_win):
+    popup_hwnd = trade_win.popup_window()
     if not popup_hwnd:
-        return
+        win_name = get_foreground_window()
+        return win_name != config.ths_main_window_title
 
-    for i in range(10):
-        popup_window = app.window(handle=popup_hwnd)
-        popup_window.set_focus()
-        rect = popup_window['Static2'].rectangle()
-        img = ImageGrab.grab((rect.left, rect.top, rect.right, rect.bottom))
+    popup_window = app.window(handle=popup_hwnd)
+    popup_window.set_focus()
+    rect = popup_window['Static2'].rectangle()
+    img = ImageGrab.grab((rect.left, rect.top, rect.right, rect.bottom))
 
-        code = image_to_string(img)
-        if len(code) >= 4:
-            code = code[:4]
+    code = image_to_string(img)
+    retry = False
+
+    if len(code) >= 4:
+        code = code[:4]
+        try:
+            _ = int(code)
+        except:
+            retry = True
+        else:
             # not enough to use EM_REPLACESEL - 需要用 admin 运行下单程序, 但仍然无法输入验证码
             # Use the EM_REPLACESEL message to replace only a portion of the text in an edit control.
             # To replace all of the text, use the WM_SETTEXT message.
@@ -99,12 +106,22 @@ def _copy_authentication(app, trade_win):
             pywinauto.keyboard.send_keys(code)
 
             popup_window.type_keys('{ENTER}')
+    else:
+        retry = True
 
-        time.sleep(0.1)
+    return retry
 
-        popup_hwnd = trade_win.popup_window()
-        if not popup_window:
-            return
+
+def verify_authentication(app, trade_win):
+    for i in range(10):
+        ret = verify_authentication_impl(app, trade_win)
+        if ret < 0:
+            pywinauto.keyboard.send_keys('{ESC}')
+            time.sleep(0.1)
+            pywinauto.keyboard.send_keys('^c')
+            time.sleep(0.1)
+            continue
+        return
 
 
 def copy_to_clipboard(pos=None):
@@ -128,7 +145,7 @@ def copy_to_clipboard(pos=None):
 
     global g_app
     global g_main_window
-    _copy_authentication(g_app, g_main_window)
+    verify_authentication(g_app, g_main_window)
 
     # time.sleep(0.2)
 
