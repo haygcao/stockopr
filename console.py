@@ -306,6 +306,7 @@ class Panel(QWidget):
 
         for combo in self.combo_signal.values():
             combo.activated[str].connect(self.on_activated_signal)
+            combo.setMaxVisibleItems(20)
             h_layout_signal.addWidget(combo)
 
         signals = config.get_all_signal(self.period)
