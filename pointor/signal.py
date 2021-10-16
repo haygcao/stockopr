@@ -81,16 +81,6 @@ def function(price, signal_all, signal, column_name):
     return signal_all
 
 
-def function_tune_enter_signal_by_stop_loss(signal_enter, high, low, close, stop_loss):
-    if numpy.isnan(signal_enter):
-        return signal_enter
-
-    if (close - stop_loss) / close < 0.02 or (low < stop_loss):
-        return numpy.nan
-
-    return signal_enter
-
-
 # supplemental_signal: [(code, date, 'B/S', price), (code, date, 'B/S', price), ...]
 def get_supplemental_signal(supplemental_signal_path, period):
     import csv
@@ -159,6 +149,45 @@ def merge_singal(quote_copy, period, header, direct, column):
         lambda x: function(x[price_column], x[direct], eval('x.{}'.format(column)), column), axis=1)
 
     return quote_copy
+
+
+def clean_signal(quote_copy, negative, positive):
+    i = 0
+    j = 0
+    while not positive.empty and not negative.empty and i < len(positive) and j < len(negative):
+        next_positive = positive.index[i]
+        next_negative = negative.index[j]
+
+        temp_positive = positive[i]
+        temp_negative = negative[j]
+        temp_positive_index = i
+        temp_negative_index = j
+        while next_positive <= next_negative and i < len(positive):
+            positive[i] = numpy.nan
+            i += 1
+            if i == len(positive):
+                break
+            next_positive = positive.index[i]
+        positive[temp_positive_index] = temp_positive
+        while next_positive > next_negative and j < len(negative):
+            negative[j] = numpy.nan
+            date_index = negative.index[j]
+            quote_copy.loc[date_index, 'stop_loss'] = numpy.nan
+            quote_copy.loc[date_index, 'stop_loss_signal_exit'] = numpy.nan
+
+            j += 1
+            if j == len(negative):
+                break
+            next_negative = negative.index[j]
+        negative[temp_negative_index] = temp_negative
+    i += 1
+    j += 1
+    while i < len(positive):
+        positive[i] = numpy.nan
+        i += 1
+    while j < len(negative):
+        negative[j] = numpy.nan
+        j += 1
 
 
 def compute_signal(code, period, quote, supplemental_signal_path=None):
@@ -233,8 +262,6 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     # 合并
     # 处理合并看多信号, 只处理启用的信号
     column_list = config.get_signal_enter_list(period)
-    # 'macd_bull_market_deviation',
-    # 'force_index_bull_market_deviation']
 
     header = True
     for column in column_list:
@@ -254,19 +281,12 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
 
     # 处理合并看空信号
     column_list = config.get_signal_exit_list(period)
-    # 'macd_bear_market_deviation',
-    # 'force_index_bear_market_deviation']
 
     header = True
     # quote_copy = quote  # .copy()
     for column in column_list:
         quote_copy = merge_singal(quote_copy, period, header, 'signal_exit', column)
         header = False
-
-    # 消除价格与 stop loss 相差不大的 enter 信号
-    # quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(
-    #     lambda x: function_tune_enter_signal_by_stop_loss(x.signal_enter, x.high, x.low, x.close, x.stop_loss_full),
-    #     axis=1)
 
     positive_all = quote_copy['signal_enter'].copy()
     negative_all = quote_copy['signal_exit'].copy()
@@ -278,55 +298,13 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     positive = positive_all[positive_all > 0]
     negative = negative_all[negative_all > 0]
 
-    i = 0
-    j = 0
-    while not positive.empty and not negative.empty and i < len(positive) and j < len(negative):
-        next_positive = positive.index[i]
-        next_negative = negative.index[j]
-
-        temp_positive = positive[i]
-        temp_negative = negative[j]
-        temp_positive_index = i
-        temp_negative_index = j
-        while next_positive <= next_negative and i < len(positive):
-            positive[i] = numpy.nan
-            i += 1
-            if i == len(positive):
-                break
-            next_positive = positive.index[i]
-        positive[temp_positive_index] = temp_positive
-        while next_positive > next_negative and j < len(negative):
-            negative[j] = numpy.nan
-            date_index = negative.index[j]
-            quote_copy.loc[date_index, 'stop_loss'] = numpy.nan
-            quote_copy.loc[date_index, 'stop_loss_signal_exit'] = numpy.nan
-
-            j += 1
-            if j == len(negative):
-                break
-            next_negative = negative.index[j]
-        negative[temp_negative_index] = temp_negative
-
-    i += 1
-    j += 1
-    while i < len(positive):
-        positive[i] = numpy.nan
-        i += 1
-
-    while j < len(negative):
-        negative[j] = numpy.nan
-        j += 1
+    clean_signal(quote_copy, negative, positive)
 
     positive = positive[positive > 0]
     negative = negative[negative > 0]
 
     quote_copy.loc[:, 'signal_enter'] = positive
     quote_copy.loc[:, 'signal_exit'] = negative
-
-    # # 重新计算止损
-    # if 'stop_loss_signal_exit' in quote_copy.columns:
-    #     quote_copy = quote_copy.drop(['stop_loss_signal_exit'], axis=1)
-    # quote_copy = signal_stop_loss.signal_exit(quote_copy)
 
     return quote_copy
 
