@@ -2,13 +2,13 @@
 
 import config.config as config
 from acquisition import basic
-from util.macd import ma
+from indicator import ma
 
 
 def gen_ma(quote, n=config.MA_NUM, l=config.MAS):
     r = []
     for i in range(n):
-        r.append(ma(quote, l[i]))
+        r.append(ma.ma(quote['close'], l[i]))
 
     return r
 

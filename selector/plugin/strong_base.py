@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from util.macd import ema
+from indicator.ema import ema
 from . import super
 
 

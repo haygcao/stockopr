@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from acquisition import quote_db
 from util import util
-from util.macd import ema
+from indicator.ema import ema
 from . import super
 
 

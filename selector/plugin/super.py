@@ -6,9 +6,9 @@ import math
 
 import numpy
 
-from acquisition import quote_db
 from util import util
-from util.macd import ema, atr
+from indicator.ema import ema
+from indicator import atr
 
 
 g_vol_times = 3
@@ -165,7 +165,7 @@ def super(quote, period, back_days=150):
     vol_ema_m = ema(vol_series, n=times * 10)['ema']
     vol_ema_l = ema(vol_series, n=times * 30)['ema']
 
-    atr5 = atr(quote, 5)['atr']
+    atr5 = atr.compute_atr(quote, 5)['atr']
     close_yest = quote['close'].shift(periods=1)
     amplitude = atr5 / close_yest
 

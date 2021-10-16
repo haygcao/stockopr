@@ -11,7 +11,7 @@ from indicator.decorator import computed
 
 
 @computed(column_name='atr')
-def compute_atr(quote):
+def compute_atr(quote, n=14):
     # quote['atr'] = atr(quote)
 
     close_yest = quote.close.shift(periods=1)
@@ -19,7 +19,7 @@ def compute_atr(quote):
     low = quote.low
 
     mtr = numpy.maximum(numpy.maximum(high - low, (close_yest - high).abs()), (close_yest - low).abs())
-    atr = mtr.rolling(14).mean()
+    atr = mtr.rolling(n).mean()
 
     quote['atr'] = atr
 

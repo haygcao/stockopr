@@ -3,7 +3,7 @@
 import math
 
 from indicator.decorator import computed
-from util.macd import ema
+from indicator import ema
 
 
 @computed(column_name='force_index13')
@@ -24,8 +24,8 @@ def force_index(quote, n=2):
     volume_adjust = volume / pow(10, digit-1)
     si = si_close * volume_adjust
 
-    si_ema = ema(si, 2)
-    si_ema13 = ema(si, 13)
+    si_ema = ema.ema(si, 2)
+    si_ema13 = ema.ema(si, 13)
 
     quote_copy = quote.copy()
     quote_copy.loc[:, 'force_index'] = si_ema.values

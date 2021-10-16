@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
+
 import numpy
-import pandas as pd
 
 from acquisition import quote_db
 from config.config import period_map
-# from util.macd import macd
-# from util.macd import ema
 from indicator import ema, macd
 from indicator.decorator import computed
 

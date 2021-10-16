@@ -1,12 +1,10 @@
-
 # -*- coding: utf-8 -*-
+
 import numpy
 
-import indicator
 from config.config import is_long_period, period_price_diff_ratio_atr_map
-from indicator import atr, dynamical_system
+from indicator import atr, dynamical_system, ema
 from indicator.decorator import computed
-from util import macd
 
 
 def function_enter(low, dyn_sys_long_period, dyn_sys, ema, atr, period, date):
@@ -58,7 +56,7 @@ def compute_index(quote, period):
     quote = dynamical_system.dynamical_system_dual_period(quote, period=period)
 
     quote = atr.compute_atr(quote)
-    ema26 = macd.ema(quote, 26)
+    ema26 = ema.ema(quote['close'], 26)
     quote['ema'] = ema26
 
     return quote

@@ -6,8 +6,7 @@
 import numpy
 
 from acquisition import quote_db
-from util import util
-from util.macd import ema
+from indicator.ema import ema
 
 # 成交量缩小 50%
 g_vol_times = 2

@@ -3,10 +3,10 @@ import numpy
 
 from acquisition import quote_db
 from config import config
+from indicator import ma
 from pointor import signal_step
 from selector import util
 from util import util
-from util.macd import bbands
 
 
 def step_ma_one_day(quote, mas, slowest_period, almost, back_day):
@@ -51,19 +51,21 @@ def step_ma(quote, mas, almost, back_days, const_slowest_period=None):
 
 
 def step_boll(quote, b=config.STEP_BOLL_BACK, d=config.STEP_BOLL_DURATION):
-    r = bbands(quote)
+    # r = bbands(quote)
+    # r['middleband']  <==> ma(20)
+    ma20 = ma.ma(quote.close, 20)
 
-    # l = min(r['middleband'][(b+d)*-1+1:(b+int(d/2))*-1+1])
-    # m = max(r['middleband'][(b+d)*-1+1:(b+int(d/2))*-1+1])
+    # l = min(ma20[(b+d)*-1+1:(b+int(d/2))*-1+1])
+    # m = max(ma20[(b+d)*-1+1:(b+int(d/2))*-1+1])
     # if not util.almost_equal(l, m, 3):
     #     return False
-    # l = min(r['middleband'][(b+int(d/2))*-1+1:b*-1+1])
-    # m = max(r['middleband'][(b+int(d/2))*-1+1:b*-1+1])
+    # l = min(ma20[(b+int(d/2))*-1+1:b*-1+1])
+    # m = max(ma20[(b+int(d/2))*-1+1:b*-1+1])
     # if not util.almost_equal(l, m, 3):
     #    return False
     for i in range(5, b):
-        l = min(r['middleband'][(i+d)*-1+1:i*-1+1])
-        m = max(r['middleband'][(i+d)*-1+1:i*-1+1])
+        l = min(ma20[(i+d)*-1+1:i*-1+1])
+        m = max(ma20[(i+d)*-1+1:i*-1+1])
         if util.almost_equal(l, m, 5):
             return True
     return False

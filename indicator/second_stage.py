@@ -5,8 +5,7 @@ import pandas
 from acquisition import quote_db
 from indicator import ma
 from indicator.decorator import computed
-from util import macd, dt
-
+from util import dt
 
 @computed(column_name='second_stage')
 def second_stage(quote, period):
@@ -133,13 +132,13 @@ def second_stage_ex(quote, period):
     # }
     # back_day = 24
 
-    ma_xxs = macd.ma(quote.close, n['xxs'])['ma']
-    ma_xs = macd.ma(quote.close, n['xs'])['ma']
-    ma_s = macd.ma(quote.close, n['s'])['ma']
-    # ma_m = macd.ma(quote.close, 100)['ma']
-    ma_l = macd.ma(quote.close, n['l'])['ma']   # 20W
-    ma_xl = macd.ma(quote.close, n['xl'])['ma']   # 30W
-    # ma_xxl = macd.ma(quote.close, 200)['ma']  # 40W
+    ma_xxs = ma.ma(quote.close, n['xxs'])['ma']
+    ma_xs = ma.ma(quote.close, n['xs'])['ma']
+    ma_s = ma.ma(quote.close, n['s'])['ma']
+    # ma_m = ma.ma(quote.close, 100)['ma']
+    ma_l = ma.ma(quote.close, n['l'])['ma']   # 20W
+    ma_xl = ma.ma(quote.close, n['xl'])['ma']   # 30W
+    # ma_xxl = ma.ma(quote.close, 200)['ma']  # 40W
 
     if quote.close[-1] <= ma_xl.iloc[-1]:
         return False

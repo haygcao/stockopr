@@ -3,7 +3,6 @@ import numpy
 import pandas
 
 from indicator.decorator import computed
-from util.macd import dmi
 
 
 @computed(column_name='adx')
@@ -77,19 +76,20 @@ def compute_dmi(quote, period):
     return quote
 
 
-@computed(column_name='adx')
-def compute_dmi_finta(quote):
-    from finta import TA
-    df = TA.DMI(quote, adjust=False)
-    return df
-
-
-@computed(column_name='adx')
-def compute_dmi_talib(quote):
-    df = dmi(quote)
-    quote['pdi'] = df['pdi']
-    quote['mdi'] = df['mdi']
-    quote['adx'] = df['adx']
-    quote['adxr'] = df['adxr']
-
-    return quote
+# @computed(column_name='adx')
+# def compute_dmi_finta(quote):
+#     from finta import TA
+#     df = TA.DMI(quote, adjust=False)
+#     return df
+#
+#
+# @computed(column_name='adx')
+# def compute_dmi_talib(quote):
+#     from util.macd import dmi
+#     df = dmi(quote)
+#     quote['pdi'] = df['pdi']
+#     quote['mdi'] = df['mdi']
+#     quote['adx'] = df['adx']
+#     quote['adxr'] = df['adxr']
+#
+#     return quote

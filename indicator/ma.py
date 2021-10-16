@@ -8,3 +8,7 @@ def compute_ma(quote):
         quote['ma{}'.format(_p)] = quote.close.rolling(_p).mean()
 
     return quote
+
+
+def ma(s, n):
+    return s.rolling(n).mean()

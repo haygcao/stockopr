@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from util.macd import ma
 import config.config as config
-import selector.util as util
 from selector.plugin.amplitude import amplitude
 
 

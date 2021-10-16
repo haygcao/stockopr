@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy.ma
 
-from config.config import is_long_period, period_price_diff_ratio_deviation_map
-from indicator import force_index, ad, skdj, rsi
-from indicator.decorator import computed, dynamic_system_filter
-from util.macd import macd
+from config.config import period_price_diff_ratio_deviation_map
+from indicator import force_index, ad, macd, skdj, rsi
+from indicator.decorator import dynamic_system_filter
 
 
 def _market_deviation(quote, period, histogram, back, will, strict):
@@ -182,13 +181,8 @@ def market_deviation(quote, period, histogram, back, column_name, will, strict):
 @dynamic_system_filter(column_name='macd_bull_market_deviation')
 def market_deviation_macd(quote, back, period, will, strict=True):
     # 价格新低
-    # print(quote['close'])
     # MACD 没有新低
-    df = macd(quote['close'])
-    # import pdb; pdb.set_trace()
-    quote['macd_line'] = df[0]
-    quote['macd_signal'] = df[1]
-    quote['macd_histogram'] = df[2]
+    quote = macd.compute_macd(quote)
 
     column_name = 'macd_bull_market_deviation' if will == 1 else 'macd_bear_market_deviation'
 

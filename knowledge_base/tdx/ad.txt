@@ -1,3 +1,3 @@
 AD_:=SUM(((CLOSE-LOW)-(HIGH-CLOSE))/(HIGH-LOW)*VOL,0);
 AD:AD_;
-E:MA(AD_, 26);
+E:MA(AD_, 30);

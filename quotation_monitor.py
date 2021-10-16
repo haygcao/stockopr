@@ -56,7 +56,7 @@ class TradeSignalManager:
     # {
     #     'code': data_structure.trade_data.TradeOrder
     # }
-    trade_order_map: dict[str, trade_data.TradeOrder]
+    trade_order_map = None  # : dict[str, trade_data.TradeOrder]
 
     @classmethod
     def reload_trade_order(cls):

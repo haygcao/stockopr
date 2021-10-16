@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from util.macd import ma
+from indicator.ma import ma
 
 import config.config as config
 import selector.util as util
@@ -14,10 +14,7 @@ def revision_ma(quote, maN=config.HT_MA_N, almost=config.ALMOST_EQUAL, range=con
     if r < range:
         return False
 
-    #print(quote['code'][-1])
-    #print(r)
-    ma30 = ma(quote, maN)
-    #if not almost_equal(quote.close[-1], ma30.ma[-1], almost):
+    ma30 = ma(quote['close'], maN)
     if util.almost_equal(quote.close[-1], ma30.ma[-1], almost):
         return True
 
@@ -28,5 +25,3 @@ def revision_ma(quote, maN=config.HT_MA_N, almost=config.ALMOST_EQUAL, range=con
         return True
 
     return False
-
-

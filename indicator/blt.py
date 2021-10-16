@@ -9,7 +9,6 @@ import numpy
 
 from indicator.decorator import computed
 from util import util
-from util.macd import ma
 
 
 def get_high_low_index(quote, emas, vol_ma, back_day, var_ma, first_high='vcp'):

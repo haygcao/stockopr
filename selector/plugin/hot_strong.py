@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from util.macd import ema, atr
+from indicator.ema import ema
+from indicator import atr
 
 
 def volume(vol_ema5, vol_ema10, back_day):
@@ -32,7 +33,7 @@ def hot_strong(quote, period, back_days=30):
     vol_ema5 = ema(vol_series, n=5)['ema']
     vol_ema10 = ema(vol_series, n=10)['ema']
 
-    atr5 = atr(quote, 5)['atr']
+    atr5 = atr.compute_atr(quote, 5)['atr']
     close_yest = quote['close'].shift(periods=1)
     amplitude = atr5 / close_yest
 

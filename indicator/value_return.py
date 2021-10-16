@@ -1,7 +1,6 @@
 import numpy
 
 from indicator.decorator import computed
-from util.macd import ema
 
 g_percent = 3
 

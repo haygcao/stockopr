@@ -1,13 +1,10 @@
-#-*- encoding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
-from util.macd import macd, sar, dmi, bbands, cci, rsi
-from util.macd import adjust
+from util.macd import macd, sar, dmi, cci
+from indicator.util import adjust
 import config.config as config
-#import price
 
 # 横盘, 60-80日均线, 5日macd 3值均约等于0
 # 1 突破10日新高2%, macdhist > 0
@@ -26,6 +23,7 @@ def gold_dead_macd(prices):
             return config.S
     return ''
 
+
 def gold_dead_sar(prices):
     df = sar(prices)
     macd_info = adjust(df, prices)
@@ -38,6 +36,7 @@ def gold_dead_sar(prices):
         else:
             return config.B
     return ''
+
 
 def gold_dead_dmi(prices):
     macd_info = dmi(prices)
@@ -54,6 +53,7 @@ def gold_dead_dmi(prices):
             return config.S
     return ''
 
+
 def gold_dead_bbands(prices):
     macd_info = dmi(prices)
     if macd_info['adx'][-1] <= 20:
@@ -69,6 +69,7 @@ def gold_dead_bbands(prices):
             return config.S
     return ''
 
+
 def gold_dead_cci(prices):
     macd_info = cci(prices)
     yest = macd_info['cci'][-2]
@@ -81,6 +82,7 @@ def gold_dead_cci(prices):
     elif today > 100 and today > yest:
         return config.S
     return ''
+
 
 def gold_dead_rsi(prices):
     macd_info = macd(prices)
@@ -95,6 +97,7 @@ def gold_dead_rsi(prices):
         else:
             return config.S
     return ''
+
 
 def gold_dead(prices):
     signal_macd = gold_dead_macd(prices)
@@ -183,6 +186,7 @@ def test_macd(prices):
             print('+'*10)
     print(r, e, round(100*r/(r+e), 2))
 
+
 def test_sar(prices):
     r = 0
     e = 0
@@ -257,6 +261,7 @@ def test_sar(prices):
     #for i, _ in sar2['r'].iteritems():
     #    print(i, _)
     #exit(0)
+
 
 if __name__ == '__main__':
     code = "600528"
