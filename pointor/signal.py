@@ -278,33 +278,6 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     positive = positive_all[positive_all > 0]
     negative = negative_all[negative_all > 0]
 
-    # print('signals before merged')
-    # print(positive[-50:])
-    # # print(quote_copy[quote_copy.index.isin(positive.index)]['resistance_support_signal_enter'])
-    # print(negative[-50:])
-
-    # print('signals after merged')
-
-    # 如果一天同时出现看多/看空信号，按看多处理
-    # def func(n: numpy.float64, p: numpy.float64):
-    #     if not numpy.isnan(p):
-    #         return numpy.nan
-    #     return n
-    #
-    # negative = negative.combine(positive, func=lambda x1, x2: func(x1, x2))
-
-    # if not positive.empty and negative.empty:
-    #     j = 1
-    #     while j < len(positive):
-    #         positive[j] = numpy.nan
-    #         j += 1
-    #
-    # if positive.empty and not negative.empty:
-    #     j = 1
-    #     while j < len(negative):
-    #         negative[j] = numpy.nan
-    #         j += 1
-
     i = 0
     j = 0
     while not positive.empty and not negative.empty and i < len(positive) and j < len(negative):
@@ -321,7 +294,6 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             if i == len(positive):
                 break
             next_positive = positive.index[i]
-            # next_negative = negative.index[j]
         positive[temp_positive_index] = temp_positive
         while next_positive > next_negative and j < len(negative):
             negative[j] = numpy.nan
@@ -330,67 +302,26 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
             quote_copy.loc[date_index, 'stop_loss_signal_exit'] = numpy.nan
 
             j += 1
-            # next_positive = positive.index[i]
             if j == len(negative):
                 break
             next_negative = negative.index[j]
         negative[temp_negative_index] = temp_negative
 
-    # 添加背离信号
-    # deviation_signals = config.get_signal_enter_deviation(period)
     i += 1
     j += 1
     while i < len(positive):
-        b = True
-        # for deviation in deviation_signals:
-        #     column = deviation[:deviation.index('_signal')]
-        #     b &= numpy.isnan(quote_copy.loc[positive.index[i], column])
-        if b:
-            positive[i] = numpy.nan
+        positive[i] = numpy.nan
         i += 1
 
-    # deviation_signals = config.get_signal_exit_deviation(period)
     while j < len(negative):
-        b = True
-        # for deviation in deviation_signals:
-        #     column = deviation[:deviation.index('_signal')]
-        #     b &= numpy.isnan(quote_copy.loc[negative.index[j], column])
-        if b:
-            negative[j] = numpy.nan
+        negative[j] = numpy.nan
         j += 1
 
     positive = positive[positive > 0]
     negative = negative[negative > 0]
 
-    # print('signals after merged')
-    # print(positive[-50:])
-    # # print(quote_copy[quote_copy.index.isin(positive.index)]['resistance_support_signal_enter'])
-    # print(negative[-50:])
-
-    # positive = positive.mask(positive > 0, quote['low'])
-    # negative = negative.mask(negative > 0, quote['high'])
-
     quote_copy.loc[:, 'signal_enter'] = positive
     quote_copy.loc[:, 'signal_exit'] = negative
-
-    # 背离
-    # 背离是重要的信号，不与其他信号合并
-    # column_list = ['force_index_bull_market_deviation_signal_enter',
-    #                'macd_bull_market_deviation_signal_enter',
-    #                'force_index_bear_market_deviation_signal_exit',
-    #                'macd_bear_market_deviation_signal_exit']
-    # for column in column_list:
-    #     deviation = quote[column]
-    #     # deviation = deviation[deviation < 0] if 'bull' in column else deviation[deviation < 0]
-    #     if 'bull' in column:
-    #         deviation = deviation[deviation > 0]
-    #         signal_all_column = 'signal_enter'
-    #     else:
-    #         deviation = deviation[deviation > 0]
-    #         signal_all_column = 'signal_exit'
-    #     for i in range(0, len(deviation)):
-    #         # quote_copy[signal_all_column][deviation.index[i]] = quote_copy.loc[deviation.index[i], column]
-    #         quote_copy.loc[deviation.index[i], signal_all_column] = quote_copy.loc[deviation.index[i], column]
 
     # # 重新计算止损
     # if 'stop_loss_signal_exit' in quote_copy.columns:
