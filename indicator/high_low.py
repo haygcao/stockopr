@@ -72,7 +72,7 @@ def compute_high_low(quote, column='close', compute_high=True, weak=False):
 def filter_high_low(adj, close_high_low, days_before, weak=False):
     index_full = close_high_low.index
 
-    days_before_after = 60
+    days_before_after = 40
     adj = adj if not weak else -adj
     i = 1
     i_prev = i - 1
@@ -118,23 +118,20 @@ def filter_high_low(adj, close_high_low, days_before, weak=False):
 
         # 未创出新高/新低
         if adj * close_high_low.iloc[i] < adj * close_high_low.iloc[i_prev]:
+            if not weak:
+                i_ignore_set.add(i)
+                i_ignored = i
+                i += 1
+                continue
+        else:
             if weak:
                 close_high_low.iat[i_prev] = numpy.nan
-                i_prev += 1
-                i = i + 1 if i == i_prev else i
+                i_prev = i
+                i_ignored = i_prev
+                i += 1
                 continue
-
-            i_ignore_set.add(i)
-            i_ignored = i
-            i += 1
-            continue
-
         # 间隔时间太短
         if delta_before_ignored < 5 or delta_before < days_before:
-            # 可能不会被忽略
-            # i_ignore_set.add(i)
-            # i += 1
-
             # A B C 三个点价格
             close_high_low.iat[i_prev] = numpy.nan
             i_prev += 1
