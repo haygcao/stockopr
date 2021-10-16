@@ -25,7 +25,7 @@ import selector.plugin.down as down
 import selector.plugin.strong_variability as strong_variability
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
-    base_breakout, blt, vcp, strong_base, amplitude, signal_config
+    base_breakout, blt, vcp, strong_base, amplitude, signal_config, bottom
 from selector.plugin import value_return
 from selector.plugin import dynamical_system
 from selector.plugin import force_index
@@ -60,6 +60,7 @@ selector = {
     'blt': blt.blt,
     'vcp': vcp.vcp,
     'strong_base': strong_base.strong_base,
+    'bottom': bottom.bottom,
     'bull_at_bottom': bull_at_bottom.bull_at_bottom,
     'dyn_sys_green': dynamical_system.dynamical_system_green,
     'dyn_sys_red': dynamical_system.dynamical_system_red,
