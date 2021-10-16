@@ -8,7 +8,7 @@ import datetime
 import numpy
 import pandas
 
-from config import config
+from config import config, signal_cond
 from config.signal_config import signal_func
 from config.signal_mask import signal_mask_column
 from config.signal_pair import signal_pair_column
@@ -132,6 +132,21 @@ def get_date_period(date, period, quote_date_index):
     return quote_date_index[-1] if ret.empty else ret[0]
 
 
+def compute_cond_signal(quote, period, signal_column):
+    quote[signal_column] = numpy.nan
+    price_column = 'high' if 'exit' in signal_column else 'low'
+    signal_all_list = config.get_all_signal(period)
+    pattern = signal_cond.signal_cond_column.get('nday_signal_exit')
+    for signal in signal_all_list:
+        import re
+        if not re.match(pattern, signal):
+            continue
+        signal_enter_shift = quote[signal].shift(periods=3)
+        quote[signal_column] = quote[signal_column].mask(signal_enter_shift.notna(), quote[price_column])
+
+    return quote
+
+
 def merge_singal(quote_copy, period, header, direct, column):
     code = quote_copy.code[-1]
     n = 40
@@ -221,7 +236,9 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         for s in signal_all_list:
             if s not in signal_func:
                 continue
-            if s == 'stop_loss_signal_exit' or s == 'nday_signal_exit':
+            if s in signal_cond.signal_cond_column:
+                continue
+            if s == 'stop_loss_signal_exit':
                 continue
             if 'market_deviation' in s or 'breakout' in s:
                 column = s[:s.index('_signal')]
@@ -269,13 +286,22 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         header = False
 
     # 计算止损数据
-    for s in ['stop_loss_signal_exit', 'nday_signal_exit']:
+    for s in ['stop_loss_signal_exit']:
         if s in quote_copy.columns:
             quote_copy = quote_copy.drop([s], axis=1)
         if config.enabled_signal(s, period):
             quote_copy = signal_func[s](quote_copy, period=period)
         else:
             quote_copy.insert(len(quote_copy.columns), s, numpy.nan)
+
+    # 条件信号
+    for _signal_column in signal_cond.signal_cond_column:
+        if _signal_column in quote_copy.columns:
+            quote_copy = quote_copy.drop([_signal_column], axis=1)
+        if config.enabled_signal(_signal_column, period):
+            quote_copy = compute_cond_signal(quote_copy, period, _signal_column)
+        else:
+            quote_copy.insert(len(quote_copy.columns), _signal_column, numpy.nan)
 
     # ----------
 
