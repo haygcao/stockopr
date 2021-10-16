@@ -108,8 +108,7 @@ def get_today_all():
         for i in range(2, PAGE_NUM[1]):
             newdf = _parsing_dayprice_json('hs_a', i)
             df = df.append(newdf, ignore_index=True)
-    df = df.append(_parsing_dayprice_json('shfxjs', 1),
-                   ignore_index=True)
+    df = df.append(_parsing_dayprice_json('shfxjs', 1), ignore_index=True)
 
     df.rename(columns={
         'trade': 'close',

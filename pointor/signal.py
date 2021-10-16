@@ -11,6 +11,7 @@ import pandas
 from config import config
 from config.signal_config import signal_func
 from config.signal_mask import signal_mask_column
+from config.signal_pair import signal_pair_column
 from indicator import dynamical_system, second_stage, ma, macd, dmi
 from pointor import mask
 from util import util
@@ -141,6 +142,25 @@ def get_date_period(date, period, quote_date_index):
     return quote_date_index[-1] if ret.empty else ret[0]
 
 
+def merge_singal(quote_copy, period, header, direct, column):
+    code = quote_copy.code[-1]
+    n = 40
+    data = quote_copy.iloc[-n:][column]
+    write_signal_log(direct, code, period, column, n, data, header)
+
+    for column_mask in signal_mask_column.get(column, []):
+        quote_copy = mask.mask_signal(quote_copy, column, column_mask)
+
+    for column_pair in signal_pair_column.get(column, []):
+        pass
+
+    price_column = 'low' if 'enter' in direct else 'high'
+    quote_copy.loc[:, direct] = quote_copy.apply(
+        lambda x: function(x[price_column], x[direct], eval('x.{}'.format(column)), column), axis=1)
+
+    return quote_copy
+
+
 def compute_signal(code, period, quote, supplemental_signal_path=None):
     file = get_cache_file(code, period)
     compute = True
@@ -218,17 +238,8 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
 
     header = True
     for column in column_list:
-        n = 40
-        data = quote_copy.iloc[-n:][column]
-        direct = 'signal_enter'
-        write_signal_log(direct, code, period, column, n, data, header)
+        quote_copy = merge_singal(quote_copy, period, header, 'signal_enter', column)
         header = False
-
-        for column_mask in signal_mask_column.get(column, []):
-            quote_copy = mask.mask_signal(quote_copy, column, column_mask)
-
-        quote_copy.loc[:, direct] = quote_copy.apply(
-            lambda x: function(x.low, x.signal_enter, eval('x.{}'.format(column)), column), axis=1)
 
     # 计算止损数据
     for s in ['stop_loss_signal_exit', 'nday_signal_exit']:
@@ -239,6 +250,8 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         else:
             quote_copy.insert(len(quote_copy.columns), s, numpy.nan)
 
+    # ----------
+
     # 处理合并看空信号
     column_list = config.get_signal_exit_list(period)
     # 'macd_bear_market_deviation',
@@ -247,17 +260,8 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     header = True
     # quote_copy = quote  # .copy()
     for column in column_list:
-        n = 40
-        data = quote_copy.iloc[-n:][column]
-        direct = 'signal_exit'
-        write_signal_log(direct, code, period, column, n, data, header)
+        quote_copy = merge_singal(quote_copy, period, header, 'signal_exit', column)
         header = False
-
-        for column_mask in signal_mask_column.get(column, []):
-            quote_copy = mask.mask_signal(quote_copy, column, column_mask)
-
-        quote_copy.loc[:, 'signal_exit'] = quote_copy.apply(
-            lambda x: function(x.high, x.signal_exit, eval('x.{}'.format(column)), column), axis=1)
 
     # 消除价格与 stop loss 相差不大的 enter 信号
     # quote_copy.loc[:, 'signal_enter'] = quote_copy.apply(

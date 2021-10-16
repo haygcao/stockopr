@@ -1,4 +1,20 @@
 
+"""
+JSON数据；当天分时数据
+小时分钟时间、价格、均价、成交量
+http://img1.money.126.net/data/hs/time/today/1300598.json
+JSON数据；前4天分时数据
+http://img1.money.126.net/data/hs/time/4days/[股票代码].json
+
+其中，是否复权，不复权为kline，复权为klinederc
+http://img1.money.126.net/data/hs/kline/day/history/2021/1300598.json
+
+返回结果：获取日线所有时间节点, 和收盘价。
+其中，[是否复权]，不复权为kline，复权为klinederc。
+其中，[周期]，day为日数据，week周数据，month月数据。
+http://img1.money.126.net/data/hs/kline/day/times/1300598.json
+
+"""
 tx_latest_day_quote_url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
 tx_min_url = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
 # tx_day_url = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param={code},{period},{start_date},,{count},qfq'  # 2020-7-16,2021-5-7,
@@ -37,7 +53,20 @@ https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Cent
 }, ...]
   """
 xl_day_price_url = 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?num=80&sort=code&asc=0&node=%s&symbol=&_s_r_a=page&page=%s'
+"""
+5、10、30、60分钟
+http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz002095&scale=60&ma=no&datalen=1023
 
+JSON qianfuquan-前复权；houfuquan-后复权 注意，无法获取未复权的数据
+http://finance.sina.com.cn/realstock/company/sz300502/qianfuquan.js?d=2021-10-15
+
+XLS文件；股票历史成交明细  服务已下线
+http://market.finance.sina.com.cn/downxls.php?date=2021-10-16&symbol=sz300598
+
+HTML文本；指定日期范围内的股票分价表。
+查询日期范围过大！请重新选择日期范围。 startdate 是必须参数
+http://market.finance.sina.com.cn/pricehis.php?symbol=sz300598&startdate=2011-08-17&enddate=2021-10-16
+"""
 fh_day_url = 'http://api.finance.ifeng.com/akdaily/?code=sh600000&type=last'
 fh_min_url = 'http://api.finance.ifeng.com/akmin?scode=sh000300&type=30'
 
