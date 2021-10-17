@@ -26,10 +26,13 @@ signal_mask_column = {
     "channel_signal_enter": [],
     "resistance_support_signal_enter": ['mask_resistance'] + mask_trend_up + ['mask_second_stage'],
     "value_return_signal_enter": ['mask_slow_ma_ins', 'mask_diff_fma_sma_positive', 'mask_dmi'] + ['mask_value_return'],
+
     "blt_signal_enter": mask_trend_up + ['mask_dmi'],
     "vcp_signal_enter": mask_trend_up,
     "step_signal_enter": ['mask_step'] + mask_trend_up + ['mask_step'],
+
     "step_breakout_signal_enter": ['mask_step'] + mask_trend_up + ['mask_second_stage'] + ['mask_step'],
+
     "weak_bull_signal_enter": ['mask_bias_bull'],
     "macd_bull_market_deviation_signal_enter": ['mask_bias_bull'],
     "asi_bull_market_deviation_signal_enter": ['mask_bias_bull'],
@@ -44,8 +47,10 @@ signal_mask_column = {
     "volume_ad_signal_exit": [],
     "dynamical_system_signal_exit": [],
     "channel_signal_exit": [],
+
     "resistance_support_signal_exit": ['mask_support'],
     "stop_loss_signal_exit": [],
+
     "weak_bear_signal_exit": ['mask_bias_bear'],
     "macd_bear_market_deviation_signal_exit": ['mask_bias_bear'],
     "asi_bear_market_deviation_signal_exit": ['mask_bias_bear'],

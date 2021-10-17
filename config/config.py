@@ -503,7 +503,7 @@ resistance_support_backdays = 1
 
 value_return_mas = [26]
 step_mas = [20, 30, 60]
-resistance_day = 60
+resistance_day = 20
 support_day = 10
 
 supplemental_signal_path = os.path.join(config_dir, '..', 'data/trade.csv')

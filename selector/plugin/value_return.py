@@ -13,3 +13,12 @@ def value_return(quote, period, back_days=3):
         if numpy.any(deviation[-back_days:]):
             return True
     return False
+
+
+def value_return_ing(quote, period, back_days=1):
+    quote = signal_value_return.compute_index(quote, period, strict=False)
+
+    cond = quote.value_return.notna()
+
+    # end_index = None if back_days == 0 else -back_days
+    return numpy.any(cond[-back_days:])

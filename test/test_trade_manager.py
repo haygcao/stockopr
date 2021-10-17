@@ -15,6 +15,7 @@ class TradeManagerTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
+
     def test_sync(self):
         trade_manager.sync()
 

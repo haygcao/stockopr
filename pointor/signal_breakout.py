@@ -2,7 +2,7 @@
 import numpy
 import pandas
 
-from indicator import step, strong_base, resistance_support, asi
+from indicator import step, strong_base, resistance_support, asi, vcp, blt
 from indicator.decorator import computed
 
 
@@ -110,12 +110,37 @@ def step_breakout_signal_enter(quote, period):
     return quote_copy
 
 
+@computed(column_name='blt_breakout_signal_enter')
+def blt_breakout_signal_enter(quote, period):
+    quote = blt.blt(quote, period)
+    mask = quote['blt'].notna()
+    values = compute_breakout(quote, period, mask)
+
+    quote_copy = quote
+    quote_copy.insert(len(quote_copy.columns), 'blt_breakout_signal_enter', values)
+
+    return quote_copy
+
+
+@computed(column_name='vcp_breakout_signal_enter')
+def vcp_breakout_signal_enter(quote, period):
+    quote = vcp.vcp(quote, period)
+    mask = quote['vcp'].notna()
+    values = compute_breakout(quote, period, mask)
+
+    quote_copy = quote
+    quote_copy.insert(len(quote_copy.columns), 'vcp_breakout_signal_enter', values)
+
+    return quote_copy
+
+
 def signal_enter(quote, period, column):
     m = {
         'asi_ex_resistance_breakout': asi_ex_resistance_breakout_signal_enter,
         'asi_resistance_breakout': asi_resistance_breakout_signal_enter,
         'resistance_breakout': resistance_breakout_signal_enter,
         'step_breakout': step_breakout_signal_enter,
+        'vcp_breakout': vcp_breakout_signal_enter,
         'strong_base_breakout': strong_base_breakout_signal_enter,
     }
 

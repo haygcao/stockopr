@@ -27,6 +27,7 @@ sum_yz = {}
 count = {}
 
 xlsx = 'icbc20130706-20210919.xls'
+xlsx = 'icbc20130706-20211017.xls'
 workbook = xlrd.open_workbook(xlsx)
 print("There are {} sheets in the workbook".format(workbook.nsheets))
 
@@ -51,6 +52,8 @@ zc = 632562.8 - 4.46
 start_date = dt.date(1986, 12, 12)
 end_date = dt.date(2021, 9, 19)
 zc = 252594.95 + 146427.03   # 信用净 + 普通总
+end_date = dt.date(2021, 10, 17)
+zc = 519313.780
 accounts = '中信证券'
 
 # 国金证券

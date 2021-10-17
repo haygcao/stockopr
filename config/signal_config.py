@@ -11,11 +11,14 @@ signal_func = {
     "blt_signal_enter": signal_blt.signal_enter,
     "vcp_signal_enter": signal_vcp.signal_enter,
     "step_signal_enter": signal_step.signal_enter,
+
     "asi_ex_resistance_breakout_signal_enter": signal_breakout.signal_enter,
     "asi_resistance_breakout_signal_enter": signal_breakout.signal_enter,
     "resistance_breakout_signal_enter": signal_breakout.signal_enter,
     "step_breakout_signal_enter": signal_breakout.signal_enter,
     "strong_base_breakout_signal_enter": signal_breakout.signal_enter,
+    "vcp_breakout_signal_enter": signal_breakout.signal_enter,
+
     "volume_ad_signal_enter": signal_volume_ad.signal_enter,
     "weak_bull_signal_enter": signal_weak.signal_enter,
     "asi_bull_market_deviation_signal_enter": signal_market_deviation.signal_enter,

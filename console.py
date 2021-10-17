@@ -248,19 +248,27 @@ class Panel(QWidget):
             self.combo_classification.addItem(indicator)
         self.combo_classification.select_index(2)
 
-        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue', 'super']:  # , 'strong_base']:  # potential
+        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue',
+                          'super',  'strong_base', 'bottom', 'volume_dry_up_ing', 'fallen']:
             self.combo_candidate.addItem(indicator)
+
         self.combo_candidate.select_text('second_stage')
 
-        for indicator in ['value_return']:
+        for indicator in ['value_return_ing', 'blt', 'vcp', 'step', 'magic_line']:
             self.combo_traced.addItem(indicator)
         # self.combo_traced.select_text('value_return')
 
         # self.combo_strategy = QComboBox(self)
 
-        for indicator in ['value_return', 'magic_line', 'blt', 'vcp', 'step', 'base_breakout', 'bull_deviation',
-                          'value_return']:
+        for indicator in [
+            'value_return',
+            'blt_breakout', 'vcp_breakout', 'step_breakout', 'base_breakout',
+            'volume_dry_up', 'volume_shrink',
+            'bull_deviation',
+            'bull_at_bottom',
+        ]:
             self.combo_strategy.addItem(indicator)
+
         # self.combo_strategy.setCurrentIndex(1)
         self.combo_strategy.select_text('step')
 

@@ -26,14 +26,24 @@ def compute_vdu(quote, n, percent_shrink):
 
 
 def volume_dry_up(quote, period, back_days=10):
+    # 信号
     percent_shrink = 30
-    quote = compute_vdu(quote, 3, percent_shrink)
+    quote = compute_vdu(quote, 4, percent_shrink)
 
     return numpy.any(quote.vdu[-back_days:])
 
 
 def volume_shrink(quote, period, back_days=10):
+    # 信号
     percent_shrink = 50
+    quote = compute_vdu(quote, 4, percent_shrink)
+
+    return numpy.any(quote.vdu[-back_days:])
+
+
+def volume_dry_up_ing(quote, period, back_days=10):
+    # 候选
+    percent_shrink = 30
     quote = compute_vdu(quote, 3, percent_shrink)
 
     return numpy.any(quote.vdu[-back_days:])
