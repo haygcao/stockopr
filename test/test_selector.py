@@ -5,7 +5,7 @@ import pandas
 
 from acquisition import quote_db, basic
 from selector import selector
-from selector.plugin import fund
+from selector.plugin import fund, volume_dry_up
 from selector.plugin.base_breakout import base_breakout
 from selector.plugin.blt import blt
 from selector.plugin.second_stage import second_stage
@@ -16,7 +16,7 @@ from selector.plugin.vcp import vcp
 
 class SelectorPluginTestCase(unittest.TestCase):
     def setUp(self):
-        self.code = '300550'  # vcp
+        self.code = '300598'  # vcp
         self.period = 'day'
         count = 1000
         self.quote = quote_db.get_price_info_df_db(self.code, days=count, period_type='D')
@@ -98,8 +98,14 @@ class SelectorPluginTestCase(unittest.TestCase):
         ret = step(self.quote, self.period)
         print(ret)
 
+    def test_volume_dry_up(self):
+        ret = volume_dry_up.volume_dry_up(self.quote, self.period)
+        print(ret)
+
     def test_update_candidate_pool(self):
         strategy_list = ['second_stage']   # super
+        strategy_list = ['bottom']
+        strategy_list = ['volume_dry_up']
         selector.update_candidate_pool(strategy_list, 'day')
 
     def test_get_candidate_pool(self):
