@@ -59,6 +59,7 @@ selector = {
     'step_breakout': step_breakout.step_breakout,
     'blt_breakout': breakout.blt_breakout,
     'vcp_breakout': breakout.vcp_breakout,
+    'magic_line_breakout': breakout.magic_line_breakout,
     'base_breakout': base_breakout.base_breakout,
     'blt': blt.blt,
     'vcp': vcp.vcp,
