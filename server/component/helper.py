@@ -112,11 +112,14 @@ def verify_authentication_impl(app, trade_win):
     return retry
 
 
-def verify_authentication(app, trade_win):
+def verify_authentication(app, trade_win, pos):
     for i in range(10):
-        ret = verify_authentication_impl(app, trade_win)
-        if ret < 0:
-            pywinauto.keyboard.send_keys('{ESC}')
+        retry = verify_authentication_impl(app, trade_win)
+        if retry:
+            win_name = get_foreground_window()
+            if win_name != config.ths_main_window_title:
+                pywinauto.keyboard.send_keys('{ESC}')
+                pywinauto.mouse.click(coords=pos)
             time.sleep(0.1)
             pywinauto.keyboard.send_keys('^c')
             time.sleep(0.1)
@@ -145,7 +148,7 @@ def copy_to_clipboard(pos=None):
 
     global g_app
     global g_main_window
-    verify_authentication(g_app, g_main_window)
+    verify_authentication(g_app, g_main_window, pos)
 
     # time.sleep(0.2)
 
