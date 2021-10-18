@@ -169,9 +169,9 @@ def sync_impl(account_id, trade_date):
     operation_detail = tradeapi.query_operation_detail(account_id)
     if operation_detail:
         # trade_date = datetime.date(2021, 9, 28)
-        trade_date_prev = dt.get_pre_trade_date(trade_date)
-        operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == trade_date_prev]
-        db_handler.save_operation_details(account_id, operation_detail, trade_date, sync=True)
+        _date = dt.get_pre_trade_date(trade_date) if trade_date == now.date() else trade_date
+        operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == _date]
+        db_handler.save_operation_details(account_id, operation_detail, _date, sync=True)
         logger.info('sync operation detail ok')
     else:
         logger.warning('sync operation detail failed')

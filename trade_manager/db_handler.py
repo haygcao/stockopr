@@ -37,11 +37,10 @@ def save_money(account_id, money: trade_data.Asset, sync=False):
     fmt = ', '.join(fmt_list)
 
     val = (money.date, money.period, money.origin, money.total_money, money.avail_money, money.net_money, money.deposit,
-           money.market_value, money.position_percent, money.profit, money.profit_percent, account_id,
-           money.total_money, money.avail_money)
+           money.market_value, money.position_percent, money.profit, money.profit_percent, account_id)
 
     # sql = "insert into {} ({}) values ({})".format(config.sql_tab_asset, key, fmt)
-    sql = u"INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY update total = %s, avail = %s".format(config.sql_tab_asset, key, fmt)
+    sql = u"INSERT INTO {} ({}) VALUES ({})".format(config.sql_tab_asset, key, fmt)
     logger.debug(sql)
 
     with mysqlcli.get_cursor() as c:
@@ -111,8 +110,8 @@ def save_positions(account_id, position_list, sync=False):
     with mysqlcli.get_cursor() as c:
         if sync:
             trade_date = position_list[0].date
-            c.execute("delete from {} where account_id = %s and date = %s".format(config.sql_tab_position),
-                      (account_id, trade_date))
+            c.execute("delete from {} where account_id = %s and date = %s and total != 0".format(
+                config.sql_tab_position), (account_id, trade_date))
 
         for position in position_list:
             val = (position.date, position.code, position.current_position, position.avail_position,
