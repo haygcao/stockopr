@@ -50,7 +50,7 @@ def upsert_candidate_pool(code_list, status, strategy, ignore_duplicate=True):
 def get_candidate_stock_code(candidate_list):
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT code FROM portfolio where status = 'candidate' and class in ('%s') order by code"
+        sql = "SELECT code FROM portfolio where class in ('%s') order by code"  # status = 'candidate' and
         class_list = "','".join(candidate_list)
         logger.info(sql % class_list)
         # c.execute(sql, class_list)
@@ -62,8 +62,8 @@ def get_candidate_stock_code(candidate_list):
 
 def _get_traced_stock_code(strategy_list, status):
     with mysqlcli.get_cursor() as c:
-        sql = "SELECT code FROM portfolio where status = %s and class in (%s) order by code"
-        c.execute(sql, (status, ','.join(strategy_list)))
+        sql = "SELECT code FROM portfolio where class in (%s) order by code"  # status = %s and
+        c.execute(sql, (','.join(strategy_list),))
         stock_code_list = c.fetchall()
 
         return [code['code'] for code in stock_code_list]

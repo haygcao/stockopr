@@ -161,20 +161,20 @@ def super(quote, period, back_days=150):
     times = 5
 
     vol_series = quote['volume']
-    vol_ema_s = ema(vol_series, n=times * 5)['ema']
-    vol_ema_m = ema(vol_series, n=times * 10)['ema']
-    vol_ema_l = ema(vol_series, n=times * 30)['ema']
+    vol_ema_s = ema(vol_series, n=times * 5)
+    vol_ema_m = ema(vol_series, n=times * 10)
+    vol_ema_l = ema(vol_series, n=times * 30)
 
     atr5 = atr.compute_atr(quote, 5)['atr']
     close_yest = quote['close'].shift(periods=1)
     amplitude = atr5 / close_yest
 
-    ema_s = ema(quote['close'], n=times * 5)['ema']
-    ema_m = ema(quote['close'], n=times * 10)['ema']
-    ema_l = ema(quote['close'], n=times * 30)['ema']
-    ema_xl = ema(quote['close'], n=times * 50)['ema']
+    ema_s = ema(quote['close'], n=times * 5)
+    ema_m = ema(quote['close'], n=times * 10)
+    ema_l = ema(quote['close'], n=times * 30)
+    ema_xl = ema(quote['close'], n=times * 50)
     # 100 周, 2年...
-    ema_xxl = ema(quote['close'], n=times * 100)['ema']
+    ema_xxl = ema(quote['close'], n=times * 100)
     # ema_xxl = ema_xl
 
     # 回退 6个月, 最后预留2日, 计算中后推时需要使用

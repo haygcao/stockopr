@@ -60,14 +60,14 @@ def magic_line(quote, period, back_days=5):
     quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
 
     vol_series = quote['volume']
-    vol_ema_s = ema(vol_series, n=5)['ema']
-    vol_ema_m = ema(vol_series, n=10)['ema']
-    vol_ema_l = ema(vol_series, n=30)['ema']
+    vol_ema_s = ema(vol_series, n=5)
+    vol_ema_m = ema(vol_series, n=10)
+    vol_ema_l = ema(vol_series, n=30)
 
-    ema_xs = ema(quote['close'], n=3)['ema']
-    ema_s = ema(quote['close'], n=9)['ema']
-    ema_m = ema(quote['close'], n=10)['ema']
-    ema_l = ema(quote['close'], n=11)['ema']
+    ema_xs = ema(quote['close'], n=3)
+    ema_s = ema(quote['close'], n=9)
+    ema_m = ema(quote['close'], n=10)
+    ema_l = ema(quote['close'], n=11)
 
     j = 15
     for i in [10, 5, 1]:

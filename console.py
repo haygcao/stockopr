@@ -248,21 +248,25 @@ class Panel(QWidget):
             self.combo_classification.addItem(indicator)
         self.combo_classification.select_index(2)
 
-        for indicator in ['second_stage', 'dyn_sys_green', 'dyn_sys_blue',
-                          'super',  'strong_base', 'bottom', 'volume_dry_up_ing', 'fallen']:
+        for indicator in [
+            'super', 'hot_strong',
+            'second_stage', 'dyn_sys_green', 'dyn_sys_blue',
+            'strong_base', 'bottom',
+            'fallen',
+        ]:
             self.combo_candidate.addItem(indicator)
 
         self.combo_candidate.select_text('second_stage')
 
-        for indicator in ['value_return_ing', 'blt', 'vcp', 'step', 'magic_line']:
+        for indicator in ['magic_line', 'blt', 'vcp', 'step', 'value_return_ing', 'volume_dry_up_ing']:
             self.combo_traced.addItem(indicator)
         # self.combo_traced.select_text('value_return')
 
         # self.combo_strategy = QComboBox(self)
 
         for indicator in [
+            'magic_line_breakout', 'blt_breakout', 'vcp_breakout', 'step_breakout', 'base_breakout',
             'value_return',
-            'blt_breakout', 'vcp_breakout', 'step_breakout', 'base_breakout',
             'volume_dry_up', 'volume_shrink',
             'bull_deviation',
             'bull_at_bottom',
@@ -679,7 +683,7 @@ class Panel(QWidget):
         logger.info('update traced started')
         traced_list = [s.text() for s in self.combo_traced.get_selected()]
         candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
-        logger.info(candidate_list, traced_list)
+        logger.info('{} {}'.format(candidate_list, traced_list))
         p = multiprocessing.Process(target=selector.select, args=(traced_list, candidate_list, self.period))
         p.start()
 
@@ -753,7 +757,7 @@ class Panel(QWidget):
             self.send_key_event('xxx')
             now = datetime.datetime.now()
             if now - update_time > datetime.timedelta(seconds=60):
-                if not account_updated:
+                if not account_updated and not dt.istradetime():
                     self.btn_sync.setStyleSheet("color : red")
                     latest_sync_date = trade_manager.db_handler.query_money(account_id).date
                     logger.info('account: {}'.format(latest_sync_date))
@@ -761,7 +765,7 @@ class Panel(QWidget):
                 else:
                     self.btn_sync.setStyleSheet("color : black")
 
-                if not quote_updated:
+                if not quote_updated and not dt.istradetime():
                     self.btn_update_quote.setStyleSheet("color : red")
                     # latest_quote_date = quote_db.get_latest_trade_date()
                     # quote_updated = latest_quote_date == trade_date
