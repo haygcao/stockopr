@@ -130,7 +130,7 @@ class Panel(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Icon')
-        # self.setWindowIcon(QIcon('data/icon11.png'))
+        self.setWindowIcon(QIcon('data/icon.png'))
 
         # self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 

@@ -77,7 +77,7 @@ def magic_line(quote, period, back_days=5):
 
     # 回退 6个月
     for back_day in range(back_days, -1, -1):
-        for e in [ema_m]: # [ema_s, ema_m, ema_l]:
+        for e in [ema_m]:  # [ema_s, ema_m, ema_l]:
             if magic_line_one_day(vol_series, vol_ema_s, vol_ema_m, vol_ema_l, quote, e,
                                   ema_xs, ema_s, ema_m, ema_l, back_day):
                 return True
