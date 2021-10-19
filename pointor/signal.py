@@ -248,7 +248,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         # 计算所有信号, 缓存以加速回测分析
         signal_all_list = config.get_all_signal(period)
         for s in signal_all_list:
-            compute_one_signal(quote, period, s)
+            quote = compute_one_signal(quote, period, s)
 
         # 信号 mask
         quote = mask.compute_enter_mask(quote, period)

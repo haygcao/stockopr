@@ -32,7 +32,7 @@ class DigitalClock(QLCDNumber):
         palette.setColor(QPalette.Window, Qt.black)  # Qt.lightGray)
         self.setPalette(palette)
         self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setWindowOpacity(0.5)
+        self.setWindowOpacity(0.3)
         self.resize(200, 60)
         self.setNumDigits(8)
         self.show_time()

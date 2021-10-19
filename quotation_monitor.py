@@ -11,7 +11,7 @@ import pandas
 
 import trade_manager.db_handler
 from chart import open_graph
-from config import config, signal_config
+from config import config, signal_config, signal_pair
 from config.config import Policy
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
@@ -69,10 +69,12 @@ class TradeSignalManager:
             if code in cls.trade_order_map:
                 cls.trade_order_map[code].in_position = True
                 continue
+            # TODO
+            strategy = None  # 'magic_line_breakout_signal_enter'
             cls.trade_order_map[code] = trade_data.TradeOrder(
                 position.date, code, position=position.current_position, open_price=position.price_cost,
                 stop_loss=position.price_cost * 0.96, stop_profit=position.price_cost * 1.15,
-                strategy=None, in_position=True)
+                strategy=strategy, in_position=True)
             logger.warning('{} with not trade order'.format(code))
 
         for code in cls.trade_order_map.keys():
@@ -83,6 +85,10 @@ class TradeSignalManager:
     @classmethod
     def get_strategy(cls, code):
         return cls.trade_order_map[code].strategy if code in cls.trade_order_map else None
+
+    @classmethod
+    def in_position(cls, code):
+        return cls.trade_order_map[code].in_position
 
     @classmethod
     def get_trade_signal_list(cls, code):
@@ -184,16 +190,15 @@ def update_status_old(code, data, period):
     return
 
 
-def check_trade_order_stop_loss(code, data):
+def check_trade_order_stop_loss(code, close):
     stop_loss = TradeSignalManager.get_stop_loss(code)
-    price = data['close'].iloc[-1]
-    if price > stop_loss:
+    if close > stop_loss:
         return False
 
     white_list = config.get_white_list()
     if code in white_list:
         logger.warning('[{}] 现股价({})已跌破止损线({}), 因其在[白名单]之中, 现不做任何处理, 请确认白名单的合理性!'.format(
-            code, price, stop_loss))
+            code, close, stop_loss))
         return False
     return True
 
@@ -202,9 +207,6 @@ def update_status_by_all_signal(code, data, period):
     data_index_: datetime.datetime = data.index[-1]
     price = data['close'][-1]
 
-    if check_trade_order_stop_loss(code, data):
-        return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
-
     now = datetime.datetime.now()
     index = -1 if now.minute > 55 or period == 'day' else -2
 
@@ -212,7 +214,7 @@ def update_status_by_all_signal(code, data, period):
     # 周期最 3 分钟
     # if period == 'day' or data_index_.minute % minute >= minute - 3:
 
-    if not numpy.isnan(data['stop_loss_signal_exit'][index]):
+    if 'stop_loss_signal_exit' in data.columns and not numpy.isnan(data['stop_loss_signal_exit'][index]):
         return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
     if index == -1 and now.minute < 55:
@@ -245,14 +247,8 @@ def update_status_by_strategy(code, data, period, strategy):
     data_index_: datetime.datetime = data.index[-1]
     price = data['close'][-1]
 
-    if check_trade_order_stop_loss(code, data):
-        return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
-
     now = datetime.datetime.now()
     index = -1 if now.minute > 55 or period == 'day' else -2
-
-    if not numpy.isnan(data['stop_loss_signal_exit'][index]):
-        return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
 
     if numpy.isnan(data[strategy][index]):
         return
@@ -270,29 +266,37 @@ def update_status_by_strategy(code, data, period, strategy):
 
 def check_period(code, period):
     logger.debug('now check {} {} status'.format(code, period))
+
+    data = get_min_data(code, period)
+    if not isinstance(data, pandas.DataFrame) or data.empty:
+        return
+
+    close = data.close[-1]
+    if check_trade_order_stop_loss(code, close):
+        return TradeSignal(code, close, data.index[-1], 'S', Policy.STOP_LOSS, period, True)
+
+    trade_signal = None
     strategy = TradeSignalManager.get_strategy(code)
     if strategy:
-        data = get_min_data(code, period)
-        if not isinstance(data, pandas.DataFrame) or data.empty:
-            return
-        data = signal.compute_one_signal(data, period, strategy)
-        trade_signal = update_status_by_strategy(code, data, period, strategy)
+        strategys = [strategy]
+        if TradeSignalManager.in_position(code):
+            strategys = signal_pair.signal_pair_column[strategy]
+            strategys.extend(signal_pair.default_columns)
+
+        for strategy in strategys:
+            data = signal.compute_one_signal(data, period, strategy)
+            trade_signal = update_status_by_strategy(code, data, period, strategy)
+            if trade_signal:
+                break
     else:
-        file = signal.get_cache_file(code, period)
-        if file:
-            data = signal.load(file)
-        else:
-            data = get_min_data(code, period)
-            if not isinstance(data, pandas.DataFrame) or data.empty:
-                return
-            data = signal.compute_signal(code, period, data)
+        data = signal.compute_signal(code, period, data)
         trade_signal = update_status_by_all_signal(code, data, period)
 
     if trade_signal:
         return trade_signal
 
 
-def check(code, periods):
+def check_trade_signal(code, periods):
     for period in periods:
         trade_signal = check_period(code, period)
         if not trade_signal:
@@ -331,6 +335,28 @@ def query_trade_order_code_list():
     return [code for code, name in r.items()]
 
 
+def check(code, periods):
+    trade_signal = check_trade_signal(code, periods)
+    if not trade_signal:
+        return
+
+    if not TradeSignalManager.need_signal(trade_signal):
+        return
+
+    supplemental_signal_path = config.supplemental_signal_path
+    signal.write_supplemental_signal(supplemental_signal_path, code, trade_signal.date, trade_signal.command,
+                                     trade_signal.period, trade_signal.price)
+
+    logger.info(TradeSignalManager.signal_map)
+    # p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period, trade_signal.supplemental))
+    # p.start()
+
+    order(trade_signal)
+    notify(trade_signal)
+
+    # p.join(timeout=1)
+
+
 def monitor_today():
     now = datetime.datetime.now()
     if not dt.istradeday() or now.hour >= 15:
@@ -353,23 +379,26 @@ def monitor_today():
         if (now < begin1) or (end1 < now < begin2) or (now > end2):
             time.sleep(60)
             continue
+            # pass
 
         TradeSignalManager.reload_trade_order()
 
         periods.clear()
-        if now.minute % 5 < 1:
-            periods.append('m5')
-        if now.minute % 30 < 1:
-            periods.append('m30')
+        # if now.minute % 5 < 1:
+        #     periods.append('m5')
+        # if now.minute % 30 < 1:
+        #     periods.append('m30')
         if now.minute % 60 < 1:
             periods.append('day')
+
+        # periods.append('day')
 
         # 最后5分钟
         if now.hour == 14 and now.minute in [56, 57]:
             if 'day' not in periods:
                 periods.append('day')
-            if 'm30' not in periods:
-                periods.append('m30')
+            # if 'm30' not in periods:
+            #     periods.append('m30')
 
         if not periods:
             # sleep = random.randint(3, 6) * 60 if now.minute < 50 else random.randint(1, 3) * 60
@@ -379,25 +408,7 @@ def monitor_today():
         logger.info('quotation monitor is running')
 
         for code in TradeSignalManager.trade_order_map.keys():
-            trade_signal = check(code, periods)
-            if not trade_signal:
-                continue
-
-            if not TradeSignalManager.need_signal(trade_signal):
-                continue
-
-            supplemental_signal_path = config.supplemental_signal_path
-            signal.write_supplemental_signal(supplemental_signal_path, code, trade_signal.date, trade_signal.command,
-                                             trade_signal.period, trade_signal.price)
-
-            logger.info(TradeSignalManager.signal_map)
-            # p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period, trade_signal.supplemental))
-            # p.start()
-
-            order(trade_signal)
-            notify(trade_signal)
-
-            # p.join(timeout=1)
+            check(code, periods)
 
         time.sleep(60)
 
