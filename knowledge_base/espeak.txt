@@ -1,0 +1,7 @@
+sudo apt install libespeak-dev
+sudo apt install espeak
+
+cd toolkit/initenv/deps/
+cp zh_dict zh_list zh_listx zh_rules /usr/lib/x86_64-linux-gnu/espeak-data
+cd /usr/lib/x86_64-linux-gnu/espeak-data
+sudo espeak --compile=zh
