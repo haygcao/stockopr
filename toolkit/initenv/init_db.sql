@@ -224,6 +224,7 @@ create table trade_order (
   risk_rate decimal(5, 2),
   stop_profit decimal(5, 2) not null,
   profitability_ratios decimal(6, 3),
+  strategy varchar(32),
   status varchar(8),
   account_id varchar(32)
   PRIMARY key (id)

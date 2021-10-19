@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
+
 import atexit
 import datetime
 import multiprocessing
-import random
 import time
-import weakref
 from dataclasses import dataclass
 
 import numpy
@@ -12,13 +11,13 @@ import pandas
 
 import trade_manager.db_handler
 from chart import open_graph
-from config import config
-from config.config import period_map, Policy, OscIndicator
+from config import config, signal_config
+from config.config import Policy
 from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
 
-from acquisition import tx, quote_db
+from acquisition import tx
 from server import config as svr_config
 from trade_manager import trade_manager
 from util import dt, singleten
@@ -61,17 +60,29 @@ class TradeSignalManager:
     @classmethod
     def reload_trade_order(cls):
         account_id = svr_config.ACCOUNT_ID_XY
-        cls.trade_order_map = trade_manager.db_handler.query_trade_order_map(account_id)
+        cls.trade_order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='TO')
+        cls.trade_order_map.update(trade_manager.db_handler.query_trade_order_map(account_id, status='ING'))
 
-        position_list = trade_manager.db_handler.query_current_position()
-        code_list = [position.code for position in position_list]
-        code_list.extend(cls.trade_order_map.keys())
+        position_list = trade_manager.db_handler.query_current_position(account_id)
+        for position in position_list:
+            code = position.code
+            if code in cls.trade_order_map:
+                cls.trade_order_map[code].in_position = True
+                continue
+            cls.trade_order_map[code] = trade_data.TradeOrder(
+                position.date, code, position=position.current_position, open_price=position.price_cost,
+                stop_loss=position.price_cost * 0.96, stop_profit=position.price_cost * 1.15,
+                strategy=None, in_position=True)
+            logger.warning('{} with not trade order'.format(code))
 
-        for code in code_list:
+        for code in cls.trade_order_map.keys():
             if code in cls.signal_map:
                 continue
             cls.signal_map[code] = []
 
+    @classmethod
+    def get_strategy(cls, code):
+        return cls.trade_order_map[code].strategy if code in cls.trade_order_map else None
 
     @classmethod
     def get_trade_signal_list(cls, code):
@@ -187,7 +198,7 @@ def check_trade_order_stop_loss(code, data):
     return True
 
 
-def update_status(code, data, period):
+def update_status_by_all_signal(code, data, period):
     data_index_: datetime.datetime = data.index[-1]
     price = data['close'][-1]
 
@@ -230,17 +241,53 @@ def update_status(code, data, period):
         return TradeSignal(code, price, data_index_, 'B', Policy.DEFAULT, period, True)
 
 
-def check_period(code, period):
-    file = signal.get_cache_file(code, period)
-    if file:
-        data = signal.load(file)
-    else:
-        data = get_min_data(code, period)
-        data = signal.compute_signal(code, period, data)
-    if not isinstance(data, pandas.DataFrame) or data.empty:
+def update_status_by_strategy(code, data, period, strategy):
+    data_index_: datetime.datetime = data.index[-1]
+    price = data['close'][-1]
+
+    if check_trade_order_stop_loss(code, data):
+        return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
+
+    now = datetime.datetime.now()
+    index = -1 if now.minute > 55 or period == 'day' else -2
+
+    if not numpy.isnan(data['stop_loss_signal_exit'][index]):
+        return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
+
+    if numpy.isnan(data[strategy][index]):
         return
+
+    direct = 'B' if 'signal_enter' in strategy else 'S'
+    if 'deviation' in strategy:
+        supplemental = signal.get_osc_key(strategy[: strategy.index('_b')])
+        policy = Policy.DEVIATION
+    else:
+        supplemental = None
+        policy = Policy.DEFAULT
+
+    return TradeSignal(code, price, data_index_, direct, policy, period, True, supplemental)
+
+
+def check_period(code, period):
     logger.debug('now check {} {} status'.format(code, period))
-    trade_signal = update_status(code, data, period)
+    strategy = TradeSignalManager.get_strategy(code)
+    if strategy:
+        data = get_min_data(code, period)
+        if not isinstance(data, pandas.DataFrame) or data.empty:
+            return
+        data = signal.compute_one_signal(data, period, strategy)
+        trade_signal = update_status_by_strategy(code, data, period, strategy)
+    else:
+        file = signal.get_cache_file(code, period)
+        if file:
+            data = signal.load(file)
+        else:
+            data = get_min_data(code, period)
+            if not isinstance(data, pandas.DataFrame) or data.empty:
+                return
+            data = signal.compute_signal(code, period, data)
+        trade_signal = update_status_by_all_signal(code, data, period)
+
     if trade_signal:
         return trade_signal
 
@@ -259,6 +306,8 @@ def order(trade_singal: TradeSignal):
     from server import config as svr_config
     account_id = svr_config.ACCOUNT_ID_XY
     op_type = svr_config.OP_TYPE_DBP
+
+    return
 
     if trade_singal.command == 'B':
         trade_manager.buy(account_id, op_type, trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period, policy=trade_singal.policy)
@@ -301,7 +350,7 @@ def monitor_today():
         begin2 = datetime.datetime(now.year, now.month, now.day, 13, 0, 0)
         end2 = datetime.datetime(now.year, now.month, now.day, 15, 0, 0)
 
-        if not dt.istradeday() or now < begin1 or (end1 < now < begin2) or now > end2:
+        if (now < begin1) or (end1 < now < begin2) or (now > end2):
             time.sleep(60)
             continue
 
@@ -342,13 +391,13 @@ def monitor_today():
                                              trade_signal.period, trade_signal.price)
 
             logger.info(TradeSignalManager.signal_map)
-            p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period, trade_signal.supplemental))
-            p.start()
+            # p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period, trade_signal.supplemental))
+            # p.start()
 
             order(trade_signal)
             notify(trade_signal)
 
-            p.join(timeout=1)
+            # p.join(timeout=1)
 
         time.sleep(60)
 

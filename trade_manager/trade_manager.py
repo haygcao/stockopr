@@ -418,7 +418,7 @@ def compute_stop_profit(quote):
     return stop_profit
 
 
-def create_trade_order(account_id, code, price_limited=0):
+def create_trade_order(account_id, code, price_limited, strategy):
     """
     单个股持仓交易风险率 <= 1%
     总持仓风险率 <= 6%
@@ -456,11 +456,12 @@ def create_trade_order(account_id, code, price_limited=0):
         return
 
     val = [datetime.date.today(), code, position * price, position, price, stop_loss, stop_profit,
-           (position * price) / total_money, profitability_ratios, 'TO']
+           (position * price) / total_money, profitability_ratios, strategy, 'TO']
 
     val = tuple(val)
 
-    keys = ['date', 'code', 'capital_quota', '`position`', 'open_price', 'stop_loss', 'stop_profit', 'risk_rate', 'profitability_ratios', 'status']
+    keys = ['date', 'code', 'capital_quota', '`position`', 'open_price', 'stop_loss',
+            'stop_profit', 'risk_rate', 'profitability_ratios', 'strategy', 'status']
 
     key = ', '.join(keys)
     fmt_list = ['%s' for i in keys]

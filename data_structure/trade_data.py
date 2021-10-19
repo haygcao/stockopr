@@ -128,8 +128,10 @@ class TradeOrder(TradeData):
     stop_profit = 0
     risk_rate = 0
     profitability_ratios = 0
+    strategy = ''
+    in_position = False
 
-    def __init__(self, date, code, position, open_price, stop_loss, stop_profit):
+    def __init__(self, date, code, position, open_price, stop_loss, stop_profit, strategy, in_position):
         self.date = date
         self.code = code
         self.position = position
@@ -138,6 +140,8 @@ class TradeOrder(TradeData):
         self.stop_profit = stop_profit
         self.risk_rate = (open_price - stop_loss) / open_price
         self.profitability_ratios = (stop_profit - open_price) / (open_price - stop_loss)
+        self.strategy = strategy
+        self.in_position = in_position
 
 
 @dataclass

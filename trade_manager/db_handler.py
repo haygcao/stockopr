@@ -55,7 +55,8 @@ def save_money(account_id, money: trade_data.Asset, sync=False):
 
 
 def new_position(d):
-    return trade_data.Position(d['code'], d['total'], d['avail'], d['cost_price'], d['price'], d['total_profit'])
+    return trade_data.Position(d['code'], float(d['total']), float(d['avail']),
+                               float(d['cost_price']), float(d['price']), float(d['total_profit']))
 
 
 def query_position(account_id, code):
@@ -194,7 +195,7 @@ def update_trade_order_status(account_id, date, code, status):
 
 def query_trade_order_map(account_id, code=None, status='ING'):
     with mysqlcli.get_cursor() as c:
-        sql = "SELECT date, code, position, open_price, stop_loss, stop_profit FROM {0} " \
+        sql = "SELECT date, code, position, open_price, stop_loss, stop_profit, strategy FROM {0} " \
               "where account_id = %s and status = '{1}'".format(config.sql_tab_trade_order, status)
         if code:
             sql += " and code = {}".format(code)
@@ -203,7 +204,9 @@ def query_trade_order_map(account_id, code=None, status='ING'):
         ret = c.fetchall()
         order_map = {}
         for row in ret:
-            trade_order = trade_data.TradeOrder(row['date'], row['code'], int(row['position']), float(row['open_price']), float(row['stop_loss']), float(row['stop_profit']))
+            trade_order = trade_data.TradeOrder(
+                row['date'], row['code'], int(row['position']), float(row['open_price']), float(row['stop_loss']),
+                float(row['stop_profit']), row['strategy'], status == 'ING')
             order_map.update({row['code']: trade_order})
 
         return order_map

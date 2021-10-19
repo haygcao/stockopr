@@ -205,6 +205,20 @@ def clean_signal(quote_copy, negative, positive):
         j += 1
 
 
+def compute_one_signal(quote, period, s):
+    if s not in signal_func:
+        return quote
+    if s in signal_cond.signal_cond_column:
+        return quote
+    if s == 'stop_loss_signal_exit':
+        return quote
+    if 'market_deviation' in s or 'breakout' in s:
+        column = s[:s.index('_signal')]
+        quote = signal_func[s](quote, period=period, column=column)
+        return quote
+    return signal_func[s](quote, period=period)
+
+
 def compute_signal(code, period, quote, supplemental_signal_path=None):
     file = get_cache_file(code, period)
     compute = True
@@ -234,17 +248,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         # 计算所有信号, 缓存以加速回测分析
         signal_all_list = config.get_all_signal(period)
         for s in signal_all_list:
-            if s not in signal_func:
-                continue
-            if s in signal_cond.signal_cond_column:
-                continue
-            if s == 'stop_loss_signal_exit':
-                continue
-            if 'market_deviation' in s or 'breakout' in s:
-                column = s[:s.index('_signal')]
-                quote = signal_func[s](quote, period=period, column=column)
-                continue
-            quote = signal_func[s](quote, period=period)
+            compute_one_signal(quote, period, s)
 
         # 信号 mask
         quote = mask.compute_enter_mask(quote, period)

@@ -729,7 +729,15 @@ class Panel(QWidget):
 
     def new_trade_order(self):
         account_id = svr_config.ACCOUNT_ID_XY
-        trade_manager.create_trade_order(account_id, self.code, price_limited=self.count_or_price[0])
+        strategys = self.combo_strategy.get_selected()
+        if len(strategys) > 1:
+            qt_util.popup_info_message_box_mp('more than one strategy[{}] selected'.format(strategys))
+            return
+        if not strategys:
+            qt_util.popup_info_message_box_mp('must select one and only one strategy')
+            return
+        strategy = '{}_signal_enter'.format(strategys[0])
+        trade_manager.create_trade_order(account_id, self.code, self.count_or_price[0], strategy)
 
     def refresh_log(self):
         lines = util.read_last_lines('log/run.log')

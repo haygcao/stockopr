@@ -90,7 +90,7 @@ class TradeManagerTestCase(unittest.TestCase):
     def test_create_trade_order(self):
         account_id = svr_config.ACCOUNT_ID_XY
         code = '300502'
-        trade_manager.create_trade_order(account_id, code)
+        trade_manager.create_trade_order(account_id, code, 0, 'magic_line_breakout')
 
     def test_patrol(self):
         trade_manager.patrol()

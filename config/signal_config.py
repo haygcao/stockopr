@@ -17,7 +17,9 @@ signal_func = {
     "resistance_breakout_signal_enter": signal_breakout.signal_enter,
     "step_breakout_signal_enter": signal_breakout.signal_enter,
     "strong_base_breakout_signal_enter": signal_breakout.signal_enter,
+    "blt_breakout_signal_enter": signal_breakout.signal_enter,
     "vcp_breakout_signal_enter": signal_breakout.signal_enter,
+    "magic_line_breakout_signal_enter": signal_breakout.signal_enter,
 
     "volume_ad_signal_enter": signal_volume_ad.signal_enter,
     "weak_bull_signal_enter": signal_weak.signal_enter,
