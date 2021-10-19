@@ -29,10 +29,10 @@ class DigitalClock(QLCDNumber):
 
     def __init_view(self):
         palette = QPalette()
-        palette.setColor(QPalette.Window, Qt.lightGray)
+        palette.setColor(QPalette.Window, Qt.black)  # Qt.lightGray)
         self.setPalette(palette)
         self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setWindowOpacity(0.4)
+        self.setWindowOpacity(0.5)
         self.resize(200, 60)
         self.setNumDigits(8)
         self.show_time()
@@ -71,9 +71,9 @@ class DigitalClock(QLCDNumber):
 
         widget = self.geometry()
 
-        x = ag.width() - widget.width() - 30
+        x = ag.width() - widget.width() - 0
         y = 2 * ag.height() - sg.height() - widget.height() - 10
-        y = 50
+        y = 0
 
         self.move(x, y)
 
