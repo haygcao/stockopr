@@ -54,6 +54,9 @@ def query_position(account_id, code):
     还可以买的股数
     """
     position = db_handler.query_position(account_id, code)
+    if not position:
+        return
+
     compute_unsync(position)
 
     return position
@@ -256,7 +259,7 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
-    position_quota = trade_manager.db_handler.query_quota_position(code)
+    position_quota = trade_manager.db_handler.query_quota_position(account_id, code)
     if not position_quota:
         popup_warning_message_box_mp('请先创建交易指令单, 请务必遵守规则!')
         return
@@ -268,7 +271,7 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
             popup_warning_message_box_mp(error.value)
             return
 
-    position = query_position(code)
+    position = query_position(account_id, code)
     current_position = position.current_position if position else 0
 
     avail_position = position_quota - current_position
@@ -303,7 +306,7 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
-    position = query_position(code)
+    position = query_position(account_id, code)
     if not position:
         return
     quote = tx.get_kline_data(code)

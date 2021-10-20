@@ -68,6 +68,8 @@ def query_position(account_id, code):
             r = c.fetchone()
         except Exception as e:
             print(e)
+    if not r:
+        return
 
     position = new_position(r)
 

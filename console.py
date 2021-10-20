@@ -145,6 +145,8 @@ class Panel(QWidget):
             'exit_deviation': QComboCheckBox()
         }
 
+        self.account_id = svr_config.ACCOUNT_ID_XY
+        self.op_type = svr_config.OP_TYPE_DBP
         self.code = 'maq'
         self.period = 'day'
         self.indicator = g_indicators[0]
@@ -539,8 +541,7 @@ class Panel(QWidget):
             position_list = trade_manager.db_handler.query_current_position()
             code_list.extend([position.code for position in position_list])
 
-            account_id = svr_config.ACCOUNT_ID_XY
-            code_name_map = trade_manager.db_handler.query_trade_order_map(account_id)
+            code_name_map = trade_manager.db_handler.query_trade_order_map(self.account_id)
             code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
             code_list_tmp.sort()
             code_list.extend(code_list_tmp)
@@ -708,7 +709,7 @@ class Panel(QWidget):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'B', self.period, 0)
         quote = tx.get_realtime_data_sina(self.code)
-        trade_manager.buy(self.code,
+        trade_manager.buy(self.account_id, self.op_type, self.code,
                           price_trade=quote['close'][-1],
                           count=int(self.count_or_price[1]),
                           period=self.period,
@@ -719,16 +720,13 @@ class Panel(QWidget):
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, 0)
         quote = tx.get_realtime_data_sina(self.code)
 
-        account_id = svr_config.ACCOUNT_ID_XY
-        op_type = svr_config.OP_TYPE_DBP
-        trade_manager.sell(account_id, op_type, self.code,
+        trade_manager.sell(self.account_id, self.op_type, self.code,
                            price_trade=quote['close'][-1],
                            count=int(self.count_or_price[1]),
                            period=self.period,
                            auto=True)
 
     def new_trade_order(self):
-        account_id = svr_config.ACCOUNT_ID_XY
         strategys = self.combo_strategy.get_selected()
         if len(strategys) > 1:
             qt_util.popup_info_message_box_mp('more than one strategy[{}] selected'.format(strategys))
@@ -737,7 +735,7 @@ class Panel(QWidget):
             qt_util.popup_info_message_box_mp('must select one and only one strategy')
             return
         strategy = '{}_signal_enter'.format(strategys[0])
-        trade_manager.create_trade_order(account_id, self.code, self.count_or_price[0], strategy)
+        trade_manager.create_trade_order(self.account_id, self.code, self.count_or_price[0], strategy)
 
     def refresh_log(self):
         lines = util.read_last_lines('log/run.log')
@@ -755,9 +753,7 @@ class Panel(QWidget):
             # self.log.setTextCursor(cursor)  # 滚动到游标位置
 
     def check(self):
-        account_id = svr_config.ACCOUNT_ID_XY
-
-        latest_sync_date = trade_manager.db_handler.query_money(account_id).date
+        latest_sync_date = trade_manager.db_handler.query_money(self.account_id).date
         logger.info('account: {}'.format(latest_sync_date))
 
         trade_date = dt.get_trade_date()
@@ -776,7 +772,7 @@ class Panel(QWidget):
             if now - update_time > datetime.timedelta(seconds=60):
                 if not account_updated and not dt.istradetime():
                     self.btn_sync.setStyleSheet("color : red")
-                    latest_sync_date = trade_manager.db_handler.query_money(account_id).date
+                    latest_sync_date = trade_manager.db_handler.query_money(self.account_id).date
                     account_updated = latest_sync_date == trade_date
                 else:
                     self.btn_sync.setStyleSheet("color : black")
@@ -790,7 +786,7 @@ class Panel(QWidget):
                 else:
                     self.btn_update_quote.setStyleSheet("color : black")
 
-                asset = trade_manager.db_handler.query_money(account_id)
+                asset = trade_manager.db_handler.query_money(self.account_id)
                 self.lbl_account.setText('{}%'.format(asset.position_percent))
                 if asset.position_percent > 80:
                     self.lbl_account.setStyleSheet("background-color : red")
