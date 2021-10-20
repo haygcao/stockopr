@@ -1,9 +1,9 @@
 from indicator.decorator import computed
 
 
-@computed(column_name='ema13')
+@computed(column_name='ema26')
 def compute_ema(quote):
-    quote['ema13'] = quote['close'].ewm(span=13, adjust=False).mean()
+    quote['ema12'] = quote['close'].ewm(span=12, adjust=False).mean()
     quote['ema26'] = quote['close'].ewm(span=26, adjust=False).mean()
 
     return quote

@@ -11,21 +11,22 @@ mask_trend_up = [
     'mask_dyn_sys_long_period',
     'mask_dyn_sys',
     'mask_slow_ma_ins',
-    'mask_diff_fma_sma_ins',
+    'mask_macd_line_positive',
+    # 'mask_macd_signal_ins',
     'mask_ad',
     'mask_rps',
     'mask_second_stage'
 ]
 
 signal_mask_column = {
-    "default_signal_enter": ['mask_slow_ma_ins', 'mask_diff_fma_sma_positive'],
+    "default_signal_enter": ['mask_slow_ma_ins', 'mask_macd_line_positive'],
     "macd_signal_enter": [],
     "force_index_signal_enter": mask_trend_up + ['mask_dmi'],
     "volume_ad_signal_enter": mask_trend_up + ['mask_dmi'],
     "dynamical_system_signal_enter": mask_trend_up,
     "channel_signal_enter": [],
     "resistance_support_signal_enter": ['mask_resistance'] + mask_trend_up + ['mask_second_stage'],
-    "value_return_signal_enter": ['mask_slow_ma_ins', 'mask_diff_fma_sma_positive', 'mask_dmi'] + ['mask_value_return'],
+    "value_return_signal_enter": ['mask_slow_ma_ins', 'mask_macd_line_positive', 'mask_dmi'] + ['mask_value_return'],
 
     "blt_signal_enter": mask_trend_up + ['mask_dmi'],
     "vcp_signal_enter": mask_trend_up,

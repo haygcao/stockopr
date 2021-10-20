@@ -12,7 +12,7 @@ from config import config, signal_cond
 from config.signal_config import signal_func
 from config.signal_mask import signal_mask_column
 from config.signal_pair import signal_pair_column
-from indicator import dynamical_system, second_stage, ma, macd, dmi
+from indicator import dynamical_system, second_stage, ma, macd, dmi, ema
 from pointor import mask
 from util import util
 
@@ -235,6 +235,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
         # 基础指标 - 均线
         # MA5, MA10, MA20, MA30, MA60, MA120, MA150, MA200, MA12, MA26, MA50, MA100
         quote = ma.compute_ma(quote)
+        quote = ema.compute_ema(quote)
 
         quote = macd.compute_macd(quote)
         quote = dmi.compute_dmi(quote, period)

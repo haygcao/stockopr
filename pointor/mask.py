@@ -24,7 +24,7 @@ def compute_enter_mask(quote, period):
     quote = quote.assign(mask_dyn_sys=(quote['dyn_sys'] < 0))
 
     # 长周期 ema26 向上, 且 close > 长周期 ema26
-    ema = quote.close.ewm(span=26).mean()
+    ema = quote['ema26']
     ema_shift = ema.shift(periods=1)
     ema_shift2 = ema.shift(periods=2)
     # 在交易信号出发当天, ema可能上涨, 所以, 检测前一日ema向上是必要的
@@ -33,14 +33,12 @@ def compute_enter_mask(quote, period):
     quote = quote.assign(mask_slow_ma_ins=mask)  # | (quote.close <= ema)
 
     # (快均线 - 慢均线) 值增大
-    ema_fast = quote.close.ewm(span=12).mean()
-    macd_line = ema_fast - ema
-    macd_line_shift = macd_line.shift(periods=1)
-    # quote.loc[:]['mask_diff_fma_sma_ins'] = (macd_line <= macd_line_shift)
-    quote = quote.assign(mask_diff_fma_sma_ins=(macd_line <= macd_line_shift))
+    macd_signal = quote['macd_signal']
+    macd_signal_shift = macd_signal.shift(periods=1)
+    quote = quote.assign(mask_macd_signal_ins=(macd_signal <= macd_signal_shift))
 
     # (快均线 - 慢均线) 值 > 0
-    quote = quote.assign(mask_diff_fma_sma_positive=(macd_line < 0))
+    quote = quote.assign(mask_macd_line_positive=(quote['macd_line'] < 0))
 
     # value_return
     quote = quote.assign(mask_value_return=(~quote.value_return.isin(config.value_return_mas)))

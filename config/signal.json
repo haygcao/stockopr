@@ -30,6 +30,7 @@
   },
   "signal_exit": {
     "default_signal_exit": true,
+    "macd_signal_exit": true,
     "force_index_signal_exit": true,
     "volume_ad_signal_exit": true,
     "dynamical_system_signal_exit": true,

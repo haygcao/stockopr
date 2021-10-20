@@ -24,7 +24,7 @@ def dynamical_system(quote, n=13):
         return quote
 
     quote = ema.compute_ema(quote)
-    ema13 = quote['ema13']
+    ema13 = quote['ema12']
     # ema26 = ema(quote['close'], 26)
 
     # print(ema13.iloc[-1])
