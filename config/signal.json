@@ -17,6 +17,7 @@
     "step_breakout_signal_enter": true,
     "strong_base_breakout_signal_enter": true,
     "vcp_breakout_signal_enter": true,
+    "magic_line_breakout_signal_enter": true,
 
     "weak_bull_signal_enter": true,
     "macd_bull_market_deviation_signal_enter": true,

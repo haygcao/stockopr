@@ -9,6 +9,8 @@ from acquisition import quote_db
 from indicator.ema import ema
 
 # 成交量缩小 50%
+from pointor import signal_breakout
+
 g_vol_times = 2
 g_up_percent = 40
 g_current_close_vs_prev_high_percent = 1.1
@@ -55,7 +57,7 @@ def magic_line_one_day(vol, vol_ema_s, vol_ema_m, vol_ema_l, quote, ema_current,
     return True
 
 
-def magic_line(quote, period, back_days=5):
+def magic_line_old(quote, period, back_days=5):
     # 重采样为 周数据
     quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
 
@@ -83,3 +85,8 @@ def magic_line(quote, period, back_days=5):
                 return True
 
     return False
+
+
+def magic_line(quote, period, back_days=5):
+    quote = signal_breakout.magic_line_breakout_signal_enter(quote, period)
+    return numpy.any(quote['magic_line_breakout_signal_enter'][-back_days:])

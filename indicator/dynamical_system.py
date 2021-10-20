@@ -104,9 +104,8 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     quote = dynamical_system(quote)
     # print(quote[-50:])
 
-    dyn_sys_long_period_copy = dyn_sys_long_period.copy()
     quote_copy = quote.copy()
-    quote_copy.loc[:, 'dyn_sys_long_period'] = dyn_sys_long_period_copy['dyn_sys'].loc[:]
+    quote_copy.loc[:, 'dyn_sys_long_period'] = dyn_sys_long_period
     quote_copy.loc[:, 'dyn_sys'] = quote['dyn_sys']
 
     if numpy.isnan(quote_copy['dyn_sys_long_period'][-1]):

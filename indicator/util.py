@@ -40,4 +40,4 @@ def resample_long_to_short(quote_week, quote, long, short_period, column='dyn_sy
         quote_short_period.loc[last_row_index:, column] = quote_short_period.loc[last_row_index][column]
 
     quote_short_period = quote_short_period[quote_short_period.index.isin(quote.index)]
-    return quote_short_period
+    return quote_short_period[column]

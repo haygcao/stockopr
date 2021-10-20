@@ -2,7 +2,7 @@
 import numpy
 import pandas
 
-from indicator import step, strong_base, resistance_support, asi, vcp, blt
+from indicator import step, strong_base, resistance_support, asi, vcp, blt, magic_line
 from indicator.decorator import computed
 
 
@@ -136,9 +136,17 @@ def vcp_breakout_signal_enter(quote, period):
 
 @computed(column_name='magic_line_breakout_signal_enter')
 def magic_line_breakout_signal_enter(quote, period):
-    quote = vcp.vcp(quote, period)
+    quote = magic_line.magic_line(quote, period)
     mask = quote['magic_line'].notna()
-    values = compute_breakout(quote, period, mask)
+
+    mask_base = mask.rolling(10, min_periods=1).max().astype(bool)
+
+    ma50 = quote.close.rolling(50).mean()
+    mask = (quote.close.shift(periods=1) < ma50) & (quote.close > ma50)
+    mask &= mask_base
+
+    values = pandas.Series(numpy.nan, index=quote.index)
+    values = values.mask(mask, quote.low[mask])
 
     quote_copy = quote
     quote_copy.insert(len(quote_copy.columns), 'magic_line_breakout_signal_enter', values)
