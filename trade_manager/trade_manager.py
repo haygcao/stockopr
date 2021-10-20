@@ -308,12 +308,21 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
     """
     position = query_position(account_id, code)
     if not position:
+        popup_warning_message_box_mp('没有 [{}] 持仓!'.format(code))
         return
     quote = tx.get_kline_data(code)
     if period == 'day' and (not policy or (policy != Policy.DEVIATION and policy != Policy.CHANNEL)):
         quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
         if quote['dyn_sys'].iloc[-1] >= 0 and quote['dyn_sys_long_period'].iloc[-1] >= 0:
             popup_warning_message_box_mp('动力系统不为红色, 禁止清仓, 请务必遵守规则!')
+            return
+
+        ema12 = quote['close'].ewm(span=12, adjust=False).mean()
+        ema26 = quote['close'].ewm(span=26, adjust=False).mean()
+        macd_line = ema12 - ema26
+        macd_signal = macd_line.ewm(span=9, adjust=False).mean()
+        if macd_line[-1] > macd_line[-2] and macd_line[-1] > 0 and macd_signal[-1] > macd_signal[-2]:
+            popup_warning_message_box_mp('MACD LINE [> 0] 且 [向上], MACD SIGNAL [向上], 禁止清仓, 请务必遵守规则!')
             return
 
     current_position = position.current_position

@@ -157,6 +157,9 @@ class Panel(QWidget):
         self.count_or_price = [0, 0]   # [price, count]
         self.log_lines = []
 
+        QShortcut(QKeySequence(self.tr("F1")), self, self.buy)
+        QShortcut(QKeySequence(self.tr("F2")), self, self.sell)
+
         self.sig_keyhot.connect(self.MKey_pressEvent)
 
         self.hk_tdx_l = system_hotkey.SystemHotkey()
@@ -173,7 +176,8 @@ class Panel(QWidget):
         # self.hk_show_r.register(('shift', 'l'), callback=lambda x: self.show_chart(1))
         # self.hk_show.register(('shift', 'k'), callback=lambda x: self.show_chart(0))
 
-        self.qle_count_or_price = QLineEdit('price|count', self)
+        self.qle_price = QLineEdit('price', self)
+        self.qle_count = QLineEdit('count', self)
 
         self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)), self)
         self.combo_code = QComboBox(self)
@@ -305,7 +309,8 @@ class Panel(QWidget):
         self.btn_update_traced.clicked.connect(self.update_traced)
         self.btn_scan.clicked.connect(self.scan)
 
-        self.qle_count_or_price.textChanged[str].connect(self.on_count_or_price_changed)
+        self.qle_price.textChanged[str].connect(self.on_count_or_price_changed)
+        self.qle_count.textChanged[str].connect(self.on_count_or_price_changed)
 
         self.btn_buy.clicked.connect(self.buy)
         self.btn_sell.clicked.connect(self.sell)
@@ -350,7 +355,10 @@ class Panel(QWidget):
         grid.addLayout(h_layout_analyse, 2, 4)
 
         grid.addWidget(self.qle_code, 3, 0)
-        grid.addWidget(self.qle_count_or_price, 3, 1)
+        h_layout_price_count = QHBoxLayout()
+        h_layout_price_count.addWidget(self.qle_price)
+        h_layout_price_count.addWidget(self.qle_count)
+        grid.addLayout(h_layout_price_count, 3, 1)
 
         h_layout_order = QHBoxLayout()
         h_layout_order.addWidget(self.btn_buy)
@@ -438,10 +446,13 @@ class Panel(QWidget):
             return
 
         self.count_or_price[0] = quote['close'][-1]
-        self.qle_count_or_price.setText(list_to_str(self.count_or_price))
+        self.qle_price.setText(list_to_str(self.count_or_price))
 
     def on_count_or_price_changed(self, text):
-        self.count_or_price = text.split('|')
+        if self.sender() == self.qle_price:
+            self.count_or_price[0] = int(text)
+        else:
+            self.count_or_price[1] = int(text)
         self.set_label()
 
     def on_activated_code(self, text):
@@ -453,7 +464,7 @@ class Panel(QWidget):
 
         self.set_label()
 
-        self.qle_count_or_price.setText(list_to_str(self.count_or_price))
+        self.qle_price.setText(list_to_str(self.count_or_price))
 
     def on_activated_signal(self, text):
         combo: QComboCheckBox = self.sender()
@@ -709,8 +720,13 @@ class Panel(QWidget):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'B', self.period, 0)
         quote = tx.get_realtime_data_sina(self.code)
+        if not isinstance(quote, pandas.DataFrame) or quote.empty:
+            qt_util.popup_warning_message_box_mp('获取行情数据失败 [{}]'.format(self.code))
+            return
+
         trade_manager.buy(self.account_id, self.op_type, self.code,
                           price_trade=quote['close'][-1],
+                          price_limited=int(self.count_or_price[0]),
                           count=int(self.count_or_price[1]),
                           period=self.period,
                           auto=True)
@@ -719,9 +735,13 @@ class Panel(QWidget):
         supplemental_signal_path = config.supplemental_signal_path
         write_supplemental_signal(supplemental_signal_path, self.code, datetime.datetime.now(), 'S', self.period, 0)
         quote = tx.get_realtime_data_sina(self.code)
+        if not isinstance(quote, pandas.DataFrame) or quote.empty:
+            qt_util.popup_warning_message_box_mp('获取行情数据失败 [{}]'.format(self.code))
+            return
 
         trade_manager.sell(self.account_id, self.op_type, self.code,
                            price_trade=quote['close'][-1],
+                           price_limited=int(self.count_or_price[0]),
                            count=int(self.count_or_price[1]),
                            period=self.period,
                            auto=True)
