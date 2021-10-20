@@ -4,7 +4,7 @@ import numpy
 
 from acquisition import quote_db
 from config.config import period_map
-from indicator import ema, macd
+from indicator import ema, macd, util
 from indicator.decorator import computed
 
 
@@ -87,7 +87,6 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     if not period:
         period = compute_period(quote)
     period_type = period_map[period]['long_period']
-    period_type_reverse = period_map[period]['period']
 
     # 长周期动力系统
     quote_week = quote_db.get_price_info_df_db_week(quote, period_type)
@@ -98,29 +97,10 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     # quote_week.rename(columns={'dyn_sys': 'dyn_sys_long_period'}, inplace=True)
     # quote_week.drop(['open', 'close'], axis=1, inplace=True)
     # quote_week = quote_week[['dyn_sys']]
-    dyn_sys_long_period = quote_week.resample(period_type_reverse).last()
-    dyn_sys_long_period['dyn_sys'] = quote_week['dyn_sys'].resample(period_type_reverse).pad()
-    # print(dyn_sys_long_period[-50:])
 
-    # 补齐最后一天的数据
-    if period in ['m30', 'm5', 'm1']:
-        last_row_index = dyn_sys_long_period.index[-1]
-        pd_loss = quote[last_row_index:]
-        dyn_sys_long_period = dyn_sys_long_period.append(pd_loss, )
+    dyn_sys_long_period = util.resample_long_to_short(quote_week, quote, 'week', period, column='dyn_sys')
 
-        # dyn_sys_long_period = dyn_sys_long_period.unique()
-        # indexs = dyn_sys_long_period.index.drop_duplicates()
-        # dyn_sys_long_period = dyn_sys_long_period[dyn_sys_long_period.index.isin(indexs)]
-        # https://stackoverflow.com/questions/22918212/fastest-way-to-drop-duplicated-index-in-a-pandas-dataframe
-        # dyn_sys_long_period = dyn_sys_long_period.groupby(dyn_sys_long_period.index).first()
-        dyn_sys_long_period = dyn_sys_long_period[~dyn_sys_long_period.index.duplicated(keep='first')]
-
-        last_dyn_sys = dyn_sys_long_period.loc[last_row_index]['dyn_sys']
-        dyn_sys_long_period.loc[last_row_index:, 'dyn_sys'] = last_dyn_sys
-
-    dyn_sys_long_period = dyn_sys_long_period[dyn_sys_long_period.index.isin(quote.index)]
-
-     # 中周期动力系统
+    # 中周期动力系统
     quote = dynamical_system(quote)
     # print(quote[-50:])
 
