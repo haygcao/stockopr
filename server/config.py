@@ -27,6 +27,11 @@ pos_detail_cre = (30, 275)  # 对账单
 pos_order_cre = (30, 497)
 pos_refresh_cre = (161, 32)
 
+# 对账单
+pos_dzd_date_down_arrow = (330, 85)
+pos_dzd_date_left_up_grid = (153, 142)
+pos_dzd_date_confirm = (480, 85)
+
 pos_pt = (10, 680)   # 普通
 pos_xy = (130, 680)  # 信用
 pos_dbp = (32, 73)

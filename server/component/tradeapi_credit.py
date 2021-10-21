@@ -312,6 +312,10 @@ def get_operation_detail(code_in=None):
     # pywinauto.mouse.release(coords=pos_detail)
     # time.sleep(0.2)
     # refresh()
+    # 选择开始日期
+    pywinauto.mouse.click(coords=config.pos_dzd_date_down_arrow)
+    pywinauto.mouse.click(coords=config.pos_dzd_date_left_up_grid)
+    pywinauto.mouse.click(coords=config.pos_dzd_date_confirm)
 
     helper.copy_to_clipboard()
 
