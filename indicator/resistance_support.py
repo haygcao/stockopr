@@ -21,8 +21,9 @@ def compute_index_resistance_impl(quote, period, column_hl, column_close, column
         mask_nan = quote_copy[column_signal].isna()
         resistance_support_signal_enter_origin = pandas.Series(numpy.nan, index=quote.index)
         mask1 = quote_copy[column_close] > resistance
+        percent = config.period_price_diff_ratio_resistance_support_map[period]
         # percent = 0 if 'asi' in column_signal else config.period_price_diff_ratio_resistance_support_map[period]
-        percent = 0
+        # percent = 0
         mask2 = quote_copy[column_close] / resistance - 1 > percent
         resistance_support_signal_enter_origin = resistance_support_signal_enter_origin.mask(mask1 & mask2, day)
 
