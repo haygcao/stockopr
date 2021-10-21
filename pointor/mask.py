@@ -108,7 +108,10 @@ def compute_enter_mask(quote, period):
     return quote
 
 
-def mask_signal(quote, column, column_mask):
+def mask_signal(quote, period, column, column_mask):
+    if '|' in column_mask and column_mask.split('|')[0] != period:
+        return quote
+
     mask = quote[column_mask]
     try:
         quote.loc[:, column] = quote[column].mask(mask, numpy.nan)

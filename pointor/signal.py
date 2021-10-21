@@ -154,7 +154,7 @@ def merge_singal(quote_copy, period, header, direct, column):
     write_signal_log(direct, code, period, column, n, data, header)
 
     for column_mask in signal_mask_column.get(column, []):
-        quote_copy = mask.mask_signal(quote_copy, column, column_mask)
+        quote_copy = mask.mask_signal(quote_copy, period, column, column_mask)
 
     for column_pair in signal_pair_column.get(column, []):
         pass
