@@ -4,6 +4,7 @@ from pointor import signal_dynamical_system, signal_channel, signal_force_index,
 
 signal_func = {
     "default_signal_enter": signal_default.signal_enter,
+    "macd_signal_enter": signal_macd.signal_enter,
     "dynamical_system_signal_enter": signal_dynamical_system.signal_enter,
     "channel_signal_enter": signal_channel.signal_enter,
     "force_index_signal_enter": signal_force_index.signal_enter,

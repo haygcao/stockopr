@@ -1,5 +1,6 @@
 {
   "signal_enter": {
+    "macd_signal_enter": true,
     "force_index_signal_enter": true,
     "volume_ad_signal_enter": true,
     "dynamical_system_signal_enter": true,
@@ -31,7 +32,7 @@
   },
   "signal_exit": {
     "macd_signal_exit": true,
-    "force_index_signal_exit": true,
+    "force_index_signal_exit": false,
     "volume_ad_signal_exit": true,
     "dynamical_system_signal_exit": true,
     "channel_signal_exit": true,
@@ -51,8 +52,8 @@
 
     "nday_signal_exit": false,
     "stop_loss_signal_exit": false,
-    "mask_signal_exit": true,
+    "mask_signal_exit": false,
 
-    "default_signal_exit": true
+    "default_signal_exit": false
   }
 }
