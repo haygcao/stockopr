@@ -1,6 +1,5 @@
 {
   "signal_enter": {
-    "default_signal_enter": false,
     "force_index_signal_enter": true,
     "volume_ad_signal_enter": true,
     "dynamical_system_signal_enter": true,
@@ -26,10 +25,11 @@
     "force_index_bull_market_deviation_signal_enter": true,
     "volume_ad_bull_market_deviation_signal_enter": true,
     "skdj_bull_market_deviation_signal_enter": true,
-    "rsi_bull_market_deviation_signal_enter": true
+    "rsi_bull_market_deviation_signal_enter": true,
+
+    "default_signal_enter": false
   },
   "signal_exit": {
-    "default_signal_exit": true,
     "macd_signal_exit": true,
     "force_index_signal_exit": true,
     "volume_ad_signal_exit": true,
@@ -51,6 +51,8 @@
 
     "nday_signal_exit": false,
     "stop_loss_signal_exit": false,
-    "mask_signal_exit": true
+    "mask_signal_exit": true,
+
+    "default_signal_exit": true
   }
 }

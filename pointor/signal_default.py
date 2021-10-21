@@ -18,6 +18,10 @@ def signal_enter(quote, period):
     cond = (i > 100) & (i_shift < 100)
     # cond |= (i > i_shift) & (close < close_shift)
 
+    mask = quote['cci_bull_market_deviation_signal_enter'].notna()
+    mask_base = mask.rolling(10, min_periods=1).max().astype(bool)
+    cond &= mask_base
+
     # dmi
     quote = dmi.compute_dmi(quote, period)
     mask_di = quote.pdi < quote.mdi
@@ -63,6 +67,10 @@ def signal_exit(quote, period):
     i_shift = i.shift(periods=1)
     cond = (i < -100) & (i_shift > -100)
     # cond |= (i < i_shift) & (close > close_shift)
+
+    mask = quote['cci_bear_market_deviation_signal_exit'].notna()
+    mask_base = mask.rolling(10, min_periods=1).max().astype(bool)
+    cond &= mask_base
 
     # dmi
     quote = dmi.compute_dmi(quote, period)
