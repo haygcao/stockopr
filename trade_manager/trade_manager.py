@@ -95,7 +95,7 @@ def query_operation_detail(account_id, code=None):
 def query_money_in_operation_detail(account_id, code=None, trade_date=None):
     if not trade_date:
         trade_date = datetime.date.today()
-    detail_list = db_handler.query_operation_details(account_id, trade_date)
+    detail_list = db_handler.query_operation_details(account_id, date=trade_date)
 
     money = 0
     for detail in detail_list:
@@ -272,11 +272,16 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
             return
 
     position = query_position(account_id, code)
+    if position.profit_total_percent < 0:
+        popup_warning_message_box_mp('[补仓] - 严禁补仓, 当前亏损[{}%], 请务必遵守规则!'.format(position.profit_total_percent))
+        return
+
     current_position = position.current_position if position else 0
 
     avail_position = position_quota - current_position
     if avail_position < 100:
         popup_warning_message_box_mp('配额已用完, 请务必遵守规则!')
+        avail_position = 0
         return
 
     # quote = tx.get_realtime_data_sina(code)
@@ -296,10 +301,16 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
     if count <= 0:
         count = min(max_position, avail_position)
 
+    used = max(position.market_value, position.cost)
+    if (count * price_trade + used) * 4 > money.origin:
+        popup_warning_message_box_mp('[重仓] - 严禁重仓, 当前仓位[{}%], 请务必遵守规则!'.format(
+            round(100 * used / float(money.origin), 2)))
+        return
+
     order(account_id, op_type, 'B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
     position = position if position else trade_data.Position(code, count, 0)
-    db_handler.save_positions([position])
+    db_handler.save_positions(account_id, [position])
 
 
 def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=False):

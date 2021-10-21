@@ -147,6 +147,7 @@ def query_operation_details(account_id, code=None, date: datetime.date = None):
             r = c.fetchall()
         except Exception as e:
             print(e)
+            return []
 
     details = []
     for row in r:

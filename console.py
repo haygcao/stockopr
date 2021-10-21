@@ -252,6 +252,7 @@ class Panel(QWidget):
 
         for indicator in ['market_index', 'position', 'allow_buy', 'traced', 'candidate', 'reserve']:
             self.combo_classification.addItem(indicator)
+        self.combo_classification.select_index(1)
         self.combo_classification.select_index(2)
 
         for indicator in [
@@ -402,7 +403,7 @@ class Panel(QWidget):
 
         layout.addWidget(self.log)
 
-        # self.load()
+        self.load()
 
         self.setLayout(layout)
 
@@ -446,11 +447,12 @@ class Panel(QWidget):
             return
 
         self.count_or_price[0] = quote['close'][-1]
-        self.qle_price.setText(list_to_str(self.count_or_price))
+        # self.qle_price.setText(list_to_str(self.count_or_price))
+        self.qle_price.setText(str(quote['close'][-1]))
 
     def on_count_or_price_changed(self, text):
         if self.sender() == self.qle_price:
-            self.count_or_price[0] = int(text)
+            self.count_or_price[0] = float(text)
         else:
             self.count_or_price[1] = int(text)
         self.set_label()
@@ -464,7 +466,8 @@ class Panel(QWidget):
 
         self.set_label()
 
-        self.qle_price.setText(list_to_str(self.count_or_price))
+        # self.qle_price.setText(list_to_str(self.count_or_price))
+        self.qle_price.setText(str(quote['close'][-1]))
 
     def on_activated_signal(self, text):
         combo: QComboCheckBox = self.sender()
@@ -549,7 +552,7 @@ class Panel(QWidget):
 
         code_list = []
         if 'position' in classification_list:
-            position_list = trade_manager.db_handler.query_current_position()
+            position_list = trade_manager.db_handler.query_current_position(self.account_id)
             code_list.extend([position.code for position in position_list])
 
             code_name_map = trade_manager.db_handler.query_trade_order_map(self.account_id)
