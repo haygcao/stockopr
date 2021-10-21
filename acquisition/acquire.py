@@ -274,7 +274,7 @@ def save_quote_tx_one_day(trade_day):
 def save_quote_impl(trade_date=None, xls=None):
     try:
         # save_quote_tx(xls)
-        quote_tdx.download_quote()
+        # quote_tdx.download_quote()
         save_quote_xl()
         # save_quote_wy()
     except Exception as e:
@@ -303,8 +303,8 @@ def save_quote():
     save_market_index_trade_info()
     logger.info('save market index quote')
 
-    industry_index.update_index_quote(start_date=today)
-    logger.info('save industry index quote')
+    # industry_index.update_index_quote(start_date=today)
+    # logger.info('save industry index quote')
 
     qt_util.popup_info_message_box_mp('update quote OK')
 
