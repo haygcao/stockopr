@@ -78,8 +78,8 @@ def query_position(account_id, code):
 
 def query_current_position(account_id):
     sql = "select code, total, avail, cost_price, price, total_profit from {} " \
-          "where account_id = %s and `date` = (select max(`date`) from `position`) order by code".format(
-        config.sql_tab_position)
+          "where account_id = %s and total > 0 and `date` = (select max(`date`) from `position`) " \
+          "order by code".format(config.sql_tab_position)
     with mysqlcli.get_cursor() as c:
         try:
             c.execute(sql, (account_id, ))

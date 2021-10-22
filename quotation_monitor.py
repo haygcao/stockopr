@@ -338,10 +338,10 @@ def query_trade_order_code_list():
 def check(code, periods):
     trade_signal = check_trade_signal(code, periods)
     if not trade_signal:
-        return
+        return False
 
     if not TradeSignalManager.need_signal(trade_signal):
-        return
+        return False
 
     supplemental_signal_path = config.supplemental_signal_path
     signal.write_supplemental_signal(supplemental_signal_path, code, trade_signal.date, trade_signal.command,
@@ -356,6 +356,8 @@ def check(code, periods):
 
     # p.join(timeout=1)
 
+    return True
+
 
 def monitor_today():
     now = datetime.datetime.now()
@@ -369,6 +371,7 @@ def monitor_today():
 
     logger.info(TradeSignalManager.signal_map)
 
+    has_signal = True
     while now.hour < 15:
         now = datetime.datetime.now()
         begin1 = datetime.datetime(now.year, now.month, now.day, 9, 30, 0)
@@ -380,8 +383,6 @@ def monitor_today():
             time.sleep(60)
             continue
             # pass
-
-        TradeSignalManager.reload_trade_order()
 
         periods.clear()
         # if now.minute % 5 < 1:
@@ -407,8 +408,13 @@ def monitor_today():
 
         logger.info('quotation monitor is running')
 
+        if has_signal:
+            TradeSignalManager.reload_trade_order()
+            has_signal = False
+
         for code in TradeSignalManager.trade_order_map.keys():
-            check(code, periods)
+            if check(code, periods):
+                has_signal = True
 
         time.sleep(60)
 

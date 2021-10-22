@@ -62,6 +62,9 @@ pos_verify = (458, 372)
 pos_up_arrow = (190, 73)
 pos_down_arrow = (190, 655)
 pos_scroll_middle = (190, 350)
+pos_scroll_left = (186, 350)
+pos_scroll_right = (197, 350)
+pos_boundary_drag_right = (202, 350)
 
 # 弹窗
 popup_text = '可选更新传送 不工作'   # win7 未激活
