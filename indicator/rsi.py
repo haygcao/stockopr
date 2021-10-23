@@ -11,15 +11,20 @@ from indicator.decorator import computed
 
 @computed(column_name='rsi')
 def compute_rsi(quote, period):
-    N = 6
+    quote['rsi'] = rsi(quote.close, 6)
+
+    return quote
+
+
+def rsi(s, n):
+    N = n
     M = 1
-    close = quote.close
-    close_yest = quote.close.shift(periods=1)
+    close = s
+    close_yest = s.shift(periods=1)
 
     a = numpy.maximum(close - close_yest, 0)
     b = (close - close_yest).abs()
 
-    rsi_12 = a.ewm(com=N - M, adjust=True).mean() / b.ewm(com=N - M, adjust=True).mean() * 100
-    quote['rsi'] = rsi_12
+    series_rsi = a.ewm(com=N - M, adjust=True).mean() / b.ewm(com=N - M, adjust=True).mean() * 100
 
-    return quote
+    return series_rsi

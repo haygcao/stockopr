@@ -1,12 +1,12 @@
 import unittest
 
 from acquisition import tx, quote_db
-from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat, cci, boll, rsi, vcp
+from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat, cci, boll, rsi, vcp, crsi
 
 
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
-        code = '688519'
+        code = '002739'
         self.period = 'm30'
         # period = 'day'
         count = 250
@@ -15,6 +15,9 @@ class IndicatorTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_crsi(self):
+        crsi.crsi(self.quote, self.period)
 
     def test_vcp(self):
         quote = vcp.vcp(self.quote, self.period)
