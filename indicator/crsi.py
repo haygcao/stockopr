@@ -81,7 +81,7 @@ def crsi(quote, period):
     n = 100
     norm_rank = pandas.Series(bn.move_rank(quote.close, window=200, min_count=1), index=quote.index)
     denorm = (((norm_rank + 1) / 2) * (n - 1)) + 1
-    descend = (n - denorm) + 1
+    # descend = (n - denorm) + 1
     # series_pct_rank = df.rolling(n).apply(lambda x: get_sort_value(x)/n)
     # series_pct_rank = descend
     series_pct_rank = denorm

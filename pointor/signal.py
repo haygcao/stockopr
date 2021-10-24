@@ -166,7 +166,10 @@ def merge_singal(quote_copy, period, header, direct, column):
     return quote_copy
 
 
-def clean_signal(quote_copy, negative, positive):
+def clean_signal(quote_copy, positive, negative):
+    positive = positive[positive > 0]
+    negative = negative[negative > 0]
+
     i = 0
     j = 0
     while not positive.empty and not negative.empty and i < len(positive) and j < len(negative):
@@ -203,6 +206,11 @@ def clean_signal(quote_copy, negative, positive):
     while j < len(negative):
         negative[j] = numpy.nan
         j += 1
+
+    positive = positive[positive > 0]
+    negative = negative[negative > 0]
+
+    return positive, negative
 
 
 def compute_one_signal(quote, period, s):
@@ -326,13 +334,7 @@ def compute_signal(code, period, quote, supplemental_signal_path=None):
     for i in range(0, len(positive_all)):
         positive_all.iloc[i] = positive_all.iloc[i] if numpy.isnan(negative_all.iloc[i]) else numpy.nan
 
-    positive = positive_all[positive_all > 0]
-    negative = negative_all[negative_all > 0]
-
-    clean_signal(quote_copy, negative, positive)
-
-    positive = positive[positive > 0]
-    negative = negative[negative > 0]
+    positive, negative = clean_signal(quote_copy, positive_all, negative_all)
 
     quote_copy.loc[:, 'signal_enter'] = positive
     quote_copy.loc[:, 'signal_exit'] = negative

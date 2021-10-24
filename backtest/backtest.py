@@ -24,6 +24,7 @@ import numpy
 import pandas
 import tqdm
 
+import strategy
 from util import util
 from selector import util as selector_util
 from acquisition import quote_db
@@ -256,6 +257,7 @@ def _backtest_one(cash, fromdate, todate, code):
     cerebro.adddata(data0)
 
     quote = signal.compute_signal(code, period, quote)
+    # quote = strategy.rsi_powerzones.compute_signal(quote, period)
     quote = quote.loc[fromdate:todate]
     open_position_date = quote.signal_enter.first_valid_index()
     if open_position_date is None:
@@ -263,6 +265,7 @@ def _backtest_one(cash, fromdate, todate, code):
 
     mask_buy = quote.signal_enter.notna()
     mask_sell = quote.signal_exit.notna()
+
     mask_sell = mask_sell.mask(mask_sell.index <= open_position_date, False)
 
     # 半仓
