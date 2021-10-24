@@ -59,7 +59,7 @@ def magic_line_one_day(vol, vol_ema_s, vol_ema_m, vol_ema_l, quote, ema_current,
 
 def magic_line_old(quote, period, back_days=5):
     # 重采样为 周数据
-    quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+    quote = quote_db.resample_quote(quote, period_type='W')
 
     vol_series = quote['volume']
     vol_ema_s = ema(vol_series, n=5)

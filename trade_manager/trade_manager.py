@@ -447,7 +447,7 @@ def create_trade_order(account_id, code, price_limited, strategy):
     总持仓风险率 <= 6%
     """
     quote = tx.get_kline_data(code, 'day')
-    quote_week = quote_db.get_price_info_df_db_week(quote, period_type=config.period_map['day']['long_period'])
+    quote_week = quote_db.resample_quote(quote, period_type=config.period_map['day']['long_period'])
 
     quote = signal.compute_signal(code, 'day', quote)
 

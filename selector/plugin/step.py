@@ -74,7 +74,7 @@ def step_boll(quote, b=config.STEP_BOLL_BACK, d=config.STEP_BOLL_DURATION):
 # 横盘也很多表现形式
 def step_old(quote, period, periods=None, almost=1, back_days=3, const_slowest_period=None):
     if period == 'week':
-        quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+        quote = quote_db.resample_quote(quote, period_type='W')
     if periods is None:
         periods = [5, 10, 20, 30, 60]
 
@@ -110,7 +110,7 @@ def step_p(quote, period, periods=None, almost=1, back_days=20):
 
 def step(quote, period, back_days=3):
     if period == 'week':
-        quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+        quote = quote_db.resample_quote(quote, period_type='W')
 
     quote = signal_step.signal_enter(quote, period='day')
     column_list = ['step_signal_enter']

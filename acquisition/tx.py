@@ -175,7 +175,7 @@ def get_kline_data_sina(code, period='day', count=250):
         quote_today = get_realtime_data_sina(code)
         quote = quote.append(quote_today)
         if period == 'week':
-            quote = quote_db.get_price_info_df_db_week(quote, period_type=period_map[period]['period'])
+            quote = quote_db.resample_quote(quote, period_type=period_map[period]['period'])
         return quote
 
     try:

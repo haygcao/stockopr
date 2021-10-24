@@ -1,7 +1,17 @@
 import unittest
 
-from acquisition import tx, quote_db
-from indicator import ad, relative_price_strength, step, second_stage, market_deviation_mat, cci, boll, rsi, vcp, crsi
+from acquisition import quote_db
+from indicator import ad
+from indicator import boll
+from indicator import cci
+from indicator import crsi
+from indicator import market_deviation_mat
+from indicator import momentum
+from indicator import relative_price_strength
+from indicator import rsi
+from indicator import second_stage
+from indicator import step
+from indicator import vcp
 
 
 class IndicatorTestCase(unittest.TestCase):
@@ -15,6 +25,9 @@ class IndicatorTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_momentum(self):
+        momentum.momentum_month(self.quote, self.period)
 
     def test_crsi(self):
         crsi.crsi(self.quote, self.period)

@@ -17,7 +17,7 @@ def base_breakout_one_day(quote, ema_m, ema_s, back_day):
 
 def base_breakout(quote, period):
     # 重采样为 周数据
-    # quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+    # quote = quote_db.resample_quote(quote, period_type='W')
 
     times = 5
     ema_s = ema(quote['close'], n=times * 5)['ema']

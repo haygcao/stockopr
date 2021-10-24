@@ -89,7 +89,7 @@ def dynamical_system_dual_period(quote, n=13, period=None):
     period_type = period_map[period]['long_period']
 
     # 长周期动力系统
-    quote_week = quote_db.get_price_info_df_db_week(quote, period_type)
+    quote_week = quote_db.resample_quote(quote, period_type)
     # print(quote[-50:])
     # print(quote_week[-50:])
     quote_week = dynamical_system(quote_week)

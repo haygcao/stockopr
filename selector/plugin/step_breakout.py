@@ -17,7 +17,7 @@ def breakout_ma_one_day(quote, mas, back_day, breakout_percent=config.TP_RANGE):
 
 def step_breakout(quote, period, periods=None, almost=1, back_days=3, const_slowest_period=None):
     if period == 'week':
-        quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+        quote = quote_db.resample_quote(quote, period_type='W')
     if periods is None:
         periods = [5, 10, 20, 30, 60]
 

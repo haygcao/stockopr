@@ -24,7 +24,7 @@ def magic_line(quote, period):
 
     # 重采样为 周数据
     if period == 'day':
-        quote_week = quote_db.get_price_info_df_db_week(quote, period_type='W')
+        quote_week = quote_db.resample_quote(quote, period_type='W')
     else:
         quote_week = quote
 

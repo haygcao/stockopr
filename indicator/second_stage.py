@@ -119,7 +119,7 @@ def second_stage_ex(quote, period):
     vol_times = 4
 
     # if period == 'day':
-    #     quote = quote_db.get_price_info_df_db_week(quote, period_type='W')
+    #     quote = quote_db.resample_quote(quote, period_type='W')
     #
     # n = {
     #     'xxs': 2,
@@ -169,7 +169,7 @@ def second_stage_ex(quote, period):
     if up_vol_mean / other_vol_mean < 2:
         return False
 
-    quote_week = quote_db.get_price_info_df_db_week(quote, period_type='W')
+    quote_week = quote_db.resample_quote(quote, period_type='W')
     back_week = 40
     # vol_min = quote_week.volume[-back_week:].rolling(5).min()
     vol_min = quote_week.volume[-back_week:].rolling(5).mean()

@@ -8,7 +8,6 @@ import pandas as pd
 import util.mysqlcli as mysqlcli
 import config.config as config
 from acquisition import basic
-from util import dt
 
 
 def get_market_df_db_day(days=250, end_date=None, period_type='D', conn=None):
@@ -357,7 +356,7 @@ def get_price_info_df_db(code, days=0, end_date=None, period_type='D', conn=None
     if period_type == 'D':
         return df
 
-    return get_price_info_df_db_week(df)
+    return resample_quote(df)
 
 
 def get_price_info_df_file_day(code, days, end_date, path):
@@ -388,7 +387,7 @@ def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
     #else:
     #    _code = code
     _code = code
-    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'percent']
+    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'percent', 'mktcap']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     on = '{0}.code = basic_info.code'.format(table[1])
     where = '{3}.code = "{0}" and trade_date <= "{1}" order by trade_date desc limit {2}'.format(_code, end_date, days, table[1])
@@ -417,7 +416,7 @@ def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
     return df
 
 
-def get_price_info_df_db_week(df, period_type='W'):
+def resample_quote(df, period_type='W'):
     # W M Q 12D 30min
     df.index = pd.to_datetime(df.index)
     # print(p.columns)
