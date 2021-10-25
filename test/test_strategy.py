@@ -15,7 +15,10 @@ class StrategyTestCase(unittest.TestCase):
         momentum.compute_momentum(datetime.date(2021, 10, 31), '002739')
 
     def test_momentum(self):
-        momentum.momentum_selector(date=datetime.date(2021, 8, 31))
+        momentum.compute_momentums(date=datetime.date(2021, 8, 31))
+
+    def test_select_pioneer(self):
+        momentum.select_pioneer(date=datetime.date(2021, 8, 31), m=0.1, n=100, dump=True)
 
 
 def suite():

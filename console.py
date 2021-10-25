@@ -638,7 +638,7 @@ class Panel(QWidget):
     def show_f10(self):
         code = self.code
         url = 'http://basic.10jqka.com.cn/' + code
-        cmd = ['/usr/bin/self.log', '--tabs', url]
+        cmd = ['/usr/bin/browser', '--tabs', url]
         subprocess.Popen(cmd)
 
     def show_indicator(self):

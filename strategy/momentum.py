@@ -13,18 +13,6 @@ from acquisition import basic, quote_db
 from indicator import momentum
 
 
-def filter_candidate(code):
-    pass
-
-
-def compute_fip(quote):
-    pass
-
-
-def compute_point(quote):
-    pass
-
-
 def compute_momentum(date, code):
     quote = quote_db.get_price_info_df_db_day(code, 750)
     if len(quote) < 250:
@@ -37,7 +25,7 @@ def compute_momentum(date, code):
     return _
 
 
-def momentum_selector(date=None, mp=True):
+def compute_momentums(date, mp=True):
     date = date if date else datetime.date.today()
     date = datetime.date(date.year, date.month, calendar.monthrange(date.year, date.month)[1])
 
@@ -64,7 +52,19 @@ def momentum_selector(date=None, mp=True):
                 df = df.append(_)
 
     df = df.sort_values(by=['momentum'], ascending=False)
-    df_pioneer = df[:int(len(df) * 0.1)].sort_values(by=['fip'])
-    cache_dir = util.get_cache_dir()
-    df_pioneer.to_csv(os.path.join(cache_dir, 'momentum_{}.csv'.format(
-        datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))))
+
+    return df
+
+
+def select_pioneer(date, m, n, dump=False, mp=True):
+    df = compute_momentums(date, mp)
+
+    df_pioneer = df[:int(len(df) * m)].sort_values(by=['fip'])
+    df_pioneer = df_pioneer[:n]
+
+    if dump:
+        cache_dir = util.get_cache_dir()
+        df_pioneer.to_csv(os.path.join(cache_dir, 'momentum_{}.csv'.format(
+            datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))))
+
+    return df_pioneer.code.to_list()
