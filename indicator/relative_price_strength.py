@@ -23,7 +23,7 @@ def compute_rps_percent(quote, market, n):
 
 
 def compute_rps(quote, market, n, market_index):
-    percent: pandas.Series = quote.close / market.close
+    percent: pandas.Series = quote.percent - market.percent
     percent[-1] = percent[-2] if numpy.isnan(percent[-1]) else percent[-1]
     # percent.iat[-1] = percent[-2] if numpy.isnan(percent[-1]) else percent[-1]
 

@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from strategy import momentum
+from strategy import momentum, relative_strength
 
 
 class StrategyTestCase(unittest.TestCase):
@@ -16,6 +16,9 @@ class StrategyTestCase(unittest.TestCase):
 
     def test_momentum(self):
         momentum.compute_momentums(date=datetime.date(2021, 8, 31))
+
+    def test_rps_select_pioneer(self):
+        relative_strength.select_pioneer(date=datetime.date(2021, 8, 31), m=0.1, n=100, dump=True, mp=True)
 
     def test_select_pioneer(self):
         momentum.select_pioneer(date=datetime.date(2021, 8, 31), m=0.1, n=100, dump=True)
