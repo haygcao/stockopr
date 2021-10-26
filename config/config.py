@@ -180,6 +180,7 @@ ChinaStockIndexList = [
 
 # tdx_home = r"C:\new_tdx"
 tdx_home = "/home/shuhm/PlayOnLinux's virtual drives/tdx/drive_c/new_jyplug"
+tdx_window_name = '通达信金融终端V7.56'
 
 accounts = {'tdx_zxs': {'pid': '', 'hwnd': '', 'hwnd_name': '', 'exe_path': ''},
             'ths_gjs': {'pid': '', 'hwnd': '', 'hwnd_name': '', 'exe_path': 'D:\\BIN\\全能行证券交易终端\\xiadan.exe'},

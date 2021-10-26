@@ -6,6 +6,7 @@ import time
 
 import pandas
 
+from config import config
 from util import pylinuxauto, util
 from util.log import logger
 
@@ -99,7 +100,7 @@ def download_quote():
         logger.info('tdx is stopped, start...')
         subprocess.Popen(['playonlinux', '--run', 'tdxw'])
 
-    tdx_window_name = '通达信金融终端V7.56'
+    tdx_window_name = config.tdx_window_name
     tdx_version = 'V7.56'
     handle = pylinuxauto.search_window_handle(tdx_window_name)
     if not handle:

@@ -44,7 +44,7 @@ from pointor.signal import write_supplemental_signal
 from selector import selector
 from server import config as svr_config
 from trade_manager import trade_manager
-from util import util, dt, qt_util, singleten
+from util import util, dt, qt_util, singleten, pylinuxauto
 from util.QComboCheckBox import QComboCheckBox
 from util.log import logger
 from util.pywinauto_util import max_window
@@ -164,10 +164,12 @@ class Panel(QWidget):
 
         self.hk_tdx_l = system_hotkey.SystemHotkey()
         self.hk_tdx_r = system_hotkey.SystemHotkey()
+
         self.hk_tdx = system_hotkey.SystemHotkey()
-        self.hk_tdx_l.register(('alt', 'j'), callback=lambda x: self.switch_code(-1))
-        self.hk_tdx_r.register(('alt', 'l'), callback=lambda x: self.switch_code(1))
-        self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.switch_code(0))
+        self.hk_tdx_l.register(('alt', 'j'), callback=lambda x: self.open_tdx(-1))  # self.switch_code(-1))
+        self.hk_tdx_r.register(('alt', 'l'), callback=lambda x: self.open_tdx(1))  # self.switch_code(1))
+        self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.open_tdx(0
+                                                                            ))  # self.switch_code(0))
 
         # self.hk_show_l = system_hotkey.SystemHotkey()
         # self.hk_show_r = system_hotkey.SystemHotkey()
@@ -507,13 +509,15 @@ class Panel(QWidget):
 
         self.set_label()
 
-    def open_tdx(self):
+    def open_tdx(self, forward=0):
+        if forward != 0:
+            self.switch_code(forward)
+
         # pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
         # if pid < 0:
         #     app = pywinauto.Application(backend="uia").start('C:\\new_tdx\\TdxW.exe')
         # else:
         #     app = pywinauto.Application(backend="uia").connect(process=pid)
-
 
         # pos = win32api.GetCursorPos()
         # main_window = app.window(class_name='TdxW_MainFrame_Class')
@@ -531,8 +535,13 @@ class Panel(QWidget):
             '1399001': '399001',
             '1399006': '399006'
         }
+
+        pylinuxauto.active_window_by_name(config.tdx_window_name)
+
         # main_window.type_keys(str(self.code))
         code = self.code if len(self.code) == 6 else m[self.code]
+        # pylinuxauto.send_key(code)
+        time.sleep(0.5)
         send_key(code)
         # pyautogui.typewrite(message=code, interval=0.1)
         # pywinauto.keyboard.send_keys(code)
