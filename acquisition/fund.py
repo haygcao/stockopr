@@ -1,5 +1,6 @@
 # coding:utf-8
 import os.path
+import pathlib
 
 from selenium import webdriver
 from bs4 import BeautifulSoup
@@ -17,7 +18,6 @@ sys.path.append(".")
 from util import util
 from util import mysqlcli
 
-# coding:utf-8
 import requests
 from lxml import etree
 
@@ -26,8 +26,20 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
 }
 
-# 84.0.4147.30
-# 85.0.4183.38
+
+date_prev = datetime.date(2021, 6, 30)
+date = datetime.date(2021, 9, 30)
+
+root_dir = util.get_root_dir()
+cache_dir = os.path.join(root_dir, 'data', 'fund', date.strftime('%Y%m%d'))
+
+html_dir = os.path.join(cache_dir, 'html')
+fund_all_log = os.path.join(cache_dir, 'fund.txt')
+fund_new_log = os.path.join(cache_dir, 'fund_new.txt')
+fund_not_updated_log = os.path.join(cache_dir, 'fund_not_updated.txt')
+fund_paused_log = os.path.join(cache_dir, 'fund_paused.txt')
+fund_code_no_stock_log = os.path.join(cache_dir, 'fund_code_no_stock.txt')
+fund_code_exception_log = os.path.join(cache_dir, 'fund_code_exception.txt')
 
 
 def init_fund_code(date):
@@ -47,7 +59,7 @@ def init_fund_code(date):
 
     print('{} funds'.format(len(code_list)))
 
-    with open('fund.txt', 'w') as f:
+    with open(fund_all_log, 'w') as f:
         for code in code_list:
             f.writelines(code)
             f.write('\n')
@@ -131,29 +143,40 @@ def exists_fund_stock(fund_code, date):
             print(e)
 
 
-def get_info(code, date, date_prev):
-    root_dir = util.get_root_dir()
-    html_dir = os.path.join(root_dir, 'data', 'html', date.strftime('%Y%m%d'))
-    if not os.path.exists(html_dir):
-        os.makedirs(html_dir)
-    html_path = os.path.join(html_dir, '{}.html'.format(code))
+def not_updated(fund_code):
+    with open(fund_not_updated_log) as f:
+        for line in f:
+            if fund_code in line:
+                return True
+        return False
 
-    url = 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
-    if not os.path.exists(html_path):
-        opt = webdriver.ChromeOptions()
-        opt.set_headless()
-        driver = webdriver.Chrome(options=opt)
-        driver.maximize_window()
-        driver.get(url)
-        driver.implicitly_wait(5)
-        day = datetime.date.today()
-        today = '%s' % day
 
-        with open(html_path, 'w', encoding='utf-8') as f:
-            f.write(driver.page_source)
-            f.flush()
-    else:
-        return
+def gen_url(code):
+    return 'http://fundf10.eastmoney.com/ccmx_%s.html' % code
+
+
+def gen_html_path(code):
+    return os.path.join(html_dir, '{}.html'.format(code))
+
+
+def get_info_impl(code, date, date_prev):
+    html_path = gen_html_path(code)
+
+    url = gen_url(code)
+
+    opt = webdriver.ChromeOptions()
+    # opt.set_headless()
+    opt.headless = True
+    driver = webdriver.Chrome(options=opt)
+    driver.maximize_window()
+    driver.get(url)
+    driver.implicitly_wait(5)
+    day = datetime.date.today()
+    today = '%s' % day
+
+    with open(html_path, 'w', encoding='utf-8') as f:
+        f.write(driver.page_source)
+        f.flush()
 
     print(url)
 
@@ -167,10 +190,11 @@ def get_info(code, date, date_prev):
         scale_date_str = soup.select('#bodydiv > div > div.r_cont > div.basic-new > div.bs_gl > p > label > span')[2].get_text()
         if scale_date_str.strip() == '---':
             file.close()
-            os.remove(html_path)
+            # os.remove(html_path)
 
-            with open('fund_new.txt', 'a+') as f:
+            with open(fund_new_log, 'a+') as f:
                 f.write(url + '\n')
+            print('{} new fund...'.format(url))
             return
 
         scale_date = scale_date_str.strip().split()
@@ -184,16 +208,20 @@ def get_info(code, date, date_prev):
         fund_date_max = datetime.date.fromisoformat(date_str)
         if fund_date_max != date:
             if fund_date_max > date_prev:
-                with open('fund_new.txt', 'a+') as f:
+                with open(fund_new_log, 'a+') as f:
                     f.write(url + '\n')
+                    print('{} new fund, last update date is {}'.format(url, fund_date_max))
             elif fund_date_max == date_prev:
-                with open('fund_not_updated.txt', 'a+') as f:
+                with open(fund_not_updated_log, 'a+') as f:
                     f.write(url + '\n')
+                    os.remove(html_path)
+                    print('{} not updated, remove cache, last update date is {}'.format(url, fund_date_max))
             else:
-                with open('fund_paused.txt', 'a+') as f:
+                with open(fund_paused_log, 'a+') as f:
                     f.write(url + '\n')
+                    print('{} paused, last update date is {}'.format(url, fund_date_max))
             file.close()
-            os.remove(html_path)
+            # os.remove(html_path)
             return
 
         table = soup.select('#cctable > div > div > table')
@@ -278,16 +306,31 @@ def get_info(code, date, date_prev):
         import traceback
         traceback.print_stack()
         print(e)
-        with open('fund_code_no_stock.txt', 'a+') as f:
+        with open(fund_code_no_stock_log, 'a+') as f:
             f.write(url + '\n')
+            print('{} no stock position'.format(url))
+
+
+def get_info(code, date, date_prev):
+    try:
+        get_info_impl(code, date, date_prev)
+    except Exception as e:
+        import traceback
+        traceback.print_stack()
+        print(e)
+        with open(fund_code_exception_log, 'a+') as f:
+            url = gen_url(code)
+            f.write(url + '\n')
+            print('{} exception'.format(url))
+        time.sleep(5)
 
 
 if __name__ == "__main__":
     # get_info('http://fundf10.eastmoney.com/ccmx_000001.html')
     # exit(0)
 
-    date_prev = datetime.date(2021, 3, 31)
-    date = datetime.date(2021, 6, 30)
+    if not os.path.exists(html_dir):
+        os.makedirs(html_dir)
 
     date_db = query_last_date(date)
     if not date_db or date_db < date:
@@ -303,7 +346,22 @@ if __name__ == "__main__":
 
     code_list = query_fund_code(date)
     # code_list = ['588300']
+
+    fund_not_updated_log_exists = os.path.exists(fund_not_updated_log)
+    if fund_not_updated_log_exists:
+        fname = pathlib.Path(fund_not_updated_log)
+        past = (datetime.datetime.now() - datetime.datetime.fromtimestamp(fname.stat().st_mtime)).seconds
+        if past > 24 * 3600:
+            os.remove(fund_not_updated_log)
+
     for code in code_list:
+        html_path = gen_html_path(code)
+        if os.path.exists(html_path):
+            continue
+
+        if fund_not_updated_log_exists and not_updated(code):
+            continue
+
         # if exists_fund_stock(code, date):
         #     continue
         get_info(code, date, date_prev)
