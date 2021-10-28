@@ -36,6 +36,7 @@ cache_dir = os.path.join(root_dir, 'data', 'fund', date.strftime('%Y%m%d'))
 html_dir = os.path.join(cache_dir, 'html')
 fund_all_log = os.path.join(cache_dir, 'fund.txt')
 fund_new_log = os.path.join(cache_dir, 'fund_new.txt')
+fund_scale_0_log = os.path.join(cache_dir, 'fund_scale_0.txt')
 fund_not_updated_log = os.path.join(cache_dir, 'fund_not_updated.txt')
 fund_paused_log = os.path.join(cache_dir, 'fund_paused.txt')
 fund_code_no_stock_log = os.path.join(cache_dir, 'fund_code_no_stock.txt')
@@ -159,24 +160,27 @@ def gen_html_path(code):
     return os.path.join(html_dir, '{}.html'.format(code))
 
 
-def get_info_impl(code, date, date_prev):
+def get_info_impl(driver, code, date, date_prev):
     html_path = gen_html_path(code)
 
     url = gen_url(code)
 
-    opt = webdriver.ChromeOptions()
-    # opt.set_headless()
-    opt.headless = True
-    driver = webdriver.Chrome(options=opt)
-    driver.maximize_window()
-    driver.get(url)
-    driver.implicitly_wait(5)
-    day = datetime.date.today()
-    today = '%s' % day
+    # opt = webdriver.ChromeOptions()
+    # # opt.set_headless()
+    # opt.headless = True
+    # driver = webdriver.Chrome(options=opt)
+    try:
+        driver.get(url)
+        driver.implicitly_wait(5)
+        day = datetime.date.today()
+        today = '%s' % day
 
-    with open(html_path, 'w', encoding='utf-8') as f:
-        f.write(driver.page_source)
-        f.flush()
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(driver.page_source)
+            f.flush()
+    finally:
+        pass
+        # driver.close()
 
     print(url)
 
@@ -200,7 +204,12 @@ def get_info_impl(code, date, date_prev):
         scale_date = scale_date_str.strip().split()
         scale = scale_date[0]
         ind = scale.find('亿元')
-        scale = scale[:ind] if ind > 0 else '0'
+        scale = scale[:ind] if ind > 0 else '0.00'
+        if float(scale) == 0:
+            with open(fund_scale_0_log, 'a+') as f:
+                f.write(url + '\n')
+                print('{} scale is 0'.format(url))
+                return
 
         import re
         date_str = re.match('.*([0-9]{4}-[0-9]{2}-[0-9]{2}).*', scale_date[1]).group(1)
@@ -311,9 +320,9 @@ def get_info_impl(code, date, date_prev):
             print('{} no stock position'.format(url))
 
 
-def get_info(code, date, date_prev):
+def get_info(driver, code, date, date_prev):
     try:
-        get_info_impl(code, date, date_prev)
+        get_info_impl(driver, code, date, date_prev)
     except Exception as e:
         import traceback
         traceback.print_stack()
@@ -325,24 +334,39 @@ def get_info(code, date, date_prev):
         time.sleep(5)
 
 
+def repair():
+    re_input = os.path.join(cache_dir, 're_input.txt')
+    with open(re_input) as f:
+        import re
+        for line in f:
+            r = re.match('http://fundf10.eastmoney.com/ccmx_([0-9]{6}).html', line)
+            code = r.group(1)
+            get_info(driver, code, date, date_prev)
+            time.sleep(random.randint(0, 2))
+
+
 if __name__ == "__main__":
+    op_repair = False
+
     # get_info('http://fundf10.eastmoney.com/ccmx_000001.html')
     # exit(0)
 
     if not os.path.exists(html_dir):
         os.makedirs(html_dir)
 
+    opt = webdriver.ChromeOptions()
+    # opt.set_headless()
+    opt.headless = True
+    driver = webdriver.Chrome(options=opt)
+    driver.maximize_window()
+
+    if op_repair:
+        repair()
+        exit(0)
+
     date_db = query_last_date(date)
     if not date_db or date_db < date:
         init_fund_code(date)
-
-    # with open('fund_code_no_stock_in.txt') as f:
-    #     import re
-    #     for line in f:
-    #         r = re.match('http://fundf10.eastmoney.com/ccmx_([0-9]{6}).html', line)
-    #         code = r.group(1)
-    #         get_info(code, date)
-    # exit(0)
 
     code_list = query_fund_code(date)
     # code_list = ['588300']
@@ -364,7 +388,7 @@ if __name__ == "__main__":
 
         # if exists_fund_stock(code, date):
         #     continue
-        get_info(code, date, date_prev)
+        get_info(driver, code, date, date_prev)
         time.sleep(random.randint(0, 2))
 
     # begin = False
