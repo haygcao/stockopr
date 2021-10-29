@@ -71,3 +71,15 @@ http://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/ZYZBAjaxNew?ty
 
 >>> r = requests.get('http://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/ZYZBAjaxNew?type=0&code=SZ002739')
 >>> json.loads(r.text)
+
+
+### 股本结构
+>>> url = 'http://emweb.securities.eastmoney.com/PC_HSF10/CapitalStockStructure/Index?type=web&code=SZ002739'
+>>> r = requests.get(url)
+>>> index = r.text.index('流通受限股份')
+>>> print(r.text[index:index+200])
+流通受限股份</td>
+                            <td class="tips-dataR">{{formatNumToLocaleStr(gbjg[0].LIMITED_SHARES,1e4)}}</td>
+
+# chrome F12 对应: <td class="tips-dataR">7,982.70</td>
+# 需要使用 webdriver 爬取数据
