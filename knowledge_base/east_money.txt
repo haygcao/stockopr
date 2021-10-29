@@ -1,0 +1,73 @@
+http://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/ZYZBAjaxNew?type=0&code=SZ002739   type: 0按报告期 1按年度 2 按季度
+
+{
+   "pages" : 4,
+   "data" : [
+		{
+			"SECUCODE" : "002739.SZ",
+			"SECURITY_CODE" : "002739",
+			"SECURITY_NAME_ABBR" : "\u4E07\u8FBE\u7535\u5F71",
+			"ORG_CODE" : "10181901",
+			"REPORT_DATE" : "2021-06-30 00:00:00",
+
+			每股指标
+			"EPSJB" : 0.0513,   摊薄每股收益(元)	0.0513
+			"BPS" : 4.362018758232,
+			"PER_CAPITAL_RESERVE" : 4.858746026301,
+			"PER_UNASSIGN_PROFIT" : -1.749958094693,
+			"PER_NETCASH" : 0.359182316936,
+
+			成长能力指标
+			"TOTALOPERATEREVE" : 2913061435.41,
+			"GROSS_PROFIT" : 835800090.79,
+			"PARENTNETPROFIT" : 114530870.84,
+			"DEDU_PARENT_PROFIT" : 95045766.83,
+
+			"TOTALOPERATEREVETZ" : 305.9329171605,
+			"PARENTNETPROFITTZ" : 111.848343199,
+			"DPNP_YOY_RATIO" : 108.7903739891,
+
+			"YYZSRGDHBZC" : -29.3105394016,
+			"NETPROFITRPHBZC" : -78.152080774,
+			"KFJLRGDHBZC" : -81.6369631402,
+
+			盈利能力指标
+			"ROE_DILUTED" : 1.179172469,
+			"JROA" : 0.3641391639,
+			"NET_PROFIT_RATIO" : 3.951399554119,
+			"GROSS_PROFIT_RATIO" : 28.691468042189
+		}
+	]
+}
+
+每股指标	21-06-30
+摊薄每股收益(元)	0.0513
+每股净资产(元)	4.3620
+每股公积金(元)	4.8587
+每股未分配利润(元)	-1.7500
+每股经营现金流(元)	0.3592
+
+成长能力指标	21-06-30
+营业总收入(元)	29.13亿
+毛利润(元)	8.358亿
+归属净利润(元)	1.145亿
+扣非净利润(元)	9505万
+营业总收入同比增长(%)	305.93
+归属净利润同比增长(%)	111.85
+扣非净利润同比增长(%)	108.79
+营业总收入滚动环比增长(%)	-29.31
+归属净利润滚动环比增长(%)	-78.15
+扣非净利润滚动环比增长(%)	-81.64
+
+盈利能力指标	21-06-30
+摊薄净资产收益率(%)	1.18
+摊薄总资产收益率(%)	0.36
+毛利率(%)	28.69
+净利率(%)	3.95
+
+
+>>> import json
+>>> import requests
+
+>>> r = requests.get('http://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/ZYZBAjaxNew?type=0&code=SZ002739')
+>>> json.loads(r.text)
