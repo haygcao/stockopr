@@ -2,7 +2,7 @@ import datetime
 import os
 import unittest
 
-from acquisition import acquire, quote_db, quote_tdx
+from acquisition import acquire, quote_db, quote_tdx, finance
 from acquisition import industry_index
 from config import config
 from util import dt
@@ -17,6 +17,10 @@ class AcquireTestCase(unittest.TestCase):
 
     def test_save_quote(self):
         acquire.save_quote()
+
+    def test_financial(self):
+        df = finance.fetch_finance_stock('002739', datetime.date(2021, 9, 30))
+        print(df)
 
     def test_check_quote(self):
         trade_date = dt.get_trade_date()
