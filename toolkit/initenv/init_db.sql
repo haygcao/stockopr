@@ -98,7 +98,7 @@ create table if not exists temp_quote (
     five_minute float
     );
 
-create table if not exists financial_data (
+create table if not exists finance (
 	code varchar(8),
 	report_date timestamp,
 	eps decimal(8, 4),
@@ -110,13 +110,13 @@ create table if not exists financial_data (
 	gross_profit decimal(16, 2),
 	parentnetprofit  decimal(16, 2),
 	dedu_parent_profit decimal(16, 2),
-	totaloperatereve_yoy_ratio decimal(8, 2),
-	parentnetprofit_yoy_ratio decimal(8, 2),
-	dpnp_yoy_ratio decimal(8, 2),
-	roe_diluted decimal(8, 2),
-	jroa decimal(8, 2),
-	net_profit_ratio decimal(8, 2),
-	gross_profit_ratio decimal(8, 2)
+	totaloperatereve_yoy_ratio decimal(12, 2),
+	parentnetprofit_yoy_ratio decimal(12, 2),
+	dpnp_yoy_ratio decimal(12, 2),
+	roe_diluted decimal(12, 2),
+	jroa decimal(12, 2),
+	net_profit_ratio decimal(12, 2),
+	gross_profit_ratio decimal(12, 2)
 );
 
 -- 建仓
@@ -200,7 +200,7 @@ create unique index quote_code_trade_date on quote(code,trade_date);
 -- mysql> insert into history_price (code, trade_day) values("600839","2015-12-25"); --date 可以这样插入
 -- ERROR 1062 (23000): Duplicate entry '600839-2015-12-25' for key 'history_price_code_trade_day'
 
-create unique index financial_data_code_date on financial_data(code, report_date);
+create unique index finance_code_date on finance(code, report_date);
 
 -- current_date() CURRENT_timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, all is ok
 

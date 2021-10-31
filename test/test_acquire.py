@@ -5,7 +5,7 @@ import unittest
 from acquisition import acquire, quote_db, quote_tdx, finance
 from acquisition import industry_index
 from config import config
-from util import dt
+from util import dt, util
 
 
 class AcquireTestCase(unittest.TestCase):
@@ -18,9 +18,21 @@ class AcquireTestCase(unittest.TestCase):
     def test_save_quote(self):
         acquire.save_quote()
 
-    def test_financial(self):
+    def test_finance(self):
         df = finance.fetch_finance_stock('002739', datetime.date(2021, 9, 30))
         print(df)
+
+    def test_save_finance(self):
+        # finance.save_finance(datetime.date(2021, 9, 30))
+        finance.save_finance(None)
+
+    def test_inance_repair(self):
+        finance.repair(datetime.date(2021, 9, 30))
+
+    def test_save_finance_from_csv(self):
+        root_dir = util.get_root_dir()
+        csv = os.path.join(root_dir, 'data', 'finance', '{}.csv'.format('xxx-20210930'))
+        finance.save_finance_from_csv(csv)
 
     def test_check_quote(self):
         trade_date = dt.get_trade_date()
