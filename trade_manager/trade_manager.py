@@ -154,6 +154,7 @@ def sync_impl(account_id, trade_date):
         money.profit = float(sum([p.profit_total for p in ps]))
 
         trade_config = config.get_trade_config()
+        money.profit += trade_config['not_in_position_profit']
         money.update_origin(money.net_money - money.profit - trade_config['debt'][account_id], trade_config['period'])
 
         db_handler.save_money(account_id, money, sync=True)

@@ -49,7 +49,7 @@ def cache_exists(code, report_date):
 
 
 def get_last_report_date():
-    return datetime.date(2021, 9, 30)
+    # return datetime.date(2021, 9, 30)
 
     today = datetime.date.today()
     month = today.month
@@ -93,9 +93,12 @@ def fetch_finance_stock_impl(code, report_date):
         with open(cache_, 'w') as f:
             f.write(r.text)
 
+    # if not os.path.exists(data_json):
         for data in data_list:
             date = datetime.datetime.strptime(data['REPORT_DATE'], '%Y-%m-%d %H:%M:%S').date()
             json_ = os.path.join(finance_dir, date.strftime('%Y%m%d'), '{}.json'.format(code))
+            if os.path.exists(json_):
+                continue
 
             dir_ = os.path.dirname(json_)
             if not os.path.exists(dir_):
@@ -172,6 +175,10 @@ def repair(report_date):
     with open(os.path.join(finance_dir, 'not_issue_{}'.format(report_date.strftime('%Y%m%d')))) as f:
         for code in f:
             code = code.strip()
+            cache_ = os.path.join(finance_dir, '{}_xxx-{}.json'.format(code, report_date.strftime('%Y%m%d')))
+            if os.path.exists(cache_):
+                os.remove(cache_)
+
             df = fetch_finance_stock(code, report_date)
             if not isinstance(df, pandas.DataFrame):
                 logger.info('{} no report'.format(code))

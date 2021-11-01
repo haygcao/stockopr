@@ -4,7 +4,8 @@
     "auto_sell": false,
     "period": "2021-12-31",
     "debt": {"1": 0, "2": 150000},
-    "position_unit": 40000
+    "position_unit": 40000,
+    "not_in_position_profit": -18194.37
   },
   "scan": {
     "update_candidate_pool": false,
