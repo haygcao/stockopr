@@ -54,6 +54,13 @@ end_date = dt.date(2021, 9, 19)
 zc = 252594.95 + 146427.03   # 信用净 + 普通总
 end_date = dt.date(2021, 10, 17)
 zc = 519313.780
+
+end_date = dt.date(2021, 9, 30)
+zc = 485131.17
+
+end_date = dt.date(2021, 10, 31)
+zc = 482654.17
+
 accounts = '中信证券'
 
 # 国金证券
