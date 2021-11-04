@@ -5,7 +5,8 @@ ths_main_window_title = '网上股票交易系统5.0'
 # pos_asset = (45, 354)
 # pos_detail = (36, 456)
 
-# 1080 x 768
+# 1024 x 768
+screen_size = (1024, 768)
 pos_position = (64, 256)
 pos_asset = (64, 360)
 pos_detail = (64, 450)

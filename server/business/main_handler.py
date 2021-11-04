@@ -5,11 +5,16 @@ import json
 import tornado.web
 
 from .. import config
-from ..component import tradeapi, tradeapi_credit
+from ..component import tradeapi, tradeapi_credit, helper
 
 
-def trade_time_filter(func):
+def base_filter(func):
     def wrapper(self, *args, **kwargs):
+        screen_size = helper.get_screen_size()
+        if screen_size != config.screen_size:
+            self.write({'ret_code': -1, 'err_msg': 'screen size({}) not adapted'.format(screen_size)})
+            return
+
         now = datetime.datetime.now()
         w_day = now.isoweekday()
         hour = now.hour
@@ -107,7 +112,7 @@ class QueryMoneyHandler(BaseHandler):
     def get(self):
         self.write("Hello, world")
 
-    @trade_time_filter
+    @base_filter
     def post(self):
         param = self.request.body.decode('utf-8')
         param = json.loads(param)
@@ -123,7 +128,7 @@ class QueryPositionHandler(BaseHandler):
     def get(self):
         self.write("Hello, world")
 
-    @trade_time_filter
+    @base_filter
     def post(self):
         param = self.request.body.decode('utf-8')
         print(param)
@@ -146,7 +151,7 @@ class QueryOperationDetailHandler(BaseHandler):
     def get(self):
         self.write("Hello, world")
 
-    @trade_time_filter
+    @base_filter
     def post(self):
         param = self.request.body.decode('utf-8')
         print(param)
@@ -168,7 +173,7 @@ class QueryTodayOrderHandler(BaseHandler):
     def get(self):
         self.write("Hello, world")
 
-    @trade_time_filter
+    @base_filter
     def post(self):
         param = self.request.body.decode('utf-8')
         print(param)

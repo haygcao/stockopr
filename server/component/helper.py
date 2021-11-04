@@ -4,6 +4,7 @@ import time
 
 import psutil
 import pywinauto
+import win32api
 import win32gui
 from PIL import ImageGrab
 # https://digi.bib.uni-mannheim.de/tesseract/
@@ -168,6 +169,9 @@ def clean_clipboard_data(data, cols):
 
 
 def get_screen_size():
+    # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
+    # SM_CXSCREEN 0
+    # SM_CYSCREEN 1
     return win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1)
 
 
