@@ -143,9 +143,11 @@ def sync_impl(account_id, trade_date):
                 position_list[i].add_profile(trade_config['profit'])
             position_list[i].avail_position = position.current_position
         db_handler.save_positions(account_id, position_list, sync=True)
-        logger.info('sync position ok')
-    else:
+
+    if position_list is None:
         logger.warning('sync position failed')
+    else:
+        logger.info('sync position ok')
 
     # money
     money = tradeapi.get_asset(account_id)
@@ -158,9 +160,11 @@ def sync_impl(account_id, trade_date):
         money.update_origin(money.net_money - money.profit - trade_config['debt'][account_id], trade_config['period'])
 
         db_handler.save_money(account_id, money, sync=True)
-        logger.info('sync money ok')
-    else:
+
+    if money is None:
         logger.warning('sync money failed')
+    else:
+        logger.info('sync money ok')
 
     order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='ING')
     if order_map:
@@ -176,9 +180,13 @@ def sync_impl(account_id, trade_date):
         _date = dt.get_pre_trade_date(trade_date) if trade_date == now.date() else trade_date
         operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == _date]
         db_handler.save_operation_details(account_id, operation_detail, _date, sync=True)
-        logger.info('sync operation detail ok')
-    else:
+
+    if operation_detail is None:
         logger.warning('sync operation detail failed')
+    else:
+        logger.info('sync operation detail ok')
+
+
 
 
 def sync():
