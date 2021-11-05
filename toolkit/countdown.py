@@ -57,6 +57,7 @@ class Window(QWidget):
         # variables
         # count variable
         self.count = INIT_COUNT
+        self.for_work = True
 
         # start flag
         self.start = False
@@ -153,6 +154,7 @@ class Window(QWidget):
             period = radio_btn.text()
             minute = int(period[:-3])
             self.count = minute * 60 * 10
+            self.for_work = True
             self.label.setText(count_to_time(self.count))
 
     # method called by timer
@@ -169,6 +171,15 @@ class Window(QWidget):
 
                 # setting text to the label
                 # self.label.setText("Completed !!!! ")
+                if self.for_work:
+                    count = 5 * 60 * 10
+                    self.for_work = False
+                else:
+                    count = INIT_COUNT
+                    self.for_work = True
+
+                self.count = count
+                self.label.setText(count_to_time(self.count))
 
                 # url = QtCore.QUrl.fromLocalFile("/usr/share/sounds/deepin/stereo/message.wav")
                 # content = QtMultimedia.QMediaContent(url)
@@ -222,6 +233,7 @@ class Window(QWidget):
 
         # setting count value to 0
         self.count = INIT_COUNT
+        self.for_work = True
 
         # setting label text
         self.label.setText(count_to_time(INIT_COUNT))
