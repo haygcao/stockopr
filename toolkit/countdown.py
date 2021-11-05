@@ -9,7 +9,7 @@ sudo apt install python3-gst-1.0
 
 PYTHONPATH=/usr/lib/python3/dist-packages python toolkit/countdown.py
 """
-
+import os
 import sys
 
 from PyQt5.QtCore import QTimer, Qt
@@ -17,7 +17,10 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QPushButton, QLabel, QMainWindow, QInputDialog, QApplication, QHBoxLayout, QVBoxLayout, \
     QRadioButton, QWidget
 
+sys.path.append('/usr/lib/python3/dist-packages')
+
 INIT_COUNT = 25 * 60 * 10
+sound_path = os.path.join(os.path.dirname(__file__), '../data/SchoolBell.ogg')  # "/usr/share/sounds/deepin/stereo/message.wav"
 
 
 def count_to_time(count):
@@ -175,7 +178,7 @@ class Window(QWidget):
                 # player.play()
 
                 from playsound import playsound
-                playsound("/usr/share/sounds/deepin/stereo/message.wav")
+                playsound(sound_path)
 
         if self.start:
             text = count_to_time(self.count)

@@ -71,9 +71,9 @@ class DigitalClock(QLCDNumber):
 
         widget = self.geometry()
 
-        x = ag.width() - widget.width() - 0
+        x = ag.width() - widget.width() - 1
         y = 2 * ag.height() - sg.height() - widget.height() - 10
-        y = 0
+        y = 5
 
         self.move(x, y)
 
