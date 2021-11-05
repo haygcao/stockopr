@@ -3,7 +3,7 @@ import unittest
 
 import util.qt_util
 from server import config as svr_config
-from trade_manager import trade_manager, db_handler
+from trade_manager import trade_manager, db_handler, trade_truth
 
 
 class TradeManagerTestCase(unittest.TestCase):
@@ -12,6 +12,9 @@ class TradeManagerTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_trade_truth(self):
+        trade_truth.trade_truth()
 
     def test_sync(self):
         trade_manager.sync()
