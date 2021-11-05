@@ -1,8 +1,88 @@
 # -*- coding: utf-8 -*-
 import datetime
+import json
 import os
 
+import numpy
 import pandas
+
+from util import util
+
+
+def compute_trade(data: pandas.DataFrame):
+    root_dir = util.get_root_dir()
+    path = os.path.join(root_dir, 'data', 'trade_detail_{}.json'.format(data.index[-1].strftime('%Y%m%d')))
+
+    if os.path.exists(path):
+        with open(path) as f:
+            trades = json.load(f)
+        return trades
+
+    # data_clear = data[data['股价余额'] == 0]
+    code_in_position = []
+    trade_in_position = {}
+    trade_all = []
+    for i in range(len(data)):
+        row = data.iloc[i]
+        if row['业务名称'] == '股息入帐':
+            continue
+
+        code = row['证券代码']
+        if not isinstance(code, str) and numpy.isnan(code):
+            continue
+        index_date = data.index[i]
+
+        if code in code_in_position:
+            if data.iloc[i]['股份余额'] > 0:
+                trade_in_position[code]['date'].append(index_date)
+                continue
+            code_in_position.remove(code)
+            trade = trade_in_position.pop(code)
+            trade['clear'] = True
+            trade_all.append(trade)
+        else:
+            code_in_position.append(code)
+            trade_in_position[code] = {'clear': False, 'date': [index_date]}
+
+    trade_all.extend(trade_in_position.values())
+
+    root_dir = util.get_root_dir()
+    path = os.path.join(root_dir, 'data', 'trade_detail_{}.json'.format(data.index[-1].strftime('%Y%m%d')))
+    with open(path, 'w') as f:
+        json.dump(trade_all, f, indent=4, cls=util.DateEncoder)
+    return trade_all
+
+
+def earn_avg():
+    pass
+
+
+def loss_avg():
+    pass
+
+
+def earn_loss():
+    pass
+
+
+def right_ratio():
+    pass
+
+
+def max_earn():
+    pass
+
+
+def max_loss():
+    pass
+
+
+def earn_days():
+    pass
+
+
+def loss_days():
+    pass
 
 
 def trade_truth():
@@ -14,12 +94,16 @@ def trade_truth():
         # ths 导出, wps 编辑 *.xls - ValueError: File is not a recognized excel file
         # wps 另存为 xlsx   pip install openpyxl
         file = os.path.join(trade_data_dir, '{}_PT.xlsx'.format(year))
-        df = pandas.read_excel(file)
+        df = pandas.read_excel(file, dtype={'证券代码': str})
         data = data.append(df)
     data = data.reset_index(drop=True)
     date = data.apply(lambda x: datetime.datetime.strptime(
         '{} {}'.format(x['发生日期'], x['成交时间']), '%Y%m%d %H:%M:%S'), axis=1)
+    data['证券代码'] = data['证券代码'].apply(str)
+    data['证券代码'] = data['证券代码'].apply(lambda x: x.zfill(6))
+    data['证券代码'] = data['证券代码'].mask(data['证券代码'] == '000nan', numpy.nan)
     data = data.set_index(date)
+    return data
 
     charge = data['手续费'].sum() + data['印花税'].sum() + data['过户费'].sum()
     date1 = datetime.datetime(2014, 10, 18)

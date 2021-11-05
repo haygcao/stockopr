@@ -14,7 +14,9 @@ class TradeManagerTestCase(unittest.TestCase):
         pass
 
     def test_trade_truth(self):
-        trade_truth.trade_truth()
+        data = trade_truth.trade_truth()
+        trades = trade_truth.compute_trade(data)
+        print(trades)
 
     def test_sync(self):
         trade_manager.sync()
