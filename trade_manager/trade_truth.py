@@ -119,13 +119,16 @@ def compute_trade_detail_impl(trade, data):
         df_ = df[cond]
         profit -= sum(df_['成交数量'] * df_['成交价格'])
     cost = abs(round(df_buy['发生金额'].sum(), 3))  # 去除日内做T的买入金额
-    profit_percent = round(100 * profit / cost, 3)
+    profit_percent = profit / cost
+    days = len(df)
     detail = {
         'code': trade['code'],
-        'count': len(df),
+        'count': days,
         'cost': cost,
         'profit': profit,
-        'profit_percent': profit_percent,
+        'profit_percent': round(profit_percent * 100, 3),
+        'profit_percent_per_day_compound_interest': round(100 * (pow(profit_percent + 1, 1 / days) - 1), 3),
+        'profit_percent_per_day_simple_interest': round(100 * profit_percent / days, 3),
         'open_position': df.iloc[0]['股份余额'],
         'open_price': df.iloc[0]['成交价格'],
         'max_position': df['股份余额'].max(),
@@ -140,9 +143,16 @@ def compute_trade_detail_impl(trade, data):
     with mysqlcli.get_cursor() as cursor:
         cursor.execute(sql, (trade['code'], df.index[0], df.index[-1]))
         r = cursor.fetchone()
-        # if not r['high'] or not r['low']:
-        #     raise Exception
-        detail.update(r)
+        if not r['high'] or not r['low']:
+            # raise Exception
+            r['high'] = detail['trade_price_high']
+            r['low'] = detail['trade_price_low']
+        detail.update({
+            'high': r['high'],
+            'low': r['low'],
+            'max_earn_percent':  round(100 * (r['high'] / detail['open_price'] - 1), 3),
+            'max_loss_percent': round(100 * (1 - r['low'] / detail['open_price']), 3),
+        })
     return pandas.DataFrame(detail, index=[detail['close_date']])
 
 
@@ -154,7 +164,7 @@ def compute_trade_detail(trade_date_list, data):
     return trade_detail
 
 
-def stat_trade(trade_detail):
+def stat_trade_by_month(trade_detail):
     df_trade_stat = pandas.DataFrame()
 
     trade_detail_earn = trade_detail[trade_detail['profit'] > 0]
@@ -167,6 +177,7 @@ def stat_trade(trade_detail):
     trade_detail_group_earn_count = trade_detail_group_earn.count()
     trade_detail_group_sum = trade_detail_group.sum()
     trade_detail_group_earn_sum = trade_detail_group_earn.sum()
+    trade_detail_group_loss_sum = trade_detail_group_loss.sum()
     trade_detail_group_earn_max = trade_detail_group_earn.max()
     trade_detail_group_loss_max = trade_detail_group_loss.max()
     trade_detail_group_loss_min = trade_detail_group_loss.min()
@@ -176,6 +187,10 @@ def stat_trade(trade_detail):
     # 平均收益/平均亏损百分比
     df_trade_stat['mean_earn_percent'] = trade_detail_group_earn_mean['profit_percent']
     df_trade_stat['mean_loss_percent'] = trade_detail_group_loss_mean['profit_percent']
+    # df_trade_stat['mean_earn_percent'] = trade_detail_group_earn_sum['profit'] / trade_detail_group_earn_sum['cost']
+    # df_trade_stat['mean_loss_percent'] = trade_detail_group_loss_sum['profit'] / trade_detail_group_loss_sum['cost']
+
+    df_trade_stat['earn_loss_percent'] = df_trade_stat['mean_earn_percent'] / df_trade_stat['mean_loss_percent'].abs()
 
     df_trade_stat['earn_trade_count'] = trade_detail_group_earn_count['count']
     # 总交
@@ -200,29 +215,56 @@ def stat_trade(trade_detail):
     df_trade_stat['max_earn_day'] = trade_detail_group_earn_max['day']
     df_trade_stat['max_loss_day'] = trade_detail_group_loss_max['day']
 
+    # 可能的最大收益/亏损
+    df_trade_stat['max_earn_percent_could'] = trade_detail_group_earn_max['max_earn_percent']
+    df_trade_stat['max_loss_percent_could'] = trade_detail_group_loss_max['max_loss_percent']
+
     # 下单次数
     df_trade_stat['order_count'] = trade_detail_group_sum['count']
 
+    # 盈亏
+    df_trade_stat['profit'] = trade_detail_group_sum['profit']
+
     columns = [
         'mean_earn_percent', 'mean_loss_percent', 'earn_count_percent',
+        'earn_loss_percent',
         'trade_count',
         'max_earn_percent', 'max_loss_percent',
         'mean_earn_day', 'mean_loss_day',
         'max_earn', 'max_loss',
         'max_earn_day', 'max_loss_day',
-        'order_count'
+        'max_earn_percent_could', 'max_loss_percent_could',
+        'order_count',
+        'profit'
     ]
     df_trade_stat = df_trade_stat[columns]
 
     return df_trade_stat
 
 
+def stat_trade(trade_stat_month, freq):
+    trade_stat_year = pandas.DataFrame()
+    trade_stat_year_group = trade_stat_month.groupby(pandas.Grouper(freq=freq))
+    trade_stat_year_mean = trade_stat_year_group.mean()
+    trade_stat_year['mean_earn_percent'] = trade_stat_year_mean['mean_earn_percent']
+    trade_stat_year['mean_loss_percent'] = trade_stat_year_mean['mean_loss_percent']
+    trade_stat_year['earn_count_percent'] = trade_stat_year_mean['earn_count_percent']
+    trade_stat_year['erar_loss_percent'] = round(
+        trade_stat_year['mean_earn_percent'] / trade_stat_year['mean_loss_percent'].abs(), 3)
+    trade_stat_year['erar_loss_percent_adj'] = 0
+
+    return trade_stat_year
+
+
 def trade_truth():
     data = load_data()
     trade_date_list = compute_trade(data)
     trade_detail = compute_trade_detail(trade_date_list, data)
-    trade_stat = stat_trade(trade_detail)
-    return trade_stat
+    trade_stat_month = stat_trade_by_month(trade_detail)
+    trade_stat_season = stat_trade(trade_stat_month, 'Q')  # '3M')
+    trade_stat_year = stat_trade(trade_stat_month, 'Y')
+
+    return trade_stat_month
 
     charge = data['手续费'].sum() + data['印花税'].sum() + data['过户费'].sum()
     date1 = datetime.datetime(2014, 10, 18)
