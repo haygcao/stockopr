@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import json
+import math
 import os
 
 import numpy
@@ -22,10 +23,10 @@ def compute_trade(data: pandas.DataFrame):
     root_dir = util.get_root_dir()
     path = os.path.join(root_dir, 'data', 'trade_detail_{}.json'.format(data.index[-1].strftime('%Y%m%d')))
 
-    # if os.path.exists(path):
-    #     with open(path) as f:
-    #         trades = json.load(f)
-    #     return trades
+    if os.path.exists(path):
+        with open(path) as f:
+            trades = json.load(f)
+        return trades
 
     # data_clear = data[data['股价余额'] == 0]
     code_in_position_list = []
@@ -141,9 +142,10 @@ def compute_trade_detail_impl(trade, data):
     }
     sql = 'select max(high) high, min(low) low from quote where code = %s and trade_date >= %s and trade_date <= %s'
     with mysqlcli.get_cursor() as cursor:
-        cursor.execute(sql, (trade['code'], df.index[0], df.index[-1]))
-        r = cursor.fetchone()
-        if not r['high'] or not r['low']:
+        # cursor.execute(sql, (trade['code'], df.index[0], df.index[-1]))
+        # r = cursor.fetchone()
+        r = {}
+        if not r or not r['high'] or not r['low']:
             # raise Exception
             r['high'] = detail['trade_price_high']
             r['low'] = detail['trade_price_low']
@@ -256,6 +258,33 @@ def stat_trade(trade_stat_month, freq):
     return trade_stat_year
 
 
+def show(trade_detail):
+    # trade_detail = trade_detail.sort_values(by=['profit_percent'])
+    x = numpy.ceil(trade_detail['profit_percent']).astype(int).value_counts(sort=False)
+    x = x.sort_index()
+    x = 100 * x / x.sum()
+    # y = trade_detail.groupby(['profit']).count()
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import Cursor
+    fig, ax = plt.subplots()
+    color = ['seagreen' if profit > 0 else 'tomato' for profit in x.index]
+    color = x.mask(x.index < -9, 'purple')
+    color = color.mask((x.index >= -9) & (x.index <= -6), 'red')
+    color = color.mask((x.index > -6) & (x.index <= 0), 'salmon')  # 'tomato')
+    color = color.mask((x.index > 0) & (x.index <= 6), 'lightgreen')
+    color = color.mask((x.index > 6) & (x.index <= 10), 'limegreen')
+    color = color.mask((x.index > 10), 'darkgreen')
+    cursor = Cursor(ax, useblit=True, color='grey', linewidth=1)
+    ax.bar(x.index, x.values, color=color, tick_label=x.index)
+    ax.plot([-9.5, -9.5], [0, max(x.values)], color='purple')
+    ax.plot([-5.5, -5.5], [0, max(x.values)], color='red')
+    ax.plot([0.5, 0.5], [0, max(x.values)], color='yellow', linewidth=2)
+    plt.xticks(numpy.arange(min(x.index), max(x.index), 2))
+    plt.yticks(numpy.arange(0, max(x.values), 5))
+    plt.grid(True, linestyle='--', alpha=0.2)  # 网格线
+    plt.show()
+
+
 def trade_truth():
     data = load_data()
     trade_date_list = compute_trade(data)
@@ -263,6 +292,8 @@ def trade_truth():
     trade_stat_month = stat_trade_by_month(trade_detail)
     trade_stat_season = stat_trade(trade_stat_month, 'Q')  # '3M')
     trade_stat_year = stat_trade(trade_stat_month, 'Y')
+
+    show(trade_detail)
 
     return trade_stat_month
 
