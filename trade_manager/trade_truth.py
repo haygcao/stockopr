@@ -285,6 +285,50 @@ def show(trade_detail):
     plt.show()
 
 
+def show_profit(trade_detail):
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import Cursor
+    fig, ax = plt.subplots()
+    x = trade_detail.index
+    y = trade_detail['profit_percent'].cumsum()
+    # y = ((trade_detail['profit_percent'] + 100) / 100).cumprod() * 100
+    ax.fill_between(x, y, where=(y > 0), color='seagreen', alpha=0.2)
+    ax.fill_between(x, y, where=(y <= 0), color='red', alpha=0.2)
+    ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='--')
+    plt.grid(True, linestyle='--', alpha=0.2)
+    plt.show()
+
+
+def show_profit_per_day(trade_detail):
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import Cursor
+    fig, ax = plt.subplots()
+    x = trade_detail.index
+    # y = trade_detail['profit_percent_per_day_compound_interest']
+    y = trade_detail['profit_percent_per_day_simple_interest']
+    ax.fill_between(x, y, where=(y > 0), color='seagreen')
+    ax.fill_between(x, y, where=(y <= 0), color='red')
+    ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='--')
+    plt.grid(True, linestyle='--', alpha=0.2)
+    plt.show()
+
+
+def show_stat(trade_stat_month):
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import Cursor
+    fig, ax = plt.subplots()
+    x = trade_stat_month.index
+    # y = ((trade_detail['profit_percent'] + 100) / 100).cumprod() * 100
+    y1 = trade_stat_month['mean_earn_percent']
+    y2 = trade_stat_month['mean_loss_percent']
+    ax.fill_between(x, y1)
+    ax.fill_between(x, y2)
+    ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='--')
+    plt.grid(True, linestyle='--', alpha=0.2)
+    # plt.xticks(x.values)
+    plt.show()
+
+
 def trade_truth():
     data = load_data()
     trade_date_list = compute_trade(data)
@@ -293,7 +337,10 @@ def trade_truth():
     trade_stat_season = stat_trade(trade_stat_month, 'Q')  # '3M')
     trade_stat_year = stat_trade(trade_stat_month, 'Y')
 
-    show(trade_detail)
+    # show(trade_detail)
+    show_profit(trade_detail)
+    # show_stat(trade_stat_month)
+    # show_stat(trade_stat_year)
 
     return trade_stat_month
 
