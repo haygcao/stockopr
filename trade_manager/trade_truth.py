@@ -3,15 +3,24 @@ import datetime
 import json
 import math
 import os
+import sys
 
 import numpy
 import pandas
+
+from matplotlib import pyplot as plt
+from matplotlib.widgets import Cursor
 
 from util import util, mysqlcli
 
 
 root_dir = util.get_root_dir()
 truth_dir = os.path.join(root_dir, 'data', 'truth')
+
+# Glyph 8722 missing from current font
+plt.rcParams['axes.unicode_minus'] = False
+plt.tight_layout()
+dpi = 300
 
 
 def merge_trade(trade_current_day_map, trade_in_position_map):
@@ -314,7 +323,7 @@ def stat_trade_by_stock(trade_detail):
     return stat
 
 
-def show(trade_detail):
+def show_profit_by_count(trade_detail):
     # trade_detail = trade_detail.sort_values(by=['profit_percent'])
     x = numpy.ceil(trade_detail['profit_percent']).astype(int).value_counts(sort=False)
     x = x.sort_index()
@@ -338,12 +347,13 @@ def show(trade_detail):
     plt.xticks(numpy.arange(min(x.index), max(x.index), 2))
     plt.yticks(numpy.arange(0, max(x.values), 5))
     plt.grid(True, linestyle='--', alpha=0.2)  # 网格线
-    plt.show()
+
+    fig.set_size_inches(10.24, 7.68)
+    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)), dpi=dpi)
+    # plt.show()
 
 
 def show_profit(trade_detail):
-    import matplotlib.pyplot as plt
-    from matplotlib.widgets import Cursor
     fig, ax = plt.subplots()
     x = trade_detail.index
     y = trade_detail['profit_percent'].cumsum()
@@ -363,12 +373,11 @@ def show_profit(trade_detail):
     ax2 = ax.twinx()
     ax2.bar(x, days)
 
-    plt.show()
+    fig.set_size_inches(10.24, 7.68)
+    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)), dpi=dpi)
 
 
 def show_profit_per_day(trade_detail):
-    import matplotlib.pyplot as plt
-    from matplotlib.widgets import Cursor
     fig, ax = plt.subplots()
     x = trade_detail.index
     # y = trade_detail['profit_percent_per_day_compound_interest']
@@ -377,23 +386,41 @@ def show_profit_per_day(trade_detail):
     ax.fill_between(x, y, where=(y <= 0), color='red')
     ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='--')
     plt.grid(True, linestyle='--', alpha=0.2)
-    plt.show()
+
+    fig.set_size_inches(10.24, 7.68)
+    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)), dpi=dpi)
 
 
-def show_stat(trade_stat_month):
-    import matplotlib.pyplot as plt
-    from matplotlib.widgets import Cursor
+def show_stat(trade_stat_month, freq):
     fig, ax = plt.subplots()
     x = trade_stat_month.index
     # y = ((trade_detail['profit_percent'] + 100) / 100).cumprod() * 100
     y1 = trade_stat_month['mean_earn_percent']
     y2 = trade_stat_month['mean_loss_percent']
-    ax.fill_between(x, y1)
-    ax.fill_between(x, y2)
-    ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='--')
+
+    adj = 1
+    earn_loss_p = y1 > y2.abs()
+    earn_loss_m = y1 <= y2.abs()
+    y3 = y1[earn_loss_p] / y2[earn_loss_p].abs()
+    y4 = y2[earn_loss_m] / y1[earn_loss_m]
+
+    alpha = 1
+    ax.fill_between(y3.index, y3 * adj, where=(y3 > 2), color='darkgreen', alpha=alpha)
+    ax.fill_between(y3.index, y3 * adj, where=((y3 <= 2) & (y3 >= 1)), color='limegreen', alpha=alpha)
+
+    ax.fill_between(y4.index, y4 * adj, where=(y4 < -2), color='purple', alpha=alpha)
+    ax.fill_between(y4.index, y4 * adj, where=((y4 >= 2) & (y4 <= -1)), color='red', alpha=alpha)
+
+    alpha = 0.2
+    ax.fill_between(x, y1, color='lightgreen', alpha=alpha)
+    ax.fill_between(x, y2, color='salmon', alpha=alpha)
+
+    # ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='--')
     plt.grid(True, linestyle='--', alpha=0.2)
     # plt.xticks(x.values)
-    plt.show()
+
+    fig.set_size_inches(10.24, 7.68)
+    plt.savefig(os.path.join(truth_dir, '{}_{}.png'.format(sys._getframe().f_code.co_name, freq)), dpi=dpi)
 
 
 def trade_truth():
@@ -401,13 +428,14 @@ def trade_truth():
     trade_date_list = compute_trade(data)
     trade_detail = compute_trade_detail(trade_date_list, data)
     trade_stat_month = stat_trade_by_month(trade_detail)
-    trade_stat_season = stat_trade_by_quarter(trade_stat_month)
+    trade_stat_quarter = stat_trade_by_quarter(trade_stat_month)
     trade_stat_year = stat_trade_by_year(trade_stat_month)
 
-    show(trade_detail)
+    show_profit_by_count(trade_detail)
     show_profit(trade_detail)
-    show_stat(trade_stat_month)
-    show_stat(trade_stat_year)
+    show_stat(trade_stat_month, 'M')
+    show_stat(trade_stat_quarter, 'Q')
+    show_stat(trade_stat_year, 'Y')
 
     trade_stat_stock = stat_trade_by_stock(trade_detail)
 
