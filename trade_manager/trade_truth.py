@@ -15,7 +15,14 @@ from util import util, mysqlcli
 
 
 root_dir = util.get_root_dir()
-truth_dir = os.path.join(root_dir, 'data', 'truth')
+truth_dir = os.path.join(root_dir, 'data', 'truth', 'pt')
+truth_dir = os.path.join(root_dir, 'data', 'truth', 'xy')
+
+if not os.path.exists(truth_dir):
+    os.makedirs(truth_dir)
+
+suffix = '_PT'
+suffix = ''
 
 # Glyph 8722 missing from current font
 plt.rcParams['axes.unicode_minus'] = False
@@ -30,6 +37,31 @@ def merge_trade(trade_current_day_map, trade_in_position_map):
             trade_in_position_map[code_current_day]['date'].extend(trade_current_day['date'])
         else:
             trade_in_position_map[code_current_day] = trade_current_day
+
+
+def load_data():
+    trade_data_dir = '/home/shuhm/workspace/inv/stat/ZXZQ/PT'
+    years = (2014, 2021)
+
+    trade_data_dir = '/home/shuhm/workspace/inv/stat/ZXZQ'
+    years = (2021, 2021)
+
+    data = pandas.DataFrame()
+    for year in range(years[0], years[1] + 1, 1):
+        # ths 导出, wps 编辑 *.xls - ValueError: File is not a recognized excel file
+        # wps 另存为 xlsx   pip install openpyxl
+        file = os.path.join(trade_data_dir, '{}{}.xlsx'.format(year, suffix))
+        df = pandas.read_excel(file, dtype={'证券代码': str})
+        data = data.append(df)
+    data = data.reset_index(drop=True)
+    date = data.apply(lambda x: datetime.datetime.strptime(
+        '{} {}'.format(x['发生日期'], x['成交时间']), '%Y%m%d %H:%M:%S'), axis=1)
+    data['证券代码'] = data['证券代码'].apply(str)
+    data['证券代码'] = data['证券代码'].apply(lambda x: x.zfill(6))
+    data['证券代码'] = data['证券代码'].mask(data['证券代码'] == '000nan', numpy.nan)
+    data = data.set_index(date)
+    data = data.sort_index()
+    return data
 
 
 def compute_trade(data: pandas.DataFrame):
@@ -97,28 +129,6 @@ def compute_trade(data: pandas.DataFrame):
     return trade_all
 
 
-def load_data():
-    trade_data_dir = '/home/shuhm/workspace/inv/stat/ZXZQ/PT'
-    years = (2014, 2021)
-
-    data = pandas.DataFrame()
-    for year in range(years[0], years[1] + 1, 1):
-        # ths 导出, wps 编辑 *.xls - ValueError: File is not a recognized excel file
-        # wps 另存为 xlsx   pip install openpyxl
-        file = os.path.join(trade_data_dir, '{}_PT.xlsx'.format(year))
-        df = pandas.read_excel(file, dtype={'证券代码': str})
-        data = data.append(df)
-    data = data.reset_index(drop=True)
-    date = data.apply(lambda x: datetime.datetime.strptime(
-        '{} {}'.format(x['发生日期'], x['成交时间']), '%Y%m%d %H:%M:%S'), axis=1)
-    data['证券代码'] = data['证券代码'].apply(str)
-    data['证券代码'] = data['证券代码'].apply(lambda x: x.zfill(6))
-    data['证券代码'] = data['证券代码'].mask(data['证券代码'] == '000nan', numpy.nan)
-    data = data.set_index(date)
-    data = data.sort_index()
-    return data
-
-
 def compute_trade_detail_impl(trade, data):
     df = data[data.index.isin(trade['date']) & (data['证券代码'] == trade['code'])]
     # 发生金额 = 成交金额 + 费用(手续费, 印花税, 过户费等)
@@ -131,7 +141,15 @@ def compute_trade_detail_impl(trade, data):
     if numpy.any(cond):
         df_ = df[cond]
         profit -= sum(df_['成交数量'] * df_['成交价格'])
+
     cost = abs(round(df_buy['发生金额'].sum(), 3))  # 去除日内做T的买入金额
+    cond = df['业务名称'] == '担保品划入'
+    if numpy.any(cond):
+        df_ = df[cond]
+        in_ = sum(df_['成交数量'] * df_['成交价格'])
+        cost += in_
+        profit -= in_
+
     profit_percent = profit / cost
     days = len(df)
     detail = {
@@ -178,9 +196,13 @@ def compute_trade_detail(trade_date_list, data):
 
     trade_detail = pandas.DataFrame()
     for trade in trade_date_list:
+        if trade['current_position'] > 0:
+            print('in position - \n{}'.format(trade))
+            continue
         df = compute_trade_detail_impl(trade, data)
         trade_detail = trade_detail.append(df)
 
+    trade_detail = trade_detail.sort_index()
     trade_detail.to_excel(path)
 
     return trade_detail
