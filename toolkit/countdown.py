@@ -13,7 +13,7 @@ import os
 import sys
 
 from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QPushButton, QLabel, QMainWindow, QInputDialog, QApplication, QHBoxLayout, QVBoxLayout, \
     QRadioButton, QWidget
 
@@ -40,7 +40,8 @@ class Window(QWidget):
         super().__init__()
 
         # setting title
-        self.setWindowTitle("Python ")
+        self.setWindowTitle("Countdown ")
+        self.setWindowIcon(QIcon('data/countdown.png'))
 
         # setting geometry
         # self.setGeometry(100, 100, 400, 600)
