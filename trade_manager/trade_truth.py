@@ -10,6 +10,10 @@ import pandas
 from util import util, mysqlcli
 
 
+root_dir = util.get_root_dir()
+truth_dir = os.path.join(root_dir, 'data', 'truth')
+
+
 def merge_trade(trade_current_day_map, trade_in_position_map):
     for code_current_day, trade_current_day in trade_current_day_map.items():
         if code_current_day in trade_in_position_map:
@@ -20,8 +24,7 @@ def merge_trade(trade_current_day_map, trade_in_position_map):
 
 
 def compute_trade(data: pandas.DataFrame):
-    root_dir = util.get_root_dir()
-    path = os.path.join(root_dir, 'data', 'trade_detail_{}.json'.format(data.index[-1].strftime('%Y%m%d')))
+    path = os.path.join(truth_dir, 'trade_date_{}.json'.format(data.index[-1].strftime('%Y%m%d')))
 
     if os.path.exists(path):
         with open(path) as f:
@@ -159,14 +162,27 @@ def compute_trade_detail_impl(trade, data):
 
 
 def compute_trade_detail(trade_date_list, data):
+    path = os.path.join(truth_dir, 'trade_detail_{}.xlsx'.format(data.index[-1].strftime('%Y%m%d')))
+    if os.path.exists(path):
+        trade_detail = pandas.read_excel(path, index_col=0)
+        return trade_detail
+
     trade_detail = pandas.DataFrame()
     for trade in trade_date_list:
         df = compute_trade_detail_impl(trade, data)
         trade_detail = trade_detail.append(df)
+
+    trade_detail.to_excel(path)
+
     return trade_detail
 
 
 def stat_trade_by_month(trade_detail):
+    path = os.path.join(truth_dir, 'trade_stat_month_{}.xlsx'.format(trade_detail['close_date'][-1].strftime('%Y%m%d')))
+    if os.path.exists(path):
+        df_trade_stat = pandas.read_excel(path, index_col=0)
+        return df_trade_stat
+
     df_trade_stat = pandas.DataFrame()
 
     trade_detail_earn = trade_detail[trade_detail['profit'] > 0]
@@ -241,10 +257,20 @@ def stat_trade_by_month(trade_detail):
     ]
     df_trade_stat = df_trade_stat[columns]
 
+    df_trade_stat.to_excel(path)
+
     return df_trade_stat
 
 
-def stat_trade(trade_stat_month, freq):
+def _stat_trade_by_time(trade_stat_month, freq):
+    if freq not in 'QY':
+        return
+
+    path = os.path.join(truth_dir, 'trade_stat_{}_{}.xlsx'.format(freq, trade_stat_month.index[-1].strftime('%Y%m%d')))
+    if os.path.exists(path):
+        trade_stat_year = pandas.read_excel(path, index_col=0)
+        return trade_stat_year
+
     trade_stat_year = pandas.DataFrame()
     trade_stat_year_group = trade_stat_month.groupby(pandas.Grouper(freq=freq))
     trade_stat_year_mean = trade_stat_year_group.mean()
@@ -255,7 +281,37 @@ def stat_trade(trade_stat_month, freq):
         trade_stat_year['mean_earn_percent'] / trade_stat_year['mean_loss_percent'].abs(), 3)
     trade_stat_year['erar_loss_percent_adj'] = 0
 
+    trade_stat_year.to_excel(path)
+
     return trade_stat_year
+
+
+def stat_trade_by_quarter(trade_stat_month):
+    return _stat_trade_by_time(trade_stat_month, 'Q')  # '3M')
+
+
+def stat_trade_by_year(trade_stat_month):
+    return _stat_trade_by_time(trade_stat_month, 'Y')
+
+
+def stat_trade_by_stock(trade_detail):
+    path = os.path.join(truth_dir, 'trade_stat_stock_{}.xlsx'.format(trade_detail.index[-1].strftime('%Y%m%d')))
+    if os.path.exists(path):
+        stat = pandas.read_excel(path, index_col=0)
+        return stat
+
+    group = trade_detail.groupby(['code'])
+    group_sum = group.sum()
+
+    stat = pandas.DataFrame()
+    stat['profit'] = group_sum['profit']
+    stat['day'] = group_sum['day']
+    stat['cost'] = group_sum['cost']
+    stat['percent'] = round(stat['profit'] / stat['cost'] * 100, 3)
+
+    stat.to_excel(path)
+
+    return stat
 
 
 def show(trade_detail):
@@ -291,11 +347,22 @@ def show_profit(trade_detail):
     fig, ax = plt.subplots()
     x = trade_detail.index
     y = trade_detail['profit_percent'].cumsum()
-    # y = ((trade_detail['profit_percent'] + 100) / 100).cumprod() * 100
+    y = (((trade_detail['profit_percent'] + 100) / 100).cumprod() - 1) * 100
     ax.fill_between(x, y, where=(y > 0), color='seagreen', alpha=0.2)
     ax.fill_between(x, y, where=(y <= 0), color='red', alpha=0.2)
-    ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='--')
-    plt.grid(True, linestyle='--', alpha=0.2)
+
+    y2 = trade_detail['profit_percent']
+    ax.fill_between(x, y2, where=(y2 > 0), color='green', alpha=0.5)
+    ax.fill_between(x, y2, where=(y2 <= 0), color='red', alpha=0.5)
+    # ax.plot(x, y2)
+
+    ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='-.')
+    plt.grid(True, linestyle='-.', alpha=0.2)
+
+    days = trade_detail['day']
+    ax2 = ax.twinx()
+    ax2.bar(x, days)
+
     plt.show()
 
 
@@ -334,13 +401,15 @@ def trade_truth():
     trade_date_list = compute_trade(data)
     trade_detail = compute_trade_detail(trade_date_list, data)
     trade_stat_month = stat_trade_by_month(trade_detail)
-    trade_stat_season = stat_trade(trade_stat_month, 'Q')  # '3M')
-    trade_stat_year = stat_trade(trade_stat_month, 'Y')
+    trade_stat_season = stat_trade_by_quarter(trade_stat_month)
+    trade_stat_year = stat_trade_by_year(trade_stat_month)
 
-    # show(trade_detail)
+    show(trade_detail)
     show_profit(trade_detail)
-    # show_stat(trade_stat_month)
-    # show_stat(trade_stat_year)
+    show_stat(trade_stat_month)
+    show_stat(trade_stat_year)
+
+    trade_stat_stock = stat_trade_by_stock(trade_detail)
 
     return trade_stat_month
 
