@@ -17,6 +17,7 @@ from util import util, mysqlcli
 root_dir = util.get_root_dir()
 truth_dir = os.path.join(root_dir, 'data', 'truth', 'pt')
 truth_dir = os.path.join(root_dir, 'data', 'truth', 'xy')
+truth_dir = os.path.join(root_dir, 'data', 'truth', 'gj')
 
 if not os.path.exists(truth_dir):
     os.makedirs(truth_dir)
@@ -45,6 +46,9 @@ def load_data():
 
     trade_data_dir = '/home/shuhm/workspace/inv/stat/ZXZQ'
     years = (2021, 2021)
+
+    trade_data_dir = '/home/shuhm/workspace/inv/stat/GJZQ'
+    years = (2015, 2016)
 
     data = pandas.DataFrame()
     for year in range(years[0], years[1] + 1, 1):
@@ -161,13 +165,13 @@ def compute_trade_detail_impl(trade, data):
         'profit_percent_per_day_compound_interest': round(100 * (pow(profit_percent + 1, 1 / days) - 1), 3),
         'profit_percent_per_day_simple_interest': round(100 * profit_percent / days, 3),
         'open_position': df.iloc[0]['股份余额'],
-        'open_price': df.iloc[0]['成交价格'],
         'max_position': df['股份余额'].max(),
+        'open_price': df.iloc[0]['成交价格'],
+        'close_price': df.iloc[-1]['成交价格'],
         'trade_price_high': df['成交价格'].max(),
         'trade_price_low': df['成交价格'].min(),
-        'close_price': df.iloc[-1]['成交价格'],
-        'open_date': df.index[0],
-        'close_date': df.index[-1],
+        'open_date': df.index[0].date(),
+        'close_date': df.index[-1].date(),
         'day': (df.index[-1] - df.index[0]).days + 1
     }
     sql = 'select max(high) high, min(low) low from quote where code = %s and trade_date >= %s and trade_date <= %s'
@@ -202,6 +206,7 @@ def compute_trade_detail(trade_date_list, data):
         df = compute_trade_detail_impl(trade, data)
         trade_detail = trade_detail.append(df)
 
+    trade_detail.index = pandas.to_datetime(trade_detail.index)
     trade_detail = trade_detail.sort_index()
     trade_detail.to_excel(path)
 
@@ -375,7 +380,7 @@ def show_profit_by_count(trade_detail):
     # plt.show()
 
 
-def show_profit(trade_detail):
+def show_profit_per_trade(trade_detail):
     fig, ax = plt.subplots()
     x = trade_detail.index
     y = trade_detail['profit_percent'].cumsum()
@@ -413,7 +418,7 @@ def show_profit_per_day(trade_detail):
     plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)), dpi=dpi)
 
 
-def show_stat(trade_stat_month, freq):
+def show_trade_stat(trade_stat_month, freq):
     fig, ax = plt.subplots()
     x = trade_stat_month.index
     # y = ((trade_detail['profit_percent'] + 100) / 100).cumprod() * 100
@@ -445,25 +450,10 @@ def show_stat(trade_stat_month, freq):
     plt.savefig(os.path.join(truth_dir, '{}_{}.png'.format(sys._getframe().f_code.co_name, freq)), dpi=dpi)
 
 
-def trade_truth():
-    data = load_data()
-    trade_date_list = compute_trade(data)
-    trade_detail = compute_trade_detail(trade_date_list, data)
-    trade_stat_month = stat_trade_by_month(trade_detail)
-    trade_stat_quarter = stat_trade_by_quarter(trade_stat_month)
-    trade_stat_year = stat_trade_by_year(trade_stat_month)
+def verify_data(data):
+    r = data.groupby('证券代码').sum()
+    return True
 
-    show_profit_by_count(trade_detail)
-    show_profit(trade_detail)
-    show_stat(trade_stat_month, 'M')
-    show_stat(trade_stat_quarter, 'Q')
-    show_stat(trade_stat_year, 'Y')
-
-    trade_stat_stock = stat_trade_by_stock(trade_detail)
-
-    return trade_stat_month
-
-    charge = data['手续费'].sum() + data['印花税'].sum() + data['过户费'].sum()
     date1 = datetime.datetime(2014, 10, 18)
     date2 = datetime.datetime(2015, 4, 30)
 
@@ -482,21 +472,21 @@ def trade_truth():
 
     # ===
     date1 = datetime.datetime(2017, 1, 3)
-    date2 = datetime.datetime(2017, 9, 11)   # 截至当前, 只剩下 万达电影 1100股
-    date2 = datetime.datetime(2018, 3, 7)   # 2017/9/11-2018/3/7 没有进行任何交易 # 2018/8/7 分红 550股, 持仓1650股
-    date2 = datetime.datetime(2018, 11, 19)   # 清仓了除万达电影以外的所有股票(2018/3/7-), 加仓万达电影2000股, 现持仓3650股
+    date2 = datetime.datetime(2017, 9, 11)  # 截至当前, 只剩下 万达电影 1100股
+    date2 = datetime.datetime(2018, 3, 7)  # 2017/9/11-2018/3/7 没有进行任何交易 # 2018/8/7 分红 550股, 持仓1650股
+    date2 = datetime.datetime(2018, 11, 19)  # 清仓了除万达电影以外的所有股票(2018/3/7-), 加仓万达电影2000股, 现持仓3650股
 
-    date2 = datetime.datetime(2019, 1, 31)   # 2018/11/19-2019/1/30, 没有进行任何交易  2019/1/31开始对万达电影做T
-    date2 = datetime.datetime(2019, 3, 7)   # 1/31-3/7 只操作了万达电影, 当前持仓 1650, 减持了期间增加的仓位
+    date2 = datetime.datetime(2019, 1, 31)  # 2018/11/19-2019/1/30, 没有进行任何交易  2019/1/31开始对万达电影做T
+    date2 = datetime.datetime(2019, 3, 7)  # 1/31-3/7 只操作了万达电影, 当前持仓 1650, 减持了期间增加的仓位
 
-    date2 = datetime.datetime(2019, 3, 8)   # 开始交易其他股票
-    date2 = datetime.datetime(2019, 3, 20)   # 再次清仓其他股票, 加仓万达电影到 7450股
-    date2 = datetime.datetime(2019, 3, 22)   # 清仓所有股票
+    date2 = datetime.datetime(2019, 3, 8)  # 开始交易其他股票
+    date2 = datetime.datetime(2019, 3, 20)  # 再次清仓其他股票, 加仓万达电影到 7450股
+    date2 = datetime.datetime(2019, 3, 22)  # 清仓所有股票
 
     # ===
-    date1 = datetime.datetime(2019, 3, 26)   # 建仓万达电影 2000
+    date1 = datetime.datetime(2019, 3, 26)  # 建仓万达电影 2000
     # date2 = datetime.datetime(2019, 6, 3)  # 加仓万达电影 500股至 2500股   4-5两月没有进行任何交易
-    date2 = datetime.datetime(2019, 6, 12)   # 开始交易其他股票
+    date2 = datetime.datetime(2019, 6, 12)  # 开始交易其他股票
     date2 = datetime.datetime(2019, 12, 6)
 
     date1 = datetime.datetime(2020, 3, 17)
@@ -512,3 +502,39 @@ def trade_truth():
 
     r = data1.groupby('证券代码').sum()  # '成交数量')
     print(data)
+
+
+def trade_truth():
+    data = load_data()
+    if '股份余额' not in data.columns:
+        cond1 = data['证券名称'] == '国金通用金腾通货币'
+        # cond2 = data['业务名称'] == '申购确认'
+        cond3 = data['业务名称'] == '赎回确认'
+        data['成交数量'] = data['成交数量'].mask(cond1 & cond3, data['成交数量'] * -1)
+        data['发生金额'] = data['发生金额'].mask(cond1 & ~cond3, data['发生金额'] * -1)
+        # data = data[data['证券名称'] != '国金通用金腾通货币']
+        data = data[data['资金账号'].notna()]
+        group = data.groupby('证券代码')
+        cumsum = group.cumsum()
+        stock_remained = cumsum['成交数量']
+        data.insert(8, '股份余额', stock_remained)
+
+    verify_data(data)
+
+    # charge = data['手续费'].sum() + data['印花税'].sum() + data['过户费'].sum()
+
+    trade_date_list = compute_trade(data)
+    trade_detail = compute_trade_detail(trade_date_list, data)
+    trade_stat_month = stat_trade_by_month(trade_detail)
+    trade_stat_quarter = stat_trade_by_quarter(trade_stat_month)
+    trade_stat_year = stat_trade_by_year(trade_stat_month)
+
+    show_profit_by_count(trade_detail)
+    show_profit_per_trade(trade_detail)
+    show_trade_stat(trade_stat_month, 'M')
+    show_trade_stat(trade_stat_quarter, 'Q')
+    show_trade_stat(trade_stat_year, 'Y')
+
+    trade_stat_stock = stat_trade_by_stock(trade_detail)
+
+    return trade_stat_month
