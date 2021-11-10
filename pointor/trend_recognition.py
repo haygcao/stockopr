@@ -1,4 +1,4 @@
-#-*- encoding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 
 import pointor.stage_handler as stage_handler
 from config.config import emulate
@@ -13,21 +13,23 @@ from config import config
 
 # 转向 逆转 突破 异动
 indicator = {
-        'zx_up'   : config.TR_ZX,
-        'lz_up'   : config.TR_LZ,
-        'tp_up'   : config.TR_TP,
-        'zx_down' : -1*config.TR_ZX,
-        'lz_down' : -1*config.TR_LZ,
-        'tp_down' : -1*config.TR_TP
-        }
+        'zx_up': config.TR_ZX,
+        'lz_up': config.TR_LZ,
+        'tp_up': config.TR_TP,
+        'zx_down': -1*config.TR_ZX,
+        'lz_down': -1*config.TR_LZ,
+        'tp_down': -1*config.TR_TP
+}
+
 
 def notice_signal_transfer(stock_info):
     return
     # 查询数据库, 是否建仓
     if emulate or stock_info['bought'] == 1:
         pass
-        #engine.say(stock_info['name'] + '注意, 逆转信号')
-        #engine.runAndWait()
+        # engine.say(stock_info['name'] + '注意, 逆转信号')
+        # engine.runAndWait()
+
 
 def percent(orig, curr):
     return 100 * (curr - orig)/orig
@@ -35,7 +37,7 @@ def percent(orig, curr):
 '''
 时间 + 价格
 '''
-#class StockTrendRecognizerInfo:
+# class StockTrendRecognizerInfo:
 #    def __init__(self, code, quote=None):
 #        self.code     = code
 #        self.quote    = quote
@@ -48,18 +50,19 @@ def percent(orig, curr):
 #        self.ind    = -1
 #        self.flag   = -1 # 1, update
 
+
 class TrendRecognizer:
     def __init__(self, code, quote=None):
-        self.code     = code
-        self.quote    = quote
+        self.code = code
+        self.quote = quote
         self.quote_rt = []
-        self.stagehandler    = stage_handler.Stage()
-        self.stagehandler.tr = self # 彼此引用
-        self.close  = -1
-        self.last   = -1
-        self.dt     = '' # datetime
-        self.ind    = -1
-        self.flag   = -1 # 1, update
+        self.stagehandler = stage_handler.Stage()
+        self.stagehandler.tr = self  # 彼此引用
+        self.close = -1
+        self.last = -1
+        self.dt = ''  # datetime
+        self.ind = -1
+        self.flag = -1  # 1, update
 
     def _init_tr(self, close):
         if self.close < 0:
@@ -73,7 +76,7 @@ class TrendRecognizer:
             self.stagehandler.set_cur_stage(cur_stage)
             self.stagehandler.set_stage_info(cur_stage, min(self.close, self.last), max(self.close, self.last))
             self.stagehandler.update_stage_info(cur_stage, start=self.quote.index[0], end=self.quote.index[1])
-            #print(self.stagehandler.stage_info)
+            # print(self.stagehandler.stage_info)
             return cur_stage
 
     def _trend_recognition(self, dt, close):
@@ -83,18 +86,18 @@ class TrendRecognizer:
             if not cur_stage:
                 return
         else:
-            self.last  = self.close
+            self.last = self.close
             self.close = close
-            self.dt    = dt
+            self.dt = dt
 
         if self.stagehandler.get_pre_stage() != cur_stage:
             self.stagehandler.set_pre_stage(cur_stage)
-            #self.stagehandler.update_info()
+            # self.stagehandler.update_info()
 
         self.stage_dict.get(cur_stage)()
 
     def trend_recognition_quote(self):
-        #保存数据库比较好
+        # 保存数据库比较好
         '''
         hset stock_info cur_stage
         hset stage_info_stock_info stage val #stage: 3, 35...; val:max, min
@@ -105,9 +108,9 @@ class TrendRecognizer:
         #记录关键值和当前值
         '''
 
-        #for close in self.quote.close.values:
+        # for close in self.quote.close.values:
         for ind, close in enumerate(self.quote.close):
-            #print(ind, self.quote.index[ind], close)
+            # print(ind, self.quote.index[ind], close)
             self.ind += 1 #indicator
             dt = self.quote.index[ind]
             self._trend_recognition(dt, close)
@@ -146,7 +149,7 @@ class TrendRecognizer:
                 '425163' : self._425163
                 }
 
-    #目前处于上升趋势
+    # 目前处于上升趋势
     def _3(self):
         cur_stage = self.stagehandler.get_cur_stage()
         mm = self.stagehandler.get_stage_info(cur_stage)
@@ -157,7 +160,7 @@ class TrendRecognizer:
             if percent(mm['max'], self.close) <= indicator['zx_down']:
                 self.stagehandler.chg_stage('35', self.close, mm['max'])
 
-    #目前处于上升趋势->自然回辙
+    # 目前处于上升趋势->自然回辙
     def _35(self):
         cur_stage = self.stagehandler.get_cur_stage()
         mm = self.stagehandler.get_stage_info(cur_stage)
@@ -174,7 +177,7 @@ class TrendRecognizer:
     def _354(self):
         pass
 
-    #目前处于上升趋势->自然回辙->自然回升
+    # 目前处于上升趋势->自然回辙->自然回升
     def _352(self):
         cur_stage = self.stagehandler.get_cur_stage()
         mm = self.stagehandler.get_stage_info(cur_stage)
@@ -196,7 +199,7 @@ class TrendRecognizer:
     def _3523(self):
         pass
 
-    #目前处于上升趋势->自然回辙->自然回升->次级回辙
+    # 目前处于上升趋势->自然回辙->自然回升->次级回辙
     def _3526(self):
 
         cur_stage = self.stagehandler.get_cur_stage()
@@ -214,7 +217,7 @@ class TrendRecognizer:
     def _35264(self):
         pass
 
-    #目前处于上升趋势->自然回辙->自然回升->次级回辙->次级回升
+    # 目前处于上升趋势->自然回辙->自然回升->次级回辙->次级回升
     def _35261(self):
 
         cur_stage = self.stagehandler.get_cur_stage()
@@ -227,7 +230,7 @@ class TrendRecognizer:
                 self.stagehandler.set_stage_info(cur_stage, mm['min'], self.close)
         else:
             if mm['max'] < mm3526['max'] and self.close - mm['max'] <= indicator['lz_down']:
-                #只处理为一种信号, 并不作为真正的趋势逆转
+                # 只处理为一种信号, 并不作为真正的趋势逆转
                 notice_signal_transfer(self.stage)
             if percent(mm['max'], self.close) <= indicator['zx_down']:
                 self.stagehandler.chg_stage('4', self.close, mm['max'])
@@ -271,7 +274,7 @@ class TrendRecognizer:
         mm42 = self.stagehandler.get_stage_info('42')
         if self.close >= self.last:
             if mm['min'] > mm42['min'] and self.close - mm['min'] >= indicator['lz_up']:
-                #只处理为一种信号, 并不作为真正的趋势逆转
+                # 只处理为一种信号, 并不作为真正的趋势逆转
                 notice_signal_transfer(self.stage)
             if percent(mm['min'], self.close) >= indicator['zx_up']:
                 self.stagehandler.chg_stage('4251', mm['min'], self.close)
@@ -308,7 +311,7 @@ class TrendRecognizer:
         mm4251 = self.stagehandler.get_stage_info('4251')
         if self.close >= self.last:
             if mm['min'] > mm4251['min'] and self.close - mm['min'] >= indicator['lz_up']:
-                #只处理为一种信号, 并不作为真正的趋势逆转
+                # 只处理为一种信号, 并不作为真正的趋势逆转
                 notice_signal_transfer(self.stage)
             if percent(mm['min'], self.close) >= indicator['zx_up']:
                 self.stagehandler.chg_stage('3', mm['min'], self.close)
@@ -319,7 +322,6 @@ class TrendRecognizer:
                 self.stagehandler.chg_stage('4', self.close, mm['max'])
             elif self.close < mm['min']:
                 self.stagehandler.set_stage_info(cur_stage, self.close, mm['max'])
-
 
     def _425164(self):
         pass
