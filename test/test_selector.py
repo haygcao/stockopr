@@ -104,8 +104,8 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_update_candidate_pool(self):
         strategy_list = ['second_stage']   # super
-        strategy_list = ['bottom']
-        strategy_list = ['volume_dry_up']
+        # strategy_list = ['bottom']
+        # strategy_list = ['volume_dry_up']
         selector.update_candidate_pool(strategy_list, 'day')
 
     def test_get_candidate_pool(self):
@@ -113,12 +113,12 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(code_list)
 
     def test_select(self):
-        code_list = selector.select(['value_return'], ['second_stage'], period='day')
+        # code_list = selector.select(['value_return'], ['second_stage'], period='day')
         # code_list = selector.select(['vcp'], ['second_stage'])
         # code_list = selector.select(['step'], ['second_stage'], period='day')
         # code_list = selector.select(['step'], ['dyn_sys_green'], period='day')
         # code_list = selector.select(['step_breakout'], ['second_stage'], period='week')
-        # code_list = selector.select(['vcp'], [], period='day')
+        code_list = selector.select(['vcp'], ['second_stage'], period='day')
         print(code_list)
 
     def test_update_candidate_pool_using_signal_config(self):

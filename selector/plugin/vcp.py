@@ -9,6 +9,22 @@ from acquisition import quote_db
 from pointor import signal_vcp
 
 
+def vcp(quote):
+    pass
+
+
+def check_price_correction(quote):
+    high_of_52week = quote.close[-250:].max()
+    low_of_52week = quote.close[-250:].min()
+    index = numpy.where(quote.close == high_of_52week)[0][0]
+    index_date = quote.index[index]
+
+    low = quote.loc[index_date:]['close'].min()
+    if (low - low_of_52week) < 0.5 * (high_of_52week - low_of_52week) or low > 0.85 * high_of_52week:
+        return False
+    return True
+
+
 def vcp(quote, period, back_days=5):
     if period == 'week':
         quote = quote_db.resample_quote(quote, period_type='W')
@@ -18,6 +34,6 @@ def vcp(quote, period, back_days=5):
 
     for column in column_list:
         deviation = quote[column]
-        if numpy.any(deviation[-back_days:]):
+        if numpy.any(deviation[-back_days:]) and check_price_correction(quote):
             return True
     return False
