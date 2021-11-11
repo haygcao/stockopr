@@ -89,7 +89,7 @@ def delete_portfolio(status_list, strategy_list):
 def get_all_stock_code():
     with mysqlcli.get_cursor() as c:
         # sql = 'SELECT DISTINCT code FROM {0}'.format(config.sql_tab_quote)
-        sql = "SELECT code FROM {0} where type = 'A'".format(config.sql_tab_basic_info)
+        sql = "SELECT code FROM {0} where type = 'A' order by code".format(config.sql_tab_basic_info)
         c.execute(sql)
         stock_code_list = c.fetchall()
 

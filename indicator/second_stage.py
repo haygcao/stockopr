@@ -7,8 +7,53 @@ from indicator import ma
 from indicator.decorator import computed
 from util import dt
 
+
 @computed(column_name='second_stage')
 def second_stage(quote, period):
+    """
+    股票魔法师 P66
+    股票魔法师II P84
+    """
+    close = quote['close']
+    ytd_close = quote['close'].shift(periods=1)
+
+    # Compute RS ratings of the stock in 3 ways
+    # rs_rating, rs_rating2, rs_rating3 = compute_rs_rating(quote)
+
+    # Compute SMA & high/low
+    quote = ma.compute_ma(quote)
+    mov_avg_50 = quote['ma50']
+    mov_avg_150 = quote['ma150']
+    mov_avg_200 = quote['ma200']
+    mov_avg_200_shift = mov_avg_200.shift(periods=1)  # SMA 200 1 month before (for calculating trending condition)
+    low_of_52week = close.rolling(250).min()  # min(quote['close'][-250:])
+    high_of_52week = close.rolling(250).max()  # max(quote['close'][-250:])
+
+    # Condition checks
+    # Condition 1: Current Price > 50 SMA > 150 SMA > 200 SMA
+    condit_1 = (close > mov_avg_50) & (mov_avg_50 > mov_avg_150) & (mov_avg_150 > mov_avg_200)
+
+    # Condition 2: 200 SMA trending up for at least 1 month (ideally 4-5 months)
+    condit_2 = ((mov_avg_200 > mov_avg_200_shift).rolling(20).min() == 1)
+
+    # Condition 3: Current Price is at least 30% above 52 week low
+    # Many of the best are up 100-300% before coming out of consolidation
+    condit_3 = (close >= (1.3 * low_of_52week))
+
+    # Condition 4: Current Price is within 25% of 52 week high, and at 10 days ago
+    condit_4 = (close >= 0.75 * high_of_52week)
+
+    condit = condit_1 & condit_2 & condit_3 & condit_4
+
+    quote['second_stage'] = numpy.nan
+
+    quote['second_stage'] = quote['second_stage'].mask(condit, quote.low)
+
+    return quote
+
+
+@computed(column_name='second_stage')
+def second_stage_(quote, period):
     """
     股票魔法师 - 第二阶段特点
     1 股票价格在200日(40周)SMA均线以上
