@@ -119,7 +119,7 @@ class SelectorPluginTestCase(unittest.TestCase):
         # code_list = selector.select(['step'], ['second_stage'], period='day')
         # code_list = selector.select(['step'], ['dyn_sys_green'], period='day')
         # code_list = selector.select(['step_breakout'], ['second_stage'], period='week')
-        code_list = selector.select(['vcp'], ['second_stage'], period='day')
+        code_list = selector.select(['vcp'], ['second_stage', 'super'], period='day')
         print(code_list)
 
     def test_update_candidate_pool_using_signal_config(self):

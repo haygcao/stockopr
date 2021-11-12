@@ -216,7 +216,7 @@ def update_candidate_pool(strategy_list, period='day'):
     for strategy in strategy_list:
         code_list = basic.get_all_stock_code()
         # code_list = ['600331']
-        code_list = select_one_strategy(code_list, strategy, period, mp=False)
+        code_list = select_one_strategy(code_list, strategy, period, mp=True)
         # 科创板
         # code_list = [code for code in code_list if not code.startswith('688')]
         msg += '{}: {}\n'.format(strategy, len(code_list))
