@@ -258,6 +258,7 @@ class Panel(QWidget):
         self.combo_classification.select_index(2)
 
         for indicator in [
+            'finance',
             'super', 'hot_strong',
             'second_stage', 'dyn_sys_green', 'dyn_sys_blue',
             'strong_base', 'bottom',

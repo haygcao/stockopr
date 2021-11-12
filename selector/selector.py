@@ -25,7 +25,7 @@ import selector.plugin.down as down
 import selector.plugin.strong_variability as strong_variability
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
-    base_breakout, blt, vcp, strong_base, amplitude, signal_config, bottom, volume_dry_up, breakout
+    base_breakout, blt, vcp, strong_base, amplitude, signal_config, bottom, volume_dry_up, breakout, finance
 from selector.plugin import value_return
 from selector.plugin import dynamical_system
 from selector.plugin import force_index
@@ -38,6 +38,7 @@ from . import selected
 from util.log import logger
 
 selector = {
+    'finance': finance.finance,
     'trend_up': signal_config.mask_config,
     'signal_config': signal_config.signal_config,
     'step': step.step,
@@ -215,7 +216,7 @@ def update_candidate_pool(strategy_list, period='day'):
     for strategy in strategy_list:
         code_list = basic.get_all_stock_code()
         # code_list = ['600331']
-        code_list = select_one_strategy(code_list, strategy, period, mp=True)
+        code_list = select_one_strategy(code_list, strategy, period, mp=False)
         # 科创板
         # code_list = [code for code in code_list if not code.startswith('688')]
         msg += '{}: {}\n'.format(strategy, len(code_list))

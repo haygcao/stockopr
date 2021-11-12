@@ -3,7 +3,7 @@ import unittest
 from acquisition import tx, quote_db
 from indicator import compute_indicator
 from acquisition.quote_db import get_price_info_df_file_day
-from pointor import signal
+from pointor import signal, signal_finance
 
 
 class SignalTestCase(unittest.TestCase):
@@ -23,6 +23,10 @@ class SignalTestCase(unittest.TestCase):
         # print(quote[:50])
         # print(quote[-50:])
         print([column for column in quote.columns if 'signal_e' in column])
+
+    def test_one_signal(self):
+        quote = signal_finance.signal_enter(self.quote, period=self.period)
+        print(quote)
 
 
 def suite():

@@ -1,4 +1,4 @@
-http://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/ZYZBAjaxNew?type=0&code=SZ002739   type: 0按报告期 1按年度 2 按季度
+http://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/ZYZBAjaxNew?type=2&code=SZ002739   type: 0按报告期 1按年度 2 按季度
 
 {
    "pages" : 4,

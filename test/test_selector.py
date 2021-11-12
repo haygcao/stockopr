@@ -104,6 +104,7 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_update_candidate_pool(self):
         strategy_list = ['second_stage']   # super
+        strategy_list = ['finance']
         # strategy_list = ['bottom']
         # strategy_list = ['volume_dry_up']
         selector.update_candidate_pool(strategy_list, 'day')

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pandas
 
+from indicator.decorator import computed
 from util import mysqlcli
 
 
@@ -56,6 +57,7 @@ def compute(df_finance):
 
     df_finance['count_dpnp_yoy_ratio'] = count_dpnp_yoy_ratio
     df_finance['count_totaloperatereve_yoy_ratio'] = count_totaloperatereve_yoy_ratio
+    df_finance['dpnp_yoy_ratio_ins'] = df_finance['dpnp_yoy_ratio'] - df_finance['dpnp_yoy_ratio'].shift(periods=4)
 
     return df_finance
 
@@ -71,3 +73,18 @@ def finance(code_list):
         result = result.append(df)
 
     return result
+
+
+@computed(column_name='finance')
+def compute_finance(quote):
+    df_finance = finance([quote.code[-1]])
+    df_finance_day = df_finance.resample('D').pad()  # 需要考虑报表发布的日期
+    df_finance_day = df_finance_day[df_finance_day.index.isin(quote.index)]
+    cond1 = df_finance_day['dpnp_yoy_ratio'] > 18
+    cond2 = df_finance_day['totaloperatereve_yoy_ratio'] > 25
+
+    v = df_finance_day['dpnp_yoy_ratio_ins']
+    quote['dpnp_yoy_ratio'] = df_finance_day['dpnp_yoy_ratio']
+    quote['finance'] = v.mask(cond1 & cond2, v)
+
+    return quote
