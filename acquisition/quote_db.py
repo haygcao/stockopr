@@ -48,7 +48,7 @@ def query_date(code, count):
         return date['min_date'] if date else None
 
 
-def query_quote(trade_date, conn=None):
+def query_quote(trade_date, begin_trade_date=None, code_list=None, conn=None):
     if conn == None:
         _conn = mysqlcli.get_connection()
     else:
@@ -56,11 +56,20 @@ def query_quote(trade_date, conn=None):
 
     key_list = ['trade_date', 'code', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'turnover_ratio']
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
-    where = ' trade_date = "{}"'.format(trade_date)
+    if begin_trade_date:
+        where = ' trade_date >= %s AND trade_date <= %s'
+        val = (begin_trade_date, trade_date)
+    else:
+        where = ' trade_date = %s'
+        val = (trade_date, )
+
+    if code_list:
+        where += " AND code in ('{}')".format("','".join(code_list))
+
     sql = 'SELECT {0} FROM {1} WHERE {2}'.format(', '.join(key_list), table[1], where)
 
     # df = pd.read_sql(sql, con=_conn, index_col=['trade_date'])
-    df = pd.read_sql(sql, con=_conn)
+    df = pd.read_sql(sql, con=_conn, params=val)
 
     if conn == None:
         _conn.close()
@@ -269,7 +278,7 @@ def insert_into_quote(val_list, ex=False):
             print(e)
 
 
-def get_price_info_db(code, trade_date = None):
+def get_price_info_db(code, trade_date=None):
     with mysqlcli.get_cursor() as c:
         key_list = ['code', 'name', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
         key_list = ['name', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
@@ -292,13 +301,13 @@ def get_price_info_db(code, trade_date = None):
         if not r:
             return None
 
-        r.update({'code':code})
+        r.update({'code': code})
         #print(r['trade_date'], r['close'])
 
         return r
 
 
-def get_price_info_list_db(code, trade_date = 1):
+def get_price_info_list_db(code, trade_date=1):
     with mysqlcli.get_cursor() as c:
         key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount']
         table = [config.sql_tab_basic_info, config.sql_tab_quote]

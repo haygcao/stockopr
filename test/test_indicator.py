@@ -1,7 +1,8 @@
+import datetime
 import unittest
 
 from acquisition import quote_db
-from indicator import ad
+from indicator import ad, relative_strength_rating
 from indicator import boll
 from indicator import cci
 from indicator import crsi
@@ -25,6 +26,11 @@ class IndicatorTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_rs_rating(self):
+        trade_date = datetime.date(2021, 11, 12)
+        trade_date = None
+        relative_strength_rating.update_rs_rating(trade_date=trade_date)
 
     def test_momentum(self):
         momentum.momentum_month(self.quote, self.period)

@@ -64,6 +64,7 @@ create table if not exists quote (
     low float,
     open float,
     yest_close float,
+    rs_rating float,
     xr tinyint(1) default 0,
     price_change float,
     percent float,
