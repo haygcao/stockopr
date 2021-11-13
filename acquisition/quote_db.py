@@ -49,7 +49,7 @@ def query_date(code, count):
 
 
 def query_quote(trade_date, begin_trade_date=None, code_list=None, conn=None):
-    if conn == None:
+    if conn is None:
         _conn = mysqlcli.get_connection()
     else:
         _conn = conn

@@ -29,7 +29,7 @@ import pandas
 import tqdm
 
 from acquisition import quote_db, basic
-from util import mysqlcli, util
+from util import mysqlcli, util, dt
 from util.log import logger
 
 
@@ -40,17 +40,25 @@ def compute_strength(quote):
     q4 = 0.2 * quote.close / quote.close.shift(periods=63 * 4)
 
     rate = q1 + q2 + q3 + q4
-    _ = pandas.DataFrame({'strength': rate}, index=quote.index)
+    _ = pandas.DataFrame({'strength': rate, 'qtr_x1': q1, 'qtr_x2': q2, 'qtr_x3': q3, 'qtr_x4': q4}, index=quote.index)
     return _
 
 
-def compute_rs_rating(code_list, days, mp):
-    today = datetime.date.today()
+def compute_rs_rating(code_list, trade_date, begin_trade_date, mp):
     t1 = time.time()
-    begin_trade_date = today - datetime.timedelta(days=days)
+    if not trade_date:
+        trade_date = datetime.date.today()
+
+    if not begin_trade_date:
+        begin_trade_date = trade_date - datetime.timedelta(days=380)
     var_code_list = code_list if len(code_list) < 10 else None
-    quote_all = quote_db.query_quote(today, begin_trade_date=begin_trade_date, code_list=var_code_list)
+    quote_all = quote_db.query_quote(trade_date, begin_trade_date=begin_trade_date, code_list=var_code_list)
     quote_all['strength'] = numpy.nan
+    quote_all['qtr_x1'] = numpy.nan
+    quote_all['qtr_x2'] = numpy.nan
+    quote_all['qtr_x3'] = numpy.nan
+    quote_all['qtr_x4'] = numpy.nan
+
     quote_all['rs_rating'] = numpy.nan
 
     t2 = time.time()
@@ -78,6 +86,10 @@ def compute_rs_rating(code_list, days, mp):
                 continue
 
             quote_all.at[_.index, 'strength'] = _['strength']
+            quote_all.at[_.index, 'qtr_x1'] = _['qtr_x1']
+            quote_all.at[_.index, 'qtr_x2'] = _['qtr_x2']
+            quote_all.at[_.index, 'qtr_x3'] = _['qtr_x3']
+            quote_all.at[_.index, 'qtr_x4'] = _['qtr_x4']
 
     t2 = time.time()
     logger.info('compute strength finished, cost [{}s]'.format(t2 - t1))
@@ -97,12 +109,15 @@ def compute_rs_rating(code_list, days, mp):
     return quote_all
 
 
-def update_rs_rating(trade_date=None):
+def update_rs_rating(trade_date=None, update_db=True):
     cache_dir = util.get_cache_dir()
     path = os.path.join(cache_dir, 'rs_rating_{}.csv'.format(datetime.date.today().strftime('%Y%m%d')))
 
     cached = os.path.exists(path)
+    one_trade_date = True if trade_date else False
     compute = True
+
+    trade_date = trade_date if trade_date else dt.get_trade_date()
     # code_list = ['002739', '300502']
     if cached:
         df = pandas.read_csv(path)
@@ -110,22 +125,24 @@ def update_rs_rating(trade_date=None):
         df = df.set_index([df['trade_date'], df['code']], drop=False)
 
         if trade_date in df.index.get_level_values(0).date:
-            compute = True  # False
+            compute = False
 
     if not compute:
         return
 
     code_list = basic.get_all_stock_code()
-    df = compute_rs_rating(code_list, days=750, mp=True)
+
+    weeks = 53 if one_trade_date else 53 * 2
+    begin_trade_date = trade_date - datetime.timedelta(weeks=weeks)
+    df = compute_rs_rating(code_list, trade_date=trade_date, begin_trade_date=begin_trade_date, mp=True)
     df = df[df['rs_rating'].notna()]
     df['code'] = df['code'].apply(lambda x: str(x).zfill(6))
-    df['rs_rating'] = round(df['rs_rating'] * 100, 3)
 
-    val = zip(df['rs_rating'], df['code'], df['trade_date'])
+    val = zip(df['rs_rating'], df['code'], df['trade_date'])  # update
     val_list = val
     # val_list = [(round(100 * t[0], 3), str(t[1]).zfill(6), t[2]) for t in val]
 
-    if trade_date:
+    if one_trade_date:
         trade_dates = df.index.get_level_values(0)
         df = df[trade_dates.date == trade_date]
         if df.empty:
@@ -135,13 +152,21 @@ def update_rs_rating(trade_date=None):
     t1 = time.time()
     logger.info('next to export to csv')
     mode = 'a' if cached else 'w'
-    df.to_csv(path, columns=['trade_date', 'code', 'rs_rating'], index=False, mode=mode)
+    df.to_csv(path, columns=['trade_date', 'code', 'rs_rating',
+                             'strength', 'qtr_x1', 'qtr_x2', 'qtr_x3', 'qtr_x4'], index=False, mode=mode)
     t2 = time.time()
     logger.info('export to csv finished, cost [{}s]'.format(t2 - t1))
 
+    if not update_db:
+        logger.info('rs rating updated')
+        return
+
     logger.info('next to update table[quote], [{}] rows'.format(len(df)))
-    
-    sql = "update quote set rs_rating = %s where code = %s and trade_date = %s"
+
+    # update executemany 实际是单条执行 self.rowcount = sum(self.execute(query, arg) for arg in args)
+    # sql = "update quote set rs_rating = %s where code = %s and trade_date = %s"
+    sql = "insert into quote (rs_rating, code, trade_date) values (%s, %s, %s) " \
+          "on duplicate key update rs_rating = values(rs_rating)"
     with mysqlcli.get_cursor() as c:
         try:
             c.executemany(sql, val_list)
