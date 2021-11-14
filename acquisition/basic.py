@@ -71,7 +71,9 @@ def get_candidate_stock_code(candidate_list, op='AND'):
 def _get_traced_stock_code(strategy_list, status):
     with mysqlcli.get_cursor() as c:
         sql = "SELECT code FROM portfolio where class in (%s) order by code"  # status = %s and
-        c.execute(sql, (','.join(strategy_list),))
+        val = "'{}'".format("','".join(strategy_list))
+        # c.execute(sql, (val,))  # 查询不到数据
+        c.execute(sql % val)
         stock_code_list = c.fetchall()
 
         return [code['code'] for code in stock_code_list]

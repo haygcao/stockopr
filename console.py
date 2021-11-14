@@ -266,7 +266,7 @@ class Panel(QWidget):
 
         for indicator in config.traced_strategy_list:
             self.combo_traced.addItem(indicator)
-        self.combo_traced.select_text('value_return_ing')
+        # self.combo_traced.select_text('value_return_ing')
         self.combo_traced.select_text('vcp')
 
         # self.combo_strategy = QComboBox(self)
@@ -275,7 +275,7 @@ class Panel(QWidget):
             self.combo_strategy.addItem(indicator)
 
         # self.combo_strategy.setCurrentIndex(1)
-        self.combo_strategy.select_text('step')
+        self.combo_strategy.select_text('vcp_breakout')
 
     def init_ui(self):
         # comboCode.adjustSize()
