@@ -256,6 +256,7 @@ class Panel(QWidget):
             self.combo_classification.addItem(indicator)
         self.combo_classification.select_index(1)
         self.combo_classification.select_index(2)
+        self.combo_classification.select_text('traced')
 
         for indicator in [
             'finance',
@@ -266,11 +267,13 @@ class Panel(QWidget):
         ]:
             self.combo_candidate.addItem(indicator)
 
+        self.combo_candidate.select_text('finance')
         self.combo_candidate.select_text('second_stage')
 
         for indicator in ['magic_line', 'blt', 'vcp', 'step', 'value_return_ing', 'volume_dry_up_ing']:
             self.combo_traced.addItem(indicator)
-        # self.combo_traced.select_text('value_return')
+        self.combo_traced.select_text('value_return_ing')
+        self.combo_traced.select_text('vco')
 
         # self.combo_strategy = QComboBox(self)
 
