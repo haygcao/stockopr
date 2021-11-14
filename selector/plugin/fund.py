@@ -235,6 +235,13 @@ def query_market_value(fund_date):
     return r['mktcap']
 
 
+def query_latest_date():
+    sql = "select max(date) date from fund_basic"
+    val = None
+    r = query_stat(sql, val)
+    return r['date']
+
+
 def query_stock_days(code_list):
     sql_tmp = "select code, count(*) count from quote where code in ('{}') group by code"
     val_code_list = "','".join(code_list)
@@ -256,3 +263,15 @@ def query_fund_stat(fund_date):
         'market_value': market_value,
         'market_value_total': market_value_total
     }
+
+
+def fund(quote, period, backdays):
+    fund_date = query_latest_date()
+    code = quote.code[-1]
+    df1 = query_stock(code, fund_date)
+    if df1.empty:
+        return False
+
+    fmvp = df1.fmv.sum() / df1.nmc[-1]
+
+    return fmvp > 0.01

@@ -262,6 +262,7 @@ class Panel(QWidget):
             self.combo_candidate.addItem(indicator)
 
         self.combo_candidate.select_text('finance')
+        self.combo_candidate.select_text('fund')
         self.combo_candidate.select_text('second_stage')
 
         for indicator in config.traced_strategy_list:

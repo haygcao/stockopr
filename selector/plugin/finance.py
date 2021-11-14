@@ -12,7 +12,7 @@ C= 可观或者加速增长的当季每股收益和每股销售收入, 如 高�
 from indicator import finance as finance_ind
 
 
-def finance(quote, period):
+def finance(quote, period, backdays):
     df_finance = finance_ind.finance([quote.code[-1]])
 
     cond1 = df_finance['dpnp_yoy_ratio'] > 18

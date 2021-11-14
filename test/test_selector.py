@@ -64,7 +64,7 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(df)
 
     def test_query_stock(self):
-        fund_date = '2021-06-30'
+        fund_date = fund.query_latest_date()  # '2021-06-30'
         code = '600519'
         df = fund.query_one_stock_lite(code, fund_date)
         df1 = fund.query_stock(code, fund_date)
@@ -105,6 +105,7 @@ class SelectorPluginTestCase(unittest.TestCase):
     def test_update_candidate_pool(self):
         strategy_list = ['second_stage']   # super
         strategy_list = ['finance']
+        strategy_list = ['fund']
         # strategy_list = ['bottom']
         # strategy_list = ['volume_dry_up']
         selector.update_candidate_pool(strategy_list, 'day')
