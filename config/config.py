@@ -536,6 +536,18 @@ period_ema26_oscillation_threshold_map = {
 key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'percent',
             'rs_rating', 'mktcap']
 
+candidate_strategy_list = ['finance', 'super', 'hot_strong', 'second_stage', 'dyn_sys_green', 'dyn_sys_blue',
+                           'strong_base', 'bottom', 'fallen']
+traced_strategy_list = ['magic_line', 'blt', 'vcp', 'step', 'value_return_ing', 'volume_dry_up_ing']
+allow_buy_strategy_list = ['magic_line_breakout', 'blt_breakout', 'vcp_breakout', 'step_breakout', 'base_breakout',
+                           'value_return', 'volume_dry_up', 'volume_shrink', 'bull_deviation', 'bull_at_bottom']
+
+strategy_map = {
+    'candidate': {'back_day': 1, 'strategies': candidate_strategy_list},
+    'traced': {'back_day': 20, 'strategies': traced_strategy_list},
+    'allow_buy': {'back_day': 5, 'strategies': allow_buy_strategy_list}
+}
+
 SELECTOR_FUND_STOCK_NMC_MAX = 10 * 1000 * 1000 * 1000  # 100万亿  单位万元
 
 stamp_duty = 0.001   # 印花税 卖方

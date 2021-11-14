@@ -258,32 +258,20 @@ class Panel(QWidget):
         self.combo_classification.select_index(2)
         self.combo_classification.select_text('traced')
 
-        for indicator in [
-            'finance',
-            'super', 'hot_strong',
-            'second_stage', 'dyn_sys_green', 'dyn_sys_blue',
-            'strong_base', 'bottom',
-            'fallen',
-        ]:
+        for indicator in config.candidate_strategy_list:
             self.combo_candidate.addItem(indicator)
 
         self.combo_candidate.select_text('finance')
         self.combo_candidate.select_text('second_stage')
 
-        for indicator in ['magic_line', 'blt', 'vcp', 'step', 'value_return_ing', 'volume_dry_up_ing']:
+        for indicator in config.traced_strategy_list:
             self.combo_traced.addItem(indicator)
         self.combo_traced.select_text('value_return_ing')
-        self.combo_traced.select_text('vco')
+        self.combo_traced.select_text('vcp')
 
         # self.combo_strategy = QComboBox(self)
 
-        for indicator in [
-            'magic_line_breakout', 'blt_breakout', 'vcp_breakout', 'step_breakout', 'base_breakout',
-            'value_return',
-            'volume_dry_up', 'volume_shrink',
-            'bull_deviation',
-            'bull_at_bottom',
-        ]:
+        for indicator in config.allow_buy_strategy_list:
             self.combo_strategy.addItem(indicator)
 
         # self.combo_strategy.setCurrentIndex(1)

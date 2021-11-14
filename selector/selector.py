@@ -79,16 +79,26 @@ selector = {
     'force_index_m': force_index.force_index_minus
 }
 
-strategy_map = {
-    # 'value_return': 'traced'
-}
+
+def get_strategy_status(strategy):
+    for status, strategy_info in config.strategy_map.items():
+        if strategy in strategy_info['strategies']:
+            return status
+    raise Exception('{} is UNKNOWN'.format(strategy))
+
+
+def get_status_backdays(status):
+    strategy_info = config.strategy_map[status]
+    return strategy_info['back_day']
 
 
 def is_match(df, strategy_name, period):
     if util.filter_quote(df):
         return False
 
-    rc = selector.get(strategy_name)(df, period)
+    status = get_strategy_status(strategy_name)
+    backdays = get_status_backdays(status)
+    rc = selector.get(strategy_name)(df, period, backdays)
     if rc:
         return True
 
@@ -252,8 +262,8 @@ def select(strategy_name_list, candidate_list=None, traced_list=None, period='da
         # for code in code_list:
         #     selected.add_selected(code, strategy_name)
         # code_list = ['002109']
-        basic.upsert_candidate_pool(
-            code_list, strategy_map.get(strategy_name, 'allow_buy'), strategy_name, ignore_duplicate=False)
+        status = 'traced' if strategy_name in config.traced_strategy_list else 'allow_buy'
+        basic.upsert_candidate_pool(code_list, status, strategy_name, ignore_duplicate=False)
         logger.info(strategy_name, code_list)
 
     # code_list.append('300502')
