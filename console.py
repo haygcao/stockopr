@@ -718,12 +718,12 @@ class Panel(QWidget):
     def scan(self):
         logger.info('scan started')
         strategy_name_list = [s.text() for s in self.combo_strategy.get_selected()]
-        candidate_list = [s.text() for s in self.combo_candidate.get_selected()]
         traced_list = [s.text() for s in self.combo_traced.get_selected()]
-        logger.info(candidate_list, traced_list, strategy_name_list)
-        candidate_list.extend(traced_list)
-        logger.info(candidate_list, strategy_name_list)
-        p = multiprocessing.Process(target=selector.select, args=(strategy_name_list, candidate_list, self.period))
+        candidate_list = [s.text() for s in self.combo_candidate.get_selected()] if not traced_list else []
+
+        logger.info('candidate: {}, traced: {}, strategy: {}'.format(candidate_list, traced_list, strategy_name_list))
+        p = multiprocessing.Process(target=selector.select,
+                                    args=(strategy_name_list, candidate_list, traced_list, self.period))
         p.start()
 
         # with multiprocessing.Manager() as manager:

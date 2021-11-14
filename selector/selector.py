@@ -227,14 +227,19 @@ def update_candidate_pool(strategy_list, period='day'):
     qt_util.popup_info_message_box_mp('update candidate finished in [{}s]\n{}'.format(cost, msg))
 
 
-def select(strategy_name_list, candidate_list=None, period='day'):
+def select(strategy_name_list, candidate_list=None, traced_list=None, period='day'):
     begin = datetime.datetime.now()
 
+    code_list = []
     if candidate_list:
         if config.update_candidate_pool:
             update_candidate_pool(candidate_list)
         code_list = basic.get_candidate_stock_code(candidate_list)
-    else:
+
+    if traced_list:
+        code_list.extend(basic.get_traced_stock_code(traced_list))
+
+    if not code_list:
         code_list = basic.get_all_stock_code()
     # code_list = future.get_future_contract_list()
     # 科创板
