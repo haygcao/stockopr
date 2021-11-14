@@ -114,10 +114,14 @@ def update_rs_rating(trade_date=None, update_db=True):
     path = os.path.join(cache_dir, 'rs_rating_{}.csv'.format(datetime.date.today().strftime('%Y%m%d')))
 
     cached = os.path.exists(path)
-    one_trade_date = True if trade_date else False
     compute = True
 
-    trade_date = trade_date if trade_date else dt.get_trade_date()
+    if trade_date:
+        one_trade_date = True
+    else:
+        one_trade_date = False
+        trade_date = dt.get_trade_date()
+
     # code_list = ['002739', '300502']
     if cached:
         df = pandas.read_csv(path)

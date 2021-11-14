@@ -396,7 +396,7 @@ def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
     #else:
     #    _code = code
     _code = code
-    key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'percent', 'mktcap']
+    key_list = config.key_list
     table = [config.sql_tab_basic_info, config.sql_tab_quote]
     on = '{0}.code = basic_info.code'.format(table[1])
     where = '{3}.code = "{0}" and trade_date <= "{1}" order by trade_date desc limit {2}'.format(_code, end_date, days, table[1])
@@ -407,7 +407,7 @@ def get_price_info_df_db_day(code, days=250, end_date=None, conn=None):
     # df.index.names = ['date']
     # df = pd.read_sql(sql, con=conn)
 
-    if conn == None:
+    if conn is None:
         _conn.close()
 
     # df = df.reset_index('trade_date') # no

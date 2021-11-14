@@ -17,9 +17,6 @@ def second_stage(quote, period):
     close = quote['close']
     ytd_close = quote['close'].shift(periods=1)
 
-    # Compute RS ratings of the stock in 3 ways
-    # rs_rating, rs_rating2, rs_rating3 = compute_rs_rating(quote)
-
     # Compute SMA & high/low
     quote = ma.compute_ma(quote)
     mov_avg_50 = quote['ma50']
@@ -43,7 +40,10 @@ def second_stage(quote, period):
     # Condition 4: Current Price is within 25% of 52 week high, and at 10 days ago
     condit_4 = (close >= 0.75 * high_of_52week)
 
-    condit = condit_1 & condit_2 & condit_3 & condit_4
+    # Condition 5: IBD RS ratings of the stock > 70
+    condit_5 = ma.ma(quote.rs_rating, 5) >= 70
+
+    condit = condit_1 & condit_2 & condit_3 & condit_4 & condit_5
 
     quote['second_stage'] = numpy.nan
 

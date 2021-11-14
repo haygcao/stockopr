@@ -533,6 +533,9 @@ period_ema26_oscillation_threshold_map = {
     'week': 1.1
 }
 
+key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'yest_close', 'percent',
+            'rs_rating', 'mktcap']
+
 SELECTOR_FUND_STOCK_NMC_MAX = 10 * 1000 * 1000 * 1000  # 100万亿  单位万元
 
 stamp_duty = 0.001   # 印花税 卖方

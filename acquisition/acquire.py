@@ -18,6 +18,7 @@ import acquisition.quote_www as quote_www
 
 # timeout in seconds
 from acquisition import industry_index, quote_tdx
+from indicator import relative_strength_rating
 from util import dt
 from util.log import logger
 from util import qt_util
@@ -305,6 +306,9 @@ def save_quote():
 
     # industry_index.update_index_quote(start_date=today)
     # logger.info('save industry index quote')
+
+    relative_strength_rating.update_rs_rating(trade_date=today, update_db=True)
+    logger.info('update rs rating')
 
     qt_util.popup_info_message_box_mp('update quote OK')
 
