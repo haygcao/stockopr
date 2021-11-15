@@ -28,8 +28,8 @@ class IndicatorTestCase(unittest.TestCase):
         pass
 
     def test_rs_rating(self):
-        trade_date = datetime.date(2021, 11, 12)
-        trade_date = None
+        trade_date = datetime.date(2021, 11, 15)
+        # trade_date = None
         relative_strength_rating.update_rs_rating(trade_date=trade_date)
 
     def test_momentum(self):

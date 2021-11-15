@@ -136,7 +136,7 @@ def update_rs_rating(trade_date=None, update_db=True):
 
     code_list = basic.get_all_stock_code()
 
-    weeks = 53 if one_trade_date else 53 * 2
+    weeks = 52 + 3 if one_trade_date else 52 * 2 + 3
     begin_trade_date = trade_date - datetime.timedelta(weeks=weeks)
     df = compute_rs_rating(code_list, trade_date=trade_date, begin_trade_date=begin_trade_date, mp=True)
     df = df[df['rs_rating'].notna()]

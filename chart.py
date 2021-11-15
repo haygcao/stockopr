@@ -215,6 +215,8 @@ class DataFinanceDraw(object):
         # mpl.rcParams['toolbar'] = 'None'
         # mpl.rcParams['interactive'] = True
         mpl.rcParams['axes.titlesize'] = 1
+        # mpl.rcParams['axes.xmargin'] = 0
+        # mpl.rcParams['axes.ymargin'] = 0
 
         # TODO 中文显示方框
         # mpl.matplotlib_fname()
@@ -830,8 +832,13 @@ class DataFinanceDraw(object):
             # ylabel='OHLC Candles',
             # ylabel_lower='Shares\nTraded Volume',
             # axisoff=True,
-            figratio=(16, 9),
-            figscale=1)
+            tight_layout=True,
+            scale_padding=0.3,
+            xrotation=0,
+            # figratio=(20, 9),
+            # figscale=2,
+            # figsize=(1920, 1080)
+        )
 
         self.fig, axlist = mpf.plot(self.get_window(self.data), **self.kwargs,
                                     style=self.style,
