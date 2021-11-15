@@ -7,8 +7,10 @@ import datetime
 import numpy
 import pandas
 
+from acquisition import basic
 from config import config
 from util import mysqlcli, dt
+from util.log import logger
 
 
 def filter_new_stocks(df_data):
@@ -61,19 +63,25 @@ def supplement_percent(df):
     return df_final
 
 
-def query_stock(code, fund_date):
-    trade_date = dt.get_pre_trade_date()
+def query_stock_by_stock_code_list(code_list, fund_date):
+    # trade_date = dt.get_pre_trade_date()
+    trade_date = fund_date
     scale = 0  # 10
     nmc = config.SELECTOR_FUND_STOCK_NMC_MAX  # 50
     sql = "select fund_code, fs.code, bi.name, fs.market_value fmv, q.nmc nmc, q.close " \
           "from fund_basic fb, fund_stock fs, basic_info bi, quote q " \
           "where q.code = bi.code and fb.code = fs.fund_code and bi.code = fs.code and fb.`date` = fund_date " \
-          "and q.trade_date = %s and fund_date = %s and fb.`scale` > %s and nmc < %s and q.code = %s" \
+          "and q.trade_date = %s and fund_date = %s and fb.`scale` > %s and nmc < %s and q.code in ('{}')" \
 
-    val = (trade_date, fund_date, scale, nmc * 10000, code)
+    sql = sql.format("','".join(code_list))
+    val = (trade_date, fund_date, scale, nmc * 10000)
     with mysqlcli.get_connection() as c:
         df = pandas.read_sql(sql, c, params=val, index_col=['fund_code'])
     return df
+
+
+def query_stock(code, fund_date):
+    return query_stock_by_stock_code_list([code], fund_date)
 
 
 def query_stocks(fund_date, fund_list=None, sort=False):
@@ -265,13 +273,72 @@ def query_fund_stat(fund_date):
     }
 
 
+def update_fund_market_value(fund_date):
+    code_list = basic.get_all_stock_code()
+
+    logger.info('compute fund market value percent')
+    val_list = []
+
+    df = query_stock_by_stock_code_list(code_list, fund_date)
+    logger.info('query position of fund [{}][{}]'.format(fund_date, len(df)))
+
+    group = df.groupby('code')
+    group_sum = group.sum()
+    group_one = group.first()
+    code = group_one.index
+    date = pandas.Series(fund_date, index=code)
+    nmc = group_one['nmc']
+    fmv = group_sum['fmv']
+    fmvp = round(100 * fmv / nmc, 3)
+    val_list = zip(nmc, fmv, fmvp, code, date)
+
+    # for code in code_list:
+    #     df1 = df[df.code == code]
+    #     if df1.empty:
+    #         continue
+    #
+    #     nmc = df1.nmc[-1]
+    #     fmv = df1.fmv.sum()
+    #     fmvp = round(100 * fmv / nmc, 3)
+    #
+    #     val_list.append((nmc, fmv, fmvp, code, fund_date))
+
+    logger.info('compute fund market value percent finished')
+
+    with mysqlcli.get_cursor() as c:
+        c.execute('select count(code) c from finance where report_date = %s', (fund_date, ))
+        r = c.fetchone()
+        if r['c'] > 2000:
+            # 需要依赖 finance 数据先更新, 不然会导致 finance 数据更新失败
+            sql = 'insert into finance(nmc, fmv, fmvp, code, report_date) values(%s, %s, %s, %s, %s) ' \
+                  'on duplicate key update nmc = values(nmc), fmv = values(fmv), fmvp = values(fmvp)'
+        else:
+            sql = 'update finance set nmc = %s, fmv = %s, fmvp = %s where code = %s and report_date = %s'
+
+        logger.info(sql)
+        c.executemany(sql, val_list)
+
+    logger.info('update fund market value percent finished')
+
+
 def fund(quote, period, backdays):
-    fund_date = query_latest_date()
     code = quote.code[-1]
-    df1 = query_stock(code, fund_date)
-    if df1.empty:
-        return False
+    fund_date = query_latest_date()
 
-    fmvp = df1.fmv.sum() / df1.nmc[-1]
+    with mysqlcli.get_cursor() as c:
+        c.execute('select fmvp from finance where code = %s and report_date = %s', (code, fund_date))
+        r = c.fetchone()
 
-    return fmvp > 0.01
+        # 退市股在 finance表中没有记录 没有基金持有则 fmvp字段为 NULL
+        if r and r['fmvp']:
+            fmvp = r['fmvp']
+        else:
+            fmvp = 0
+
+    # df1 = query_stock(code, fund_date)
+    # if df1.empty:
+    #     return False
+    #
+    # fmvp = 100 * df1.fmv.sum() / df1.nmc[-1]
+
+    return fmvp > 1

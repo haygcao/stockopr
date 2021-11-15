@@ -16,7 +16,7 @@ import config.config as config
 from util.log import logger
 
 
-def upsert_candidate_pool(code_list, status, strategy, ignore_duplicate=True):
+def upsert_candidate_pool(code_list, status, strategy, strategy_from=None, ignore_duplicate=True):
     if not code_list:
         return
 
@@ -32,7 +32,9 @@ def upsert_candidate_pool(code_list, status, strategy, ignore_duplicate=True):
                 cursor.executemany(sql_str, value_list)
                 sql_str = u"delete from portfolio where class = %s"  # and status = %s"
                 # cursor.execute(sql_str, (strategy, status))
-                cursor.execute(sql_str, (strategy, ))
+                if not strategy_from:
+                    strategy_from = strategy
+                cursor.execute(sql_str, (strategy_from, ))
 
             sql_str = u"INSERT IGNORE INTO portfolio (code, class, status) VALUES (%s, %s, %s)"
             # not all arguments converted during string formatting
