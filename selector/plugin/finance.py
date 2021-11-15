@@ -8,6 +8,7 @@ P168 最近一个季度的销售额增幅不应低于 25%
 增幅下限是最基本要求
 C= 可观或者加速增长的当季每股收益和每股销售收入, 如 高于 70% 或者 34% -> 53% -> 107% -> 126%
 """
+import pandas
 
 from indicator import finance as finance_ind
 
@@ -15,11 +16,23 @@ from indicator import finance as finance_ind
 def finance(quote, period, backdays):
     df_finance = finance_ind.finance([quote.code[-1]])
 
+    # 按季度
     cond1 = df_finance['dpnp_yoy_ratio'] > 18
     cond2 = df_finance['totaloperatereve_yoy_ratio'] > 25
 
     v = df_finance['dpnp_yoy_ratio_ins']
     cond3 = (v > 1) | (df_finance['dpnp_yoy_ratio'] > 70)
-    cond = cond1 & cond2 & cond3
+
+    # 按年度
+    group = df_finance.groupby(pandas.Grouper(freq='4Q'))
+    group_sum = group.sum()
+    # 扣非每股收益
+    dpnp = group_sum['dedu_parent_profit'][-1]
+    dpnp_prev = group_sum['dedu_parent_profit'][-2]
+
+    dpnp_yoy_ratio_4q = (dpnp / dpnp_prev) - 1
+    cond4 = dpnp_yoy_ratio_4q > 0.25
+
+    cond = cond1 & cond2 & cond3 & cond4
 
     return cond[-1]

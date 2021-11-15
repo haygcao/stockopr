@@ -62,7 +62,7 @@ def compute_rs_rating(code_list, trade_date, begin_trade_date, mp):
     quote_all['rs_rating'] = numpy.nan
 
     t2 = time.time()
-    logger.info('fetch quote finished, cost [{}s]'.format(t2 - t1))
+    logger.info('fetch quote finished, cost [{}s]'.format(int(t2 - t1)))
     t1 = t2
 
     quote_all = quote_all.set_index([quote_all['trade_date'], quote_all['code']], drop=False)
@@ -72,7 +72,7 @@ def compute_rs_rating(code_list, trade_date, begin_trade_date, mp):
         with multiprocessing.Pool(nproc) as p:
             arg = [quote_all.loc[quote_all.index.get_level_values(1) == code] for code in code_list]
             t2 = time.time()
-            logger.info('generate args finished, cost [{}s]'.format(t2 - t1))
+            logger.info('generate args finished, cost [{}s]'.format(int(t2 - t1)))
             t1 = t2
             for _ in tqdm.tqdm(p.imap_unordered(compute_strength, arg), total=len(code_list), ncols=64):
                 if not isinstance(_, pandas.DataFrame):
@@ -92,7 +92,7 @@ def compute_rs_rating(code_list, trade_date, begin_trade_date, mp):
             quote_all.at[_.index, 'qtr_x4'] = _['qtr_x4']
 
     t2 = time.time()
-    logger.info('compute strength finished, cost [{}s]'.format(t2 - t1))
+    logger.info('compute strength finished, cost [{}s]'.format(int(t2 - t1)))
     t1 = t2
 
     trade_days = set(quote_all.index.get_level_values(0).to_list())
@@ -104,7 +104,7 @@ def compute_rs_rating(code_list, trade_date, begin_trade_date, mp):
         quote_all.at[quote_day.index, 'rs_rating'] = round(rs_rating * 100, 3)
 
     t2 = time.time()
-    logger.info('compute rs rating finished, cost [{}s]'.format(t2 - t1))
+    logger.info('compute rs rating finished, cost [{}s]'.format(int(t2 - t1)))
 
     return quote_all
 
@@ -159,7 +159,7 @@ def update_rs_rating(trade_date=None, update_db=True):
     df.to_csv(path, columns=['trade_date', 'code', 'rs_rating',
                              'strength', 'qtr_x1', 'qtr_x2', 'qtr_x3', 'qtr_x4'], index=False, mode=mode)
     t2 = time.time()
-    logger.info('export to csv finished, cost [{}s]'.format(t2 - t1))
+    logger.info('export to csv finished, cost [{}s]'.format(int(t2 - t1)))
 
     if not update_db:
         logger.info('rs rating updated')
@@ -185,5 +185,5 @@ def update_rs_rating(trade_date=None, update_db=True):
         #     c.executemany(sql, v)
 
     t2 = time.time()
-    logger.info('update table[quote] finished, cost [{}s]'.format(t2 - t1))
+    logger.info('update table[quote] finished, cost [{}s]'.format(int(t2 - t1)))
     logger.info('rs rating updated')
