@@ -98,18 +98,23 @@ def save_quote_wy():
             c.execute('truncate table temp_quote')
 
             # MySql connection in sqlAlchemy
-            engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
+            engine = create_engine(
+                'mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
             connection = engine.connect()
 
             # Do not insert the row number (index=False)
             df_quote.to_sql(name='temp_quote', con=engine, if_exists='append', index=False, chunksize=20000)
             # connection.close()
 
-            sql_str = "select code, close, high, low, open, yestclose from quote where code in ('000001', '000002', '000003', '000004', '000005') and trade_date in (select max(trade_date) from quote);"
+            sql_str = "select code, close, high, low, open, yestclose from quote " \
+                      "where code in ('000001', '000002', '000003', '000004', '000005') and " \
+                      "trade_date in (select max(trade_date) from quote);"
             c.execute(sql_str)
             r1 = c.fetchall()
 
-            sql_str = "select code, close, high, low, open, yestclose from temp_quote where code in ('000001', '000002', '000003', '000004', '000005') and trade_date in (select max(trade_date) from temp_quote);"
+            sql_str = "select code, close, high, low, open, yestclose from temp_quote " \
+                      "where code in ('000001', '000002', '000003', '000004', '000005') and " \
+                      "trade_date in (select max(trade_date) from temp_quote);"
             c.execute(sql_str)
             r2 = c.fetchall()
 
@@ -168,14 +173,15 @@ def save_quote_xl(ignore=True):
 
     try:
         # MySql connection in sqlAlchemy
-        engine = create_engine('mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
+        engine = create_engine(
+            'mysql+pymysql://{0}:{1}@127.0.0.1:3306/stock?charset=utf8mb4'.format(config.db_user, config.db_passwd))
         with engine.connect() as con:
             prev_trade_date = dt.get_pre_trade_date(dt.get_trade_date())
             data = []
             for i in range(10):
                 data.append({"code": df_quote.iloc[i]['code'], 'trade_date': prev_trade_date})
 
-            statement = text("""SELECT close, high, low, open FROM quote WHERE code = :code AND trade_date = :trade_date""")
+            statement = text("SELECT close, high, low, open FROM quote WHERE code = :code AND trade_date = :trade_date")
 
             for idx, line in enumerate(data):
                 r = con.execute(statement, **line)
@@ -193,7 +199,7 @@ def save_quote_xl(ignore=True):
 
         if same_day:
             logger.info('quote is same with prev trade date [{}], not updated...'.format(prev_trade_date))
-            return
+            raise Exception('fetch data - no data')
 
         df_quote.loc[:, 'trade_date'] = df_quote.index
 
@@ -231,6 +237,7 @@ def save_quote_xl(ignore=True):
         # df_quote.to_csv('2021-06-07.csv')
     except Exception as e:
         logger.error(e)
+        raise e
 
 
 def save_quote_tx_one_day(trade_day):
@@ -280,6 +287,7 @@ def save_quote_impl(trade_date=None, xls=None):
         # save_quote_wy()
     except Exception as e:
         logger.error(e)
+        raise e
 
 
 def save_quote():

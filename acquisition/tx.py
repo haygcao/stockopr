@@ -128,6 +128,8 @@ def get_today_all():
     df = df.assign(date=dt.get_trade_date())
     df.set_index('date', inplace=True)
 
+    df = df.sort_values(by=['code'])
+
     return df
 
 
