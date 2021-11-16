@@ -17,6 +17,8 @@ from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QPushButton, QLabel, QMainWindow, QInputDialog, QApplication, QHBoxLayout, QVBoxLayout, \
     QRadioButton, QWidget
 
+from util import xset
+
 sys.path.append('/usr/lib/python3/dist-packages')
 
 INIT_COUNT = 25 * 60 * 10
@@ -175,9 +177,11 @@ class Window(QWidget):
                 if self.for_work:
                     count = 5 * 60 * 10
                     self.for_work = False
+                    xset.turn_off_screen(grab=True)
                 else:
                     count = INIT_COUNT
                     self.for_work = True
+                    xset.turn_on_screen(ungrab=True)
 
                 self.count = count
                 self.label.setText(count_to_time(self.count))
@@ -191,6 +195,9 @@ class Window(QWidget):
 
                 from playsound import playsound
                 playsound(sound_path)
+
+                if not self.for_work:
+                    self.start_action()
 
         if self.start:
             text = count_to_time(self.count)
