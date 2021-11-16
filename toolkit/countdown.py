@@ -11,6 +11,7 @@ PYTHONPATH=/usr/lib/python3/dist-packages python toolkit/countdown.py
 """
 import os
 import sys
+import time
 
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont, QIcon
@@ -61,6 +62,8 @@ class Window(QWidget):
         # count variable
         self.count = INIT_COUNT
         self.for_work = True
+
+        self.display = xset.get_display()
 
         # start flag
         self.start = False
@@ -177,11 +180,9 @@ class Window(QWidget):
                 if self.for_work:
                     count = 5 * 60 * 10
                     self.for_work = False
-                    xset.turn_off_screen(grab=True)
                 else:
                     count = INIT_COUNT
                     self.for_work = True
-                    xset.turn_on_screen(ungrab=True)
 
                 self.count = count
                 self.label.setText(count_to_time(self.count))
@@ -196,8 +197,17 @@ class Window(QWidget):
                 from playsound import playsound
                 playsound(sound_path)
 
+                time.sleep(5)
+
                 if not self.for_work:
+                    xset.turn_off_screen()
+                    xset.grab_keyboard(self.display)
+                    xset.grab_pointer(self.display)
                     self.start_action()
+                else:
+                    xset.turn_on_screen()
+                    xset.ungrab_pointer(self.display)
+                    xset.ungrab_keyboard(self.display)
 
         if self.start:
             text = count_to_time(self.count)
@@ -230,12 +240,10 @@ class Window(QWidget):
             self.start = False
 
     def pause_action(self):
-
         # making flag false
         self.start = False
 
     def reset_action(self):
-
         # making flag false
         self.start = False
 
@@ -244,8 +252,10 @@ class Window(QWidget):
         self.for_work = True
 
         # setting label text
-        self.label.setText(count_to_time(INIT_COUNT))
+        self.label.setText(count_to_time(self.count))
 
+        xset.ungrab_pointer(self.display)
+        xset.ungrab_keyboard(self.display)
 
 
 # create pyqt5 app
