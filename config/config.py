@@ -441,6 +441,13 @@ def is_long_period(period):
     return period in ['week', 'm30']
 
 
+def get_config_options():
+    import json
+    with open(os.path.join(config_dir, 'config.json')) as fp:
+        options = json.load(fp)
+        return options
+
+
 def get_trade_config(code=None):
     import json
     fp = open(os.path.join(config_dir, 'config.json'))

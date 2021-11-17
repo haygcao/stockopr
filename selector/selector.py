@@ -154,7 +154,7 @@ def _select(strategy_name, period, code_day_quote):
     return ret
 
 
-def select_one_strategy(code_list, strategy_name, period, mp=True):
+def select_one_strategy(code_list, strategy_name, period, options):
     """
     https://docs.python.org/3/library/multiprocessing.html
     This means that if you try joining that process you may get a deadlock
@@ -168,7 +168,10 @@ def select_one_strategy(code_list, strategy_name, period, mp=True):
     logger.info('[{}] to check [{}]...'.format(len(code_list), strategy_name))
 
     day_quote = None
-    if dt.istradetime():
+
+    mp = options['selector_mp']
+    use_rt_quote = options['selector_rt_quote']
+    if use_rt_quote and dt.istradetime():
         cache_dir = util_util.get_cache_dir()
         cache = os.path.join(cache_dir, 'day_quote_{}.csv'.format(datetime.datetime.now().strftime('%Y%m%d')))
         has_cache = False
@@ -224,10 +227,11 @@ def select_one_strategy(code_list, strategy_name, period, mp=True):
 def update_candidate_pool(strategy_list, period='day'):
     t1 = datetime.datetime.now()
     msg = ''
+    options = config.get_config_options()
     for strategy in strategy_list:
         code_list = basic.get_all_stock_code()
         # code_list = ['600331']
-        code_list = select_one_strategy(code_list, strategy, period, mp=True)
+        code_list = select_one_strategy(code_list, strategy, period, options)
         # 科创板
         # code_list = [code for code in code_list if not code.startswith('688')]
         msg += '{}: {}\n'.format(strategy, len(code_list))
@@ -257,9 +261,10 @@ def select(strategy_name_list, candidate_list=None, traced_list=None, period='da
     # code_list = [code for code in code_list if int(code[:2]) <= 60]
     # code_list = ['000408']
 
+    options = config.get_config_options()
     strategy_name_list = config.get_scan_strategy_name_list() if not strategy_name_list else strategy_name_list
     for strategy_name in strategy_name_list:
-        code_list = select_one_strategy(code_list, strategy_name, period, mp=True)
+        code_list = select_one_strategy(code_list, strategy_name, period, options)
         # for code in code_list:
         #     selected.add_selected(code, strategy_name)
         # code_list = ['002109']
