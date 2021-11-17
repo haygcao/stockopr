@@ -551,8 +551,8 @@ allow_buy_strategy_list = ['magic_line_breakout', 'blt_breakout', 'vcp_breakout'
 
 strategy_map = {
     'candidate': {'back_day': 1, 'strategies': candidate_strategy_list},
-    'traced': {'back_day': 20, 'strategies': traced_strategy_list},
-    'allow_buy': {'back_day': 5, 'strategies': allow_buy_strategy_list}
+    'traced': {'back_day': 5, 'strategies': traced_strategy_list},
+    'allow_buy': {'back_day': 3, 'strategies': allow_buy_strategy_list}
 }
 
 SELECTOR_FUND_STOCK_NMC_MAX = 10 * 1000 * 1000 * 1000  # 100万亿  单位万元

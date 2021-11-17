@@ -2,7 +2,7 @@
 import numpy
 import pandas
 
-from indicator import boll
+from indicator import boll, ma
 from indicator.decorator import computed
 
 g_percent = 3
@@ -18,6 +18,8 @@ def step(quote, period):
     当前 maN 比其 N天前 上涨
     ma120 > 或约等于 ma150   - 上涨阶段
     """
+    quote = ma.compute_ma(quote)
+
     ma_periods = [5, 10, 20, 30, 60, 120]  # , 150, 200]  # 会被 second_stage 过滤, 所以, 放到 strong_base
     df_mas = pandas.DataFrame()
     df_mas_shift_p = pandas.DataFrame()

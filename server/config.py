@@ -25,6 +25,9 @@ pos_centre = (256, 365)
 pos_asset_cre = (30, 73)
 pos_detail_cre = (30, 275)  # 对账单
 # pos_detail_cre = (30, 295)  # 交割单
+# 2021/11/17
+pos_detail_cre = (30, 295)  # 对账单
+# pos_detail_cre = (30, 315)  # 交割单
 pos_order_cre = (30, 497)
 pos_refresh_cre = (161, 32)
 
