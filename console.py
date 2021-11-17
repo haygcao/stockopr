@@ -228,8 +228,8 @@ class Panel(QWidget):
         self.log_switch = QPushButton('-', self)
         self.log_switch.setFixedHeight(5)
         self.log = QListWidget(self)  # QTextBrowser(self)  # QLabel("this for log", self)
-        widget = self.geometry()
         # self.log.resize(600, 500)
+        # self.log.setHidden(True)
         self.log.setFixedHeight(250)
 
         self.init_ui()
@@ -432,8 +432,9 @@ class Panel(QWidget):
         self.lbl.adjustSize()
 
         stock_info = self.stock_info_map[self.code]
-        self.lbl_stock_info.setText('[{}-{} {}]\trs_rating: [{}] - fmvp: [{}]'.format(
-            self.code, self.period, list_to_str(self.count_or_price), stock_info['rs_rating'], stock_info['fmvp']))
+        self.lbl_stock_info.setText('[{}-{} {}]\trs_rating: [{}]  fmvp: [{}]  percent: [{}]'.format(
+            self.code, self.period, list_to_str(self.count_or_price),
+            stock_info['rs_rating'], stock_info['fmvp'], stock_info['percent']))
 
     def checked(self, checked):
         for s, w in self.widget_signals.items():
@@ -624,10 +625,13 @@ class Panel(QWidget):
         self.combo_code.setMaxVisibleItems(50)
 
         for code in code_list:
-            quote = quote_db.get_price_info_df_db(code, 1)
+            quote = quote_db.get_price_info_df_db(code, 300)
             rs_rating = quote['rs_rating'][-1]
+            # rs_rating = int(rs_rating) if rs_rating > 0 else rs_rating
             fmvp = fund.query_fmvp(code)
-            self.stock_info_map.update({code: {'rs_rating': rs_rating, 'fmvp': fmvp}})
+            # fmvp = round(fmvp, 2) if fmvp > 0 else fmvp
+            percent = 100 * (quote.close[-1] / quote.close[-250] - 1)
+            self.stock_info_map.update({code: {'rs_rating': rs_rating, 'fmvp': fmvp, 'percent': percent}})
 
         qt_util.popup_info_message_box_mp('[{}] loaded'.format(len(code_list)))
 

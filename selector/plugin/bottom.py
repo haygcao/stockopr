@@ -24,7 +24,9 @@ def compute_bottom(quote, n1, n2, percent_down):
     return quote
 
 
-def bottom(quote, period, back_days=10):
+def bottom(quote, period, back_days):
+    back_days = 10
+
     # 长期大底
     n1 = 750
     n2 = 30

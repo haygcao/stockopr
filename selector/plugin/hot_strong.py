@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from indicator.ema import ema
+from indicator import ema
 from indicator import atr
 
 
@@ -28,16 +28,18 @@ def hot_strong_one_day(vol_ema5, vol_ema10, amplitude, ema26, back_day):
     return True
 
 
-def hot_strong(quote, period, back_days=30):
+def hot_strong(quote, period, back_days):
+    back_days = 5
+
     vol_series = quote['volume']
-    vol_ema5 = ema(vol_series, n=5)['ema']
-    vol_ema10 = ema(vol_series, n=10)['ema']
+    vol_ema5 = ema.ema(vol_series, n=5)
+    vol_ema10 = ema.ema(vol_series, n=10)
 
     atr5 = atr.compute_atr(quote, 5)['atr']
     close_yest = quote['close'].shift(periods=1)
     amplitude = atr5 / close_yest
 
-    ema26 = ema(quote['close'], n=26)['ema']
+    ema26 = ema.ema(quote['close'], n=26)
 
     for back_day in range(0, back_days):
         if hot_strong_one_day(vol_ema5, vol_ema10, amplitude, ema26, back_day):

@@ -23,7 +23,7 @@ pos_centre = (256, 365)
 
 # 信用
 pos_asset_cre = (30, 73)
-pos_detail_cre = (30, 275)  # 对账单
+# pos_detail_cre = (30, 275)  # 对账单
 # pos_detail_cre = (30, 295)  # 交割单
 # 2021/11/17
 pos_detail_cre = (30, 295)  # 对账单
