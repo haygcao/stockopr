@@ -165,7 +165,7 @@ def select_one_strategy(code_list, strategy_name, period, mp=True):
     Note that a queue created using a manager does not have this issue.
     """
 
-    logger.info('[{}] to check {}...'.format(len(code_list), strategy_name))
+    logger.info('[{}] to check [{}]...'.format(len(code_list), strategy_name))
 
     day_quote = None
     if dt.istradetime():
