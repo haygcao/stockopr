@@ -9,15 +9,11 @@ from acquisition import quote_db
 from pointor import signal_vcp
 
 
-def vcp(quote):
-    pass
-
-
 def check_price_correction(quote):
     high_of_52week = quote.close[-250:].max()
     low_of_52week = quote.close[-250:].min()
     index = numpy.where(quote.close == high_of_52week)[0][0]
-    index_date = quote.index[index]
+    index_date = quote.index[index].date()
 
     low = quote.loc[index_date:]['close'].min()
     if (low - low_of_52week) < 0.5 * (high_of_52week - low_of_52week) or low > 0.85 * high_of_52week:
