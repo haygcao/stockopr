@@ -498,10 +498,10 @@ def compute_price_divisor(quote: pd.DataFrame, divisor_date, yest_close_adjust, 
     if df.empty:
         return quote
 
-    if df.index[-1] < divisor_date or df.index[0] >= divisor_date:
+    if df.index[-1].date() < divisor_date or df.index[0].date() >= divisor_date:
         return quote
 
-    if df.index[-1] != divisor_date:
+    if df.index[-1].date() != divisor_date:
         df_tmp: pd.Series = pd.Series(quote.iloc[len(df)], name=quote.index[len(df)])
         df = df.append(df_tmp)
 
