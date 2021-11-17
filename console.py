@@ -120,7 +120,7 @@ class Widget(QWidget):
         grid.addWidget(self.combo_classification)
         # grid = QVBoxLayout()
         # grid.addWidget(self.combo_classification)
-        self.setGeometry(300, 300, 280, 170)
+        # self.setGeometry(300, 300, 280, 170)
         self.setLayout(grid)
         self.show()
 
@@ -225,6 +225,8 @@ class Panel(QWidget):
 
         self.btn_delete = QPushButton('delete', self)
 
+        self.log_switch = QPushButton('-', self)
+        self.log_switch.setFixedHeight(5)
         self.log = QListWidget(self)  # QTextBrowser(self)  # QLabel("this for log", self)
         widget = self.geometry()
         # self.log.resize(600, 500)
@@ -317,6 +319,8 @@ class Panel(QWidget):
         self.init_period()
         self.init_indicator()
 
+        self.log_switch.clicked.connect(self.hide_log)
+
         ###
         # TODO 信号下拉复选框点击 ALL 时报错
         h_layout_signal = QHBoxLayout()
@@ -399,14 +403,28 @@ class Panel(QWidget):
         layout.addWidget(self.lbl_stock_info)
         layout.addLayout(h_layout_signal)
 
-        layout.addWidget(self.log)
+        v_layout_log = QVBoxLayout()
+        v_layout_log.addWidget(self.log_switch)
+        v_layout_log.addWidget(self.log)
+
+        layout.addLayout(v_layout_log)
 
         self.load()
 
         self.setLayout(layout)
 
-        self.setGeometry(300, 300, 280, 170)
+        # self.setGeometry(300, 300, 280, 170)
         self.setWindowTitle('K')
+
+    def hide_log(self):
+        if self.log.isHidden():
+            hide = False
+            adj = 1
+        else:
+            hide = True
+            adj = -1
+        self.log.setHidden(hide)
+        self.setFixedHeight(self.geometry().height() + adj * self.log.geometry().height())
 
     def set_label(self):
         s = '{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price))
