@@ -42,6 +42,7 @@ from config import config
 from indicator import relative_price_strength
 from pointor.signal import write_supplemental_signal
 from selector import selector
+from selector.plugin import fund
 from server import config as svr_config
 from trade_manager import trade_manager
 from util import util, dt, qt_util, singleten, pylinuxauto
@@ -82,16 +83,16 @@ def get_combo_signal_key(s):
 def send_key(key):
     import pyautogui as pag
 
-    x, y = pag.position()
-
-    screen_width, screen_height = pyautogui.size()
-    pyautogui.moveTo(screen_width - 100, screen_height / 2)
-    pyautogui.click()
+    # x, y = pag.position()
+    #
+    # screen_width, screen_height = pyautogui.size()
+    # pyautogui.moveTo(screen_width - 100, screen_height / 2)
+    # pyautogui.click()
 
     pyautogui.typewrite(message=key, interval=0.1)
     pyautogui.press('enter')
 
-    pag.moveTo(x, y)
+    # pag.moveTo(x, y)
 
 
 class Main(QMainWindow):
@@ -145,6 +146,7 @@ class Panel(QWidget):
             'exit_deviation': QComboCheckBox()
         }
 
+        self.stock_info_map = {}
         self.account_id = svr_config.ACCOUNT_ID_XY
         self.op_type = svr_config.OP_TYPE_DBP
         self.code = 'maq'
@@ -168,8 +170,7 @@ class Panel(QWidget):
         self.hk_tdx = system_hotkey.SystemHotkey()
         self.hk_tdx_l.register(('alt', 'j'), callback=lambda x: self.open_tdx(-1))  # self.switch_code(-1))
         self.hk_tdx_r.register(('alt', 'l'), callback=lambda x: self.open_tdx(1))  # self.switch_code(1))
-        self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.open_tdx(0
-                                                                            ))  # self.switch_code(0))
+        self.hk_tdx.register(('alt', 'k'), callback=lambda x: self.open_tdx(0))  # self.switch_code(0))
 
         # self.hk_show_l = system_hotkey.SystemHotkey()
         # self.hk_show_r = system_hotkey.SystemHotkey()
@@ -182,6 +183,7 @@ class Panel(QWidget):
         self.qle_count = QLineEdit('count', self)
 
         self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)), self)
+        self.lbl_stock_info = QLabel('', self)
         self.combo_code = QComboBox(self)
         self.combo_period = QComboBox(self)
         self.combo_indictor = QComboBox(self)
@@ -394,6 +396,7 @@ class Panel(QWidget):
         layout = QVBoxLayout()
         layout.addStretch(2)
         layout.addLayout(grid)
+        layout.addWidget(self.lbl_stock_info)
         layout.addLayout(h_layout_signal)
 
         layout.addWidget(self.log)
@@ -406,8 +409,13 @@ class Panel(QWidget):
         self.setWindowTitle('K')
 
     def set_label(self):
-        self.lbl.setText('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)))
+        s = '{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price))
+        self.lbl.setText(s)
         self.lbl.adjustSize()
+
+        stock_info = self.stock_info_map[self.code]
+        self.lbl_stock_info.setText('[{}-{} {}]\trs_rating: [{}] - fmvp: [{}]'.format(
+            self.code, self.period, list_to_str(self.count_or_price), stock_info['rs_rating'], stock_info['fmvp']))
 
     def checked(self, checked):
         for s, w in self.widget_signals.items():
@@ -447,9 +455,9 @@ class Panel(QWidget):
 
     def on_count_or_price_changed(self, text):
         if self.sender() == self.qle_price:
-            self.count_or_price[0] = float(text)
+            self.count_or_price[0] = float(text) if text else 0
         else:
-            self.count_or_price[1] = int(text)
+            self.count_or_price[1] = int(text) if text else 0
         self.set_label()
 
     def on_activated_code(self, text):
@@ -596,6 +604,12 @@ class Panel(QWidget):
 
         # self.combo_code.adjustSize()
         self.combo_code.setMaxVisibleItems(50)
+
+        for code in code_list:
+            quote = quote_db.get_price_info_df_db(code, 1)
+            rs_rating = quote['rs_rating'][-1]
+            fmvp = fund.query_fmvp(code)
+            self.stock_info_map.update({code: {'rs_rating': rs_rating, 'fmvp': fmvp}})
 
         qt_util.popup_info_message_box_mp('[{}] loaded'.format(len(code_list)))
 

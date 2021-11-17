@@ -323,8 +323,19 @@ def update_fund_market_value(fund_date):
 
 def fund(quote, period, backdays):
     code = quote.code[-1]
-    fund_date = query_latest_date()
+    fmvp = query_fmvp(code)
 
+    # df1 = query_stock(code, fund_date)
+    # if df1.empty:
+    #     return False
+    #
+    # fmvp = 100 * df1.fmv.sum() / df1.nmc[-1]
+
+    return fmvp > 1
+
+
+def query_fmvp(code):
+    fund_date = query_latest_date()
     with mysqlcli.get_cursor() as c:
         c.execute('select fmvp from finance where code = %s and report_date = %s', (code, fund_date))
         r = c.fetchone()
@@ -334,11 +345,4 @@ def fund(quote, period, backdays):
             fmvp = r['fmvp']
         else:
             fmvp = 0
-
-    # df1 = query_stock(code, fund_date)
-    # if df1.empty:
-    #     return False
-    #
-    # fmvp = 100 * df1.fmv.sum() / df1.nmc[-1]
-
-    return fmvp > 1
+    return fmvp
