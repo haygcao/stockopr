@@ -7,8 +7,8 @@ from util import mysqlcli
 
 def query_finance(code_list):
     sql = "select code, report_date, " \
-          "totaloperatereve, dedu_parent_profit, totaloperatereve_yoy_ratio, dpnp_yoy_ratio, eps, eps_std_rank " \
-          "from finance {} order by report_date"
+          "totaloperatereve, dedu_parent_profit, totaloperatereve_yoy_ratio, dpnp_yoy_ratio, " \
+          "roe_diluted roe, bps, eps, eps_std_rank from finance {} order by report_date"
     where = "where code in ('{}')".format("','".join(code_list)) if code_list else ''
     sql = sql.format(where)
 

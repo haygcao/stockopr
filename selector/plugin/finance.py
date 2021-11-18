@@ -26,6 +26,8 @@ def finance(quote, period, backdays):
     # 按年度
     group = df_finance.groupby(pandas.Grouper(freq='4Q'))
     group_sum = group.sum()
+    group_mean = group.mean()
+
     # 扣非每股收益
     dpnp = group_sum['dedu_parent_profit'][-1]
     dpnp_prev = group_sum['dedu_parent_profit'][-2]
@@ -36,6 +38,11 @@ def finance(quote, period, backdays):
     # 收益稳定性
     cond5 = df_finance['eps_std_rank'] < 25
 
-    cond = cond1 & cond2 & cond3 & cond4 & cond5
+    # 净资产收益率
+    # roe1 = group_sum['roe'][-1]
+    roe = round(100 * group_sum['eps'][-1] / group_mean['bps'][-1], 3)
+    cond6 = roe > 17
+
+    cond = cond1 & cond2 & cond3 & cond4 & cond5 & cond6
 
     return cond[-1]
