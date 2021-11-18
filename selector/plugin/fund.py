@@ -81,12 +81,18 @@ def query_stock_by_stock_code_list(code_list, fund_date):
 
 
 def query_stock(code, fund_date):
+    """
+    计算股票, 对应的基金个数, 基金持有市值, 以及占流通股的比例
+    """
     return query_stock_by_stock_code_list([code], fund_date)
 
 
 def query_stocks(fund_date, fund_list=None, sort=False):
+    """
+    统计各股票, 对应的基金个数, 基金持有市值, 以及占流通股的比例
+    """
     sort_by = 'fmvp'
-    trade_date = dt.get_pre_trade_date()
+    trade_date = dt.get_pre_trade_date(fund_date + datetime.timedelta(days=1))  # dt.get_pre_trade_date()
     scale = 10
     nmc = config.SELECTOR_FUND_STOCK_NMC_MAX
     # nmc = 50
@@ -104,6 +110,7 @@ def query_stocks(fund_date, fund_list=None, sort=False):
     val = (trade_date, fund_date, scale, nmc * 10000)
     with mysqlcli.get_connection() as c:
         df = pandas.read_sql(sql, c, params=val, index_col=['code'])
+        df['nmc'] = df['nmc'].fillna(-1)
         df['fmvp'] = round(df['fmv'] / df['nmc'], 3)
 
     df = filter_new_stocks(df)
@@ -113,29 +120,39 @@ def query_stocks(fund_date, fund_list=None, sort=False):
 
 
 def query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next):
+    """
+
+    """
     df_prev = query_stocks(fund_date_prev)
     df_next = query_stocks(fund_date_next)
     df_prev.sort_index(inplace=True)
     df_next.sort_index(inplace=True)
 
-    fmvp_diff = df_next['fmvp'] - df_prev['fmvp']
-    mask1 = fmvp_diff.isna()
-    mask2 = df_next['fmvp'] >= 0
-    fmvp_diff = fmvp_diff.mask(mask1 & mask2, df_next['fmvp'])
+    r = pandas.DataFrame()
+    for col in ['fmvp', 'fc']:
+        diff = df_next[col] - df_prev[col]
+        mask1 = diff.isna()
+        mask2 = df_next[col] >= 0
+        diff = diff.mask(mask1 & mask2, df_next[col])
 
-    mask1 = fmvp_diff.isna()
-    mask2 = df_prev['fmvp'] >= 0
-    fmvp_diff = fmvp_diff.mask(mask1 & mask2, -df_prev['fmvp'])
+        mask1 = diff.isna()
+        mask2 = df_prev[col] >= 0
+        diff = diff.mask(mask1 & mask2, -df_prev[col])
 
-    fmvp_diff = fmvp_diff.sort_values(ascending=False)
+        diff = diff.sort_values(ascending=False)
 
-    df = pandas.DataFrame(fmvp_diff, index=fmvp_diff.index)
-    df.insert(0, 'name', df_next['name'])
-    # df = df.assign(name=df_next['name'])
-    df.name = df.name.mask(df.name.isna(), df_prev.name)
-    df = df.rename(columns={'fmvp': 'fmvp_diff'})
+        df = pandas.DataFrame(diff, index=diff.index)
+        df.insert(0, 'name', df_next['name'])
+        # df = df.assign(name=df_next['name'])
+        df.name = df.name.mask(df.name.isna(), df_prev.name)
+        df = df.rename(columns={col: col + '_diff'})
 
-    return df
+        if r.empty:
+            r = df.copy()
+        else:
+            r[col + '_diff'] = df[col + '_diff']
+
+    return r
 
 
 def query_stocks_fund_theme_specified(fund_date, fund_name):

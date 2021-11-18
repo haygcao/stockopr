@@ -13,6 +13,7 @@ import pymysql
 import util.mysqlcli as mysqlcli
 import acquisition.quote_www as price
 import config.config as config
+from util import dt
 from util.log import logger
 
 
@@ -326,8 +327,29 @@ def get_future_name(code):
             print(e)
 
 
+def update_stock_shares(trade_date):
+    with mysqlcli.get_connection() as c:
+        latest_trade_date = dt.get_trade_date()
+        sql = "select code, round(nmc / close, 0) shares from quote where trade_date = %s"
+        df = pandas.read_sql(sql, c, params=(latest_trade_date,), index_col=['code'])
+        sql = "select code, close from quote where trade_date = %s"
+        df2 = pandas.read_sql(sql, c, params=(trade_date,), index_col=['code'])
+        df = df[df.index.isin(df2.index)]
+        df2 = df2[df2.index.isin(df.index)]
+        df['nmc'] = df['shares'] * df2['close']
+        df['trade_date'] = trade_date
+        df = df[df['nmc'].notna()]
+
+        sql = "insert into quote (code, trade_date, nmc) values (%s, %s, %s) on duplicate key update nmc = values(nmc)"
+        vals = zip(df.index, df['trade_date'], df['nmc'])
+        cur = c.cursor()
+        cur.executemany(sql, vals)
+        c.commit()
+
+
 if __name__ == '__main__':
-    upsert_stock_list_into_db([('300502', 'ABC')])
+    update_stock_shares(datetime.date(2021, 3, 31))
+    # upsert_stock_list_into_db([('300502', 'ABC')])
     # exit(0)
     # pass
     # add_selected_history('600674')
