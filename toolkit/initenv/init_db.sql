@@ -118,6 +118,7 @@ create table if not exists finance (
 	jroa decimal(12, 2),
 	net_profit_ratio decimal(12, 2),
 	gross_profit_ratio decimal(12, 2),
+	eps_std_rank float,
 	nmc decimal(20, 6),
 	fmv decimal(20, 6),
 	fmvp float

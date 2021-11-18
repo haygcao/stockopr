@@ -7,7 +7,7 @@ from util import mysqlcli
 
 def query_finance(code_list):
     sql = "select code, report_date, " \
-          "totaloperatereve, dedu_parent_profit, totaloperatereve_yoy_ratio, dpnp_yoy_ratio " \
+          "totaloperatereve, dedu_parent_profit, totaloperatereve_yoy_ratio, dpnp_yoy_ratio, eps, eps_std_rank " \
           "from finance {} order by report_date"
     where = "where code in ('{}')".format("','".join(code_list)) if code_list else ''
     sql = sql.format(where)
@@ -36,9 +36,9 @@ def count_ins_continuous(series, ins_percent):
     # c = c.mask(series_p, c + 1)
 
     c = pandas.Series([0 for i in range(len(series))], index=series.index)
-    c.iat[0] = 1 if series_p.iloc[0] else 0
+    c.iat[0] = 1 if not series_p.empty and series_p.iloc[0] else 0
     for i in range(1, len(series), 1):
-        if not series_p.iloc[i]:
+        if series_p.empty or not series_p.iloc[i]:
             c.iat[i] = 0
         else:
             c.iat[i] = c.iat[i - 1] + 1
@@ -55,11 +55,24 @@ def compute(df_finance):
     count_dpnp_yoy_ratio = count_ins_continuous(dpnp_yoy_ratio, 0)
     count_totaloperatereve_yoy_ratio = count_ins_continuous(totaloperatereve_yoy_ratio, 0)
 
-    df_finance['count_dpnp_yoy_ratio'] = count_dpnp_yoy_ratio
-    df_finance['count_totaloperatereve_yoy_ratio'] = count_totaloperatereve_yoy_ratio
-    df_finance['dpnp_yoy_ratio_ins'] = df_finance['dpnp_yoy_ratio'] - df_finance['dpnp_yoy_ratio'].shift(periods=4)
+    # A value is trying to be set on a copy of a slice from a DataFrame.
+    # Try using .loc[row_indexer,col_indexer] = value instead
+    # df_finance['count_dpnp_yoy_ratio'] = count_dpnp_yoy_ratio
+    # df_finance.loc[:, 'count_dpnp_yoy_ratio'] = count_dpnp_yoy_ratio
+    # df_finance.loc[:, 'count_totaloperatereve_yoy_ratio'] = count_totaloperatereve_yoy_ratio
+    # df_finance.loc[:, 'dpnp_yoy_ratio_ins'] = df_finance['dpnp_yoy_ratio'] - df_finance['dpnp_yoy_ratio'].shift(
+    #     periods=4)
 
-    return df_finance
+    df_finance_copy = df_finance.copy()
+    df_finance_copy['count_dpnp_yoy_ratio'] = count_dpnp_yoy_ratio
+    # df_finance_copy.loc[:, 'count_dpnp_yoy_ratio'] = count_dpnp_yoy_ratio
+    df_finance_copy.loc[:, 'count_totaloperatereve_yoy_ratio'] = count_totaloperatereve_yoy_ratio
+    df_finance_copy.loc[:, 'dpnp_yoy_ratio_ins'] = df_finance['dpnp_yoy_ratio'] - df_finance['dpnp_yoy_ratio'].shift(periods=4)
+
+    # 收益稳定性
+    df_finance_copy['eps_std'] = df_finance['eps'].rolling(9).std()
+
+    return df_finance_copy
 
 
 def finance(code_list):
@@ -69,6 +82,8 @@ def finance(code_list):
 
     for code in code_list:
         df = df_finance[df_finance['code'] == code]
+        if df.empty:
+            continue
         df = compute(df)
         result = result.append(df)
 

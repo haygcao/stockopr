@@ -33,6 +33,9 @@ def finance(quote, period, backdays):
     dpnp_yoy_ratio_4q = (dpnp / dpnp_prev) - 1
     cond4 = dpnp_yoy_ratio_4q > 0.25
 
-    cond = cond1 & cond2 & cond3 & cond4
+    # 收益稳定性
+    cond5 = df_finance['eps_std_rank'] < 25
+
+    cond = cond1 & cond2 & cond3 & cond4 & cond5
 
     return cond[-1]
