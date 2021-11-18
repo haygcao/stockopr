@@ -39,6 +39,7 @@ from util.log import logger
 
 selector = {
     'finance': finance.finance,
+    'finance_ex': finance.finance_ex,
     'fund': fund.fund,
     'trend_up': signal_config.mask_config,
     'signal_config': signal_config.signal_config,

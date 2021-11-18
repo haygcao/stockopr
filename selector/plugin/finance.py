@@ -10,6 +10,7 @@ C= 可观或者加速增长的当季每股收益和每股销售收入, 如 高�
 """
 import pandas
 
+from config import config
 from indicator import finance as finance_ind
 
 
@@ -28,7 +29,6 @@ def finance(quote, period, backdays):
     # 按年度
     group = df_finance.groupby(pandas.Grouper(freq='4Q'))
     group_sum = group.sum()
-    group_mean = group.mean()
 
     # 扣非每股收益
     dpnp = group_sum['dedu_parent_profit'][-1]
@@ -37,17 +37,30 @@ def finance(quote, period, backdays):
     dpnp_yoy_ratio_4q = (dpnp / dpnp_prev) - 1
     cond4 = dpnp_yoy_ratio_4q > 0.25
 
+    cond = cond1 & cond2 & cond3 & cond4
+
+    return cond[-1]
+
+
+def finance_ex(quote, period, backdays):
+    df_finance = finance_ind.finance([quote.code[-1]])
+
+    group = df_finance.groupby(pandas.Grouper(freq='4Q'))
+    group_sum = group.sum()
+    group_mean = group.mean()
+
+    options = config.get_config_options()
+    # 净资产收益率
+    # roe1 = group_sum['roe'][-1]
+    roe = round(100 * group_sum['eps'] / group_mean['bps'], 3)
+    cond1 = roe > options['roe']
+
     # 收益稳定性
     # cond5 = df_finance['eps_std_rank'] < 25
 
     eps_std = df_finance['dpnp_yoy_ratio'].rolling(8).std()
-    cond5 = eps_std < 30   # 40 选出 18 只  # 3年 对应30
+    cond2 = eps_std < options['eps_std']   # 40 选出 18 只  # 3年 对应30
 
-    # 净资产收益率
-    # roe1 = group_sum['roe'][-1]
-    roe = round(100 * group_sum['eps'] / group_mean['bps'], 3)
-    cond6 = roe > 17
-
-    cond = cond1 & cond2 & cond3 & cond4 & cond5 & cond6
+    cond = cond1 & cond2
 
     return cond[-1]

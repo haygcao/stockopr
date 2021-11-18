@@ -31,5 +31,7 @@
     "base_url": "127.0.0.1:8080/api"
   },
   "selector_rt_quote": false,
-  "selector_mp": true
+  "selector_mp": true,
+  "roe": 17,
+  "eps_std": 30
 }
