@@ -70,7 +70,7 @@ def compute(df_finance):
     df_finance_copy.loc[:, 'dpnp_yoy_ratio_ins'] = df_finance['dpnp_yoy_ratio'] - df_finance['dpnp_yoy_ratio'].shift(periods=4)
 
     # 收益稳定性
-    df_finance_copy['eps_std'] = df_finance['eps'].rolling(9).std()
+    df_finance_copy['eps_std'] = df_finance['dpnp_yoy_ratio'].rolling(9).std()   # 'eps'
 
     return df_finance_copy
 

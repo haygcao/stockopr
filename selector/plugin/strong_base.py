@@ -12,12 +12,14 @@ def strong_base(quote, period, back_days):
 
     times = 5  # if period == 'week' else 1
 
+    ema_xs = ema.ema(quote['close'], n=times * 2)
     ema_s = ema.ema(quote['close'], n=times * 5)
     ema_m = ema.ema(quote['close'], n=times * 10)
     ema_l = ema.ema(quote['close'], n=times * 30)
+    ema_xl = ema.ema(quote['close'], n=times * 40)
 
     for back_day in range(back_days, -1, -1):
-        if super.strong_base(ema_s, ema_m, ema_l, back_day):
+        if super.strong_base(ema_xs, ema_s, ema_m, ema_l, ema_xl, back_day):
             return True
 
     return False

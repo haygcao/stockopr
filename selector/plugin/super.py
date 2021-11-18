@@ -37,15 +37,20 @@ def bottom(close, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
     return close_ < ema_xl.iloc[-1 - back_day] * g_up_percent and close_ < ema_xxl.iloc[-1 - back_day] * g_up_percent
 
 
-def strong_base(ema_s, ema_m, ema_l, back_day):
+def strong_base(ema_xs, ema_s, ema_m, ema_l, ema_xl, back_day):
     # xxl = ema_xxl.iloc[-2 - back_day]
     # xl = ema_xl.iloc[-2 - back_day]
-    l = ema_l.iloc[-2 - back_day]
-    m = ema_m.iloc[-2 - back_day]
-    s = ema_s.iloc[-2 - back_day]
+    index = -2 - back_day
+    h = max(ema_xs.iloc[index], ema_s.iloc[index], ema_m.iloc[index], ema_l.iloc[index], ema_xl.iloc[index])
+    l = min(ema_xs.iloc[index], ema_s.iloc[index], ema_m.iloc[index], ema_l.iloc[index], ema_xl.iloc[index])
+
+    index = -250 if len(ema_s) > 250 else -len(ema_s)
+    percent = 100 * (h / min(ema_s[index:]) - 1)
+    if percent > 300:
+        return False
 
     # print(len(close), xxl, xl, l, m)
-    if util.almost_equal(l, m, g_almost) and util.almost_equal(m, s, g_almost) and util.almost_equal(l, s, g_almost):
+    if 100 * (h / l - 1) < g_almost:
         return True
     return False
 
@@ -125,7 +130,7 @@ def high_angle(quote, back_day):
     return True
 
 
-def super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
+def super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_xs, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
     vol = quote.volume
     close = quote.close
 
@@ -139,7 +144,7 @@ def super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, e
         return False
 
     # print('trend ok')
-    if not strong_base(ema_s, ema_m, ema_l, back_day):
+    if not strong_base(ema_xs, ema_s, ema_m, ema_l, ema_xl, back_day):
         return False
 
     # print('strong base ok')
@@ -171,17 +176,18 @@ def super(quote, period, back_days):
     close_yest = quote['close'].shift(periods=1)
     amplitude = atr5 / close_yest
 
+    ema_xs = ema(quote['close'], n=times * 2)
     ema_s = ema(quote['close'], n=times * 5)
     ema_m = ema(quote['close'], n=times * 10)
     ema_l = ema(quote['close'], n=times * 30)
-    ema_xl = ema(quote['close'], n=times * 50)
+    ema_xl = ema(quote['close'], n=times * 40)
     # 100 周, 2年...
     ema_xxl = ema(quote['close'], n=times * 100)
     # ema_xxl = ema_xl
 
     # 回退 6个月, 最后预留2日, 计算中后推时需要使用
     for back_day in range(back_days, 1, -1):
-        if super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
+        if super_one_day(quote, vol_ema_s, vol_ema_m, vol_ema_l, ema_xs, ema_s, ema_m, ema_l, ema_xl, ema_xxl, back_day):
             date = quote.index[-1 - back_day]
             # print(quote.code[-1], date)
             return True

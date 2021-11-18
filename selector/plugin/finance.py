@@ -18,7 +18,9 @@ def finance(quote, period, backdays):
 
     # 按季度
     cond1 = df_finance['dpnp_yoy_ratio'] > 18
-    cond2 = df_finance['totaloperatereve_yoy_ratio'] > 25
+
+    series = df_finance['totaloperatereve_yoy_ratio']
+    cond2 = (series > 25) | ((series > 0) & (series.shift(periods=1) > 0) & (series.shift(periods=2) > 0))
 
     v = df_finance['dpnp_yoy_ratio_ins']
     cond3 = (v > 1) | (df_finance['dpnp_yoy_ratio'] > 70)
@@ -36,13 +38,16 @@ def finance(quote, period, backdays):
     cond4 = dpnp_yoy_ratio_4q > 0.25
 
     # 收益稳定性
-    cond5 = df_finance['eps_std_rank'] < 25
+    # cond5 = df_finance['eps_std_rank'] < 25
+
+    # eps_std = df_finance['dpnp_yoy_ratio'].rolling(4).std()
+    # cond5 = eps_std < 30   # 40 选出 18 只  # 3年 对应30
 
     # 净资产收益率
     # roe1 = group_sum['roe'][-1]
-    roe = round(100 * group_sum['eps'][-1] / group_mean['bps'][-1], 3)
+    roe = round(100 * group_sum['eps'] / group_mean['bps'], 3)
     cond6 = roe > 17
 
-    cond = cond1 & cond2 & cond3 & cond4 & cond5 & cond6
+    cond = cond1 & cond2 & cond3 & cond4 & cond6
 
     return cond[-1]

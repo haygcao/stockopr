@@ -625,6 +625,8 @@ class Panel(QWidget):
         self.combo_code.setMaxVisibleItems(50)
 
         for code in code_list:
+            if code in self.stock_info_map:
+                continue
             quote = quote_db.get_price_info_df_db(code, 300)
             rs_rating = quote['rs_rating'][-1]
             # rs_rating = int(rs_rating) if rs_rating > 0 else rs_rating
