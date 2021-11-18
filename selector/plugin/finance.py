@@ -40,14 +40,14 @@ def finance(quote, period, backdays):
     # 收益稳定性
     # cond5 = df_finance['eps_std_rank'] < 25
 
-    # eps_std = df_finance['dpnp_yoy_ratio'].rolling(4).std()
-    # cond5 = eps_std < 30   # 40 选出 18 只  # 3年 对应30
+    eps_std = df_finance['dpnp_yoy_ratio'].rolling(8).std()
+    cond5 = eps_std < 30   # 40 选出 18 只  # 3年 对应30
 
     # 净资产收益率
     # roe1 = group_sum['roe'][-1]
     roe = round(100 * group_sum['eps'] / group_mean['bps'], 3)
     cond6 = roe > 17
 
-    cond = cond1 & cond2 & cond3 & cond4 & cond6
+    cond = cond1 & cond2 & cond3 & cond4 & cond5 & cond6
 
     return cond[-1]

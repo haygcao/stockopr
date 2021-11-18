@@ -15,7 +15,7 @@ def breakout_ma_one_day(quote, mas, back_day, breakout_percent=config.TP_RANGE):
     return False
 
 
-def step_breakout(quote, period, periods=None, almost=1, back_days=3, const_slowest_period=None):
+def step_breakout(quote, period, back_days=3, periods=None, almost=1, const_slowest_period=None):
     if period == 'week':
         quote = quote_db.resample_quote(quote, period_type='W')
     if periods is None:
@@ -48,5 +48,5 @@ def step_breakout(quote, period, periods=None, almost=1, back_days=3, const_slow
     return True
 
 
-def step_breakout_p(quote, period, periods=None, almost=1, back_days=3):
+def step_breakout_p(quote, period, back_days=3, periods=None, almost=1):
     return step_breakout(quote, period, periods, almost, back_days, const_slowest_period=60)

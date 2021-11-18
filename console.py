@@ -632,7 +632,7 @@ class Panel(QWidget):
             # rs_rating = int(rs_rating) if rs_rating > 0 else rs_rating
             fmvp = fund.query_fmvp(code)
             # fmvp = round(fmvp, 2) if fmvp > 0 else fmvp
-            percent = 100 * (quote.close[-1] / quote.close[-250] - 1)
+            percent = round(100 * (quote.close[-1] / quote.close[-250] - 1), 3)
             self.stock_info_map.update({code: {'rs_rating': rs_rating, 'fmvp': fmvp, 'percent': percent}})
 
         qt_util.popup_info_message_box_mp('[{}] loaded'.format(len(code_list)))
