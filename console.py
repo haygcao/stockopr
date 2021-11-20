@@ -39,6 +39,7 @@ import chart
 import trade_manager.db_handler
 from acquisition import acquire, basic, quote_db, tx
 from config import config
+from console_trade import PlaceControlInCell
 from indicator import relative_price_strength
 from pointor.signal import write_supplemental_signal
 from selector import selector
@@ -225,6 +226,10 @@ class Panel(QWidget):
 
         self.btn_delete = QPushButton('delete', self)
 
+        self.order_switch = QPushButton('-', self)
+        self.order_switch.setFixedHeight(5)
+        self.order_table = PlaceControlInCell()
+
         self.log_switch = QPushButton('-', self)
         self.log_switch.setFixedHeight(5)
         self.log = QListWidget(self)  # QTextBrowser(self)  # QLabel("this for log", self)
@@ -233,6 +238,7 @@ class Panel(QWidget):
         self.log.setFixedHeight(250)
 
         self.init_ui()
+        # self.order_table.setFixedHeight(self.order_table.geometry().height())
         threading.Thread(target=self.check, args=()).start()
 
         self.show()
@@ -320,6 +326,7 @@ class Panel(QWidget):
         self.init_indicator()
 
         self.log_switch.clicked.connect(self.hide_log)
+        self.order_switch.clicked.connect(self.hide_log)
 
         ###
         # TODO 信号下拉复选框点击 ALL 时报错
@@ -404,7 +411,11 @@ class Panel(QWidget):
         layout.addLayout(h_layout_signal)
 
         v_layout_log = QVBoxLayout()
-        v_layout_log.addWidget(self.log_switch)
+        h_layout_switch = QHBoxLayout()
+        h_layout_switch.addWidget(self.order_switch)
+        h_layout_switch.addWidget(self.log_switch)
+        v_layout_log.addLayout(h_layout_switch)
+        v_layout_log.addWidget(self.order_table)
         v_layout_log.addWidget(self.log)
 
         layout.addLayout(v_layout_log)
@@ -417,14 +428,16 @@ class Panel(QWidget):
         self.setWindowTitle('K')
 
     def hide_log(self):
-        if self.log.isHidden():
+        comp = self.log if self.sender() == self.log_switch else self.order_table
+        if comp.isHidden():
             hide = False
             adj = 1
         else:
             hide = True
             adj = -1
-        self.log.setHidden(hide)
-        self.setFixedHeight(self.geometry().height() + adj * self.log.geometry().height())
+        comp.setFixedHeight(comp.geometry().height())
+        comp.setHidden(hide)
+        self.setFixedHeight(self.geometry().height() + adj * comp.geometry().height())
 
     def set_label(self):
         s = '{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price))
@@ -581,23 +594,7 @@ class Panel(QWidget):
 
         code_list = []
         if 'position' in classification_list:
-            position_list = trade_manager.db_handler.query_current_position(self.account_id)
-            code_list.extend([position.code for position in position_list])
-
-            code_name_map = trade_manager.db_handler.query_trade_order_map(self.account_id)
-            code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
-            code_list_tmp.sort()
-            code_list.extend(code_list_tmp)
-
-            code_list_tmp = []
-            with open('data/portfolio.txt', encoding='utf8') as fp:
-                for code_name in fp:
-                    code_name = code_name.strip()
-                    if not code_name:
-                        continue
-                    code_list_tmp.append(code_name.split()[0])
-            code_list_tmp.sort()
-            code_list.extend(code_list_tmp)
+            code_list = trade_manager.query_position_ex(self.account_id)
 
         if 'allow_buy' in classification_list:
             strategy_list = [i.text() for i in self.combo_strategy.get_selected()]

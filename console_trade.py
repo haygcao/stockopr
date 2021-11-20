@@ -27,7 +27,7 @@ class PlaceControlInCell(QWidget):
     def initUI(self):
         self.setWindowTitle("QTable Widget演示")
         # self.resize(800, 300)
-        self.setFixedWidth(700)
+        # self.setFixedWidth(700)
 
         layout = QHBoxLayout()
 

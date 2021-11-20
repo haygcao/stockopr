@@ -312,7 +312,7 @@ def get_stocks_name(code_list):
 
 def get_stock_name(code):
     r = get_stocks_name([code])
-    return r['name'] if r else None
+    return r[0]['name'] if r else None
 
 
 def get_future_name(code):
