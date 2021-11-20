@@ -19,19 +19,20 @@ def fetch_close(code):
     return quote['close'][-1]
 
 
-class PlaceControlInCell(QWidget):
+class TableOrder(QWidget):
     def __init__(self):
-        super(PlaceControlInCell, self).__init__()
+        super(TableOrder, self).__init__()
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("QTable Widget演示")
         # self.resize(800, 300)
-        # self.setFixedWidth(700)
+        self.setFixedWidth(700)
 
         layout = QHBoxLayout()
 
         self.table_widget = QTableWidget()
+        # self.table_widget.setContentsMargins(0, 0, 0, 0)
 
         code_list = trade_manager.query_position_ex(svr_config.ACCOUNT_ID_XY)
         self.table_widget.setRowCount(len(code_list))
@@ -135,7 +136,7 @@ class PlaceControlInCell(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    main = PlaceControlInCell()
+    main = TableOrder()
     main.show()
     sys.exit(app.exec_())
     # sys.exit(app.exec())
