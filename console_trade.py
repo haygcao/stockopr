@@ -9,6 +9,7 @@ from PyQt5.QtCore import *
 from acquisition import tx, basic
 from server import config as svr_config
 from trade_manager import trade_manager
+from util import qt_util
 
 
 def fetch_close(code):
@@ -19,19 +20,20 @@ def fetch_close(code):
     return quote['close'][-1]
 
 
-class PlaceControlInCell(QWidget):
+class TableOrder(QWidget):
     def __init__(self):
-        super(PlaceControlInCell, self).__init__()
+        super(TableOrder, self).__init__()
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("QTable Widget演示")
         # self.resize(800, 300)
-        # self.setFixedWidth(700)
+        self.setFixedWidth(700)
 
         layout = QHBoxLayout()
 
         self.table_widget = QTableWidget()
+        # self.table_widget.setContentsMargins(0, 0, 0, 0)
 
         code_list = trade_manager.query_position_ex(svr_config.ACCOUNT_ID_XY)
         self.table_widget.setRowCount(len(code_list))
@@ -42,7 +44,7 @@ class PlaceControlInCell(QWidget):
         self.table_widget.cellClicked.connect(self.refresh_close)
 
         # 在第一行第一列添加一个字符串
-        self.table_widget.setHorizontalHeaderLabels(['代码', '名称', '价格', '数量', '最新价格', '买入', '卖出'])
+        self.table_widget.setHorizontalHeaderLabels(['代码', '名称', '价格', '金额(万)', '最新价格', '买入', '卖出'])
         # self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table_widget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -99,16 +101,25 @@ class PlaceControlInCell(QWidget):
     def cb_order(self):
         btn = self.sender()
         row, col = btn.property('row_col')
-        price_item = self.table_widget.item(row, 2)
-        count_item = self.table_widget.item(row, 3)
-        close_item = self.table_widget.item(row, 4)
+        price_item = self.table_widget.item(row, 2).text()
+        money_item = self.table_widget.item(row, 3).text()
+        close_item = self.table_widget.item(row, 4).text()
 
         direct = btn.property('direct')
         code = self.table_widget.item(row, 0).text()
         name = self.table_widget.item(row, 1).text()
-        price = price_item.text() if price_item else 0.0
-        count = count_item.text() if count_item else 0
-        close = close_item.text() if close_item else 0.0
+        price = price_item if price_item else 0.0
+        money = money_item if money_item else 0
+        close = close_item if close_item else price
+
+        if close == 0 or money == 0:
+            qt_util.popup_warning_message_box_mp('current price or money is 0')
+            return
+
+        count = (float(money) * 10000 / float(close)) // 100 * 100
+        if count == 0:
+            qt_util.popup_warning_message_box_mp('money is not enough to buy 100, count is 0')
+            return
 
         print('[{0}] {1}/{2} {3}x{4}'.format(direct, code, name, price, count))
 
@@ -127,6 +138,9 @@ class PlaceControlInCell(QWidget):
         pass
 
     def refresh_close(self, row, col):
+        if col != 4:
+            return
+
         code = self.table_widget.item(row, 0).text()
         close = fetch_close(code)
 
@@ -135,7 +149,7 @@ class PlaceControlInCell(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    main = PlaceControlInCell()
+    main = TableOrder()
     main.show()
     sys.exit(app.exec_())
     # sys.exit(app.exec())

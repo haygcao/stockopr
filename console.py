@@ -39,7 +39,7 @@ import chart
 import trade_manager.db_handler
 from acquisition import acquire, basic, quote_db, tx
 from config import config
-from console_trade import PlaceControlInCell
+from console_trade import TableOrder
 from indicator import relative_price_strength
 from pointor.signal import write_supplemental_signal
 from selector import selector
@@ -227,11 +227,13 @@ class Panel(QWidget):
         self.btn_delete = QPushButton('delete', self)
 
         self.order_switch = QPushButton('-', self)
-        self.order_switch.setFixedHeight(5)
-        self.order_table = PlaceControlInCell()
+        self.order_switch.setFixedHeight(10)
+
+        self._ = TableOrder()
+        self.order_table = self._.table_widget
 
         self.log_switch = QPushButton('-', self)
-        self.log_switch.setFixedHeight(5)
+        self.log_switch.setFixedHeight(10)
         self.log = QListWidget(self)  # QTextBrowser(self)  # QLabel("this for log", self)
         # self.log.resize(600, 500)
         # self.log.setHidden(True)
