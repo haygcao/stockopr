@@ -277,11 +277,11 @@ def check_list(quote, period):
         return ERROR.E_MACD_LINE_INC
 
     quote = relative_price_strength.relative_price_strength(quote, period='day')
-    if quote['rps'][-1] < quote['erps'][-1]:
+    if quote['rpsmaq'][-1] < quote['erpsmaq'][-1]:
         return ERROR.E_WEAKER_THAN_MARKET
 
     quote = ad.compute_ad(quote)
-    if quote['ad'] < quote['ad_ma']:
+    if quote['ad'][-1] < quote['ad_ma'][-1]:
         return ERROR.E_AD_INC
 
     return ERROR.OK
@@ -292,6 +292,7 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
     position_quota = trade_manager.db_handler.query_quota_position(account_id, code)
+    # check #1
     if not position_quota:
         popup_warning_message_box_mp('请先创建交易指令单, 请务必遵守规则!')
         return
@@ -304,13 +305,17 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
             return
 
     position = query_position(account_id, code)
-    if position.profit_total_percent < 0:
+
+    # check #2
+    if position and position.profit_total_percent < 0:
         popup_warning_message_box_mp('[补仓] - 严禁补仓, 当前亏损[{}%], 请务必遵守规则!'.format(position.profit_total_percent))
         return
 
     current_position = position.current_position if position else 0
 
     avail_position = position_quota - current_position
+
+    # check #3
     if avail_position < 100:
         popup_warning_message_box_mp('配额已用完, 请务必遵守规则!')
         avail_position = 0
@@ -326,22 +331,21 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
     if not auto:
         auto = trade_config['auto_buy']
 
-    if count == 0:
+    if count == 0 and 'count' in trade_config:
         count = trade_config['count']
     # avail_position = min(avail_position, count)
 
     if count <= 0:
         count = min(max_position, avail_position)
 
-    used = max(position.market_value, position.cost)
+    used = max(position.market_value, position.cost) if position else 0
     if (count * price_trade + used) * 4 > money.origin:
         popup_warning_message_box_mp('[重仓] - 严禁重仓, 当前仓位[{}%], 请务必遵守规则!'.format(
             round(100 * used / float(money.origin), 2)))
         return
 
     order(account_id, op_type, 'B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
-
-    position = position if position else trade_data.Position(code, count, 0)
+    position = position if position else trade_data.Position(code, count, 0, price_limited, price_trade, 0)
     db_handler.save_positions(account_id, [position])
 
 

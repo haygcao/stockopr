@@ -77,14 +77,15 @@ class TradeManagerTestCase(unittest.TestCase):
         # # tradeapi.order('B', code, count, auto=False)
         # trade_manager.buy(account_id, op_type, code, count, period='day')
         #
-        # code = '300501'
-        # count = 100
+        code = '002739'
+        count = 100
         # # tradeapi.order('B', code, count, auto=False)
         # trade_manager.buy(account_id, op_type, code, count, period='day')
+        trade_manager.sell(account_id, op_type, code, count, period='day')
 
         # trade_manager.buy('300502')
 
-        trade_manager.order(account_id, op_type, 'B', '300502', 1500)
+        # trade_manager.order(account_id, op_type, 'B', '300502', 1500)
 
     def test_query_order(self):
         code = '300502'
