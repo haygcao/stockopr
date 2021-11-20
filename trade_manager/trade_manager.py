@@ -34,6 +34,29 @@ class TradeManager:
         # return cls.operation
 
 
+def query_position_ex(account_id):
+    code_list = []
+    position_list = trade_manager.db_handler.query_current_position(account_id)
+    code_list.extend([position.code for position in position_list])
+
+    code_name_map = trade_manager.db_handler.query_trade_order_map(account_id)
+    code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
+    code_list_tmp.sort()
+    code_list.extend(code_list_tmp)
+
+    code_list_tmp = []
+    with open('data/portfolio.txt', encoding='utf8') as fp:
+        for code_name in fp:
+            code_name = code_name.strip()
+            if not code_name:
+                continue
+            code_list_tmp.append(code_name.split()[0])
+    code_list_tmp.sort()
+    code_list.extend(code_list_tmp)
+
+    return code_list
+
+
 def query_withdraw_order(account_id):
     order_list = tradeapi.query_withdraw_order(account_id)
     return order_list
@@ -273,8 +296,8 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
         popup_warning_message_box_mp('请先创建交易指令单, 请务必遵守规则!')
         return
 
-    quote = tx.get_kline_data(code)
     if period == 'day' and policy != Policy.DEVIATION:
+        quote = tx.get_kline_data(code)
         error = check_list(quote, 'day')
         if error != ERROR.OK:
             popup_warning_message_box_mp(error.value)
@@ -330,8 +353,9 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
     if not position:
         popup_warning_message_box_mp('没有 [{}] 持仓!'.format(code))
         return
-    quote = tx.get_kline_data(code)
+
     if period == 'day' and (not policy or (policy != Policy.DEVIATION and policy != Policy.CHANNEL)):
+        quote = tx.get_kline_data(code)
         quote = dynamical_system.dynamical_system_dual_period(quote, period='day')
         if quote['dyn_sys'].iloc[-1] >= 0 and quote['dyn_sys_long_period'].iloc[-1] >= 0:
             popup_warning_message_box_mp('动力系统不为红色, 禁止清仓, 请务必遵守规则!')

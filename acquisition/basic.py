@@ -298,16 +298,21 @@ def get_stock_code(name):
             print(e)
 
 
-def get_stock_name(code):
+def get_stocks_name(code_list):
     with mysqlcli.get_cursor() as c:
         try:
-            sql = 'select name from {0} where code = "{1}"'.format(config.sql_tab_basic_info, code)
+            sql = "select code, name from basic_info where code in ('{}')".format("','".join(code_list))
             c.execute(sql)
             # name = c.fetchall()
-            r = c.fetchone()
-            return r['name']
+            r = c.fetchall()
+            return r
         except Exception as e:
             print(e)
+
+
+def get_stock_name(code):
+    r = get_stocks_name([code])
+    return r['name'] if r else None
 
 
 def get_future_name(code):

@@ -802,7 +802,9 @@ class Panel(QWidget):
 
     def refresh_log(self):
         lines = util.read_last_lines('log/run.log')
-        if lines != self.log_lines:
+        # print(self.log.verticalScrollBar().value(), self.log.verticalScrollBar().cursor().pos())
+        offset = (self.log.verticalOffset() == 460 and self.log.horizontalOffset() == 0)
+        if self.log.count() == 0 or (offset and lines != self.log_lines):
             self.log.clear()
             self.log.addItems([line[:-1] for line in lines])
             self.log.setCurrentRow(self.log.count() - 1)
