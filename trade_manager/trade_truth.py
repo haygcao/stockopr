@@ -194,11 +194,20 @@ def compute_trade_detail_impl(trade, data):
             # raise Exception
             r['high'] = detail['trade_price_high']
             r['low'] = detail['trade_price_low']
+
+        # 国金理财 open_price 为 0
+        if detail['open_price']:
+            max_earn_percent = round(100 * (r['high'] / detail['open_price'] - 1), 3)
+            max_loss_percent = round(100 * (r['low'] / detail['open_price'] - 1), 3)
+        else:
+            max_earn_percent = detail['profit_percent']
+            max_loss_percent = detail['profit_percent']
+
         detail.update({
             'high': r['high'],
             'low': r['low'],
-            'max_earn_percent':  round(100 * (r['high'] / detail['open_price'] - 1), 3),
-            'max_loss_percent': round(100 * (1 - r['low'] / detail['open_price']), 3),
+            'max_earn_percent':  max_earn_percent,
+            'max_loss_percent': max_loss_percent,
         })
     return pandas.DataFrame(detail, index=[detail['close_date']])
 
