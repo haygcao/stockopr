@@ -396,7 +396,10 @@ def show_profit_by_count(trade_detail):
     plt.grid(True, linestyle='--', alpha=0.2)  # 网格线
 
     fig.set_size_inches(10.24, 7.68)
-    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)), dpi=dpi)
+
+    plt.margins(0, 0)
+    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)),
+                dpi=dpi, bbox_inches='tight', pad_inches=0)
     # plt.show()
 
 
@@ -421,7 +424,10 @@ def show_profit_per_trade(trade_detail):
     ax2.bar(x, days)
 
     fig.set_size_inches(10.24, 7.68)
-    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)), dpi=dpi)
+
+    plt.margins(0, 0)
+    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)),
+                dpi=dpi, bbox_inches='tight', pad_inches=0)
 
 
 def show_profit_per_day(trade_detail):
@@ -435,7 +441,10 @@ def show_profit_per_day(trade_detail):
     plt.grid(True, linestyle='--', alpha=0.2)
 
     fig.set_size_inches(10.24, 7.68)
-    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)), dpi=dpi)
+
+    plt.margins(0, 0)
+    plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)),
+                dpi=dpi, bbox_inches='tight', pad_inches=0)
 
 
 def show_trade_stat(trade_stat_month, freq):
@@ -467,7 +476,13 @@ def show_trade_stat(trade_stat_month, freq):
     # plt.xticks(x.values)
 
     fig.set_size_inches(10.24, 7.68)
-    plt.savefig(os.path.join(truth_dir, '{}_{}.png'.format(sys._getframe().f_code.co_name, freq)), dpi=dpi)
+
+    # plt.tight_layout = True  # 没用
+    # 框内空白
+    plt.margins(0, 0)
+    # 框外空白
+    plt.savefig(os.path.join(truth_dir, '{}_{}.png'.format(sys._getframe().f_code.co_name, freq)),
+                dpi=dpi, bbox_inches='tight', pad_inches=0)
 
 
 def verify_data(data):
