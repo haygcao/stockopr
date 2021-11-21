@@ -19,11 +19,10 @@ truth_dir = os.path.join(root_dir, 'data', 'truth', 'pt')
 truth_dir = os.path.join(root_dir, 'data', 'truth', 'xy')
 truth_dir = os.path.join(root_dir, 'data', 'truth', 'gj')
 
+truth_dir = os.path.join(root_dir, 'data', 'truth')
+
 if not os.path.exists(truth_dir):
     os.makedirs(truth_dir)
-
-suffix = '_PT'
-suffix = ''
 
 # Glyph 8722 missing from current font
 plt.rcParams['axes.unicode_minus'] = False
@@ -34,38 +33,48 @@ dpi = 300
 def merge_trade(trade_current_day_map, trade_in_position_map):
     for code_current_day, trade_current_day in trade_current_day_map.items():
         if code_current_day in trade_in_position_map:
-            trade_in_position_map[code_current_day]['current_position'] = trade_current_day['current_position']
+            trade_in_position_map[code_current_day]['current_position'] = trade_current_day['diff_position']
             trade_in_position_map[code_current_day]['date'].extend(trade_current_day['date'])
         else:
             trade_in_position_map[code_current_day] = trade_current_day
 
 
 def load_data():
-    trade_data_dir = '/home/shuhm/workspace/inv/stat/ZXZQ/PT'
-    years = (2014, 2021)
+    trade_data_root_dir = '/home/shuhm/workspace/inv/stat'
 
-    trade_data_dir = '/home/shuhm/workspace/inv/stat/ZXZQ'
-    years = (2021, 2021)
+    result = pandas.DataFrame()
+    for trade_data_dir, years in (('ZXZQ/PT', (2014, 2021)), ('ZXZQ', (2021, 2021)), ('GJZQ', (2015, 2016))):
+        data = pandas.DataFrame()
+        for year in range(years[0], years[1] + 1, 1):
+            suffix = '_{}'.format(trade_data_dir.split('/')[-1]) if '/' in trade_data_dir else ''
+            # ths 导出, wps 编辑 *.xls - ValueError: File is not a recognized excel file
+            # wps 另存为 xlsx   pip install openpyxl
+            file = os.path.join(trade_data_root_dir, trade_data_dir, '{}{}.xlsx'.format(year, suffix))
+            df = pandas.read_excel(file, dtype={'证券代码': str})
+            data = data.append(df)
+        data = data.reset_index(drop=True)
+        date = data.apply(lambda x: datetime.datetime.strptime(
+            '{} {}'.format(x['发生日期'], x['成交时间']), '%Y%m%d %H:%M:%S'), axis=1)
+        data['证券代码'] = data['证券代码'].apply(str)
+        data['证券代码'] = data['证券代码'].apply(lambda x: x.zfill(6))
+        data['证券代码'] = data['证券代码'].mask(data['证券代码'] == '000nan', numpy.nan)
+        data = data.set_index(date)
+        if '股份余额' not in data.columns:
+            cond1 = data['证券名称'] == '国金通用金腾通货币'
+            # cond2 = data['业务名称'] == '申购确认'
+            cond3 = data['业务名称'] == '赎回确认'
+            data['成交数量'] = data['成交数量'].mask(cond1 & cond3, data['成交数量'] * -1)
+            data['发生金额'] = data['发生金额'].mask(cond1 & ~cond3, data['发生金额'] * -1)
+            # data = data[data['证券名称'] != '国金通用金腾通货币']
+            data = data[data['资金账号'].notna()]
+            group = data.groupby('证券代码')
+            cumsum = group.cumsum()
+            stock_remained = cumsum['成交数量']
+            data.insert(8, '股份余额', stock_remained)
 
-    trade_data_dir = '/home/shuhm/workspace/inv/stat/GJZQ'
-    years = (2015, 2016)
-
-    data = pandas.DataFrame()
-    for year in range(years[0], years[1] + 1, 1):
-        # ths 导出, wps 编辑 *.xls - ValueError: File is not a recognized excel file
-        # wps 另存为 xlsx   pip install openpyxl
-        file = os.path.join(trade_data_dir, '{}{}.xlsx'.format(year, suffix))
-        df = pandas.read_excel(file, dtype={'证券代码': str})
-        data = data.append(df)
-    data = data.reset_index(drop=True)
-    date = data.apply(lambda x: datetime.datetime.strptime(
-        '{} {}'.format(x['发生日期'], x['成交时间']), '%Y%m%d %H:%M:%S'), axis=1)
-    data['证券代码'] = data['证券代码'].apply(str)
-    data['证券代码'] = data['证券代码'].apply(lambda x: x.zfill(6))
-    data['证券代码'] = data['证券代码'].mask(data['证券代码'] == '000nan', numpy.nan)
-    data = data.set_index(date)
-    data = data.sort_index()
-    return data
+        result = result.append(data)
+    result = result.sort_index()
+    return result
 
 
 def compute_trade(data: pandas.DataFrame):
@@ -86,7 +95,7 @@ def compute_trade(data: pandas.DataFrame):
     trade_date_prev = trade_date
     for i in range(len(data)):
         row = data.iloc[i]
-        if row['业务名称'] == '股息入帐':
+        if row['业务名称'] in ['股息入帐', '担保品划出', '担保品划入']:
             continue
 
         code = row['证券代码']
@@ -104,12 +113,13 @@ def compute_trade(data: pandas.DataFrame):
                     code_in_position_list.append(code_current_day)
 
                 if code_current_day in trade_in_position_map:
-                    trade_in_position_map[code_current_day]['current_position'] = trade_current_day['current_position']
+                    trade_in_position_map[code_current_day]['current_position'] += trade_current_day['diff_position']
                     trade_in_position_map[code_current_day]['date'].extend(trade_current_day['date'])
                 else:
                     trade_in_position_map[code_current_day] = trade_current_day
+                    trade_in_position_map[code_current_day]['current_position'] = trade_current_day['diff_position']
 
-                if trade_current_day['current_position'] <= 0:
+                if trade_in_position_map[code_current_day]['current_position'] <= 0:
                     code_in_position_list.remove(code_current_day)
                     trade_in_position = trade_in_position_map.pop(code_current_day)
                     trade_in_position['clear'] = True
@@ -120,10 +130,11 @@ def compute_trade(data: pandas.DataFrame):
 
         if code in code_current_day_list:
             trade_current_day_map[code]['date'].append(index_date)
+            trade_current_day_map[code]['diff_position'] += int(data.iloc[i]['成交数量'])
         else:
             code_current_day_list.append(code)
             trade_current_day_map[code] = {'code': code, 'clear': False, 'date': [index_date]}
-        trade_current_day_map[code]['current_position'] = int(data.iloc[i]['股份余额'])
+            trade_current_day_map[code]['diff_position'] = int(data.iloc[i]['成交数量'])
 
     merge_trade(trade_current_day_map, trade_in_position_map)
     trade_all.extend(trade_in_position_map.values())
@@ -506,25 +517,13 @@ def verify_data(data):
 
 def trade_truth():
     data = load_data()
-    if '股份余额' not in data.columns:
-        cond1 = data['证券名称'] == '国金通用金腾通货币'
-        # cond2 = data['业务名称'] == '申购确认'
-        cond3 = data['业务名称'] == '赎回确认'
-        data['成交数量'] = data['成交数量'].mask(cond1 & cond3, data['成交数量'] * -1)
-        data['发生金额'] = data['发生金额'].mask(cond1 & ~cond3, data['发生金额'] * -1)
-        # data = data[data['证券名称'] != '国金通用金腾通货币']
-        data = data[data['资金账号'].notna()]
-        group = data.groupby('证券代码')
-        cumsum = group.cumsum()
-        stock_remained = cumsum['成交数量']
-        data.insert(8, '股份余额', stock_remained)
-
     verify_data(data)
 
     # charge = data['手续费'].sum() + data['印花税'].sum() + data['过户费'].sum()
 
     trade_date_list = compute_trade(data)
     trade_detail = compute_trade_detail(trade_date_list, data)
+
     trade_stat_month = stat_trade_by_month(trade_detail)
     trade_stat_quarter = stat_trade_by_quarter(trade_stat_month)
     trade_stat_year = stat_trade_by_year(trade_stat_month)
