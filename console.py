@@ -830,10 +830,12 @@ class Panel(QWidget):
         pid_prev_check = None
         update_time = datetime.datetime(2021, 6, 18, 0, 0, 0)
 
+        network_error = True
         while self.running:
             self.send_key_event('xxx')
             now = datetime.datetime.now()
-            if now - update_time > datetime.timedelta(seconds=60):
+            timeout = now - update_time > datetime.timedelta(seconds=60)
+            if timeout:
                 if not account_updated and not dt.istradetime():
                     self.btn_sync.setStyleSheet("color : red")
                     latest_sync_date = trade_manager.db_handler.query_money(self.account_id).date
@@ -857,6 +859,24 @@ class Panel(QWidget):
                     # self.lbl_account.setStyleSheet("color : red")
 
                 update_time = now
+
+            if network_error or timeout:
+                ip = '192.168.1.1'
+                network_error = not util.ping(ip)
+                if network_error:
+                    root_dir = util.get_root_dir()
+                    with open(os.path.join(root_dir, 'log', 'network.log'), 'a') as f:
+                        f.writelines('{} {} is unavailable\n'.format(now.strftime('%Y-%m-%d %H:%M:%S'), ip))
+                    color = 'red'
+                    from playsound import playsound
+                    sound_path = os.path.join(root_dir, 'data', 'network_error.wav')
+                    playsound(sound_path)
+                else:
+                    color = ''
+
+                # d = self.order_switch.styleSheet()
+                self.order_switch.setStyleSheet("background-color : {}".format(color))
+                self.log_switch.setStyleSheet("background-color : {}".format(color))
 
             pid = util.get_pid_of_python_proc('watch_dog')
             if pid == pid_prev_check:

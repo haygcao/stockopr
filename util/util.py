@@ -27,6 +27,19 @@ def almost_equal(m, n, almost):
     return False
 
 
+def ping(ip):
+    r = subprocess.Popen(['ping', ip, '-c', '1'], stdout=subprocess.DEVNULL)
+    try:
+        r.communicate(timeout=3)
+    except subprocess.TimeoutExpired as e:
+        pass
+
+    if r.returncode is None or r.returncode != 0:
+        return False
+
+    return True
+
+
 def get_pname_by_id(pid):
     try:
         p = psutil.Process(pid)

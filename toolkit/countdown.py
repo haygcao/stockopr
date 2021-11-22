@@ -23,7 +23,7 @@ from util import xset
 sys.path.append('/usr/lib/python3/dist-packages')
 
 INIT_COUNT = 25 * 60 * 10
-sound_path = os.path.join(os.path.dirname(__file__), '../data/SchoolBell.ogg')  # "/usr/share/sounds/deepin/stereo/message.wav"
+sound_path = os.path.join(os.path.dirname(__file__), '../data/school_bell.ogg')  # "/usr/share/sounds/deepin/stereo/message.wav"
 
 
 def count_to_time(count):
