@@ -2,7 +2,6 @@
 
 """ slope 暂未计算, 先由人工判断
 """
-import math
 
 import numpy
 
@@ -122,7 +121,7 @@ def high_angle(quote, back_day):
     y = (low_max / yest_close - 1) * 25
     x = index + 2
 
-    angle = math.degrees(math.atan(y/x))
+    angle = util.angle(x, y)
     # print('\n{} {}'.format(quote.code.iloc[-1], angle))
     if angle < g_angle:
         return False

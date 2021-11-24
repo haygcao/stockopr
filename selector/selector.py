@@ -25,7 +25,8 @@ import selector.plugin.down as down
 import selector.plugin.strong_variability as strong_variability
 
 from selector.plugin import market_deviation, super, bull_at_bottom, second_stage, hot_strong, magic_line, \
-    base_breakout, blt, vcp, strong_base, amplitude, signal_config, bottom, volume_dry_up, breakout, finance, fund
+    base_breakout, blt, vcp, strong_base, amplitude, signal_config, bottom, volume_dry_up, breakout, finance, fund, \
+    trend_weak
 from selector.plugin import value_return
 from selector.plugin import dynamical_system
 from selector.plugin import force_index
@@ -42,6 +43,7 @@ selector = {
     'finance_ex': finance.finance_ex,
     'fund': fund.fund,
     'trend_up': signal_config.mask_config,
+    'trend_weak': trend_weak.trend_weak,
     'signal_config': signal_config.signal_config,
     'step': step.step,
     'step_p': step.step_p,

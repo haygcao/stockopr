@@ -1,8 +1,10 @@
 import json
+import math
 import os
 import subprocess
 import sys
 
+import numpy
 import psutil
 import datetime
 import time
@@ -25,6 +27,18 @@ def almost_equal(m, n, almost):
     if abs(m - n) * 100 / l < almost:
         return True
     return False
+
+
+def angle_np(dx, dy):
+    # numpy.tan(numpy.radians([45]))
+    # numpy.degrees(numpy.arctan([1]))
+    return numpy.degrees(numpy.arctan(dy / dx))
+
+
+def angle(dx, dy):
+    # math.tan(math.radians(45))   -> 1
+    # math.degrees(math.atan(1))   -> 45
+    return math.degrees(math.atan(dy / dx))
 
 
 def ping(ip):

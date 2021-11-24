@@ -546,7 +546,7 @@ key_list = ['code', 'trade_date', 'open', 'high', 'low', 'close', 'volume', 'amo
 candidate_strategy_list = ['finance', 'finance_ex', 'fund', 'super', 'hot_strong', 'second_stage',
                            'dyn_sys_green', 'dyn_sys_blue',
                            'strong_base', 'bottom', 'fallen']
-traced_strategy_list = ['magic_line', 'blt', 'vcp', 'step', 'value_return_ing', 'volume_dry_up_ing']
+traced_strategy_list = ['trend_weak', 'magic_line', 'blt', 'vcp', 'step', 'value_return_ing', 'volume_dry_up_ing']
 allow_buy_strategy_list = ['magic_line_breakout', 'blt_breakout', 'vcp_breakout', 'step_breakout', 'base_breakout',
                            'value_return', 'volume_dry_up', 'volume_shrink', 'bull_deviation', 'bull_at_bottom']
 
