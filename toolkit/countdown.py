@@ -7,6 +7,9 @@ sudo apt install python3-gi
 ValueError: Namespace Gst not available
 sudo apt install python3-gst-1.0
 
+playsound is relying on another python subprocess. Please use `pip install pygobject` if you want playsound to run more efficiently.
+pip install pygobject   # 安装失败, 日后再解决
+
 PYTHONPATH=/usr/lib/python3/dist-packages python toolkit/countdown.py
 """
 import os

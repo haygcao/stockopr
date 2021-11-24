@@ -14,7 +14,7 @@ class FetchQuoteTestCase(unittest.TestCase):
     def test_fetch_quote_sina(self):
         code = '300502'
         period = 'm30'
-        # period = 'day'
+        period = 'day'
         count = 250
         quote = tx.get_kline_data_sina(code, period, count)
         print(quote)

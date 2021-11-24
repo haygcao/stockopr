@@ -46,4 +46,4 @@ def save(txt):
 
 if __name__ == '__main__':
     say('hello world')
-    say('注意 买 3 0 0')
+    say('注意， 买入， 3 0 0')

@@ -40,10 +40,12 @@ def second_stage(quote, period):
     # Condition 4: Current Price is within 25% of 52 week high, and at 10 days ago
     condit_4 = (close >= 0.75 * high_of_52week)
 
-    # Condition 5: IBD RS ratings of the stock > 70
-    condit_5 = ma.ma(quote.rs_rating, 5) >= 70
+    condit = condit_1 & condit_2 & condit_3 & condit_4
 
-    condit = condit_1 & condit_2 & condit_3 & condit_4 & condit_5
+    if period == 'day':
+        # Condition 5: IBD RS ratings of the stock > 70
+        condit_5 = ma.ma(quote.rs_rating, 5) >= 70
+        condit &= condit_5
 
     quote['second_stage'] = numpy.nan
 

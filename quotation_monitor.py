@@ -17,7 +17,7 @@ from data_structure import trade_data
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
 
-from acquisition import tx
+from acquisition import tx, basic
 from server import config as svr_config
 from trade_manager import trade_manager
 from util import dt, singleten
@@ -51,11 +51,13 @@ class TradeSignalManager:
     # {
     #     'code': [TradeSignal, ]
     # }
+
+    stock_dict = {}
     signal_map = {}
     # {
     #     'code': data_structure.trade_data.TradeOrder
     # }
-    trade_order_map = None  # : dict[str, trade_data.TradeOrder]
+    trade_order_map = {}  # : dict[str, trade_data.TradeOrder]
 
     @classmethod
     def reload_trade_order(cls):
@@ -71,6 +73,7 @@ class TradeSignalManager:
                 continue
             # TODO
             strategy = None  # 'magic_line_breakout_signal_enter'
+            strategy = 'vcp_breakout_signal_enter'   # 买入策略
             cls.trade_order_map[code] = trade_data.TradeOrder(
                 position.date, code, position=position.current_position, open_price=position.price_cost,
                 stop_loss=position.price_cost * 0.96, stop_profit=position.price_cost * 1.15,
@@ -78,6 +81,9 @@ class TradeSignalManager:
             logger.warning('{} with not trade order'.format(code))
 
         for code in cls.trade_order_map.keys():
+            if code not in cls.stock_dict:
+                cls.stock_dict.update({code: basic.get_stock_name(code)})
+
             if code in cls.signal_map:
                 continue
             cls.signal_map[code] = []
@@ -122,6 +128,9 @@ class TradeSignalManager:
 
 # @atexit.register(weakref.ref(proc))
 def goodbye():
+    import traceback
+    traceback.print_exc()
+
     logger.info("monitor stopped")
 
 
@@ -264,11 +273,12 @@ def update_status_by_strategy(code, data, period, strategy):
     return TradeSignal(code, price, data_index_, direct, policy, period, True, supplemental)
 
 
-def check_period(code, period):
-    logger.debug('now check {} {} status'.format(code, period))
+def check_period(code, period, strategy, in_position):
+    logger.info('now check {} {} status, strategy is {}'.format(code, period, strategy))
 
     data = get_min_data(code, period)
     if not isinstance(data, pandas.DataFrame) or data.empty:
+        logger.error('fetch quote failed')
         return
 
     close = data.close[-1]
@@ -276,10 +286,9 @@ def check_period(code, period):
         return TradeSignal(code, close, data.index[-1], 'S', Policy.STOP_LOSS, period, True)
 
     trade_signal = None
-    strategy = TradeSignalManager.get_strategy(code)
     if strategy:
         strategys = [strategy]
-        if TradeSignalManager.in_position(code):
+        if in_position:
             strategys = signal_pair.signal_pair_column[strategy]
             strategys.extend(signal_pair.default_columns)
 
@@ -296,9 +305,9 @@ def check_period(code, period):
         return trade_signal
 
 
-def check_trade_signal(code, periods):
+def check_trade_signal(code, periods, strategy, in_position):
     for period in periods:
-        trade_signal = check_period(code, period)
+        trade_signal = check_period(code, period, strategy, in_position)
         if not trade_signal:
             continue
         return trade_signal
@@ -335,8 +344,8 @@ def query_trade_order_code_list():
     return [code for code, name in r.items()]
 
 
-def check(code, periods):
-    trade_signal = check_trade_signal(code, periods)
+def check(code, periods, strategy, in_position):
+    trade_signal = check_trade_signal(code, periods, strategy, in_position)
     if not trade_signal:
         return False
 
@@ -369,8 +378,10 @@ def monitor_today():
     atexit.register(goodbye)
     periods = []
 
-    logger.info(TradeSignalManager.signal_map)
+    TradeSignalManager.reload_trade_order()
+    logger.info('stock in monitor: {}'.format(TradeSignalManager.stock_dict.values()))
 
+    periods_enabled = ['m5', 'm30', 'day']
     has_signal = True
     while now.hour < 15:
         now = datetime.datetime.now()
@@ -385,11 +396,11 @@ def monitor_today():
             # pass
 
         periods.clear()
-        # if now.minute % 5 < 1:
-        #     periods.append('m5')
-        # if now.minute % 30 < 1:
-        #     periods.append('m30')
-        if now.minute % 60 < 1:
+        if 'm5' in periods_enabled and now.minute % 5 < 1:
+            periods.append('m5')
+        if 'm30' in periods_enabled and now.minute % 30 < 1:
+            periods.append('m30')
+        if 'day' in periods_enabled and now.minute % 60 < 1:
             periods.append('day')
 
         # periods.append('day')
@@ -410,10 +421,13 @@ def monitor_today():
 
         if has_signal:
             TradeSignalManager.reload_trade_order()
+            print('stock in monitor: {}'.format(TradeSignalManager.stock_dict.values()))
             has_signal = False
 
         for code in TradeSignalManager.trade_order_map.keys():
-            if check(code, periods):
+            strategy = TradeSignalManager.get_strategy(code)
+            in_position = TradeSignalManager.in_position(code)
+            if check(code, periods, strategy, in_position):
                 has_signal = True
 
         time.sleep(60)

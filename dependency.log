@@ -87,3 +87,10 @@ trade manager
 
 pip install openpyxl
 Successfully installed et-xmlfile-1.1.0 openpyxl-3.0.9
+
+=====
+
+quotation monitor
+
+pip install pyttsx3
+Successfully installed pyttsx3-2.90
