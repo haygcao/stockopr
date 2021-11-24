@@ -157,7 +157,9 @@ def compute_trade_detail_impl(trade, data):
         df_ = df[cond]
         profit -= sum(df_['成交数量'] * df_['成交价格'])
 
-    cost = abs(round(df_buy['发生金额'].sum(), 3))  # 去除日内做T的买入金额
+    # cost = abs(round(df_buy['发生金额'].sum(), 3))  # 去除日内做T的买入金额
+    cost = abs(round(min(df_group_sum['发生金额'].cumsum()), 3))
+
     cond = df['业务名称'] == '担保品划入'
     if numpy.any(cond):
         df_ = df[cond]
@@ -391,13 +393,13 @@ def show_profit_by_count(trade_detail):
     ax.plot([-9.5, -9.5], [0, max(x.values)], color='purple')
     ax.plot([-5.5, -5.5], [0, max(x.values)], color='red')
     ax.plot([0.5, 0.5], [0, max(x.values)], color='yellow', linewidth=2)
-    plt.xticks(numpy.arange(min(x.index), max(x.index), 2))
+    plt.xticks(numpy.arange(min(x.index), max(x.index) + 1, 1), rotation=90)
     plt.yticks(numpy.arange(0, max(x.values), 5))
     plt.grid(True, linestyle='--', alpha=0.2)  # 网格线
 
     fig.set_size_inches(10.24, 7.68)
 
-    plt.margins(0, 0)
+    # plt.margins(0, 0)
     plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)),
                 dpi=dpi, bbox_inches='tight', pad_inches=0)
     # plt.show()
