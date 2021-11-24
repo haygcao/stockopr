@@ -176,6 +176,7 @@ def get_kline_data_sina(code, period='day', count=250):
             return quote
         quote_today = get_realtime_data_sina(code)
         quote = quote.append(quote_today)
+        quote['rs_rating'].iat[-1] = quote['rs_rating'][-2]
         if period == 'week':
             quote = quote_db.resample_quote(quote, period_type=period_map[period]['period'])
         return quote
