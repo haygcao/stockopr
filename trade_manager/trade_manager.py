@@ -3,20 +3,20 @@ import datetime
 import threading
 import time
 
-import trade_manager.db_handler
+import indicator
 from acquisition import tx, quote_db
 from config import config
 from config.config import Policy, ERROR
 from data_structure import trade_data
 from indicator import atr, ema, dynamical_system, relative_price_strength, ad
-from pointor import signal
+from pointor import signal, signal_stop_loss
 from server import config as svr_config
 import selector
-from trade_manager import tradeapi, db_handler
+from . import tradeapi, db_handler
 from util import mysqlcli, dt, qt_util
 
 from util.log import logger
-from util.qt_util import popup_warning_message_box_mp
+from util.qt_util import popup_warning_message_box_mp, popup_info_message_box_mp
 
 
 class TradeManager:
@@ -36,10 +36,10 @@ class TradeManager:
 
 def query_position_ex(account_id):
     code_list = []
-    position_list = trade_manager.db_handler.query_current_position(account_id)
+    position_list = db_handler.query_current_position(account_id)
     code_list.extend([position.code for position in position_list])
 
-    code_name_map = trade_manager.db_handler.query_trade_order_map(account_id)
+    code_name_map = db_handler.query_trade_order_map(account_id)
     code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
     code_list_tmp.sort()
     code_list.extend(code_list_tmp)
@@ -189,7 +189,7 @@ def sync_impl(account_id, trade_date):
     else:
         logger.info('sync money ok')
 
-    order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='ING')
+    order_map = db_handler.query_trade_order_map(account_id, status='ING')
     if order_map:
         for code, trade_order in order_map.items():
             if code not in [position.code for position in position_list]:
@@ -241,7 +241,7 @@ def check_quota(code, direction):
     巡检, 周期巡检超出配额的已有仓位
     """
     current_position = query_position(code)
-    quota_position = trade_manager.db_handler.query_quota_position()
+    quota_position = db_handler.query_quota_position()
     if current_position.current_position > quota_position:
         return False
     return True
@@ -291,7 +291,7 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
-    position_quota = trade_manager.db_handler.query_quota_position(account_id, code)
+    position_quota = db_handler.query_quota_position(account_id, code)
     # check #1
     if not position_quota:
         popup_warning_message_box_mp('请先创建交易指令单, 请务必遵守规则!')
@@ -486,42 +486,52 @@ def create_trade_order(account_id, code, price_limited, strategy):
     quote = tx.get_kline_data(code, 'day')
     quote_week = quote_db.resample_quote(quote, period_type=config.period_map['day']['long_period'])
 
-    quote = signal.compute_signal(code, 'day', quote)
+    # quote = signal.compute_signal(code, 'day', quote)
+    # quote = signal_stop_loss.compute_index(quote, 'day')
+    # stop_loss = quote['stop_loss_full'].iloc[-1]
+
+    quote = indicator.atr.compute_atr(quote)
+    stop_loss = max(quote[config.stop_loss_atr_price][-10:]) - config.stop_loss_atr_ratio * quote['atr'][-1]
 
     price = quote['close'].iloc[-1] if price_limited == 0 else price_limited
-    stop_loss = quote['stop_loss_full'].iloc[-1]
+    stop_loss = price * 0.96
+    stop_loss = round(stop_loss, 2)
 
     money = query_money(account_id)
     # total money, begin of month
     # total_money = money.total_money
-    trade_config = config.get_trade_config(code)
-    total_money = trade_config['total_money'][account_id]
-    avail_money = money.avail_money
+    total_money = float(money.origin)   # 投入总资金
+    # avail_money = float(money.avail_money)
 
     loss = total_money * config.one_risk_rate
-    total_loss_used = trade_manager.db_handler.query_total_risk_amount(account_id)
+    total_loss_used = db_handler.query_total_risk_amount(account_id)
     total_loss_remain = total_money * config.total_risk_rate - total_loss_used
 
     loss = min(loss, total_loss_remain)
-    loss = min(loss, avail_money)
     position = loss / (price - stop_loss) // 100 * 100
-    position = min(position, avail_money / price // 100 * 100)
+    # 创建交易指令单, 可以先不考虑可用的资金是否足够
+    # position = min(position, avail_money / price // 100 * 100)
     if position < 100:
         return
 
-    stop_profit = compute_stop_profit(quote_week)
+    # 止盈价格, 需要根据具体的行情走势确定
+    # stop_profit = compute_stop_profit(quote_week)
+    #
+    # profitability_ratios = (stop_profit - price) / (price - stop_loss)
+    # if profitability_ratios < 2:
+    #     return
 
-    profitability_ratios = (stop_profit - price) / (price - stop_loss)
-    if profitability_ratios < 2:
-        return
+    stop_profit = None
+    profitability_ratios = None
 
+    strategy_in_db = strategy[:strategy.index('_signal_enter')]
     val = [datetime.date.today(), code, position * price, position, price, stop_loss, stop_profit,
-           (position * price) / total_money, profitability_ratios, strategy, 'TO']
+           (position * price) / total_money, profitability_ratios, strategy_in_db, 'TO', svr_config.ACCOUNT_ID_XY]
 
     val = tuple(val)
 
     keys = ['date', 'code', 'capital_quota', '`position`', 'open_price', 'stop_loss',
-            'stop_profit', 'risk_rate', 'profitability_ratios', 'strategy', 'status']
+            'stop_profit', 'risk_rate', 'profitability_ratios', 'strategy', 'status', 'account_id']
 
     key = ', '.join(keys)
     fmt_list = ['%s' for i in keys]
@@ -529,6 +539,14 @@ def create_trade_order(account_id, code, price_limited, strategy):
     sql = "insert into {} ({}) values ({})".format(config.sql_tab_trade_order, key, fmt)
     with mysqlcli.get_cursor() as c:
         try:
+            sql_exists = "select code, stop_loss from trade_order where code = %s and account_id = %s and status = 'TO'"
+            c.execute(sql_exists, (code, account_id))
+            r = c.fetchone()
+            if r:
+                stop_loss_o = round(r['stop_loss'], 2)
+                msg = 'trade order for [{}] exists, stop loss [{}] -> [{}]'.format(code, stop_loss_o, stop_loss)
+                popup_info_message_box_mp(msg, db_handler.update_trade_order_stop_loss, account_id, code, stop_loss)
+                return
             c.execute(sql, val)
         except Exception as e:
             print(e)
@@ -556,7 +574,7 @@ def handle_illegal_position(position: trade_data.Position, quota):
 def patrol():
     position_list = query_current_position()
     for position in position_list:
-        quota = trade_manager.db_handler.query_quota_position(position.code)
+        quota = db_handler.query_quota_position(position.code)
         if not quota:
             handle_illegal_position(position, quota)
             continue
@@ -573,7 +591,7 @@ def patrol():
 
 def create_position_price_limited():
     account_id = svr_config.ACCOUNT_ID_XY
-    order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='TO')
+    order_map = db_handler.query_trade_order_map(account_id, status='TO')
     for code, trade_order in order_map.items():
         quote = tx.get_realtime_data_sina(code)
         close = quote['close'][-1]

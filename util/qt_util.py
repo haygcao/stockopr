@@ -21,7 +21,9 @@ def popup_warning_message_box(func_name, msg, callback, *args):
         ws = tkinter.Tk()
         ws.withdraw()
         r = tkinter.messagebox.askokcancel(title, msg,)
-        ok = r == tkinter.messagebox.OK
+        # ok = r == tkinter.messagebox.OK  # 上一版本 TK
+        ok = r
+
         # ws.mainloop()
     else:
         global g_q_application
@@ -35,7 +37,7 @@ def popup_warning_message_box(func_name, msg, callback, *args):
         # r = msg_box.exec()
 
         r = func(None, title, msg, QMessageBox.Yes | QMessageBox.No)
-        ok = r == QMessageBox.Yes
+        ok = (r == QMessageBox.Yes)
 
     if callback:
         if ok:

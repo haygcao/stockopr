@@ -491,8 +491,8 @@ def get_scan_strategy_name_list():
 
 
 # risk management
-total_risk_rate = 1   # 0.06   # 6%
-one_risk_rate = 0.1   # 0.01   # 1%
+total_risk_rate = 0.05   # 5% = 1.25% * 4
+one_risk_rate = 0.0125   # 1.25%
 
 #
 period_price_diff_ratio_resistance_support_map = {

@@ -196,6 +196,12 @@ def update_trade_order_status(account_id, date, code, status):
             logger.info(e)
 
 
+def update_trade_order_stop_loss(account_id, code, stop_loss):
+    with mysqlcli.get_cursor() as c:
+        sql_update = "update trade_order set stop_loss = %s where code = %s and status = 'TO' and account_id = %s"
+        c.execute(sql_update, (stop_loss, code, account_id))
+
+
 def query_trade_order_map(account_id, code=None, status='ING'):
     with mysqlcli.get_cursor() as c:
         sql = "SELECT date, code, position, open_price, stop_loss, stop_profit, strategy FROM {0} " \
@@ -207,9 +213,10 @@ def query_trade_order_map(account_id, code=None, status='ING'):
         ret = c.fetchall()
         order_map = {}
         for row in ret:
+            strategy = row['strategy'] + '_signal_enter'
             trade_order = trade_data.TradeOrder(
                 row['date'], row['code'], int(row['position']), float(row['open_price']), float(row['stop_loss']),
-                float(row['stop_profit']), row['strategy'], status == 'ING')
+                float(row['stop_profit']), strategy, status == 'ING')
             order_map.update({row['code']: trade_order})
 
         return order_map
