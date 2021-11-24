@@ -452,7 +452,6 @@ def show_profit_per_day(trade_detail):
 def show_trade_stat(trade_stat_month, freq):
     fig, ax = plt.subplots()
     x = trade_stat_month.index
-    # y = ((trade_detail['profit_percent'] + 100) / 100).cumprod() * 100
     y1 = trade_stat_month['mean_earn_percent']
     y2 = trade_stat_month['mean_loss_percent']
 

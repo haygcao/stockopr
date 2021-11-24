@@ -184,6 +184,12 @@ def read_last_lines(fname, n=30):
     return lines
 
 
+def alarm():
+    from playsound import playsound
+    sound_path = os.path.join(get_root_dir(), 'data', 'network_error.wav')
+    playsound(sound_path)
+
+
 if __name__ == '__main__':
     # r = get_day('2015-12-31', 1)
     r = get_diff_days('2015-12-31', '2016-01-10')

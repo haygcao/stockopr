@@ -4,6 +4,7 @@ import atexit
 import datetime
 import multiprocessing
 import time
+import traceback
 from dataclasses import dataclass
 
 import numpy
@@ -20,8 +21,35 @@ from pointor import signal_channel
 from acquisition import tx, basic
 from server import config as svr_config
 from trade_manager import trade_manager
-from util import dt, singleten
+from util import dt, singleten, util
 from util.log import logger
+
+import atexit
+import sys
+
+
+class ExitHooks(object):
+    def __init__(self):
+        self.exit_code = None
+        self.exception = None
+        self.tb = None
+
+    def hook(self):
+        self._orig_exit = sys.exit
+        sys.exit = self.exit
+        sys.excepthook = self.exc_handler
+
+    def exit(self, code=0):
+        self.exit_code = code
+        self._orig_exit(code)
+
+    def exc_handler(self, exc_type, exc, *args):
+        self.exception = exc
+        self.tb = traceback.format_exception(exc_type, exc, *args)
+
+
+hooks = ExitHooks()
+hooks.hook()
 
 
 @dataclass
@@ -128,10 +156,23 @@ class TradeSignalManager:
 
 # @atexit.register(weakref.ref(proc))
 def goodbye():
-    import traceback
-    traceback.print_exc()
+    if hooks.exit_code is not None:
+        logger.error("monitor exit by sys.exit({})".format(hooks.exit_code))
+        util.alarm()
+    elif hooks.exception is not None:
+        tb_str = ''.join(hooks.tb)
+        logger.error("monitor exit by exception: {}\n{}".format(hooks.exception, tb_str))
+        util.alarm()
+    else:
+        logger.info("monitor natural exit")
 
-    logger.info("monitor stopped")
+    # import traceback
+    # traceback.print_exc()
+    # exc = ''.join(traceback.format_exc())
+    # logger.error(exc)
+
+    # stack = ''.join(traceback.format_stack())
+    # print(stack)
 
 
 def get_min_data(code, m='m5', count=250):
@@ -267,7 +308,7 @@ def update_status_by_strategy(code, data, period, strategy):
         supplemental = signal.get_osc_key(strategy[: strategy.index('_b')])
         policy = Policy.DEVIATION
     else:
-        supplemental = None
+        supplemental = ''
         policy = Policy.DEFAULT
 
     return TradeSignal(code, price, data_index_, direct, policy, period, True, supplemental)
@@ -278,6 +319,7 @@ def check_period(code, period, strategy, in_position):
 
     data = get_min_data(code, period)
     if not isinstance(data, pandas.DataFrame) or data.empty:
+        util.alarm()
         logger.error('fetch quote failed')
         return
 
@@ -333,7 +375,9 @@ def notify(trade_singal: TradeSignal):
     command = '买入' if trade_singal.command == 'B' else '卖出'
     # tts
     from toolkit import tts
-    txt = '注意, {1}信号, {2}, {0}'.format(' '.join(trade_singal.code), command, trade_singal.policy.value)
+    detail = ', {}'.format(' '.join(trade_singal.supplemental)) if trade_singal.supplemental else ''
+    txt = '注意, {1}信号, {0}, {2}{3}'.format(TradeSignalManager.stock_dict[trade_singal.code], command,
+                                          trade_singal.policy.value, detail)
     logger.info(txt)
     tts.say(txt)
 
@@ -369,13 +413,14 @@ def check(code, periods, strategy, in_position):
 
 
 def monitor_today():
+    me = singleten.SingleInstance()
+
+    atexit.register(goodbye)
+
     now = datetime.datetime.now()
     if not dt.istradeday() or now.hour >= 15:
         return
 
-    me = singleten.SingleInstance()
-
-    atexit.register(goodbye)
     periods = []
 
     TradeSignalManager.reload_trade_order()
@@ -421,7 +466,7 @@ def monitor_today():
 
         if has_signal:
             TradeSignalManager.reload_trade_order()
-            print('stock in monitor: {}'.format(TradeSignalManager.stock_dict.values()))
+            logger.info('stock in monitor: {}'.format(TradeSignalManager.stock_dict.values()))
             has_signal = False
 
         for code in TradeSignalManager.trade_order_map.keys():

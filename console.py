@@ -868,9 +868,7 @@ class Panel(QWidget):
                     with open(os.path.join(root_dir, 'log', 'network.log'), 'a') as f:
                         f.writelines('{} {} is unavailable\n'.format(now.strftime('%Y-%m-%d %H:%M:%S'), ip))
                     color = 'red'
-                    from playsound import playsound
-                    sound_path = os.path.join(root_dir, 'data', 'network_error.wav')
-                    playsound(sound_path)
+                    util.alarm()
                 else:
                     color = ''
 

@@ -583,12 +583,13 @@ def charge(amount, direct, market):
 
 class Policy(Enum):
     DEFAULT = ''
-    DEVIATION = 'deviation'
-    EMA_VALUE = 'ema value'
-    CHANNEL = 'channel'
-    FORCE_INDEX = 'force index'
-    DYNAMICAL_SYSTEM = 'dynamical system'
-    STOP_LOSS = 'stop loss'
+    DEVIATION = '背离'  # 'deviation'
+    EMA_VALUE = '价值回归'  # 'ema value'
+    CHANNEL = '通道'  # 'channel'
+    FORCE_INDEX = '强力指数'  # 'force index'
+    DYNAMICAL_SYSTEM = '动力系统'  # 'dynamical system'
+    STOP_LOSS = '止损'  # 'stop loss'
+    STOP_PROFIT = '止盈'  # 'stop profit'
 
 
 class ERROR(Enum):
