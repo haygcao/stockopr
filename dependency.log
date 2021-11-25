@@ -94,3 +94,8 @@ quotation monitor
 
 pip install pyttsx3
 Successfully installed pyttsx3-2.90
+
+=====
+
+pip install bottleneck
+Successfully installed bottleneck-1.3.2

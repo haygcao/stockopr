@@ -15,6 +15,7 @@ from chart import open_graph
 from config import config, signal_config, signal_pair
 from config.config import Policy
 from data_structure import trade_data
+from indicator import quantity_relative_ratio
 from pointor import signal_dynamical_system, signal_market_deviation, signal
 from pointor import signal_channel
 
@@ -96,7 +97,7 @@ class TradeSignalManager:
         position_list = trade_manager.db_handler.query_current_position(account_id)
         for position in position_list:
             code = position.code
-            if code in cls.trade_order_map:
+            if code in cls.trade_order_map and position.current_position > 0:
                 cls.trade_order_map[code].in_position = True
                 continue
             # TODO
@@ -105,7 +106,7 @@ class TradeSignalManager:
             cls.trade_order_map[code] = trade_data.TradeOrder(
                 position.date, code, position=position.current_position, open_price=position.price_cost,
                 stop_loss=position.price_cost * 0.96, stop_profit=position.price_cost * 1.15,
-                strategy=strategy, in_position=True)
+                strategy=strategy, in_position=(position.current_position > 0))
             logger.warning('{} with not trade order'.format(code))
 
         for code in cls.trade_order_map.keys():
@@ -138,6 +139,8 @@ class TradeSignalManager:
 
     @classmethod
     def need_signal(cls, trade_signal: TradeSignal) -> bool:
+        if trade_signal.policy == Policy.STOP_PROFIT and trade_signal.period != 'day':
+            return False
         return True
 
         last_signal = cls.get_last_trade_signal(trade_signal.code)
@@ -151,6 +154,12 @@ class TradeSignalManager:
     def get_stop_loss(cls, code):
         if code in cls.trade_order_map:
             return cls.trade_order_map[code].stop_loss
+        return -1
+
+    @classmethod
+    def get_open_price(cls, code):
+        if code in cls.trade_order_map:
+            return cls.trade_order_map[code].open_price
         return -1
 
 
@@ -240,7 +249,10 @@ def update_status_old(code, data, period):
     return
 
 
-def check_trade_order_stop_loss(code, close):
+def check_trade_order_stop_loss(code, close, in_position):
+    if not in_position:
+        return False
+
     stop_loss = TradeSignalManager.get_stop_loss(code)
     if close > stop_loss:
         return False
@@ -251,6 +263,16 @@ def check_trade_order_stop_loss(code, close):
             code, close, stop_loss))
         return False
     return True
+
+
+def check_trade_order_open_price(code, close, in_position, qrr):
+    if in_position:
+        return False
+
+    open_price = TradeSignalManager.get_open_price(code)
+    if close > open_price and qrr > 4:
+        return True
+    return False
 
 
 def update_status_by_all_signal(code, data, period):
@@ -324,8 +346,13 @@ def check_period(code, period, strategy, in_position):
         return
 
     close = data.close[-1]
-    if check_trade_order_stop_loss(code, close):
+    if check_trade_order_stop_loss(code, close, in_position):
         return TradeSignal(code, close, data.index[-1], 'S', Policy.STOP_LOSS, period, True)
+
+    data_qrr = quantity_relative_ratio.quantity_relative_ratio(data[-6:], period)
+    qrr = data_qrr['qrr'][-1]
+    if check_trade_order_open_price(code, close, in_position, qrr):
+        return TradeSignal(code, close, data.index[-1], 'B', Policy.OPEN_PRICE, period, True)
 
     trade_signal = None
     if strategy:
@@ -358,16 +385,19 @@ def check_trade_signal(code, periods, strategy, in_position):
 def order(trade_singal: TradeSignal):
     logger.info('{} {}'.format(trade_singal.command, trade_singal.code))
 
+    auto_strategy_map = {
+        Policy.STOP_LOSS: True,
+        Policy.OPEN_PRICE: False,
+    }
+    auto = False
+
     from server import config as svr_config
     account_id = svr_config.ACCOUNT_ID_XY
     op_type = svr_config.OP_TYPE_DBP
 
-    return
-
-    if trade_singal.command == 'B':
-        trade_manager.buy(account_id, op_type, trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period, policy=trade_singal.policy)
-    else:
-        trade_manager.sell(account_id, op_type, trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period)
+    order_func = trade_manager.buy if trade_singal.command == 'B' else trade_manager.sell
+    order_func(account_id, op_type, trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period,
+               policy=trade_singal.policy, auto=auto)
 
 
 def notify(trade_singal: TradeSignal):

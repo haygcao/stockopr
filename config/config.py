@@ -590,6 +590,7 @@ class Policy(Enum):
     DYNAMICAL_SYSTEM = '动力系统'  # 'dynamical system'
     STOP_LOSS = '止损'  # 'stop loss'
     STOP_PROFIT = '止盈'  # 'stop profit'
+    OPEN_PRICE = '建仓价格'
 
 
 class ERROR(Enum):

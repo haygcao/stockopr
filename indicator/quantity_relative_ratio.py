@@ -3,19 +3,15 @@
 import datetime
 import math
 
+import numpy
+
+from indicator.decorator import computed
 from util import dt
 
 
-def quantity_relative_ratio(quote, period):
+def compute_minute(now):
     minutes_day = 4 * 60
-    minutes_5day = 5 * minutes_day
-    series_vol = quote['volume']
-    
-    vol_5d = series_vol.rolling(5).sum()
-    vol_5d_avg = vol_5d / minutes_5day
-    vol_5d_avg_shift = vol_5d_avg.shift(periods=1)
 
-    now = quote.index[-1]
     if now.hour == 0:
         minutes = minutes_day
     else:
@@ -30,6 +26,25 @@ def quantity_relative_ratio(quote, period):
             minutes = 2 * 60 + math.ceil((now - pm_begin).seconds / 60)
         else:
             minutes = minutes_day
+
+    return minutes
+
+
+@computed(column_name='qrr')
+def quantity_relative_ratio(quote, period):
+    if period != 'day':
+        quote = quote.assign(qrr=numpy.nan)
+        return quote
+    minutes_day = 4 * 60
+    minutes_5day = 5 * minutes_day
+    series_vol = quote['volume']
+    
+    vol_5d = series_vol.rolling(5).sum()
+    vol_5d_avg = vol_5d / minutes_5day
+    vol_5d_avg_shift = vol_5d_avg.shift(periods=1)
+
+    now = quote.index[-1]
+    minutes = compute_minute(now)
 
     vol_cur_avg = series_vol / minutes_day
     if minutes != minutes_day:

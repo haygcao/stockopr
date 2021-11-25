@@ -287,7 +287,7 @@ def check_list(quote, period):
     return ERROR.OK
 
 
-def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=False):
+def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
     """
@@ -349,7 +349,7 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
     db_handler.save_positions(account_id, [position])
 
 
-def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=False):
+def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=None):
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
@@ -383,10 +383,10 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
     to_position = ((position_unit / price_trade) // 100) * 100
     to_position = min(avail_position, to_position)
 
-    if not auto:
+    if auto is None:
         auto = trade_config['auto_sell']
 
-    if count == 0:
+    if count == 0 and 'count' in trade_config:
         count = trade_config['count']
     # count = min(to_position, count)
 
