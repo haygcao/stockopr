@@ -39,10 +39,11 @@ def query_position_ex(account_id):
     position_list = db_handler.query_current_position(account_id)
     code_list.extend([position.code for position in position_list])
 
-    code_name_map = db_handler.query_trade_order_map(account_id)
-    code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
-    code_list_tmp.sort()
-    code_list.extend(code_list_tmp)
+    for status in ['TO', 'ING']:
+        code_name_map = db_handler.query_trade_order_map(account_id, status=status)
+        code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
+        code_list_tmp.sort()
+        code_list.extend(code_list_tmp)
 
     code_list_tmp = []
     with open('data/portfolio.txt', encoding='utf8') as fp:
@@ -551,7 +552,8 @@ def create_trade_order(account_id, code, price_limited, stop_loss, strategy):
     sql = "insert into {} ({}) values ({})".format(config.sql_tab_trade_order, key, fmt)
     with mysqlcli.get_cursor() as c:
         try:
-            sql_exists = "select code, stop_loss from trade_order where code = %s and account_id = %s and status = 'TO'"
+            sql_exists = "select code, stop_loss from trade_order " \
+                         "where code = %s and account_id = %s and status in ('TO', 'ING')"
             c.execute(sql_exists, (code, account_id))
             r = c.fetchone()
             if r:

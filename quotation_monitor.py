@@ -272,12 +272,45 @@ def check_trade_order_stop_loss(code, close, in_position):
     return True
 
 
-def check_trade_order_open_price(code, close, in_position, qrr):
+def compute_qrr(trade_time):
+    am_begin = datetime.datetime(trade_time.year, trade_time.month, trade_time.day, 9, 30, 0)
+    pm_end = datetime.datetime(trade_time.year, trade_time.month, trade_time.day, 15, 0, 0)
+    if trade_time >= pm_end or trade_time <= am_begin:
+        return -1
+
+    delta = (pm_end - trade_time).seconds
+    index = delta // 1800
+    d = {
+        # 下午
+        0: 2,
+        1: 3,
+        2: 4,
+        3: 5,
+        # 午休
+        4: 6,
+        5: 6,
+        6: 6,
+        # 上午
+        7: 6,
+        8: 7,
+        9: 8,
+        10: 9
+    }
+    return d[index]
+
+
+def check_trade_order_open_price(code, close, yest_close, in_position, qrr):
     if in_position:
         return False
 
+    now = datetime.datetime.now()
+    # 10点以前不交易
+    if now.hour < 10:
+        return False
+
     open_price = TradeSignalManager.get_open_price(code)
-    if close > open_price and qrr > 4:
+    # 买入采用限价交易
+    if close > open_price and qrr > compute_qrr(now):  # and (close / open_price - 1 < 0.04):
         return True
     return False
 
@@ -356,9 +389,10 @@ def check_period(code, period, strategy, in_position):
     if check_trade_order_stop_loss(code, close, in_position):
         return TradeSignal(code, close, data.index[-1], 'S', Policy.STOP_LOSS, period, True)
 
+    yest_close = data['close'][-2]
     data_qrr = quantity_relative_ratio.quantity_relative_ratio(data[-6:], period)
     qrr = data_qrr['qrr'][-1]
-    if check_trade_order_open_price(code, close, in_position, qrr):
+    if check_trade_order_open_price(code, close, yest_close, in_position, qrr):
         return TradeSignal(code, close, data.index[-1], 'B', Policy.OPEN_PRICE, period, True)
 
     trade_signal = None
@@ -402,9 +436,13 @@ def order(trade_singal: TradeSignal):
     account_id = svr_config.ACCOUNT_ID_XY
     op_type = svr_config.OP_TYPE_DBP
 
+    price_limited = 0
+    if trade_singal.policy == Policy.OPEN_PRICE:
+        price_limited = TradeSignalManager.get_open_price(trade_singal.code)
+
     order_func = trade_manager.buy if trade_singal.command == 'B' else trade_manager.sell
-    order_func(account_id, op_type, trade_singal.code, price_trade=trade_singal.price, period=trade_singal.period,
-               policy=trade_singal.policy, auto=auto)
+    order_func(account_id, op_type, trade_singal.code, price_trade=trade_singal.price, price_limited=price_limited,
+               period=trade_singal.period, policy=trade_singal.policy, auto=auto)
 
 
 def notify(trade_singal: TradeSignal):

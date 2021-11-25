@@ -12,12 +12,12 @@ signal_pair_column = {
 }
 
 default_columns = [
-    "weak_bear_signal_exit",
-    "macd_bear_market_deviation_signal_exit",
-    "cci_bear_market_deviation_signal_exit",
-    "asi_bear_market_deviation_signal_exit",
-    "force_index_bear_market_deviation_signal_exit",
-    "volume_ad_bear_market_deviation_signal_exit",
-    "skdj_bear_market_deviation_signal_exit",
-    "rsi_bear_market_deviation_signal_exit",
+    # "weak_bear_signal_exit",
+    # "macd_bear_market_deviation_signal_exit",
+    # "cci_bear_market_deviation_signal_exit",
+    # "asi_bear_market_deviation_signal_exit",
+    # "force_index_bear_market_deviation_signal_exit",
+    # "volume_ad_bear_market_deviation_signal_exit",
+    # "skdj_bear_market_deviation_signal_exit",
+    # "rsi_bear_market_deviation_signal_exit",
 ]

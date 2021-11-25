@@ -445,7 +445,11 @@ class Panel(QWidget):
         self.setFixedHeight(self.geometry().height() + adj * comp.geometry().height())
 
     def set_label(self):
-        s = '{} {} {}'.format(self.code, self.period, list_to_str(self.price_and_stop_loss))
+        open_price = self.price_and_stop_loss[0]
+        stop_loss = self.price_and_stop_loss[1]
+        stop_loss = stop_loss if stop_loss > 0 else open_price
+        risk_rate = round(100 * (1 - open_price/stop_loss), 2) if stop_loss > 0 else 0
+        s = '{} {} {}  {}%'.format(self.code, self.period, list_to_str(self.price_and_stop_loss), risk_rate)
         self.lbl.setText(s)
         self.lbl.adjustSize()
 
@@ -453,8 +457,8 @@ class Panel(QWidget):
             return
 
         stock_info = self.stock_info_map[self.code]
-        self.lbl_stock_info.setText('[{}-{} {}]\trs_rating: [{}]  fmvp: [{}]  percent: [{}]'.format(
-            self.code, self.period, list_to_str(self.price_and_stop_loss),
+        self.lbl_stock_info.setText('[{}-{} {}  {}%]\trs_rating: [{}]  fmvp: [{}]  percent: [{}]'.format(
+            self.code, self.period, list_to_str(self.price_and_stop_loss), risk_rate,
             stock_info['rs_rating'], stock_info['fmvp'], stock_info['percent']))
 
     def checked(self, checked):
@@ -819,6 +823,7 @@ class Panel(QWidget):
         r = trade_manager.create_trade_order(self.account_id, self.code, open_price, stop_loss, strategy)
         if not r:
             return
+        self.on_activated_code(self.code)
         qt_util.popup_info_message_box_mp('create trade order success')
 
     def refresh_log(self):
