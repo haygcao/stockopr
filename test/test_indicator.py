@@ -2,7 +2,7 @@ import datetime
 import unittest
 
 from acquisition import quote_db
-from indicator import ad, relative_strength_rating
+from indicator import ad, relative_strength_rating, quantity_relative_ratio
 from indicator import boll
 from indicator import cci
 from indicator import crsi
@@ -17,15 +17,20 @@ from indicator import vcp
 
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
-        code = '002739'
+        self.code = '002739'
         self.period = 'm30'
         # period = 'day'
         count = 250
         # quote = tx.get_kline_data_sina(code, period, count)
-        self.quote = quote_db.get_price_info_df_db_day(code, days=1000)  # days=250)
+        self.quote = quote_db.get_price_info_df_db_day(self.code, days=1000)  # days=250)
 
     def tearDown(self):
         pass
+
+    def test_quantity_relative_ratio(self):
+        from acquisition import tx
+        self.quote = tx.get_kline_data_sina(self.code)
+        quantity_relative_ratio.quantity_relative_ratio(self.quote, self.period)
 
     def test_rs_rating(self):
         trade_date = datetime.date(2021, 11, 15)
