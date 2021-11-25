@@ -52,8 +52,10 @@ class SelectorPluginTestCase(unittest.TestCase):
         print(df)
 
     def test_query_stocks_fund_market_value_diff(self):
-        fund_date_prev = '2021-03-31'
-        fund_date_next = '2021-06-30'
+        fund_date_prev = datetime.date(2021, 3, 31)
+        fund_date_next = datetime.date(2021, 6, 30)
+        fund_date_prev = datetime.date(2021, 6, 30)
+        fund_date_next = datetime.date(2021, 9, 30)
         df_diff = fund.query_stocks_fund_market_value_diff(fund_date_prev, fund_date_next)
         df_diff = fund.supplement_percent(df_diff)
         print(df_diff)
@@ -65,7 +67,7 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_query_stock(self):
         fund_date = fund.query_latest_date()  # '2021-06-30'
-        code = '600519'
+        code = '603707'
         df = fund.query_one_stock_lite(code, fund_date)
         df1 = fund.query_stock(code, fund_date)
         fmvp = df1.fmv.sum() / df1.nmc[-1]
@@ -116,12 +118,12 @@ class SelectorPluginTestCase(unittest.TestCase):
 
     def test_select(self):
         # code_list = selector.select(['value_return'], ['second_stage'], period='day')
-        # code_list = selector.select(['vcp'], ['second_stage'])
+        code_list = selector.select(['vcp'], ['second_stage', 'finance', 'fund'])
         # code_list = selector.select(['step'], ['second_stage'], period='day')
         # code_list = selector.select(['step'], ['dyn_sys_green'], period='day')
         # code_list = selector.select(['step_breakout'], ['second_stage'], period='week')
         # code_list = selector.select(['vcp'], ['second_stage', 'super'], period='day')
-        code_list = selector.select(['vcp_breakout'], ['second_stage', 'finance', 'vcp'], period='day')
+        # code_list = selector.select(['vcp_breakout'], ['second_stage', 'finance', 'vcp'], period='day')
         print(code_list)
 
     def test_update_candidate_pool_using_signal_config(self):

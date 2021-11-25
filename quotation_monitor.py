@@ -22,7 +22,7 @@ from pointor import signal_channel
 from acquisition import tx, basic
 from server import config as svr_config
 from trade_manager import trade_manager
-from util import dt, singleten, util
+from util import dt, singleten, util, qt_util
 from util.log import logger
 
 import atexit
@@ -94,6 +94,8 @@ class TradeSignalManager:
         cls.trade_order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='TO')
         cls.trade_order_map.update(trade_manager.db_handler.query_trade_order_map(account_id, status='ING'))
 
+        has_warning = False
+        money = trade_manager.db_handler.query_money(account_id)
         position_list = trade_manager.db_handler.query_current_position(account_id)
         for position in position_list:
             code = position.code
@@ -101,13 +103,18 @@ class TradeSignalManager:
                 cls.trade_order_map[code].in_position = True
                 continue
             # TODO
-            strategy = None  # 'magic_line_breakout_signal_enter'
             strategy = 'vcp_breakout_signal_enter'   # 买入策略
+            risk_loss = position.current_position * position.price_cost * 0.04
+            risk_rate_total = round(100 * risk_loss / money.origin, 2)
             cls.trade_order_map[code] = trade_data.TradeOrder(
                 position.date, code, position=position.current_position, open_price=position.price_cost,
                 stop_loss=position.price_cost * 0.96, stop_profit=position.price_cost * 1.15,
-                strategy=strategy, in_position=(position.current_position > 0))
-            logger.warning('{} with not trade order'.format(code))
+                risk_rate_total=risk_rate_total, strategy=strategy, in_position=(position.current_position > 0))
+            logger.warning('[{}] with not trade order'.format(code))
+            has_warning = True
+
+        if has_warning:
+            qt_util.popup_warning_message_box_mp('occur position with not trade order')
 
         for code in cls.trade_order_map.keys():
             if code not in cls.stock_dict:

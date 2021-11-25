@@ -191,21 +191,22 @@ def update_trade_order_status(account_id, date, code, status):
           "where account_id = %s and date = %s and code = %s".format(config.sql_tab_trade_order)
     with mysqlcli.get_cursor() as c:
         try:
-            c.execute(sql, (account_id, date, code, status))
+            c.execute(sql, (status, account_id, date, code))
         except Exception as e:
             logger.info(e)
 
 
-def update_trade_order_stop_loss(account_id, code, stop_loss):
+def update_trade_order_stop_loss(account_id, code, stop_loss, risk_rate, risk_rate_total):
     with mysqlcli.get_cursor() as c:
-        sql_update = "update trade_order set stop_loss = %s where code = %s and status = 'TO' and account_id = %s"
-        c.execute(sql_update, (stop_loss, code, account_id))
+        sql_update = "update trade_order set stop_loss = %s, risk_rate = %s, risk_rate_total = %s " \
+                     "where code = %s and status = 'TO' and account_id = %s"
+        c.execute(sql_update, (stop_loss, risk_rate, risk_rate_total, code, account_id))
 
 
 def query_trade_order_map(account_id, code=None, status='ING'):
     with mysqlcli.get_cursor() as c:
-        sql = "SELECT date, code, position, open_price, stop_loss, stop_profit, strategy FROM {0} " \
-              "where account_id = %s and status = '{1}'".format(config.sql_tab_trade_order, status)
+        sql = "SELECT date, code, position, open_price, stop_loss, stop_profit, risk_rate, risk_rate_total, strategy " \
+              "FROM {0} where account_id = %s and status = '{1}'".format(config.sql_tab_trade_order, status)
         if code:
             sql += " and code = {}".format(code)
 
@@ -216,7 +217,7 @@ def query_trade_order_map(account_id, code=None, status='ING'):
             strategy = row['strategy'] + '_signal_enter'
             trade_order = trade_data.TradeOrder(
                 row['date'], row['code'], int(row['position']), float(row['open_price']), float(row['stop_loss']),
-                float(row['stop_profit']), strategy, status == 'ING')
+                row['stop_profit'], float(row['risk_rate_total']), strategy, status == 'ING')
             order_map.update({row['code']: trade_order})
 
         return order_map

@@ -237,6 +237,7 @@ create table trade_order (
   open_price decimal(5, 2) not null,
   stop_loss decimal(5, 2) not null,
   risk_rate decimal(5, 2),
+  risk_rate_total decimal(5, 2),
   stop_profit decimal(5, 2) not null,
   profitability_ratios decimal(6, 3),
   strategy varchar(32),

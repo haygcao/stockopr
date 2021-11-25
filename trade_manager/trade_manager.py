@@ -158,6 +158,8 @@ def sync_impl(account_id, trade_date):
     # position
     position_list = tradeapi.query_position(account_id)
     if position_list:
+        order_ing_map = db_handler.query_trade_order_map(account_id, status='ING')
+        order_to_map = db_handler.query_trade_order_map(account_id, status='TO')
         for i in range(len(position_list)):
             position = position_list[i]
             code = position.code
@@ -165,7 +167,20 @@ def sync_impl(account_id, trade_date):
             if 'profit' in trade_config:
                 position_list[i].add_profile(trade_config['profit'])
             position_list[i].avail_position = position.current_position
+
+            # trade order
+            trade_order_ing = order_ing_map.pop(code) if code in order_ing_map else None
+            trade_order_to = order_to_map.pop(code) if code in order_to_map else None
+            if position.current_position == 0 and trade_order_ing:
+                db_handler.update_trade_order_status(account_id, trade_order_ing.date, code, 'ED')
+            if position.current_position > 0 and trade_order_to:
+                db_handler.update_trade_order_status(account_id, trade_order_to.date, code, 'ING')
+
         db_handler.save_positions(account_id, position_list, sync=True)
+
+        for code, trade_order in order_ing_map.items():
+            db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
+        logger.info('update trade order')
 
     if position_list is None:
         logger.warning('sync position failed')
@@ -188,13 +203,6 @@ def sync_impl(account_id, trade_date):
         logger.warning('sync money failed')
     else:
         logger.info('sync money ok')
-
-    order_map = db_handler.query_trade_order_map(account_id, status='ING')
-    if order_map:
-        for code, trade_order in order_map.items():
-            if code not in [position.code for position in position_list]:
-                db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
-        logger.info('update trade order')
 
     # operation detailtotal_money
     operation_detail = tradeapi.query_operation_detail(account_id)
@@ -478,7 +486,7 @@ def compute_stop_profit(quote):
     return stop_profit
 
 
-def create_trade_order(account_id, code, price_limited, strategy):
+def create_trade_order(account_id, code, price_limited, stop_loss, strategy):
     """
     单个股持仓交易风险率 <= 1%
     总持仓风险率 <= 6%
@@ -486,16 +494,17 @@ def create_trade_order(account_id, code, price_limited, strategy):
     quote = tx.get_kline_data(code, 'day')
     quote_week = quote_db.resample_quote(quote, period_type=config.period_map['day']['long_period'])
 
-    # quote = signal.compute_signal(code, 'day', quote)
-    # quote = signal_stop_loss.compute_index(quote, 'day')
-    # stop_loss = quote['stop_loss_full'].iloc[-1]
-
-    quote = indicator.atr.compute_atr(quote)
-    stop_loss = max(quote[config.stop_loss_atr_price][-10:]) - config.stop_loss_atr_ratio * quote['atr'][-1]
-
     price = quote['close'].iloc[-1] if price_limited == 0 else price_limited
-    stop_loss = price * 0.96
-    stop_loss = round(stop_loss, 2)
+    if not stop_loss:
+        # quote = signal.compute_signal(code, 'day', quote)
+        # quote = signal_stop_loss.compute_index(quote, 'day')
+        # stop_loss = quote['stop_loss_full'].iloc[-1]
+
+        # quote = indicator.atr.compute_atr(quote)
+        # stop_loss = max(quote[config.stop_loss_atr_price][-10:]) - config.stop_loss_atr_ratio * quote['atr'][-1]
+
+        stop_loss = price * 0.96
+        stop_loss = round(stop_loss, 2)
 
     money = query_money(account_id)
     # total money, begin of month
@@ -512,7 +521,8 @@ def create_trade_order(account_id, code, price_limited, strategy):
     # 创建交易指令单, 可以先不考虑可用的资金是否足够
     # position = min(position, avail_money / price // 100 * 100)
     if position < 100:
-        return
+        popup_info_message_box_mp('create trade order failed, position < 100')
+        return False
 
     # 止盈价格, 需要根据具体的行情走势确定
     # stop_profit = compute_stop_profit(quote_week)
@@ -523,15 +533,17 @@ def create_trade_order(account_id, code, price_limited, strategy):
 
     stop_profit = None
     profitability_ratios = None
+    risk_rate = round(100 * (1 - stop_loss / price), 2)
+    risk_rate_total = round(100 * (position * (price - stop_loss)) / total_money, 2)
 
     strategy_in_db = strategy[:strategy.index('_signal_enter')]
     val = [datetime.date.today(), code, position * price, position, price, stop_loss, stop_profit,
-           (position * price) / total_money, profitability_ratios, strategy_in_db, 'TO', svr_config.ACCOUNT_ID_XY]
+           risk_rate, risk_rate_total, profitability_ratios, strategy_in_db, 'TO', svr_config.ACCOUNT_ID_XY]
 
     val = tuple(val)
 
     keys = ['date', 'code', 'capital_quota', '`position`', 'open_price', 'stop_loss',
-            'stop_profit', 'risk_rate', 'profitability_ratios', 'strategy', 'status', 'account_id']
+            'stop_profit', 'risk_rate', 'risk_rate_total', 'profitability_ratios', 'strategy', 'status', 'account_id']
 
     key = ', '.join(keys)
     fmt_list = ['%s' for i in keys]
@@ -545,11 +557,15 @@ def create_trade_order(account_id, code, price_limited, strategy):
             if r:
                 stop_loss_o = round(r['stop_loss'], 2)
                 msg = 'trade order for [{}] exists, stop loss [{}] -> [{}]'.format(code, stop_loss_o, stop_loss)
-                popup_info_message_box_mp(msg, db_handler.update_trade_order_stop_loss, account_id, code, stop_loss)
-                return
+                popup_info_message_box_mp(msg, db_handler.update_trade_order_stop_loss,
+                                          account_id, code, stop_loss, risk_rate, risk_rate_total)
+                return False
             c.execute(sql, val)
         except Exception as e:
             print(e)
+            return False
+
+    return True
 
 
 def handle_illegal_position(position: trade_data.Position, quota):

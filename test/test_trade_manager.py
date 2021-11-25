@@ -95,7 +95,7 @@ class TradeManagerTestCase(unittest.TestCase):
     def test_create_trade_order(self):
         account_id = svr_config.ACCOUNT_ID_XY
         code = '300502'
-        trade_manager.create_trade_order(account_id, code, 0, 'vcp_breakout_signal_enter')
+        trade_manager.create_trade_order(account_id, code, 0, stop_loss=0, strategy='vcp_breakout_signal_enter')
 
     def test_patrol(self):
         trade_manager.patrol()

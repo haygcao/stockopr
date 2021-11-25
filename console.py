@@ -157,7 +157,7 @@ class Panel(QWidget):
         self.check_thread = None
         self.rlock = threading.RLock()
         self.running = True
-        self.count_or_price = [0, 0]   # [price, count]
+        self.price_and_stop_loss = [0, 0]   # [price, count]
         self.log_lines = []
 
         QShortcut(QKeySequence(self.tr("F1")), self, self.buy)
@@ -180,10 +180,12 @@ class Panel(QWidget):
         # self.hk_show_r.register(('shift', 'l'), callback=lambda x: self.show_chart(1))
         # self.hk_show.register(('shift', 'k'), callback=lambda x: self.show_chart(0))
 
-        self.qle_price = QLineEdit('price', self)
-        self.qle_count = QLineEdit('count', self)
+        self.qle_price = QLineEdit(self)
+        self.qle_price.setPlaceholderText('价格')
+        self.qle_stop_loss = QLineEdit(self)
+        self.qle_stop_loss.setPlaceholderText('止损价')
 
-        self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price)), self)
+        self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.price_and_stop_loss)), self)
         self.lbl_stock_info = QLabel('', self)
         self.combo_code = QComboBox(self)
         self.combo_period = QComboBox(self)
@@ -218,7 +220,8 @@ class Panel(QWidget):
         self.btn_scan = QPushButton('scan', self)
 
         self.btn_load = QPushButton('load', self)
-        self.qle_code = QLineEdit('300502', self)
+        self.qle_code = QLineEdit(self)
+        self.qle_code.setPlaceholderText('股票代码')
 
         self.btn_buy = QPushButton('buy', self)
         self.btn_sell = QPushButton('sell', self)
@@ -317,8 +320,8 @@ class Panel(QWidget):
         self.btn_update_traced.clicked.connect(self.update_traced)
         self.btn_scan.clicked.connect(self.scan)
 
-        self.qle_price.textChanged[str].connect(self.on_count_or_price_changed)
-        self.qle_count.textChanged[str].connect(self.on_count_or_price_changed)
+        self.qle_price.textChanged[str].connect(self.on_price_and_stop_loss_changed)
+        self.qle_stop_loss.textChanged[str].connect(self.on_price_and_stop_loss_changed)
 
         self.btn_buy.clicked.connect(self.buy)
         self.btn_sell.clicked.connect(self.sell)
@@ -368,7 +371,7 @@ class Panel(QWidget):
         grid.addWidget(self.qle_code, 3, 0)
         h_layout_price_count = QHBoxLayout()
         h_layout_price_count.addWidget(self.qle_price)
-        h_layout_price_count.addWidget(self.qle_count)
+        h_layout_price_count.addWidget(self.qle_stop_loss)
         grid.addLayout(h_layout_price_count, 3, 1)
 
         h_layout_order = QHBoxLayout()
@@ -442,13 +445,16 @@ class Panel(QWidget):
         self.setFixedHeight(self.geometry().height() + adj * comp.geometry().height())
 
     def set_label(self):
-        s = '{} {} {}'.format(self.code, self.period, list_to_str(self.count_or_price))
+        s = '{} {} {}'.format(self.code, self.period, list_to_str(self.price_and_stop_loss))
         self.lbl.setText(s)
         self.lbl.adjustSize()
 
+        if self.code not in self.stock_info_map:
+            return
+
         stock_info = self.stock_info_map[self.code]
         self.lbl_stock_info.setText('[{}-{} {}]\trs_rating: [{}]  fmvp: [{}]  percent: [{}]'.format(
-            self.code, self.period, list_to_str(self.count_or_price),
+            self.code, self.period, list_to_str(self.price_and_stop_loss),
             stock_info['rs_rating'], stock_info['fmvp'], stock_info['percent']))
 
     def checked(self, checked):
@@ -473,7 +479,8 @@ class Panel(QWidget):
         else:
             self.code = text[:-1]
 
-        self.set_label()
+        # self.set_label()
+        self.on_activated_code(self.code)
 
         # 市场指数长度为 7, 行业指数长度为 6, 且以 '88' 开始
         if len(self.code) == 6 and self.code[0] in '036':
@@ -483,28 +490,37 @@ class Panel(QWidget):
         if not isinstance(quote, pandas.DataFrame):
             return
 
-        self.count_or_price[0] = quote['close'][-1]
-        # self.qle_price.setText(list_to_str(self.count_or_price))
+        self.price_and_stop_loss[0] = quote['close'][-1]
+        # self.qle_price.setText(list_to_str(self.price_and_stop_loss))
         self.qle_price.setText(str(quote['close'][-1]))
 
-    def on_count_or_price_changed(self, text):
+    def on_price_and_stop_loss_changed(self, text):
         if self.sender() == self.qle_price:
-            self.count_or_price[0] = float(text) if text else 0
+            self.price_and_stop_loss[0] = float(text) if text else 0
         else:
-            self.count_or_price[1] = int(text) if text else 0
+            self.price_and_stop_loss[1] = float(text) if text else 0
         self.set_label()
 
     def on_activated_code(self, text):
         self.code = text.split()[0]
 
-        quote = tx.get_realtime_data_sina(self.code)
-        if isinstance(quote, pandas.DataFrame):
-            self.count_or_price[0] = quote['close'][-1]
+        trade_orders = trade_manager.db_handler.query_trade_order_map(self.account_id, self.code, status='ING')
+        if not trade_orders:
+            trade_orders = trade_manager.db_handler.query_trade_order_map(self.account_id, self.code, status='TO')
+        if trade_orders:
+            trade_order = trade_orders[self.code]
+            self.price_and_stop_loss = [trade_order.open_price, trade_order.stop_loss]
+        else:
+            quote = tx.get_realtime_data_sina(self.code)
+            if isinstance(quote, pandas.DataFrame):
+                self.price_and_stop_loss[0] = quote['close'][-1]
 
         self.set_label()
 
-        # self.qle_price.setText(list_to_str(self.count_or_price))
-        self.qle_price.setText(str(quote['close'][-1]))
+        # self.qle_price.setText(list_to_str(self.price_and_stop_loss))
+        self.qle_code.setText(self.code)
+        self.qle_price.setText(str(self.price_and_stop_loss[0]))
+        self.qle_stop_loss.setText(str(self.price_and_stop_loss[1]))
 
     def on_activated_signal(self, text):
         combo: QComboCheckBox = self.sender()
@@ -542,7 +558,8 @@ class Panel(QWidget):
         text = self.combo_code.currentText()
         self.code = text.split()[0]
 
-        self.set_label()
+        # self.set_label()
+        self.on_activated_code(self.code)
 
     def open_tdx(self, forward=0):
         if forward != 0:
@@ -768,8 +785,8 @@ class Panel(QWidget):
 
         trade_manager.buy(self.account_id, self.op_type, self.code,
                           price_trade=quote['close'][-1],
-                          price_limited=int(self.count_or_price[0]),
-                          count=int(self.count_or_price[1]),
+                          price_limited=int(self.price_and_stop_loss[0]),
+                          count=int(self.price_and_stop_loss[1]),
                           period=self.period,
                           auto=True)
 
@@ -783,8 +800,8 @@ class Panel(QWidget):
 
         trade_manager.sell(self.account_id, self.op_type, self.code,
                            price_trade=quote['close'][-1],
-                           price_limited=int(self.count_or_price[0]),
-                           count=int(self.count_or_price[1]),
+                           price_limited=int(self.price_and_stop_loss[0]),
+                           count=int(self.price_and_stop_loss[1]),
                            period=self.period,
                            auto=True)
 
@@ -796,8 +813,13 @@ class Panel(QWidget):
         if not strategys:
             qt_util.popup_info_message_box_mp('must select one and only one strategy')
             return
-        strategy = '{}_signal_enter'.format(strategys[0])
-        trade_manager.create_trade_order(self.account_id, self.code, self.count_or_price[0], strategy)
+        strategy = '{}_signal_enter'.format(strategys[0].text())
+        open_price = self.price_and_stop_loss[0]
+        stop_loss = self.price_and_stop_loss[1]
+        r = trade_manager.create_trade_order(self.account_id, self.code, open_price, stop_loss, strategy)
+        if not r:
+            return
+        qt_util.popup_info_message_box_mp('create trade order success')
 
     def refresh_log(self):
         lines = util.read_last_lines('log/run.log')
