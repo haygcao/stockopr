@@ -6,7 +6,7 @@ import time
 import indicator
 from acquisition import tx, quote_db
 from config import config
-from config.config import Policy, ERROR
+from config.config import Policy, ERROR, PositionStage
 from data_structure import trade_data
 from indicator import atr, ema, dynamical_system, relative_price_strength, ad
 from pointor import signal, signal_stop_loss
@@ -77,6 +77,11 @@ def query_position(account_id, code):
     可以卖的股数
     还可以买的股数
     """
+    if dt.istradetime():
+        positions = tradeapi.query_position(account_id, code)
+        position = positions[0] if positions else None
+        return position
+
     position = db_handler.query_position(account_id, code)
     if not position:
         return
@@ -99,6 +104,10 @@ def query_current_position(account_id):
 
 
 def query_money(account_id):
+    if dt.istradetime():
+        money = tradeapi.get_asset(account_id)
+        return money
+
     money = db_handler.query_money(account_id)
     money_in_operation_detail = query_money_in_operation_detail(account_id)
     money.avail_money -= money_in_operation_detail
@@ -296,6 +305,36 @@ def check_list(quote, period):
     return ERROR.OK
 
 
+def get_position_stage(position: trade_data.Position, trade_order: trade_data.TradeOrder):
+    """
+    0 -> 2/10(+2/10) -> 5/10(+3/10) -> 10/10(+5/10)
+    0 -> 5%(+5%)     -> 12.5%(+7.5%)-> 25%(+12.5%)
+    """
+    if position.current_position == 0:
+        return PositionStage.EMPTY
+
+    cost = position.cost
+    quota = trade_order.capital_quota
+    if cost < quota * 0.3:
+        return PositionStage.TRY
+    if cost < quota * 0.6:
+        return PositionStage.HALF
+    if cost < quota:
+        return PositionStage.FULL
+    return PositionStage.EX
+
+
+def compute_count_by_rule(position, trade_order, price):
+    position_stage = get_position_stage(position, trade_order)
+    next_stage = position_stage.succ()
+    quota = next_stage.value * trade_order.capital_quota - position.cost
+    if quota <= 0:
+        return 0
+    count = quota / price // 100 * 100
+
+    return count
+
+
 def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=None):
     """
     单次交易仓位: min(加仓至最大配额, 可用全部资金对应仓位)
@@ -313,42 +352,37 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
             popup_warning_message_box_mp(error.value)
             return
 
-    # position = query_position(account_id, code)
-    positions = tradeapi.query_position(account_id, code)
-    position = positions[0] if positions else None
+    position = query_position(account_id, code)
 
     # check #2
     if position and position.profit_total_percent < 0:
         popup_warning_message_box_mp('[补仓] - 严禁补仓, 当前亏损[{}%], 请务必遵守规则!'.format(position.profit_total_percent))
         return
 
-    current_position = position.current_position if position else 0
+    price = price_limited if price_limited > 0 else price_trade * 1.01
 
-    avail_position = position_quota - current_position
+    trade_order = db_handler.query_trade_order(account_id, code)
+    avail_position = compute_count_by_rule(position, trade_order, price)
 
     # check #3
     if avail_position < 100:
         popup_warning_message_box_mp('配额已用完, 请务必遵守规则!')
-        avail_position = 0
         return
 
-    # quote = tx.get_realtime_data_sina(code)
-    # money = query_money(account_id)
-    money = tradeapi.get_asset(account_id)
-    max_position = money.avail_money / (price_limited if price_limited > 0 else price_trade * 1.01) // 100 * 100
+    money = query_money(account_id)
+    max_position = money.avail_money / price // 100 * 100
+    if max_position < 100:
+        popup_warning_message_box_mp('配额已用完, 请务必遵守规则!')
+        return
 
-    trade_config = config.get_trade_config(code)
-    position_unit = trade_config['position_unit']
-    max_position = min(max_position, (position_unit / price_trade) // 100 * 100)
-    if not auto:
+    if auto is None:
+        trade_config = config.get_trade_config(code)
         auto = trade_config['auto_buy']
 
-    if count == 0 and 'count' in trade_config:
-        count = trade_config['count']
-    # avail_position = min(avail_position, count)
-
-    if count <= 0:
+    if count == 0:
         count = min(max_position, avail_position)
+    else:
+        count = min(max_position, avail_position, count)
 
     used = max(position.market_value, position.cost) if position else 0
     if (count * price_trade + used) * 4 > money.origin:
@@ -365,11 +399,8 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
-    # position = query_position(account_id, code)
-    positions = tradeapi.query_position(account_id, code)
-    position = positions[0] if positions else None
-
-    if not position:
+    position = query_position(account_id, code)
+    if not position or position.avail_position < 100:
         popup_warning_message_box_mp('没有 [{}] 持仓!'.format(code))
         return
 
@@ -388,28 +419,15 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
             popup_warning_message_box_mp('MACD LINE [> 0] 且 [向上], MACD SIGNAL [向上], 禁止清仓, 请务必遵守规则!')
             return
 
-    current_position = position.current_position
-    avail_position = position.avail_position
-
-    trade_config = config.get_trade_config(code)
-    position_unit = trade_config['position_unit']
-
-    # to_position = ((current_position / 2) // 100) * 100
-    to_position = ((position_unit / price_trade) // 100) * 100
-    to_position = min(avail_position, to_position)
-
     if auto is None:
+        trade_config = config.get_trade_config(code)
         auto = trade_config['auto_sell']
 
-    if count == 0 and 'count' in trade_config:
-        count = trade_config['count']
-    # count = min(to_position, count)
+    if count == 0:
+        trade_order = db_handler.query_trade_order(account_id, code)
+        count = min(position.current_position, position.avail_position, 0.5 * trade_order.position)
+        count = count // 100 * 100
 
-    # count = to_position
-    if count <= 0:
-        count = to_position
-    # operation = TradeManager.get_operation()
-    # operation.__sell(code, count, price, auto=auto)
     order(account_id, op_type, 'S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
 
 

@@ -107,7 +107,7 @@ class TradeSignalManager:
             risk_loss = position.current_position * position.price_cost * 0.04
             risk_rate_total = round(100 * risk_loss / money.origin, 2)
             cls.trade_order_map[code] = trade_data.TradeOrder(
-                position.date, code, position=position.current_position, try_price=position.price_cost,
+                position.date, code, position=position.current_position, capital_quota=0, try_price=position.price_cost,
                 stop_loss=position.price_cost * 0.96, half_pos_price=0, full_pos_price=0,
                 stop_profit=position.price_cost * 1.15,
                 risk_rate_total=risk_rate_total, strategy=strategy, in_position=(position.current_position > 0))

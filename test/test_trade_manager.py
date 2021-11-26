@@ -78,6 +78,7 @@ class TradeManagerTestCase(unittest.TestCase):
         # trade_manager.buy(account_id, op_type, code, count, period='day')
         #
         code = '002739'
+        code = '000930'
         count = 100
         # # tradeapi.order('B', code, count, auto=False)
         trade_manager.buy(account_id, op_type, code, count, period='day')
