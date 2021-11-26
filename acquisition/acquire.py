@@ -1,6 +1,7 @@
 # -*- encoding:utf-8 -*-
 
 import datetime
+import time
 
 import numpy
 import pandas
@@ -53,6 +54,7 @@ def save_market_index_trade_info():
         val = quote_www.get_price_urllib(index)
         if val:
             val_list.append(val)
+        time.sleep(1)
 
     quote_db.insert_into_quote(val_list, ex=True)
 
@@ -297,17 +299,17 @@ def save_quote():
         # exit(0)
     xls = None
     # xls = 'data/xls/2021-05-24.xls'
-    t1 = datetime.datetime.now()
-    save_quote_impl(xls)
-    t2 = datetime.datetime.now()
-    logger.info('save quote cost [{}]s'.format((t2 - t1).seconds))
-
+    # t1 = datetime.datetime.now()
+    # save_quote_impl(xls)
+    # t2 = datetime.datetime.now()
+    # logger.info('save quote cost [{}]s'.format((t2 - t1).seconds))
+    #
     today = datetime.date.today()  # 2021/07/01
-    today_datetime = datetime.datetime(today.year, today.month, today.day)
-    quote_db.compute_market(today_datetime, today_datetime, include_end=True)
-
-    t3 = datetime.datetime.now()
-    logger.info('calculate and save market cost [{}]s'.format((t3 - t2).seconds))
+    # today_datetime = datetime.datetime(today.year, today.month, today.day)
+    # quote_db.compute_market(today_datetime, today_datetime, include_end=True)
+    #
+    # t3 = datetime.datetime.now()
+    # logger.info('calculate and save market cost [{}]s'.format((t3 - t2).seconds))
 
     save_market_index_trade_info()
     logger.info('save market index quote')
@@ -318,7 +320,9 @@ def save_quote():
     relative_strength_rating.update_rs_rating(trade_date=today, update_db=True)
     logger.info('update rs rating')
 
-    qt_util.popup_info_message_box_mp('update quote OK')
+    trade_date = dt.get_trade_date()
+    count = quote_db.get_quote_count(trade_date)
+    qt_util.popup_info_message_box_mp('[{}] [{}] rows updated'.format(trade_date, count))
 
 
 def check_quote(quote1, quote2):

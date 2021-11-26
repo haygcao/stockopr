@@ -261,7 +261,7 @@ create table asset(
   market_value decimal(10, 3),
   position_percent decimal(6, 3),
   total_profit decimal(10, 3),
-  total_profit_percent decimal(6, 3),
+  total_profit_percent decimal(10, 3),
   today_profit decimal(10, 3),
   account_id varchar(32)
 );

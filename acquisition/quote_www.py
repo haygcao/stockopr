@@ -5,6 +5,8 @@ import re
 import time
 import json
 
+from util.log import logger
+
 
 def get_price_urllib(stock_code):
     exchange = "0" if (int(stock_code) // 100000 == 6) else "1"
@@ -12,7 +14,18 @@ def get_price_urllib(stock_code):
     _stock_code = '{1}{0}'.format(stock_code, exchange)
     if stock_code == '999999':
         _stock_code = '0000001'
-    r = urllib.request.urlopen('http://api.money.126.net/data/feed/{0},money.api'.format(_stock_code)).read().decode()
+
+    r = None
+    while True:
+        try:
+            r = urllib.request.urlopen('http://api.money.126.net/data/feed/{0},money.api'.format(
+                _stock_code)).read().decode()
+        except Exception as e:
+            logger.error(e)
+            time.sleep(5)
+            continue
+        else:
+            break
     b = r.find(':{') + 1
     e = r.find(' }')
     data = json.loads(r[b:e])

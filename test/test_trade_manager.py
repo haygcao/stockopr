@@ -80,8 +80,8 @@ class TradeManagerTestCase(unittest.TestCase):
         code = '002739'
         count = 100
         # # tradeapi.order('B', code, count, auto=False)
-        # trade_manager.buy(account_id, op_type, code, count, period='day')
-        trade_manager.sell(account_id, op_type, code, count, period='day')
+        trade_manager.buy(account_id, op_type, code, count, period='day')
+        # trade_manager.sell(account_id, op_type, code, count, period='day')
 
         # trade_manager.buy('300502')
 
