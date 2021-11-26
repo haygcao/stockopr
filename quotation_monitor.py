@@ -107,8 +107,9 @@ class TradeSignalManager:
             risk_loss = position.current_position * position.price_cost * 0.04
             risk_rate_total = round(100 * risk_loss / money.origin, 2)
             cls.trade_order_map[code] = trade_data.TradeOrder(
-                position.date, code, position=position.current_position, open_price=position.price_cost,
-                stop_loss=position.price_cost * 0.96, stop_profit=position.price_cost * 1.15,
+                position.date, code, position=position.current_position, try_price=position.price_cost,
+                stop_loss=position.price_cost * 0.96, half_pos_price=0, full_pos_price=0,
+                stop_profit=position.price_cost * 1.15,
                 risk_rate_total=risk_rate_total, strategy=strategy, in_position=(position.current_position > 0))
             logger.warning('[{}] with not trade order'.format(code))
             has_warning = True
@@ -164,9 +165,9 @@ class TradeSignalManager:
         return -1
 
     @classmethod
-    def get_open_price(cls, code):
+    def get_try_price(cls, code):
         if code in cls.trade_order_map:
-            return cls.trade_order_map[code].open_price
+            return cls.trade_order_map[code].try_price
         return -1
 
 
@@ -299,7 +300,7 @@ def compute_qrr(trade_time):
     return d[index]
 
 
-def check_trade_order_open_price(code, close, yest_close, in_position, qrr):
+def check_trade_order_try_price(code, close, yest_close, in_position, qrr):
     if in_position:
         return False
 
@@ -308,9 +309,9 @@ def check_trade_order_open_price(code, close, yest_close, in_position, qrr):
     if now.hour < 10:
         return False
 
-    open_price = TradeSignalManager.get_open_price(code)
+    try_price = TradeSignalManager.get_try_price(code)
     # 买入采用限价交易
-    if close > open_price and qrr > compute_qrr(now):  # and (close / open_price - 1 < 0.04):
+    if close > try_price and qrr > compute_qrr(now):  # and (close / try_price - 1 < 0.04):
         return True
     return False
 
@@ -392,7 +393,7 @@ def check_period(code, period, strategy, in_position):
     yest_close = data['close'][-2]
     data_qrr = quantity_relative_ratio.quantity_relative_ratio(data[-6:], period)
     qrr = data_qrr['qrr'][-1]
-    if check_trade_order_open_price(code, close, yest_close, in_position, qrr):
+    if check_trade_order_try_price(code, close, yest_close, in_position, qrr):
         return TradeSignal(code, close, data.index[-1], 'B', Policy.OPEN_PRICE, period, True)
 
     trade_signal = None
@@ -438,7 +439,7 @@ def order(trade_singal: TradeSignal):
 
     price_limited = 0
     if trade_singal.policy == Policy.OPEN_PRICE:
-        price_limited = TradeSignalManager.get_open_price(trade_singal.code)
+        price_limited = TradeSignalManager.get_try_price(trade_singal.code)
 
     order_func = trade_manager.buy if trade_singal.command == 'B' else trade_manager.sell
     order_func(account_id, op_type, trade_singal.code, price_trade=trade_singal.price, price_limited=price_limited,

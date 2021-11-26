@@ -554,7 +554,7 @@ def create_trade_order(account_id, code, price_limited, stop_loss, strategy):
 
     strategy_in_db = strategy[:strategy.index('_signal_enter')]
 
-    trade_order_info = 'code: {}\nopen_price: {}\nstop_loss: {}\ncapital_quota: \ncapital_quota_pct: {}\nposition: \n' \
+    trade_order_info = 'code: {}\ntry_price: {}\nstop_loss: {}\ncapital_quota: \ncapital_quota_pct: {}\nposition: \n' \
                        'risk_rate: {}\nrisk_rate_total: {}\nstrategy: {}'.format(
         code, price, stop_loss, capital_quota, capital_quota_pct, position, risk_rate, risk_rate_total, strategy)
     click_ok = popup_warning_message_box('info', trade_order_info)
@@ -566,7 +566,7 @@ def create_trade_order(account_id, code, price_limited, stop_loss, strategy):
 
     val = tuple(val)
 
-    keys = ['date', 'code', 'capital_quota', '`position`', 'open_price', 'stop_loss',
+    keys = ['date', 'code', 'capital_quota', '`position`', 'try_price', 'stop_loss',
             'stop_profit', 'risk_rate', 'risk_rate_total', 'profitability_ratios', 'strategy', 'status', 'account_id']
 
     key = ', '.join(keys)
@@ -638,7 +638,7 @@ def create_position_price_limited():
         close = quote['close'][-1]
         count = trade_order.position
         date = trade_order.date
-        if close > trade_order.open_price:
+        if close > trade_order.try_price:
             logger.info('建仓 限价交易单[{} {}] {}x{}'.format(date, code, close, count))
             buy(code, price_trade=close, price_limited=close, count=count, period='day', auto=True)
             db_handler.update_trade_order_status(trade_order.date, code, 'ING')

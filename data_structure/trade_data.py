@@ -123,24 +123,29 @@ class TradeOrder(TradeData):
     date = None
     code = ''
     position = 0
-    open_price = 0
+    try_price = 0
     stop_loss = 0
+    half_pos_price = 0
+    full_pos_price = 0
     stop_profit = 0
     risk_rate = 0
     profitability_ratios = 0
     strategy = ''
     in_position = False
 
-    def __init__(self, date, code, position, open_price, stop_loss, stop_profit, risk_rate_total, strategy, in_position):
+    def __init__(self, date, code, position, try_price, stop_loss, half_pos_price, full_pos_price, stop_profit,
+                 risk_rate_total, strategy, in_position):
         self.date = date
         self.code = code
         self.position = position
-        self.open_price = open_price
+        self.try_price = try_price
+        self.half_pos_price = half_pos_price
+        self.full_pos_price = full_pos_price
         self.stop_loss = stop_loss
         self.stop_profit = stop_profit
-        self.risk_rate = (open_price - stop_loss) / open_price
+        self.risk_rate = (try_price - stop_loss) / try_price
         self.risk_rate_total = risk_rate_total
-        self.profitability_ratios = 0  # (stop_profit - open_price) / (open_price - stop_loss)
+        self.profitability_ratios = 0  # (stop_profit - try_price) / (try_price - stop_loss)
         self.strategy = strategy
         self.in_position = in_position
 

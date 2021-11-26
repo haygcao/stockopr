@@ -445,10 +445,10 @@ class Panel(QWidget):
         self.setFixedHeight(self.geometry().height() + adj * comp.geometry().height())
 
     def set_label(self):
-        open_price = self.price_and_stop_loss[0]
+        try_price = self.price_and_stop_loss[0]
         stop_loss = self.price_and_stop_loss[1]
-        stop_loss = stop_loss if stop_loss > 0 else open_price
-        risk_rate = round(100 * (1 - open_price/stop_loss), 2) if stop_loss > 0 else 0
+        stop_loss = stop_loss if stop_loss > 0 else try_price
+        risk_rate = round(100 * (1 - try_price/stop_loss), 2) if stop_loss > 0 else 0
         s = '{} {} {}  {}%'.format(self.code, self.period, list_to_str(self.price_and_stop_loss), risk_rate)
         self.lbl.setText(s)
         self.lbl.adjustSize()
@@ -513,7 +513,7 @@ class Panel(QWidget):
             trade_orders = trade_manager.db_handler.query_trade_order_map(self.account_id, self.code, status='TO')
         if trade_orders:
             trade_order = trade_orders[self.code]
-            self.price_and_stop_loss = [trade_order.open_price, trade_order.stop_loss]
+            self.price_and_stop_loss = [trade_order.try_price, trade_order.stop_loss]
         else:
             quote = tx.get_realtime_data_sina(self.code)
             if isinstance(quote, pandas.DataFrame):
@@ -818,9 +818,9 @@ class Panel(QWidget):
             qt_util.popup_info_message_box_mp('must select one and only one strategy')
             return
         strategy = '{}_signal_enter'.format(strategys[0].text())
-        open_price = self.price_and_stop_loss[0]
+        try_price = self.price_and_stop_loss[0]
         stop_loss = self.price_and_stop_loss[1]
-        r = trade_manager.create_trade_order(self.account_id, self.code, open_price, stop_loss, strategy)
+        r = trade_manager.create_trade_order(self.account_id, self.code, try_price, stop_loss, strategy)
         if not r:
             return
         self.on_activated_code(self.code)

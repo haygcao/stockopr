@@ -179,7 +179,7 @@ def compute_trade_detail_impl(trade, data):
         'profit_percent_per_day_simple_interest': round(100 * profit_percent / days, 3),
         'open_position': df.iloc[0]['股份余额'],
         'max_position': df['股份余额'].max(),
-        'open_price': df.iloc[0]['成交价格'],
+        'try_price': df.iloc[0]['成交价格'],
         'close_price': df.iloc[-1]['成交价格'],
         'trade_price_high': df['成交价格'].max(),
         'trade_price_low': df['成交价格'].min(),
@@ -197,10 +197,10 @@ def compute_trade_detail_impl(trade, data):
             r['high'] = detail['trade_price_high']
             r['low'] = detail['trade_price_low']
 
-        # 国金理财 open_price 为 0
-        if detail['open_price']:
-            max_earn_percent = round(100 * (r['high'] / detail['open_price'] - 1), 3)
-            max_loss_percent = round(100 * (r['low'] / detail['open_price'] - 1), 3)
+        # 国金理财 try_price 为 0
+        if detail['try_price']:
+            max_earn_percent = round(100 * (r['high'] / detail['try_price'] - 1), 3)
+            max_loss_percent = round(100 * (r['low'] / detail['try_price'] - 1), 3)
         else:
             max_earn_percent = detail['profit_percent']
             max_loss_percent = detail['profit_percent']
