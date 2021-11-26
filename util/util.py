@@ -29,6 +29,11 @@ def almost_equal(m, n, almost):
     return False
 
 
+# Python 3.5 adds the math.isclose and cmath.isclose functions as described in PEP 485
+def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
 def angle_np(dx, dy):
     # numpy.tan(numpy.radians([45]))
     # numpy.degrees(numpy.arctan([1]))

@@ -16,7 +16,7 @@ from . import tradeapi, db_handler
 from util import mysqlcli, dt, qt_util
 
 from util.log import logger
-from util.qt_util import popup_warning_message_box_mp, popup_info_message_box_mp
+from util.qt_util import popup_warning_message_box_mp, popup_info_message_box_mp, popup_warning_message_box
 
 
 class TradeManager:
@@ -522,7 +522,18 @@ def create_trade_order(account_id, code, price_limited, stop_loss, strategy):
     # 创建交易指令单, 可以先不考虑可用的资金是否足够
     # position = min(position, avail_money / price // 100 * 100)
     if position < 100:
-        popup_info_message_box_mp('create trade order failed, position < 100')
+        popup_info_message_box_mp('create trade order failed\nposition < 100')
+        return False
+
+    capital_quota = position * price
+    capital_quota_by_trade_rule = money.origin * 0.25
+    capital_quota = min(capital_quota, capital_quota_by_trade_rule)
+    position = (capital_quota / price) // 100 * 100
+
+    capital_quota_pct = round(100 * capital_quota / money.origin, 2)
+    if capital_quota_pct < 20:
+        popup_info_message_box_mp('create trade order failed\nposition pct is [{}%]\nless than [20%]'.format(
+            capital_quota_pct))
         return False
 
     # 止盈价格, 需要根据具体的行情走势确定
@@ -536,9 +547,21 @@ def create_trade_order(account_id, code, price_limited, stop_loss, strategy):
     profitability_ratios = None
     risk_rate = round(100 * (1 - stop_loss / price), 2)
     risk_rate_total = round(100 * (position * (price - stop_loss)) / total_money, 2)
+    if risk_rate > config.one_risk_rate or risk_rate_total > config.total_risk_rate:
+        popup_info_message_box_mp('create trade order failed\nrisk rate exceed\npos: [{}%] total: [{}%]'.format(
+            risk_rate, risk_rate_total))
+        return False
 
     strategy_in_db = strategy[:strategy.index('_signal_enter')]
-    val = [datetime.date.today(), code, position * price, position, price, stop_loss, stop_profit,
+
+    trade_order_info = 'code: {}\nopen_price: {}\nstop_loss: {}\ncapital_quota: \ncapital_quota_pct: {}\nposition: \n' \
+                       'risk_rate: {}\nrisk_rate_total: {}\nstrategy: {}'.format(
+        code, price, stop_loss, capital_quota, capital_quota_pct, position, risk_rate, risk_rate_total, strategy)
+    click_ok = popup_warning_message_box('info', trade_order_info)
+    if not click_ok:
+        return False
+
+    val = [datetime.date.today(), code, capital_quota, position, price, stop_loss, stop_profit,
            risk_rate, risk_rate_total, profitability_ratios, strategy_in_db, 'TO', svr_config.ACCOUNT_ID_XY]
 
     val = tuple(val)

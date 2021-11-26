@@ -7,7 +7,7 @@ g_q_application = None
 g_use_tk = True
 
 
-def popup_warning_message_box(func_name, msg, callback, *args):
+def popup_warning_message_box(func_name, msg, callback=None, *args):
     if func_name == 'warning':
         func = QMessageBox.warning
         title = '警告'
@@ -47,6 +47,8 @@ def popup_warning_message_box(func_name, msg, callback, *args):
         # elif r == QMessageBox.Ok:
         #     callback(*args)
     g_q_application = None
+
+    return ok
 
 
 def popup_warning_message_box_mp(msg, callback=None, *args):

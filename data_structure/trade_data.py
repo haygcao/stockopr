@@ -36,12 +36,12 @@ class Asset(TradeData):
         self.net_money = net_money if net_money > 0 else total_money
         self.avail_money = float(avail_money)
         self.deposit = deposit
-        self.market_value = market_value if market_value > 0 else self.total_money - self.avail_money
-        asset = self.origin if self.origin else self.net_money
+        self.market_value = float(market_value if market_value > 0 else self.total_money - self.avail_money)
+        asset = float(self.origin if self.origin else self.net_money)
         self.position_percent = round(100 * self.market_value / asset, 3)
 
     def update_origin(self, origin, period):
-        self.origin = origin
+        self.origin = float(origin)
         self.period = datetime.datetime.strptime(period, '%Y-%m-%d').date()
 
         self.profit_percent = round(100 * self.profit / self.origin, 3)

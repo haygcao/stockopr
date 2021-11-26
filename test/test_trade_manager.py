@@ -88,9 +88,10 @@ class TradeManagerTestCase(unittest.TestCase):
         # trade_manager.order(account_id, op_type, 'B', '300502', 1500)
 
     def test_query_order(self):
+        account_id = svr_config.ACCOUNT_ID_XY
         code = '300502'
-        order_list = trade_manager.query_trade_order_list(code)
-        print(order_list[0])
+        order_list = trade_manager.db_handler.query_trade_order_map(account_id, code)
+        print(order_list)
 
     def test_create_trade_order(self):
         account_id = svr_config.ACCOUNT_ID_XY
