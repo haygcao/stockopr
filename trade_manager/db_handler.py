@@ -106,7 +106,7 @@ def save_positions(account_id, position_list, sync=False):
     fmt_list = ['%s' for i in keys]
     fmt = ', '.join(fmt_list)
 
-    sql = u"INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY update total = %s, avail = %s".format(
+    sql = u"INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY update total=values(total), avail=values(avail)".format(
         config.sql_tab_position, key, fmt)
     logger.debug(sql)
 
@@ -116,17 +116,18 @@ def save_positions(account_id, position_list, sync=False):
             c.execute("delete from {} where account_id = %s and date = %s and total != 0".format(
                 config.sql_tab_position), (account_id, trade_date))
 
+        vals = []
         for position in position_list:
             val = (position.date, position.code, position.current_position, position.avail_position,
                    position.price_cost, position.price, position.cost, position.market_value,
-                   position.profit_total, position.profit_total_percent, account_id,
-                   position.current_position, position.avail_position)
+                   position.profit_total, position.profit_total_percent, account_id)
+            vals.append(val)
 
-            try:
-                c.execute(sql, val)
-            except Exception as e:
-                # executemany failed, not all arguments converted during string formatting
-                print('save position failed -', e)
+        try:
+            c.executemany(sql, vals)
+        except Exception as e:
+            # executemany failed, not all arguments converted during string formatting
+            print('save position failed -', e)
 
 
 def query_operation_details(account_id, code=None, date: datetime.date = None):
