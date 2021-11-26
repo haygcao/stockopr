@@ -1,5 +1,6 @@
 {
   "signal_enter": {
+    "ma_signal_enter": true,
     "macd_signal_enter": true,
     "force_index_signal_enter": true,
     "volume_ad_signal_enter": true,
@@ -31,6 +32,7 @@
     "default_signal_enter": false
   },
   "signal_exit": {
+    "ma_signal_exit": true,
     "macd_signal_exit": true,
     "force_index_signal_exit": false,
     "volume_ad_signal_exit": true,
@@ -52,6 +54,7 @@
 
     "nday_signal_exit": false,
     "stop_loss_signal_exit": false,
+    "stop_profit_signal_exit": false,
     "mask_signal_exit": false,
 
     "default_signal_exit": false

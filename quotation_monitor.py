@@ -134,6 +134,10 @@ class TradeSignalManager:
         return cls.trade_order_map[code].in_position
 
     @classmethod
+    def position(cls, code):
+        return cls.trade_order_map[code].position
+
+    @classmethod
     def get_trade_signal_list(cls, code):
         return cls.signal_map[code]
 
@@ -149,6 +153,17 @@ class TradeSignalManager:
     def need_signal(cls, trade_signal: TradeSignal) -> bool:
         if trade_signal.policy == Policy.STOP_PROFIT and trade_signal.period != 'day':
             return False
+        code = trade_signal.code
+        position = trade_manager.db_handler.query_position(svr_config.ACCOUNT_ID_XY, code)
+        if not position:
+            return True
+
+        if trade_signal.command == 'S' and position.avail_position == 0:
+            return False
+
+        if trade_signal.command == 'B' and position.current_position >= TradeSignalManager.position(code):
+            return False
+
         return True
 
         last_signal = cls.get_last_trade_signal(trade_signal.code)

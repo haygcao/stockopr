@@ -1,7 +1,7 @@
 signal_pair_column = {
     'magic_line_breakout_signal_enter': ['default_signal_exit', 'macd_signal_exit', 'channel_signal_exit'],
     'blt_breakout_signal_enter': ['default_signal_exit', 'macd_signal_exit', 'channel_signal_exit'],
-    'vcp_breakout_signal_enter': ['stop_profit_signal_exit'],
+    'vcp_breakout_signal_enter': [],
     'step_breakout_signal_enter': ['default_signal_exit', 'macd_signal_exit', 'channel_signal_exit'],
     'base_breakout_signal_enter': ['default_signal_exit', 'macd_signal_exit', 'channel_signal_exit'],
     'value_return_signal_enter': ['default_signal_exit', 'macd_signal_exit', 'channel_signal_exit'],
@@ -12,6 +12,9 @@ signal_pair_column = {
 }
 
 default_columns = [
+    "stop_profit_signal_exit",
+    "ma_signal_enter",
+    "ma_signal_exit",
     # "weak_bear_signal_exit",
     # "macd_bear_market_deviation_signal_exit",
     # "cci_bear_market_deviation_signal_exit",

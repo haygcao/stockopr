@@ -7,6 +7,10 @@ from indicator.decorator import computed
 
 @computed(column_name='stop_profit')
 def stop_profit(quote, period):
+    if period != 'day':
+        quote['stop_profit'] = numpy.nan
+        return quote
+
     close = quote['close']
     close_yest = close.shift(periods=1)
 
