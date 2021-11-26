@@ -13,13 +13,12 @@ def signal_enter(quote, period):
 
     quote = ema.compute_ema(quote)
     ema26 = quote['ema26']
-
-    # 上穿 ema26
-    # cond = (close_yest <= ema26) & (close > ema26)
-    cond = (close > ema26)
-
     ema26_shift = ema26.shift(periods=1)
-    cond &= (ema26 > ema26_shift)
+    ema26_shift2 = ema26.shift(periods=2)
+
+    # 股价上穿 ema26, 或者ema26 由降转升
+    cond = (close_yest <= ema26) | (ema26_shift2 >= ema26_shift)
+    cond &= (ema26 > ema26_shift) & (close > ema26)
 
     if period == 'm5':
         # 30分钟
@@ -41,13 +40,12 @@ def signal_exit(quote, period):
 
     quote = ema.compute_ema(quote)
     ema26 = quote['ema26']
-
-    # 下穿 ema26
-    # cond = (close_yest >= ema26) & (close < ema26)
-    cond = (close < ema26)
-
     ema26_shift = ema26.shift(periods=1)
-    cond &= (ema26 < ema26_shift)
+    ema26_shift2 = ema26.shift(periods=2)
+
+    # 股价下穿 ema26, 或者 ema26 由升转降
+    cond = (close_yest >= ema26) | (ema26_shift2 <= ema26_shift)
+    cond &= (ema26 < ema26_shift) & (close < ema26)
 
     if period == 'm5':
         # 30分钟

@@ -313,7 +313,9 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
             popup_warning_message_box_mp(error.value)
             return
 
-    position = query_position(account_id, code)
+    # position = query_position(account_id, code)
+    positions = tradeapi.query_position(account_id, code)
+    position = positions[0] if positions else None
 
     # check #2
     if position and position.profit_total_percent < 0:
@@ -331,7 +333,8 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
         return
 
     # quote = tx.get_realtime_data_sina(code)
-    money = query_money(account_id)
+    # money = query_money(account_id)
+    money = tradeapi.get_asset(account_id)
     max_position = money.avail_money / (price_limited if price_limited > 0 else price_trade * 1.01) // 100 * 100
 
     trade_config = config.get_trade_config(code)
@@ -362,7 +365,10 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
     """
     单次交易仓位: 可用仓位   # min(总仓位/2, 可用仓位)
     """
-    position = query_position(account_id, code)
+    # position = query_position(account_id, code)
+    positions = tradeapi.query_position(account_id, code)
+    position = positions[0] if positions else None
+
     if not position:
         popup_warning_message_box_mp('没有 [{}] 持仓!'.format(code))
         return
