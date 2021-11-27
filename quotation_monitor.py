@@ -187,7 +187,7 @@ class TradeSignalManager:
             if code not in cls.position_map:
                 price = cls.trade_order_map[code].try_price
             else:
-                price = trade_manager.compute_price_by_rule(cls.position_map[code], cls.trade_order_map[code])
+                price = trade_manager.get_price_by_rule(cls.position_map[code], cls.trade_order_map[code])
             return price
         return -1
 

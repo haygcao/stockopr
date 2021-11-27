@@ -159,6 +159,78 @@ def query_position_in_operation_detail(account_id, code=None, trade_date=None, d
     return position
 
 
+def sync_position(account_id):
+    position_list = tradeapi.query_position(account_id)
+    if not position_list:
+        return position_list
+
+    order_ing_map = db_handler.query_trade_order_map(account_id, status=['ING'])
+    order_to_map = db_handler.query_trade_order_map(account_id, status=['TO'])
+    for i in range(len(position_list)):
+        position = position_list[i]
+        trade_config = config.get_trade_config(position.code)
+        if 'profit' in trade_config:
+            position_list[i].add_profile(trade_config['profit'])
+        position_list[i].avail_position = position.current_position
+
+    db_handler.save_positions(account_id, position_list, sync=True)
+
+    for code, trade_order in order_ing_map.items():
+        db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
+    logger.info('update trade order')
+
+    return position_list
+
+
+def sync_trade_order(account_id, position_list):
+    if not position_list:
+        return
+
+    # trade order
+    order_ing_map = db_handler.query_trade_order_map(account_id, status=['ING'])
+    order_to_map = db_handler.query_trade_order_map(account_id, status=['TO'])
+
+    for position in position_list:
+        code = position.code
+        trade_order_ing = order_ing_map.pop(code) if code in order_ing_map else None
+        trade_order_to = order_to_map.pop(code) if code in order_to_map else None
+        if position.current_position == 0 and trade_order_ing:
+            db_handler.update_trade_order_status(account_id, trade_order_ing.date, code, 'ED')
+        if position.current_position > 0 and trade_order_to:
+            db_handler.update_trade_order_status(account_id, trade_order_to.date, code, 'ING')
+
+
+def sync_money(account_id):
+    money = tradeapi.get_asset(account_id)
+    if not money:
+        return money
+
+    ps = db_handler.query_current_position(account_id)
+    money.profit = float(sum([p.profit_total for p in ps]))
+
+    trade_config = config.get_trade_config()
+    money.profit += trade_config['not_in_position_profit']
+    money.update_origin(money.net_money - money.profit - trade_config['debt'][account_id], trade_config['period'])
+
+    db_handler.save_money(account_id, money, sync=True)
+
+    return money
+
+
+def sync_operation_detail(account_id, trade_date):
+    now = datetime.datetime.now()
+    operation_detail = tradeapi.query_operation_detail(account_id)
+    if not operation_detail:
+        return operation_detail
+
+    # trade_date = datetime.date(2021, 9, 28)
+    _date = dt.get_pre_trade_date(trade_date) if trade_date == now.date() else trade_date
+    operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == _date]
+    db_handler.save_operation_details(account_id, operation_detail, _date, sync=True)
+
+    return operation_detail
+
+
 def sync_impl(account_id, trade_date):
     """
     sync previous trade date's data
@@ -169,31 +241,7 @@ def sync_impl(account_id, trade_date):
     #     return
 
     # position
-    position_list = tradeapi.query_position(account_id)
-    if position_list:
-        order_ing_map = db_handler.query_trade_order_map(account_id, status=['ING'])
-        order_to_map = db_handler.query_trade_order_map(account_id, status=['TO'])
-        for i in range(len(position_list)):
-            position = position_list[i]
-            code = position.code
-            trade_config = config.get_trade_config(code)
-            if 'profit' in trade_config:
-                position_list[i].add_profile(trade_config['profit'])
-            position_list[i].avail_position = position.current_position
-
-            # trade order
-            trade_order_ing = order_ing_map.pop(code) if code in order_ing_map else None
-            trade_order_to = order_to_map.pop(code) if code in order_to_map else None
-            if position.current_position == 0 and trade_order_ing:
-                db_handler.update_trade_order_status(account_id, trade_order_ing.date, code, 'ED')
-            if position.current_position > 0 and trade_order_to:
-                db_handler.update_trade_order_status(account_id, trade_order_to.date, code, 'ING')
-
-        db_handler.save_positions(account_id, position_list, sync=True)
-
-        for code, trade_order in order_ing_map.items():
-            db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
-        logger.info('update trade order')
+    position_list = sync_position(account_id)
 
     if position_list is None:
         logger.warning('sync position failed')
@@ -201,16 +249,7 @@ def sync_impl(account_id, trade_date):
         logger.info('sync position ok')
 
     # money
-    money = tradeapi.get_asset(account_id)
-    if money:
-        ps = db_handler.query_current_position(account_id)
-        money.profit = float(sum([p.profit_total for p in ps]))
-
-        trade_config = config.get_trade_config()
-        money.profit += trade_config['not_in_position_profit']
-        money.update_origin(money.net_money - money.profit - trade_config['debt'][account_id], trade_config['period'])
-
-        db_handler.save_money(account_id, money, sync=True)
+    money = sync_money(account_id)
 
     if money is None:
         logger.warning('sync money failed')
@@ -218,17 +257,14 @@ def sync_impl(account_id, trade_date):
         logger.info('sync money ok')
 
     # operation detailtotal_money
-    operation_detail = tradeapi.query_operation_detail(account_id)
-    if operation_detail:
-        # trade_date = datetime.date(2021, 9, 28)
-        _date = dt.get_pre_trade_date(trade_date) if trade_date == now.date() else trade_date
-        operation_detail = [detail for detail in operation_detail if detail.trade_time.date() == _date]
-        db_handler.save_operation_details(account_id, operation_detail, _date, sync=True)
+    operation_detail = sync_operation_detail(account_id, trade_date)
 
     if operation_detail is None:
         logger.warning('sync operation detail failed')
     else:
         logger.info('sync operation detail ok')
+
+    sync_trade_order(account_id, position_list)
 
 
 def sync():
@@ -341,7 +377,7 @@ def compute_count_by_rule(position, trade_order, price):
     return count
 
 
-def compute_price_by_rule(position, trade_order):
+def get_price_by_rule(position, trade_order):
     position_stage = get_position_stage(position, trade_order)
     price = 0
 
@@ -383,7 +419,7 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
 
     price_limited = 0
     if policy == Policy.OPEN_PRICE:
-        price_limited = compute_price_by_rule(position, trade_order)
+        price_limited = get_price_by_rule(position, trade_order)
 
     price = price_limited if price_limited > 0 else price_trade * 1.01
 
@@ -416,8 +452,8 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
         return
 
     order(account_id, op_type, 'B', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
-    position = position if position else trade_data.Position(code, count, 0, price_limited, price_trade, 0)
-    db_handler.save_positions(account_id, [position])
+    # position = position if position else trade_data.Position(code, count, 0, price_limited, price_trade, 0)
+    # db_handler.save_positions(account_id, [position])
 
 
 def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=None):
@@ -470,6 +506,8 @@ def order(account_id, op_type, direct, code, price_trade, price_limited=0, count
         if not auto:
             popup_warning_message_box_mp('更新 operation detail?', update_operation_detail, detail)
         # update_operation_detail(detail)
+        sync_position(account_id)
+        sync_money(account_id)
     except Exception as e:
         print(e)
 
@@ -670,6 +708,7 @@ def crtupdt_trade_order(account_id, code, price_limited, stop_loss=0, strategy='
     else:
         r = create_trade_order(account_id, code, price_limited, stop_loss, strategy)
     return r
+
 
 def handle_illegal_position(position: trade_data.Position, quota):
     code = position.code
