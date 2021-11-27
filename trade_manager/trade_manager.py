@@ -645,7 +645,7 @@ def update_trade_order(account_id, code, price_limited):
     position = query_position(account_id, code)
     trade_order = db_handler.query_trade_order(account_id, code)
     if not position or not trade_order:
-        return
+        return False
 
     stage = get_position_stage(position, trade_order)
 
@@ -654,13 +654,22 @@ def update_trade_order(account_id, code, price_limited):
     elif stage == PositionStage.HALF:
         col_price = 'full_pos_price'
     else:
-        return
+        return False
 
     keys = [col_price]
     vals = [price_limited]
 
     db_handler.update_trade_order(account_id, trade_order.date, code, keys, vals)
+    return True
 
+
+def crtupdt_trade_order(account_id, code, price_limited, stop_loss=0, strategy=''):
+    trade_order = db_handler.query_trade_order(account_id, code)
+    if trade_order:
+        r = update_trade_order(account_id, code, price_limited)
+    else:
+        r = create_trade_order(account_id, code, price_limited, stop_loss, strategy)
+    return r
 
 def handle_illegal_position(position: trade_data.Position, quota):
     code = position.code

@@ -510,18 +510,27 @@ class Panel(QWidget):
 
         trade_order = trade_manager.db_handler.query_trade_order(self.account_id, self.code)
         if trade_order:
-            self.price_and_stop_loss = [trade_order.try_price, trade_order.stop_loss]
+            price = trade_order.full_pos_price
+            if price <= 0:
+                price = trade_order.half_pos_price
+            if price <= 0:
+                price = trade_order.try_price
+
+            self.price_and_stop_loss = [price, trade_order.stop_loss]
+            self.qle_price.setText(str(self.price_and_stop_loss[0]))
+            self.qle_stop_loss.setText(str(self.price_and_stop_loss[1]))
         else:
             quote = tx.get_realtime_data_sina(self.code)
             if isinstance(quote, pandas.DataFrame):
                 self.price_and_stop_loss[0] = quote['close'][-1]
 
+            self.qle_price.clear()
+            self.qle_stop_loss.clear()
+
         self.set_label()
 
         # self.qle_price.setText(list_to_str(self.price_and_stop_loss))
         self.qle_code.setText(self.code)
-        self.qle_price.setText(str(self.price_and_stop_loss[0]))
-        self.qle_stop_loss.setText(str(self.price_and_stop_loss[1]))
 
     def on_activated_signal(self, text):
         combo: QComboCheckBox = self.sender()
@@ -817,7 +826,7 @@ class Panel(QWidget):
         strategy = '{}_signal_enter'.format(strategys[0].text())
         try_price = self.price_and_stop_loss[0]
         stop_loss = self.price_and_stop_loss[1]
-        r = trade_manager.create_trade_order(self.account_id, self.code, try_price, stop_loss, strategy)
+        r = trade_manager.crtupdt_trade_order(self.account_id, self.code, try_price, stop_loss, strategy)
         if not r:
             return
         self.on_activated_code(self.code)
