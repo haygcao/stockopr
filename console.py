@@ -508,11 +508,8 @@ class Panel(QWidget):
     def on_activated_code(self, text):
         self.code = text.split()[0]
 
-        trade_orders = trade_manager.db_handler.query_trade_order_map(self.account_id, self.code, status='ING')
-        if not trade_orders:
-            trade_orders = trade_manager.db_handler.query_trade_order_map(self.account_id, self.code, status='TO')
-        if trade_orders:
-            trade_order = trade_orders[self.code]
+        trade_order = trade_manager.db_handler.query_trade_order(self.account_id, self.code)
+        if trade_order:
             self.price_and_stop_loss = [trade_order.try_price, trade_order.stop_loss]
         else:
             quote = tx.get_realtime_data_sina(self.code)

@@ -204,10 +204,12 @@ def update_trade_order_stop_loss(account_id, code, stop_loss, risk_rate, risk_ra
         c.execute(sql_update, (stop_loss, risk_rate, risk_rate_total, code, account_id))
 
 
-def query_trade_order_map(account_id, code=None, status='ING'):
+def query_trade_order_map(account_id, code=None, status=None):
+    status = ['ING'] if not status else status
+    status = "','".join(status)
     with mysqlcli.get_cursor() as c:
         sql = "SELECT date, code, position, capital_quota, try_price, stop_loss, half_pos_price, full_pos_price, " \
-              "stop_profit, risk_rate, risk_rate_total, strategy " \
+              "stop_profit, risk_rate, risk_rate_total, strategy, status " \
               "FROM {0} where account_id = %s and status in ('{1}')".format(config.sql_tab_trade_order, status)
         if code:
             sql += " and code = {}".format(code)
@@ -220,16 +222,14 @@ def query_trade_order_map(account_id, code=None, status='ING'):
             trade_order = trade_data.TradeOrder(
                 row['date'], row['code'], int(row['position']), float(row['capital_quota']), float(row['try_price']),
                 float(row['stop_loss']), float(row['half_pos_price']), float(row['full_pos_price']),
-                row['stop_profit'], float(row['risk_rate_total']), strategy, status == 'ING')
+                row['stop_profit'], float(row['risk_rate_total']), strategy, row['status'] == 'ING')
             order_map.update({row['code']: trade_order})
 
         return order_map
 
 
 def query_trade_order(account_id, code):
-    trade_order = query_trade_order_map(account_id, code, status='ING')
-    if not trade_order:
-        trade_order = query_trade_order_map(account_id, code, status='TO')
+    trade_order = query_trade_order_map(account_id, code, status=['TO', 'ING'])
     return trade_order[code]
 
 

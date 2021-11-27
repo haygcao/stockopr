@@ -91,8 +91,7 @@ class TradeSignalManager:
     @classmethod
     def reload_trade_order(cls):
         account_id = svr_config.ACCOUNT_ID_XY
-        cls.trade_order_map = trade_manager.db_handler.query_trade_order_map(account_id, status='TO')
-        cls.trade_order_map.update(trade_manager.db_handler.query_trade_order_map(account_id, status='ING'))
+        cls.trade_order_map = trade_manager.db_handler.query_trade_order_map(account_id, status=['TO', 'ING'])
 
         has_warning = False
         money = trade_manager.db_handler.query_money(account_id)

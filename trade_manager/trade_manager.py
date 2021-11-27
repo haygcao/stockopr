@@ -39,11 +39,10 @@ def query_position_ex(account_id):
     position_list = db_handler.query_current_position(account_id)
     code_list.extend([position.code for position in position_list])
 
-    for status in ['TO', 'ING']:
-        code_name_map = db_handler.query_trade_order_map(account_id, status=status)
-        code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
-        code_list_tmp.sort()
-        code_list.extend(code_list_tmp)
+    code_name_map = db_handler.query_trade_order_map(account_id, status=['TO', 'ING'])
+    code_list_tmp = [code for code in code_name_map.keys() if code not in code_list]
+    code_list_tmp.sort()
+    code_list.extend(code_list_tmp)
 
     code_list_tmp = []
     with open('data/portfolio.txt', encoding='utf8') as fp:
@@ -168,8 +167,8 @@ def sync_impl(account_id, trade_date):
     # position
     position_list = tradeapi.query_position(account_id)
     if position_list:
-        order_ing_map = db_handler.query_trade_order_map(account_id, status='ING')
-        order_to_map = db_handler.query_trade_order_map(account_id, status='TO')
+        order_ing_map = db_handler.query_trade_order_map(account_id, status=['ING'])
+        order_to_map = db_handler.query_trade_order_map(account_id, status=['TO'])
         for i in range(len(position_list)):
             position = position_list[i]
             code = position.code
@@ -656,7 +655,7 @@ def patrol():
 
 def create_position_price_limited():
     account_id = svr_config.ACCOUNT_ID_XY
-    order_map = db_handler.query_trade_order_map(account_id, status='TO')
+    order_map = db_handler.query_trade_order_map(account_id, status=['TO'])
     for code, trade_order in order_map.items():
         quote = tx.get_realtime_data_sina(code)
         close = quote['close'][-1]
