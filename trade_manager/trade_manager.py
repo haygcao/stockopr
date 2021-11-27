@@ -95,6 +95,10 @@ def query_current_position(account_id):
     可以卖的股数
     还可以买的股数
     """
+    if dt.istradetime():
+        positions = tradeapi.query_position(account_id)
+        return positions
+
     position_list = db_handler.query_current_position(account_id)
     for position in position_list:
         compute_unsync(position)
@@ -227,8 +231,6 @@ def sync_impl(account_id, trade_date):
         logger.info('sync operation detail ok')
 
 
-
-
 def sync():
     r = False
     m_date = ''
@@ -304,16 +306,15 @@ def check_list(quote, period):
     return ERROR.OK
 
 
-def get_position_stage(position: trade_data.Position, trade_order: trade_data.TradeOrder):
+def get_position_stage_impl(current_position, cost, capital_quota):
     """
     0 -> 2/10(+2/10) -> 5/10(+3/10) -> 10/10(+5/10)
     0 -> 5%(+5%)     -> 12.5%(+7.5%)-> 25%(+12.5%)
     """
-    if position.current_position == 0:
+    if current_position == 0:
         return PositionStage.EMPTY
 
-    cost = position.cost
-    quota = trade_order.capital_quota
+    quota = capital_quota
     if cost < quota * 0.3:
         return PositionStage.TRY
     if cost < quota * 0.6:
@@ -321,6 +322,10 @@ def get_position_stage(position: trade_data.Position, trade_order: trade_data.Tr
     if cost < quota:
         return PositionStage.FULL
     return PositionStage.EX
+
+
+def get_position_stage(position: trade_data.Position, trade_order: trade_data.TradeOrder):
+    return get_position_stage_impl(position.current_position, position.cost, trade_order.capital_quota)
 
 
 def compute_count_by_rule(position, trade_order, price):
@@ -332,6 +337,18 @@ def compute_count_by_rule(position, trade_order, price):
     count = quota / price // 100 * 100
 
     return count
+
+
+def compute_price_by_rule(position, trade_order):
+    position_stage = get_position_stage(position, trade_order)
+    price = 0
+
+    if position_stage == PositionStage.TRY:
+        price = trade_order.half_pos_price
+    elif position_stage == PositionStage.HALF:
+        price = trade_order.full_pos_price
+
+    return price
 
 
 def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period='day', policy=None, auto=None):
@@ -352,15 +369,22 @@ def buy(account_id, op_type, code, price_trade, price_limited=0, count=0, period
             return
 
     position = query_position(account_id, code)
+    trade_order = db_handler.query_trade_order(account_id, code)
 
     # check #2
     if position and position.profit_total_percent < 0:
-        popup_warning_message_box_mp('[补仓] - 严禁补仓, 当前亏损[{}%], 请务必遵守规则!'.format(position.profit_total_percent))
-        return
+        position_stage = get_position_stage(position, trade_order)
+        if position_stage != PositionStage.TRY:
+            popup_warning_message_box_mp('[补仓] - 严禁补仓, 当前亏损[{}%], 请务必遵守规则!'.format(
+                position.profit_total_percent))
+            return
+
+    price_limited = 0
+    if policy == Policy.OPEN_PRICE:
+        price_limited = compute_price_by_rule(position, trade_order)
 
     price = price_limited if price_limited > 0 else price_trade * 1.01
 
-    trade_order = db_handler.query_trade_order(account_id, code)
     avail_position = compute_count_by_rule(position, trade_order, price)
 
     # check #3
@@ -588,7 +612,6 @@ def create_trade_order(account_id, code, price_limited, stop_loss, strategy):
            risk_rate, risk_rate_total, profitability_ratios, strategy_in_db, 'TO', svr_config.ACCOUNT_ID_XY]
 
     val = tuple(val)
-
     keys = ['date', 'code', 'capital_quota', '`position`', 'try_price', 'stop_loss',
             'stop_profit', 'risk_rate', 'risk_rate_total', 'profitability_ratios', 'strategy', 'status', 'account_id']
 

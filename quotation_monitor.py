@@ -87,6 +87,7 @@ class TradeSignalManager:
     #     'code': data_structure.trade_data.TradeOrder
     # }
     trade_order_map = {}  # : dict[str, trade_data.TradeOrder]
+    position_map = {}
 
     @classmethod
     def reload_trade_order(cls):
@@ -94,10 +95,12 @@ class TradeSignalManager:
         cls.trade_order_map = trade_manager.db_handler.query_trade_order_map(account_id, status=['TO', 'ING'])
 
         has_warning = False
-        money = trade_manager.db_handler.query_money(account_id)
-        position_list = trade_manager.db_handler.query_current_position(account_id)
+        money = trade_manager.query_money(account_id)
+        position_list = trade_manager.query_current_position(account_id)
         for position in position_list:
             code = position.code
+            cls.position_map.update({code, position})
+
             if code in cls.trade_order_map and position.current_position > 0:
                 cls.trade_order_map[code].in_position = True
                 continue
@@ -179,9 +182,13 @@ class TradeSignalManager:
         return -1
 
     @classmethod
-    def get_try_price(cls, code):
+    def get_price(cls, code):
         if code in cls.trade_order_map:
-            return cls.trade_order_map[code].try_price
+            if code not in cls.position_map:
+                price = cls.trade_order_map[code].try_price
+            else:
+                price = trade_manager.compute_price_by_rule(cls.position_map[code], cls.trade_order_map[code])
+            return price
         return -1
 
 
@@ -323,7 +330,10 @@ def check_trade_order_try_price(code, close, yest_close, in_position, qrr):
     if now.hour < 10:
         return False
 
-    try_price = TradeSignalManager.get_try_price(code)
+    try_price = TradeSignalManager.get_price(code)
+    if try_price <= 0:
+        return False
+
     # 买入采用限价交易
     if close > try_price and qrr > compute_qrr(now):  # and (close / try_price - 1 < 0.04):
         return True
@@ -447,16 +457,11 @@ def order(trade_singal: TradeSignal):
     }
     auto = False
 
-    from server import config as svr_config
     account_id = svr_config.ACCOUNT_ID_XY
     op_type = svr_config.OP_TYPE_DBP
 
-    price_limited = 0
-    if trade_singal.policy == Policy.OPEN_PRICE:
-        price_limited = TradeSignalManager.get_try_price(trade_singal.code)
-
     order_func = trade_manager.buy if trade_singal.command == 'B' else trade_manager.sell
-    order_func(account_id, op_type, trade_singal.code, price_trade=trade_singal.price, price_limited=price_limited,
+    order_func(account_id, op_type, trade_singal.code, price_trade=trade_singal.price,
                period=trade_singal.period, policy=trade_singal.policy, auto=auto)
 
 
