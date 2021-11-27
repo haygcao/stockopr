@@ -204,6 +204,20 @@ def update_trade_order_stop_loss(account_id, code, stop_loss, risk_rate, risk_ra
         c.execute(sql_update, (stop_loss, risk_rate, risk_rate_total, code, account_id))
 
 
+def update_trade_order(account_id, date, code, keys, vals):
+    sql = "update {} set ".format(config.sql_tab_trade_order)
+    for key in keys:
+        sql += "{} = %s, ".format(key)
+    sql = "{} where account_id = %s and date = %s and code = %s".format(sql[:-2])
+
+    vals.extend([account_id, date, code])
+    with mysqlcli.get_cursor() as c:
+        try:
+            c.execute(sql, vals)
+        except Exception as e:
+            logger.info(e)
+
+
 def query_trade_order_map(account_id, code=None, status=None):
     status = ['ING'] if not status else status
     status = "','".join(status)
@@ -230,7 +244,7 @@ def query_trade_order_map(account_id, code=None, status=None):
 
 def query_trade_order(account_id, code):
     trade_order = query_trade_order_map(account_id, code, status=['TO', 'ING'])
-    return trade_order[code]
+    return trade_order[code] if code in trade_order else None
 
 
 def query_total_risk_amount(account_id):

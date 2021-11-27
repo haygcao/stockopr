@@ -325,6 +325,8 @@ def get_position_stage_impl(current_position, cost, capital_quota):
 
 
 def get_position_stage(position: trade_data.Position, trade_order: trade_data.TradeOrder):
+    if not position:
+        return PositionStage.EMPTY
     return get_position_stage_impl(position.current_position, position.cost, trade_order.capital_quota)
 
 
@@ -637,6 +639,27 @@ def create_trade_order(account_id, code, price_limited, stop_loss, strategy):
             return False
 
     return True
+
+
+def update_trade_order(account_id, code, price_limited):
+    position = query_position(account_id, code)
+    trade_order = db_handler.query_trade_order(account_id, code)
+    if not position or not trade_order:
+        return
+
+    stage = get_position_stage(position, trade_order)
+
+    if stage == PositionStage.TRY:
+        col_price = 'half_pos_price'
+    elif stage == PositionStage.HALF:
+        col_price = 'full_pos_price'
+    else:
+        return
+
+    keys = [col_price]
+    vals = [price_limited]
+
+    db_handler.update_trade_order(account_id, trade_order.date, code, keys, vals)
 
 
 def handle_illegal_position(position: trade_data.Position, quota):
