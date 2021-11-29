@@ -50,10 +50,31 @@ def quantity_relative_ratio(quote, period):
     if minutes != minutes_day:
         vol_cur_avg.iat[-1] = series_vol[-1] / minutes
 
+    # A value is trying to be set on a copy of a slice from a DataFrame.
+    # Try using .loc[row_indexer,col_indexer] = value instead
+    #
+    # See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#
+    # returning-a-view-versus-a-copy
+    #   quote['qrr'] = series_qrr
+
+
     series_qrr = round(vol_cur_avg / vol_5d_avg_shift, 2)
 
-    quote['qrr'] = series_qrr
+    # /home/shuhm/workspace/stockopr/venv2/lib/python3.7/site-packages/pandas/core/indexing.py:1667:
+    # SettingWithCopyWarning:
+    # A value is trying to be set on a copy of a slice from a DataFrame.
+    # Try using .loc[row_indexer,col_indexer] = value instead
+    #
+    # See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#
+    # returning-a-view-versus-a-copy
+    #   self.obj[key] = value
 
-    return quote
+    # quote.loc[:, 'qrr'] = series_qrr
+    # return quote
+
+    quote_copy = quote.copy()
+    quote_copy['qrr'] = series_qrr
+
+    return quote_copy
 
 

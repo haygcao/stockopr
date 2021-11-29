@@ -109,6 +109,8 @@ def query_current_position(account_id):
 def query_money(account_id):
     if dt.istradetime():
         money = tradeapi.get_asset(account_id)
+        money_db = db_handler.query_money(account_id)
+        money.origin = money_db.origin
         return money
 
     money = db_handler.query_money(account_id)

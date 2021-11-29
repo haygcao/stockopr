@@ -2,6 +2,7 @@
 
 import atexit
 import datetime
+import json
 import multiprocessing
 import time
 import traceback
@@ -94,16 +95,17 @@ class TradeSignalManager:
         account_id = svr_config.ACCOUNT_ID_XY
         cls.trade_order_map = trade_manager.db_handler.query_trade_order_map(account_id, status=['TO', 'ING'])
 
-        has_warning = False
+        no_trade_order_stocks = []
         money = trade_manager.query_money(account_id)
         position_list = trade_manager.query_current_position(account_id)
         for position in position_list:
             code = position.code
-            cls.position_map.update({code, position})
+            cls.position_map.update({code: position})
 
-            if code in cls.trade_order_map and position.current_position > 0:
-                cls.trade_order_map[code].in_position = True
+            if code in cls.trade_order_map:
+                cls.trade_order_map[code].in_position = (position.current_position > 0)
                 continue
+
             # TODO
             strategy = 'vcp_breakout_signal_enter'   # 买入策略
             risk_loss = position.current_position * position.price_cost * 0.04
@@ -113,11 +115,7 @@ class TradeSignalManager:
                 stop_loss=position.price_cost * 0.96, half_pos_price=0, full_pos_price=0,
                 stop_profit=position.price_cost * 1.15,
                 risk_rate_total=risk_rate_total, strategy=strategy, in_position=(position.current_position > 0))
-            logger.warning('[{}] with not trade order'.format(code))
-            has_warning = True
-
-        if has_warning:
-            qt_util.popup_warning_message_box_mp('occur position with not trade order')
+            no_trade_order_stocks.append(code)
 
         for code in cls.trade_order_map.keys():
             if code not in cls.stock_dict:
@@ -126,6 +124,12 @@ class TradeSignalManager:
             if code in cls.signal_map:
                 continue
             cls.signal_map[code] = []
+
+        for code in no_trade_order_stocks:
+            logger.warning('[{}/{}] with not trade order'.format(code, cls.stock_dict[code]))
+
+        if no_trade_order_stocks:
+            qt_util.popup_warning_message_box_mp('occur position with not trade order')
 
     @classmethod
     def get_strategy(cls, code):
@@ -288,8 +292,8 @@ def check_trade_order_stop_loss(code, close, in_position):
 
     white_list = config.get_white_list()
     if code in white_list:
-        logger.warning('[{}] 现股价({})已跌破止损线({}), 因其在[白名单]之中, 现不做任何处理, 请确认白名单的合理性!'.format(
-            code, close, stop_loss))
+        logger.warning('[white list][{}/{}] close({}) is less than stop loss({}), IGNORE, reasonable?'.format(
+            code, TradeSignalManager.stock_dict[code], close, stop_loss))
         return False
     return True
 
@@ -402,8 +406,7 @@ def update_status_by_strategy(code, data, period, strategy):
 
 
 def check_period(code, period, strategy, in_position):
-    logger.info('now check {} {} status, strategy is {}'.format(code, period, strategy))
-
+    # logger.debug('check {}/{} {}, strategy is {}'.format(code, TradeSignalManager.stock_dict[code], period, strategy))
     data = get_min_data(code, period)
     if not isinstance(data, pandas.DataFrame) or data.empty:
         util.alarm()
@@ -443,6 +446,7 @@ def check_period(code, period, strategy, in_position):
 def check_trade_signal(code, periods, strategy, in_position):
     for period in periods:
         trade_signal = check_period(code, period, strategy, in_position)
+        time.sleep(1)
         if not trade_signal:
             continue
         return trade_signal
@@ -500,6 +504,7 @@ def check(code, periods, strategy, in_position):
     # p.start()
 
     order(trade_signal)
+    TradeSignalManager.reload_trade_order()
     notify(trade_signal)
 
     # p.join(timeout=1)
@@ -519,10 +524,9 @@ def monitor_today():
     periods = []
 
     TradeSignalManager.reload_trade_order()
-    logger.info('stock in monitor: {}'.format(TradeSignalManager.stock_dict.values()))
+    logger.info('stock in monitor: {}'.format(json.dumps(TradeSignalManager.stock_dict, indent=4, ensure_ascii=False)))
 
     periods_enabled = ['m5', 'm30', 'day']
-    has_signal = True
     while now.hour < 15:
         now = datetime.datetime.now()
         begin1 = datetime.datetime(now.year, now.month, now.day, 9, 30, 0)
@@ -557,18 +561,13 @@ def monitor_today():
             time.sleep(3)
             continue
 
-        logger.info('quotation monitor is running')
-
-        if has_signal:
-            TradeSignalManager.reload_trade_order()
-            logger.info('stock in monitor: {}'.format(TradeSignalManager.stock_dict.values()))
-            has_signal = False
+        # logger.debug('quotation monitor is running')
 
         for code in TradeSignalManager.trade_order_map.keys():
             strategy = TradeSignalManager.get_strategy(code)
             in_position = TradeSignalManager.in_position(code)
-            if check(code, periods, strategy, in_position):
-                has_signal = True
+            check(code, periods, strategy, in_position)
+            time.sleep(1)
 
         time.sleep(60)
 

@@ -20,8 +20,9 @@ def base_filter(func):
         hour = now.hour
         minute = now.minute
         if w_day <= 5 and (hour < 15 and (hour > 9 or (hour == 9 and minute >= 15))):
-            self.write({'ret_code': -1, 'err_msg': ''})
-            return
+            pass
+            # self.write({'ret_code': -1, 'err_msg': ''})
+            # return
 
         return func(self, *args, **kwargs)
 
