@@ -299,11 +299,11 @@ def save_quote():
         # exit(0)
     xls = None
     # xls = 'data/xls/2021-05-24.xls'
-    # t1 = datetime.datetime.now()
-    # save_quote_impl(xls)
-    # t2 = datetime.datetime.now()
-    # logger.info('save quote cost [{}]s'.format((t2 - t1).seconds))
-    #
+    t1 = datetime.datetime.now()
+    save_quote_impl(xls)
+    t2 = datetime.datetime.now()
+    logger.info('save quote cost [{}]s'.format((t2 - t1).seconds))
+
     today = datetime.date.today()  # 2021/07/01
     # today_datetime = datetime.datetime(today.year, today.month, today.day)
     # quote_db.compute_market(today_datetime, today_datetime, include_end=True)

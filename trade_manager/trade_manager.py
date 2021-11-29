@@ -166,8 +166,6 @@ def sync_position(account_id):
     if not position_list:
         return position_list
 
-    order_ing_map = db_handler.query_trade_order_map(account_id, status=['ING'])
-    order_to_map = db_handler.query_trade_order_map(account_id, status=['TO'])
     for i in range(len(position_list)):
         position = position_list[i]
         trade_config = config.get_trade_config(position.code)
@@ -177,8 +175,6 @@ def sync_position(account_id):
 
     db_handler.save_positions(account_id, position_list, sync=True)
 
-    for code, trade_order in order_ing_map.items():
-        db_handler.update_trade_order_status(account_id, trade_order.date, code, 'ED')
     logger.info('update trade order')
 
     return position_list
