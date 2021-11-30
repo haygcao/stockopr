@@ -292,8 +292,8 @@ def check_trade_order_stop_loss(code, close, in_position):
 
     white_list = config.get_white_list()
     if code in white_list:
-        logger.warning('[white list][{}/{}] close({}) is less than stop loss({}), IGNORE, reasonable?'.format(
-            code, TradeSignalManager.stock_dict[code], close, stop_loss))
+        # logger.warning('[white list][{}/{}] close({}) is less than stop loss({}), IGNORE, reasonable?'.format(
+        #     code, TradeSignalManager.stock_dict[code], close, stop_loss))
         return False
     return True
 
@@ -453,8 +453,6 @@ def check_trade_signal(code, periods, strategy, in_position):
 
 
 def order(trade_singal: TradeSignal):
-    logger.info('{} {}'.format(trade_singal.command, trade_singal.code))
-
     auto_strategy_map = {
         Policy.STOP_LOSS: True,
         Policy.OPEN_PRICE: False,
@@ -471,13 +469,16 @@ def order(trade_singal: TradeSignal):
 
 def notify(trade_singal: TradeSignal):
     # log
+    code = trade_singal.code
+    name = TradeSignalManager.stock_dict[code]
     command = '买入' if trade_singal.command == 'B' else '卖出'
+
     # tts
     from toolkit import tts
     detail = ', {}'.format(' '.join(trade_singal.supplemental)) if trade_singal.supplemental else ''
-    txt = '注意, {1}信号, {0}, {2}{3}'.format(TradeSignalManager.stock_dict[trade_singal.code], command,
-                                          trade_singal.policy.value, detail)
-    logger.info(txt)
+    txt = '注意, {1}信号, {0}, {2}{3}'.format(name, command, trade_singal.policy.value, detail)
+
+    logger.info('{}/{} {} {} {}'.format(code, name, trade_singal.command, trade_singal.price, trade_singal.period))
     tts.say(txt)
 
 
@@ -526,7 +527,8 @@ def monitor_today():
     TradeSignalManager.reload_trade_order()
     logger.info('stock in monitor: {}'.format(json.dumps(TradeSignalManager.stock_dict, indent=4, ensure_ascii=False)))
 
-    periods_enabled = ['m5', 'm30', 'day']
+    last_check = datetime.datetime(now.year, now.month, now.day, 9, 30, 0)
+    periods_enabled = ['m30', 'day']
     while now.hour < 15:
         now = datetime.datetime.now()
         begin1 = datetime.datetime(now.year, now.month, now.day, 9, 30, 0)
@@ -540,11 +542,16 @@ def monitor_today():
             # pass
 
         periods.clear()
+
+        if (now - last_check).seconds < 4 * 60:
+            time.sleep(3)
+            continue
+
         if 'm5' in periods_enabled and now.minute % 5 < 1:
             periods.append('m5')
-        if 'm30' in periods_enabled and now.minute % 30 < 1:
+        if 'm30' in periods_enabled and now.minute % 5 < 1:
             periods.append('m30')
-        if 'day' in periods_enabled and now.minute % 60 < 1:
+        if 'day' in periods_enabled and now.minute % 5 < 1:
             periods.append('day')
 
         # periods.append('day')
@@ -560,6 +567,8 @@ def monitor_today():
             # sleep = random.randint(3, 6) * 60 if now.minute < 50 else random.randint(1, 3) * 60
             time.sleep(3)
             continue
+
+        last_check = now
 
         # logger.debug('quotation monitor is running')
 

@@ -52,7 +52,7 @@ def signal_exit(quote, period):
         ema_l = ema.ema(close, 26 * 6)
         ema_l_shift = ema_l.shift(periods=1)
         angle20 = util.angle_np(1, 100 * (ema_l - ema_l_shift) / ema_l_shift)
-        cond &= (angle20 < 10)
+        cond &= (angle20 < 5)
 
     quote['ma_signal_exit'] = numpy.nan
     quote['ma_signal_exit'] = quote['ma_signal_exit'].mask(cond, quote.low)

@@ -546,8 +546,12 @@ def trade_truth():
 
     # charge = data['手续费'].sum() + data['印花税'].sum() + data['过户费'].sum()
 
+    # data = data.loc[:datetime.datetime(2019, 3, 23)]
+    # data = data[data['证券代码'] == '002739']
     trade_date_list = compute_trade(data)
     trade_detail = compute_trade_detail(trade_date_list, data)
+    # trade_detail_wd = trade_detail[trade_detail['code'] == 2739]
+    # profit = trade_detail_wd['profit'].sum()
 
     trade_stat_month = stat_trade_by_month(trade_detail)
     trade_stat_quarter = stat_trade_by_quarter(trade_stat_month)

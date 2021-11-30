@@ -613,6 +613,13 @@ def add_succ_and_pred_maps(cls):
 
 @add_succ_and_pred_maps
 class PositionStage(Enum):
+    """
+    +20% +30% +50% = 100% (+5% +7.5% +12.5% = 25%)
+    涉水 建仓 加仓
+
+    -50% -50% = 0%
+    减仓 清仓
+    """
     EMPTY = 0
     TRY = 0.2
     HALF = 0.5

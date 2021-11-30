@@ -4,7 +4,7 @@ import threading
 import time
 
 import indicator
-from acquisition import tx, quote_db
+from acquisition import tx, quote_db, basic
 from config import config
 from config.config import Policy, ERROR, PositionStage
 from data_structure import trade_data
@@ -484,7 +484,11 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
 
     if count == 0:
         trade_order = db_handler.query_trade_order(account_id, code)
-        count = min(position.current_position, position.avail_position, 0.5 * trade_order.position)
+        if trade_order:
+            count = min(position.current_position, position.avail_position, 0.5 * trade_order.position)
+        else:
+            popup_warning_message_box_mp('请先创建交易指令单, 请务必遵守规则!')
+            count = min(position.current_position, position.avail_position)
         count = count // 100 * 100
 
     order(account_id, op_type, 'S', code, price_trade=price_trade, price_limited=price_limited, count=count, auto=auto)
@@ -493,6 +497,11 @@ def sell(account_id, op_type, code, price_trade, price_limited=0, count=0, perio
 def order(account_id, op_type, direct, code, price_trade, price_limited=0, count=0, auto=False):
     try:
         count = count // 100 * 100
+
+        trade_config = config.get_trade_config(code)
+        if 'count' in trade_config:
+            count = trade_config['count']
+
         tradeapi.order(account_id, op_type, direct, code, count, price_limited, auto)
         now = datetime.datetime.now()
         price_ed = 0   # 成交的价格
@@ -502,7 +511,9 @@ def order(account_id, op_type, direct, code, price_trade, price_limited=0, count
         if auto and price_limited == 0:
             threading.Thread(target=assure_finish, args=(account_id, op_type, code, count, now)).start()
         if not auto:
-            popup_warning_message_box_mp('更新 operation detail?', update_operation_detail, detail)
+            name = basic.get_stock_name(code)
+            msg = '[{}/{}][{}]\n更新 operation detail?'.format(code, name, direct)
+            popup_warning_message_box_mp(msg, update_operation_detail, detail)
         # update_operation_detail(detail)
         sync_position(account_id)
         sync_money(account_id)

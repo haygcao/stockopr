@@ -51,6 +51,10 @@ from util.QComboCheckBox import QComboCheckBox
 from util.log import logger
 from util.pywinauto_util import max_window
 
+# [WARNING][playsound.py:253] playsound is relying on another python subprocess.
+# Please use `pip install pygobject` if you want playsound to run more efficiently.
+sys.path.append('/usr/lib/python3/dist-packages')
+
 # pywinauto
 # QWindowsContext: OleInitialize() failed: "COM error 0xffffffff80010106 RPC_E_CHANGED_MODE (Unknown error 0x080010106)"
 warnings.simplefilter("ignore", category=UserWarning)

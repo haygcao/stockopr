@@ -14,16 +14,13 @@
     ]
   },
   "603726": {
-    "auto_buy": false,
-    "auto_sell": false,
-    "count": 0,
     "price_cost": 15.63,
     "profit": -6105.44
   },
   "002739": {
     "auto_buy": false,
     "auto_sell": false,
-    "count": 0,
+    "count": 6500,
     "price_cost": 19.35,
     "profit": -64138.59
   },
