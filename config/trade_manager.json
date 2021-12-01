@@ -1,3 +1,4 @@
 {
-  "white_list": ["002739"]
+  "white_list": ["002739"],
+  "ignore_list": ["603726"]
 }

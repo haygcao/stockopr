@@ -30,6 +30,9 @@ import atexit
 import sys
 
 
+sys.path.append('/usr/lib/python3/dist-packages')
+
+
 class ExitHooks(object):
     def __init__(self):
         self.exit_code = None
@@ -60,17 +63,19 @@ class TradeSignal:
     price: float
     date: datetime.datetime = datetime.datetime.now()
     command: str = ''
+    strategy: str = ''
     policy: Policy = Policy.DEFAULT
     period: str = ''
     last: bool = False
     supplemental: str = ''
 
-    def __init__(self, code: str, price: float, date: datetime.datetime, command: str, category: Policy, period: str,
-                 last: bool, supplemental: str = None):
+    def __init__(self, code: str, price: float, date: datetime.datetime, command: str, strategy: str, category: Policy,
+                 period: str, last: bool, supplemental: str = None):
         self.code = code
         self.price = price
         self.date = date
         self.command = command
+        self.strategy = strategy
         self.policy = category
         self.period = period
         self.last = last
@@ -125,6 +130,11 @@ class TradeSignalManager:
                 continue
             cls.signal_map[code] = []
 
+        ignore_list = config.get_ignore_list()
+        for code in ignore_list:
+            cls.trade_order_map.pop(code)
+            logger.warning('[{}/{}] in ignore list, IGNORE'.format(code, cls.stock_dict[code]))
+
         for code in no_trade_order_stocks:
             logger.warning('[{}/{}] with not trade order'.format(code, cls.stock_dict[code]))
 
@@ -156,7 +166,19 @@ class TradeSignalManager:
         cls.signal_map[trade_signal.code].append(trade_signal)
 
     @classmethod
+    def need_check(cls, code) -> bool:
+        ignore_list = config.get_ignore_list()
+        if code in ignore_list:
+            return False
+        return True
+
+    @classmethod
     def need_signal(cls, trade_signal: TradeSignal) -> bool:
+        last_signal = cls.get_last_trade_signal(trade_signal.code)
+        cls.append_trade_siganl(trade_signal)
+        if last_signal and last_signal.command == trade_signal.command:
+            return False
+
         if trade_signal.policy == Policy.STOP_PROFIT and trade_signal.period != 'day':
             return False
         code = trade_signal.code
@@ -168,13 +190,6 @@ class TradeSignalManager:
             return False
 
         if trade_signal.command == 'B' and position.current_position >= TradeSignalManager.position(code):
-            return False
-
-        return True
-
-        last_signal = cls.get_last_trade_signal(trade_signal.code)
-        cls.append_trade_siganl(trade_signal)
-        if last_signal and last_signal.command == trade_signal.command:
             return False
 
         return True
@@ -230,6 +245,21 @@ def get_day_data(code, period='day', count=250):
     return data
 
 
+def compute_periods():
+    periods_enabled = ['m30', 'day']
+
+    now = datetime.datetime.now()
+
+    periods_tmp = []
+    if 'm5' in periods_enabled and now.minute % 5 == 4:
+        periods_tmp.append('m5')
+    if 'm30' in periods_enabled and now.minute % 5 == 4:
+        periods_tmp.append('m30')
+    if 'day' in periods_enabled and now.minute % 5 == 4:
+        periods_tmp.append('day')
+    return periods_tmp
+
+
 def update_status_old(code, data, period):
     data_index_ = data.index[-1]
     price = data['close'][-1]
@@ -251,16 +281,16 @@ def update_status_old(code, data, period):
         command = 'B' if 'bull' in column_name else 'S'
         if data_sub.any(skipna=True):
             data_index_ = data_sub[data_sub.notnull()].index[0]
-            return TradeSignal(code, price, data_index_, command, Policy.DEVIATION, period, True)
+            return TradeSignal(code, price, data_index_, command, '', Policy.DEVIATION, period, True)
 
     data = signal_channel.signal_enter(data, period=period)
     data = signal_channel.signal_exit(data, period=period)
 
     if not numpy.isnan(data['channel_signal_enter'][-1]):
-        return TradeSignal(code, price, data_index_, 'B', Policy.CHANNEL, period, True)
+        return TradeSignal(code, price, data_index_, 'B', '', Policy.CHANNEL, period, True)
 
     if not numpy.isnan(data['channel_signal_exit'][-1]):
-        return TradeSignal(code, price, data_index_, 'S', Policy.CHANNEL, period, True)
+        return TradeSignal(code, price, data_index_, 'S', '', Policy.CHANNEL, period, True)
 
     # long period do not check dynamical system signal
     if period in ['m30']:
@@ -271,10 +301,10 @@ def update_status_old(code, data, period):
     data = signal_dynamical_system.signal_exit(data, period=period)
 
     if data['dynamical_system_signal_enter'][-1] > 0:
-        return TradeSignal(code, price, data_index_, 'B', Policy.DYNAMICAL_SYSTEM, period, True)
+        return TradeSignal(code, price, data_index_, 'B', '', Policy.DYNAMICAL_SYSTEM, period, True)
 
     if not numpy.isnan(data['dynamical_system_signal_exit'][-1]):
-        return TradeSignal(code, price, data_index_, 'S', Policy.DYNAMICAL_SYSTEM, period, True)
+        return TradeSignal(code, price, data_index_, 'S', '', Policy.DYNAMICAL_SYSTEM, period, True)
     # if not status_map[code][str(m)] or data['dyn_sys'][-1] != status_map[code][str(m)][-1]:
     #     status_map[code][str(m)].append((datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), data['dyn_sys'][-1]))
     #     return True
@@ -356,7 +386,7 @@ def update_status_by_all_signal(code, data, period):
     # if period == 'day' or data_index_.minute % minute >= minute - 3:
 
     if 'stop_loss_signal_exit' in data.columns and not numpy.isnan(data['stop_loss_signal_exit'][index]):
-        return TradeSignal(code, price, data_index_, 'S', Policy.STOP_LOSS, period, True)
+        return TradeSignal(code, price, data_index_, 'S', 'stop_loss_signal_exit', Policy.STOP_LOSS, period, True)
 
     if index == -1 and now.minute < 55:
         signal_exit_deviation_tmp = ['macd_bear_market_deviation_signal_exit']
@@ -369,19 +399,19 @@ def update_status_by_all_signal(code, data, period):
         if not numpy.isnan(data[deviation][index]):
             direct = 'S'
             supplemental = signal.get_osc_key(deviation[: deviation.index('_b')])
-            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True, supplemental)
+            return TradeSignal(code, price, data_index_, direct, deviation, Policy.DEVIATION, period, True, supplemental)
 
     for deviation in signal_enter_deviation_tmp:
         if not numpy.isnan(data[deviation][index]):
             direct = 'B'
             supplemental = signal.get_osc_key(deviation[: deviation.index('_b')])
-            return TradeSignal(code, price, data_index_, direct, Policy.DEVIATION, period, True, supplemental)
+            return TradeSignal(code, price, data_index_, direct, deviation, Policy.DEVIATION, period, True, supplemental)
 
     if not numpy.isnan(data['signal_exit'][index]):
-        return TradeSignal(code, price, data_index_, 'S', Policy.DEFAULT, period, True)
+        return TradeSignal(code, price, data_index_, 'S', '', Policy.DEFAULT, period, True)
 
     if not numpy.isnan(data['signal_enter'][index]):
-        return TradeSignal(code, price, data_index_, 'B', Policy.DEFAULT, period, True)
+        return TradeSignal(code, price, data_index_, 'B', '', Policy.DEFAULT, period, True)
 
 
 def update_status_by_strategy(code, data, period, strategy):
@@ -402,7 +432,7 @@ def update_status_by_strategy(code, data, period, strategy):
         supplemental = ''
         policy = Policy.DEFAULT
 
-    return TradeSignal(code, price, data_index_, direct, policy, period, True, supplemental)
+    return TradeSignal(code, price, data_index_, direct, strategy, policy, period, True, supplemental)
 
 
 def check_period(code, period, strategy, in_position):
@@ -415,13 +445,13 @@ def check_period(code, period, strategy, in_position):
 
     close = data.close[-1]
     if check_trade_order_stop_loss(code, close, in_position):
-        return TradeSignal(code, close, data.index[-1], 'S', Policy.STOP_LOSS, period, True)
+        return TradeSignal(code, close, data.index[-1], 'S', strategy, Policy.STOP_LOSS, period, True)
 
     yest_close = data['close'][-2]
     data_qrr = quantity_relative_ratio.quantity_relative_ratio(data[-6:], period)
     qrr = data_qrr['qrr'][-1]
     if check_trade_order_try_price(code, close, yest_close, in_position, qrr):
-        return TradeSignal(code, close, data.index[-1], 'B', Policy.OPEN_PRICE, period, True)
+        return TradeSignal(code, close, data.index[-1], 'B', strategy, Policy.OPEN_PRICE, period, True)
 
     trade_signal = None
     if strategy:
@@ -453,11 +483,20 @@ def check_trade_signal(code, periods, strategy, in_position):
 
 
 def order(trade_singal: TradeSignal):
-    auto_strategy_map = {
+    auto_policy_map = {
         Policy.STOP_LOSS: True,
         Policy.OPEN_PRICE: False,
     }
-    auto = False
+    auto_strategy_map = {
+        'ma_signal_enter': True,
+        'ma_signal_exit': True,
+        'stop_profit_signal_exit': True
+    }
+
+    if trade_singal.policy == Policy.DEFAULT:
+        auto = auto_strategy_map.get(trade_singal.strategy, False)
+    else:
+        auto = auto_policy_map.get(trade_singal.policy, False)
 
     account_id = svr_config.ACCOUNT_ID_XY
     op_type = svr_config.OP_TYPE_DBP
@@ -522,13 +561,13 @@ def monitor_today():
     if not dt.istradeday() or now.hour >= 15:
         return
 
-    periods = []
-
     TradeSignalManager.reload_trade_order()
-    logger.info('stock in monitor: {}'.format(json.dumps(TradeSignalManager.stock_dict, indent=4, ensure_ascii=False)))
+    # msg = json.dumps(TradeSignalManager.stock_dict, indent=4, ensure_ascii=False)
+    code_list = list(TradeSignalManager.trade_order_map.keys())
+    msg = '\n'.join(['{}/{}'.format(code, TradeSignalManager.stock_dict[code]) for code in code_list])
+    logger.info('stock in monitor:\n{}'.format(msg))
 
     last_check = datetime.datetime(now.year, now.month, now.day, 9, 30, 0)
-    periods_enabled = ['m30', 'day']
     while now.hour < 15:
         now = datetime.datetime.now()
         begin1 = datetime.datetime(now.year, now.month, now.day, 9, 30, 0)
@@ -537,22 +576,15 @@ def monitor_today():
         end2 = datetime.datetime(now.year, now.month, now.day, 15, 0, 0)
 
         if (now < begin1) or (end1 < now < begin2) or (now > end2):
-            time.sleep(60)
+            time.sleep(30)
             continue
             # pass
-
-        periods.clear()
 
         if (now - last_check).seconds < 4 * 60:
             time.sleep(3)
             continue
-
-        if 'm5' in periods_enabled and now.minute % 5 < 1:
-            periods.append('m5')
-        if 'm30' in periods_enabled and now.minute % 5 < 1:
-            periods.append('m30')
-        if 'day' in periods_enabled and now.minute % 5 < 1:
-            periods.append('day')
+        
+        periods = compute_periods()
 
         # periods.append('day')
 
@@ -573,12 +605,14 @@ def monitor_today():
         # logger.debug('quotation monitor is running')
 
         for code in TradeSignalManager.trade_order_map.keys():
+            # if not TradeSignalManager.need_check(code):
+            #     continue
             strategy = TradeSignalManager.get_strategy(code)
             in_position = TradeSignalManager.in_position(code)
             check(code, periods, strategy, in_position)
             time.sleep(1)
 
-        time.sleep(60)
+        time.sleep(30)
 
 
 if __name__ == '__main__':
