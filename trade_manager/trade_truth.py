@@ -408,7 +408,7 @@ def show_profit_by_count(trade_detail):
 def show_profit_per_trade(trade_detail):
     fig, ax = plt.subplots()
     x = trade_detail.index
-    y = trade_detail['profit_percent'].cumsum()
+    # y = trade_detail['profit_percent'].cumsum()
     y = (((trade_detail['profit_percent'] + 100) / 100).cumprod() - 1) * 100
     ax.fill_between(x, y, where=(y > 0), color='seagreen', alpha=0.2)
     ax.fill_between(x, y, where=(y <= 0), color='red', alpha=0.2)
@@ -446,6 +446,58 @@ def show_profit_per_day(trade_detail):
 
     plt.margins(0, 0)
     plt.savefig(os.path.join(truth_dir, '{}.png'.format(sys._getframe().f_code.co_name)),
+                dpi=dpi, bbox_inches='tight', pad_inches=0)
+
+
+def show_profit_stat(trade_detail, freq):
+    fig, ax = plt.subplots()
+
+    x = trade_detail.index
+    y = trade_detail['profit'].cumsum()
+    y = round(y / 10000, 2)
+
+    # y = (((trade_detail['profit_percent'] + 100) / 100).cumprod() - 1) * 100
+    ax.fill_between(x, y, where=(y > 0), color='seagreen', alpha=0.1)
+    ax.fill_between(x, y, where=(y <= 0), color='red', alpha=0.1)
+
+    max_ = y.idxmax()
+    min_ = y.idxmin()
+    ax.plot([y.index[0], max_], [y[max_], y[max_]])
+    ax.plot([y.index[0], min_], [y[min_], y[min_]])
+
+    ax.text(max_, y[max_] + 0.01, y[max_], color='green', fontweight='bold')
+    ax.text(y.index[0], y[max_] + 0.01, y[max_], color='green', fontweight='bold')
+    ax.text(min_, y[min_] + 0.01, y[min_], color='red', fontweight='bold')
+    ax.text(y.index[0], y[min_] + 0.01, y[min_], color='red', fontweight='bold')
+
+    # ax.plot([min(x.values), max(x.values)], [0, 0], color='grey', linestyle='-.')
+    plt.grid(True, linestyle='-.', alpha=0.2)
+
+    ax2 = ax.twinx()
+    y = round(trade_detail['profit'] / 10000, 2)
+    v_mean = y.abs().mean()
+    v_threshold = v_mean * 1.5
+
+    y1 = y.mask(y <= v_threshold, 0)
+    y2 = y.mask(y > -v_threshold, 0)
+    y3 = y.mask((y <= 0) | (y >= v_threshold), 0)
+    y4 = y.mask((y > 0) | (y <= -v_threshold), 0)
+    ax2.bar(x, y1, color='green', width=20, alpha=0.5, label='earn')
+    ax2.bar(x, y2.abs(), color='red', width=20, alpha=0.5, label='loss')
+    ax2.bar(x, y3, color='lightgreen', width=20, alpha=0.2, label='earn')
+    ax2.bar(x, y4.abs(), color='salmon', width=20, alpha=0.2, label='loss')
+
+    for i, v in enumerate(y):
+        abs_v = abs(v)
+        if abs_v < v_threshold:
+            continue
+        color = 'grey'
+        ax2.text(y.index[i], abs_v + 0.01, v, color=color)  # , fontweight='bold')
+
+    fig.set_size_inches(10.24, 7.68)
+
+    plt.margins(0, 0)
+    plt.savefig(os.path.join(truth_dir, '{}_{}.png'.format(sys._getframe().f_code.co_name, freq)),
                 dpi=dpi, bbox_inches='tight', pad_inches=0)
 
 
@@ -559,6 +611,7 @@ def trade_truth():
 
     show_profit_by_count(trade_detail)
     show_profit_per_trade(trade_detail)
+    show_profit_stat(trade_stat_month, 'M')
     show_trade_stat(trade_stat_month, 'M')
     show_trade_stat(trade_stat_quarter, 'Q')
     show_trade_stat(trade_stat_year, 'Y')
