@@ -322,7 +322,13 @@ def save_quote():
 
     trade_date = dt.get_trade_date()
     count = quote_db.get_quote_count(trade_date)
-    qt_util.popup_info_message_box_mp('[{}] [{}] rows updated'.format(trade_date, count))
+    msg = '[{}] [{}] rows updated'.format(trade_date, count)
+    logger.info(msg)
+    qt_util.popup_info_message_box_mp(msg)
+
+    t3 = datetime.datetime.now()
+    logger.info('compute and save extra data cost [{}]s'.format((t3 - t2).seconds))
+    logger.info('save quote total cost [{}]s'.format((t3 - t1).seconds))
 
 
 def check_quote(quote1, quote2):

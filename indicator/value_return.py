@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy
 
 from indicator.decorator import computed

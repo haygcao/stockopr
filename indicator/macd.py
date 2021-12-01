@@ -8,11 +8,13 @@ DIF:EMA(CLOSE,SHORT)-EMA(CLOSE,LONG);
 DEA:EMA(DIF,MID);
 MACD:(DIF-DEA)*2,COLORSTICK;
 """
+from indicator import ema
 from indicator.decorator import computed
 
 
 @computed(column_name='macd_histogram')
 def compute_macd(quote):
+    quote = ema.compute_ema(quote)
     exp12 = quote['ema12']
     exp26 = quote['ema26']
     macd_line = exp12 - exp26

@@ -2,7 +2,7 @@ import datetime
 import unittest
 
 from acquisition import quote_db
-from indicator import ad, relative_strength_rating, quantity_relative_ratio
+from indicator import ad, relative_strength_rating, quantity_relative_ratio, trend_strength
 from indicator import boll
 from indicator import cci
 from indicator import crsi
@@ -26,6 +26,9 @@ class IndicatorTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_trend_strength(self):
+        quote = trend_strength.compute_trend_strength(self.quote, self.period)
 
     def test_quantity_relative_ratio(self):
         from acquisition import tx
