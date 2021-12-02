@@ -390,9 +390,9 @@ def show_profit_by_count(trade_detail):
     color = color.mask((x.index > 10), 'darkgreen')
     cursor = Cursor(ax, useblit=True, color='grey', linewidth=1)
     ax.bar(x.index, x.values, color=color, tick_label=x.index)
-    ax.plot([-9.5, -9.5], [0, max(x.values)], color='purple')
-    ax.plot([-5.5, -5.5], [0, max(x.values)], color='red')
-    ax.plot([0.5, 0.5], [0, max(x.values)], color='yellow', linewidth=2)
+    # ax.plot([-9.5, -9.5], [0, max(x.values)], color='purple')
+    # ax.plot([-5.5, -5.5], [0, max(x.values)], color='red')
+    # ax.plot([0.5, 0.5], [0, max(x.values)], color='yellow', linewidth=2)
     plt.xticks(numpy.arange(min(x.index), max(x.index) + 1, 1), rotation=90)
     plt.yticks(numpy.arange(0, max(x.values), 5))
     plt.grid(True, linestyle='--', alpha=0.2)  # 网格线

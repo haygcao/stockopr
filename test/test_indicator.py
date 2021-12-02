@@ -18,6 +18,8 @@ from indicator import vcp
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
         self.code = '002739'
+        # self.code = '601633'
+        self.code = '300598'
         self.period = 'm30'
         # period = 'day'
         count = 250
