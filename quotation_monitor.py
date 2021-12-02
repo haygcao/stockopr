@@ -81,6 +81,9 @@ class TradeSignal:
         self.last = last
         self.supplemental = supplemental
 
+    def __str__(self):
+        return ' '.join([self.date.strftime('%H:%M'), self.code, self.command, self.strategy])
+
 
 class TradeSignalManager:
     # {
@@ -498,6 +501,11 @@ def order(trade_singal: TradeSignal):
     else:
         auto = auto_policy_map.get(trade_singal.policy, False)
 
+    if trade_singal.date.minute % 30 != 29:
+        auto = False
+
+    auto = False
+
     account_id = svr_config.ACCOUNT_ID_XY
     op_type = svr_config.OP_TYPE_DBP
 
@@ -539,7 +547,7 @@ def check(code, periods, strategy, in_position):
     signal.write_supplemental_signal(supplemental_signal_path, code, trade_signal.date, trade_signal.command,
                                      trade_signal.period, trade_signal.price)
 
-    logger.info(TradeSignalManager.signal_map)
+    # logger.info(TradeSignalManager.signal_map)
     # p = multiprocessing.Process(target=open_graph, args=(code, trade_signal.period, trade_signal.supplemental))
     # p.start()
 

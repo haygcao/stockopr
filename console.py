@@ -100,27 +100,66 @@ def send_key(key):
     # pag.moveTo(x, y)
 
 
+def str_stock_info(stock_info):
+    msg = '[{} {}|{}  {}%]\tstrength: [{}]  rs: [{}]  fmvp: [{}]  pct: [{}]'.format(
+        stock_info['code'], stock_info['order_price'], stock_info['stop_loss'], stock_info['risk_rate'],
+        stock_info['strength'], stock_info['rs_rating'], stock_info['fmvp'], stock_info['percent'])
+
+    return msg
+
+
+def compute_trend_strength(code):
+    quote = quote_db.get_price_info_df_db(code, 300)
+    quote = trend_strength.compute_trend_strength(quote, 'day')
+    quote_week = quote_db.resample_quote(quote, 'W')
+    quote_week = trend_strength.compute_trend_strength(quote_week, 'week')
+    quote_m30 = tx.get_kline_data_sina(code, 'm30')
+    quote_m30 = trend_strength.compute_trend_strength(quote_m30, 'm30')
+    quote_m5 = tx.get_kline_data_sina(code, 'm5')
+    quote_m5 = trend_strength.compute_trend_strength(quote_m5, 'm5')
+
+    strength = '{}|{}|{}|{}'.format(quote_week['trend_strength'][-1], quote['trend_strength'][-1],
+                                    quote_m30['trend_strength'][-1], quote_m5['trend_strength'][-1])
+    return strength
+
+
 def compute_stock_info(code):
     quote = quote_db.get_price_info_df_db(code, 300)
+    trade_order = trade_manager.db_handler.query_trade_order(svr_config.ACCOUNT_ID_XY, code)
+    if trade_order:
+        order_price = trade_order.full_pos_price
+        if order_price <= 0:
+            order_price = trade_order.half_pos_price
+        if order_price <= 0:
+            order_price = trade_order.try_price
+        stop_loss = trade_order.stop_loss
+    else:
+        order_price = 0
+        stop_loss = 0
+
     rs_rating = quote['rs_rating'][-1]
     rs_rating = int(rs_rating) if rs_rating > 0 else rs_rating
     fmvp = fund.query_fmvp(code)
     fmvp = round(fmvp, 2) if fmvp > 0 else fmvp
     percent = round(100 * (quote.close[-1] / quote.close[-250] - 1), 2)
 
-    quote = trend_strength.compute_trend_strength(quote, 'day')
-    quote_week = quote_db.resample_quote(quote, 'W')
-    quote_week = trend_strength.compute_trend_strength(quote_week, 'week')
-    quote_m30 = tx.get_kline_data_sina(code, 'm30')
-    quote_m30 = trend_strength.compute_trend_strength(quote_m30, 'm30')
+    # stop_loss = stop_loss if stop_loss > 0 else order_price
+    risk_rate = round(100 * (1 - order_price / stop_loss), 2) if stop_loss > 0 else 0
 
     stock_info = {
+        'code': code,
+        'time': datetime.datetime.now(),
         'rs_rating': rs_rating,
         'fmvp': fmvp,
         'percent': percent,
-        'strength': '{}|{}|{}'.format(
-            quote_week['trend_strength'][-1], quote['trend_strength'][-1], quote_m30['trend_strength'][-1])
+        'price': quote['close'][-1],
+        'order_price': order_price,
+        'stop_loss': stop_loss,
+        'risk_rate': risk_rate
     }
+
+    strength = compute_trend_strength(code)
+    stock_info.update({'strength': strength})
 
     return stock_info
 
@@ -215,7 +254,8 @@ class Panel(QWidget):
         self.qle_stop_loss.setPlaceholderText('止损价')
 
         self.lbl = QLabel('{} {} {}'.format(self.code, self.period, list_to_str(self.price_and_stop_loss)), self)
-        self.lbl_stock_info = QLabel('', self)
+        self.lbl_stock_info = QPushButton('', self)  # QLabel('', self)
+        self.lbl_stock_info.setStyleSheet("QPushButton { text-align: left; }")
         self.combo_code = QComboBox(self)
         self.combo_period = QComboBox(self)
         self.combo_indictor = QComboBox(self)
@@ -328,6 +368,7 @@ class Panel(QWidget):
 
         self.combo_code.activated[str].connect(self.on_activated_code)
 
+        self.lbl_stock_info.clicked.connect(self.update_stock_info)
         self.btn_tdx.clicked.connect(self.open_tdx)
         self.btn_tdx_prev.clicked.connect(self.switch_code)
         self.btn_tdx_next.clicked.connect(self.switch_code)
@@ -473,6 +514,12 @@ class Panel(QWidget):
         comp.setHidden(hide)
         self.setFixedHeight(self.geometry().height() + adj * comp.geometry().height())
 
+    def update_stock_info(self):
+        strength = compute_trend_strength(self.code)
+        stock_info = self.stock_info_map[self.code]
+        stock_info.update({'strength': strength, 'time': datetime.datetime.now()})
+        self.lbl_stock_info.setText(str_stock_info(stock_info))
+
     def set_label(self):
         try_price = self.price_and_stop_loss[0]
         stop_loss = self.price_and_stop_loss[1]
@@ -483,12 +530,18 @@ class Panel(QWidget):
         self.lbl.adjustSize()
 
         if self.code not in self.stock_info_map:
-            return
+            stock_info = compute_stock_info(self.code)
+            self.stock_info_map.update({self.code: stock_info})
 
         stock_info = self.stock_info_map[self.code]
-        self.lbl_stock_info.setText('[{}-{} {}  {}%]\tstrength: [{}]  rs: [{}]  fmvp: [{}]  pct: [{}]'.format(
-            self.code, self.period, list_to_str(self.price_and_stop_loss), risk_rate,
-            stock_info['strength'], stock_info['rs_rating'], stock_info['fmvp'], stock_info['percent']))
+
+        if dt.istradetime():
+            now = datetime.datetime.now()
+            if (now - stock_info['time']).seconds > 3 * 60:
+                strength = compute_trend_strength(self.code)
+                stock_info.update({'strength': strength, 'time': now})
+
+        self.lbl_stock_info.setText(str_stock_info(stock_info))
 
     def checked(self, checked):
         for s, w in self.widget_signals.items():
@@ -536,22 +589,14 @@ class Panel(QWidget):
 
     def on_activated_code(self, text):
         self.code = text.split()[0]
-
-        trade_order = trade_manager.db_handler.query_trade_order(self.account_id, self.code)
-        if trade_order:
-            price = trade_order.full_pos_price
-            if price <= 0:
-                price = trade_order.half_pos_price
-            if price <= 0:
-                price = trade_order.try_price
-
-            self.price_and_stop_loss = [price, trade_order.stop_loss]
+        stock_info = self.stock_info_map[self.code]
+        price, stop_loss = stock_info['order_price'], stock_info['stop_loss']
+        if stop_loss > 0:
+            self.price_and_stop_loss = [price, stop_loss]
             self.qle_price.setText(str(self.price_and_stop_loss[0]))
             self.qle_stop_loss.setText(str(self.price_and_stop_loss[1]))
         else:
-            quote = tx.get_realtime_data_sina(self.code)
-            if isinstance(quote, pandas.DataFrame):
-                self.price_and_stop_loss[0] = quote['close'][-1]
+            self.price_and_stop_loss[0] = price
 
             self.qle_price.clear()
             self.qle_stop_loss.clear()
