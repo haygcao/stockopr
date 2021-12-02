@@ -40,7 +40,7 @@ import trade_manager.db_handler
 from acquisition import acquire, basic, quote_db, tx
 from config import config
 from console_trade import TableOrder
-from indicator import relative_price_strength
+from indicator import relative_price_strength, trend_strength
 from pointor.signal import write_supplemental_signal
 from selector import selector
 from selector.plugin import fund
@@ -98,6 +98,31 @@ def send_key(key):
     pyautogui.press('enter')
 
     # pag.moveTo(x, y)
+
+
+def compute_stock_info(code):
+    quote = quote_db.get_price_info_df_db(code, 300)
+    rs_rating = quote['rs_rating'][-1]
+    # rs_rating = int(rs_rating) if rs_rating > 0 else rs_rating
+    fmvp = fund.query_fmvp(code)
+    # fmvp = round(fmvp, 2) if fmvp > 0 else fmvp
+    percent = round(100 * (quote.close[-1] / quote.close[-250] - 1), 3)
+
+    quote = trend_strength.compute_trend_strength(quote, 'day')
+    quote_week = quote_db.resample_quote(quote, 'W')
+    quote_week = trend_strength.compute_trend_strength(quote_week, 'week')
+    quote_m30 = tx.get_kline_data_sina(code, 'm30')
+    quote_m30 = trend_strength.compute_trend_strength(quote_m30, 'm30')
+
+    stock_info = {
+        'rs_rating': rs_rating,
+        'fmvp': fmvp,
+        'percent': percent,
+        'strength': '{}|{}|{}'.format(
+            quote_week['trend_strength'][-1], quote['trend_strength'][-1], quote_m30['trend_strength'][-1])
+    }
+
+    return stock_info
 
 
 class Main(QMainWindow):
@@ -461,9 +486,9 @@ class Panel(QWidget):
             return
 
         stock_info = self.stock_info_map[self.code]
-        self.lbl_stock_info.setText('[{}-{} {}  {}%]\trs_rating: [{}]  fmvp: [{}]  percent: [{}]'.format(
+        self.lbl_stock_info.setText('[{}-{} {}  {}%]\tstrength: [{}]  rs: [{}]  fmvp: [{}]  pct: [{}]'.format(
             self.code, self.period, list_to_str(self.price_and_stop_loss), risk_rate,
-            stock_info['rs_rating'], stock_info['fmvp'], stock_info['percent']))
+            stock_info['strength'], stock_info['rs_rating'], stock_info['fmvp'], stock_info['percent']))
 
     def checked(self, checked):
         for s, w in self.widget_signals.items():
@@ -657,13 +682,9 @@ class Panel(QWidget):
         for code in code_list:
             if code in self.stock_info_map:
                 continue
-            quote = quote_db.get_price_info_df_db(code, 300)
-            rs_rating = quote['rs_rating'][-1]
-            # rs_rating = int(rs_rating) if rs_rating > 0 else rs_rating
-            fmvp = fund.query_fmvp(code)
-            # fmvp = round(fmvp, 2) if fmvp > 0 else fmvp
-            percent = round(100 * (quote.close[-1] / quote.close[-250] - 1), 3)
-            self.stock_info_map.update({code: {'rs_rating': rs_rating, 'fmvp': fmvp, 'percent': percent}})
+
+            stock_info = compute_stock_info(code)
+            self.stock_info_map.update({code: stock_info})
 
         qt_util.popup_info_message_box_mp('[{}] loaded'.format(len(code_list)))
 
