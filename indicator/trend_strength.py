@@ -29,6 +29,11 @@ def compute_strength(quote, trend_up):
     di_shift = di.shift(periods=1)
     df['di_direct'] = df['dmi'] & (di > di_shift)
 
+    di2 = quote['mdi'] if adj == 1 else quote['pdi']
+    df['strong_di'] = df['dmi'] & (di >= 50) & (di2 <= 10)
+
+    df['strong_adx'] = df['dmi'] & (adx > di)
+
     ema_angle_ori = util.angle_np(1, 100 * (ema26 / ema26_shift - 1))
     ema_angle = ema.ema(ema_angle_ori, 2)
     angle_adj = 0 if adj == 1 else 10
@@ -62,13 +67,19 @@ def compute_strength(quote, trend_up):
     # df_tmp['macd'] = macd_line_angle
     # df_tmp['adx'] = adx_line_angle
 
-    return df.eq(True).sum(axis=1)
+    r = df.eq(True).sum(axis=1)
+
+    mask = (adx < 20) | ((adx < quote['pdi']) & (adx < quote['mdi']))
+
+    r = r.mask(mask, 0)
+
+    return r
 
 
 @computed(column_name='trend_strength')
-def compute_trend_strength(quote, period):
-    quote = macd.compute_macd(quote)
-    quote = dmi.compute_dmi(quote, period)
+def compute_trend_strength(quote, period, always=False):
+    quote = macd.compute_macd(quote, always=always)
+    quote = dmi.compute_dmi(quote, period, always=always)
 
     series_up = compute_strength(quote, trend_up=True)
     series_down = compute_strength(quote, trend_up=False)

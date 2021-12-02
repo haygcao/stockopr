@@ -300,8 +300,8 @@ def check_quota(code, direction):
     return True
 
 
-def update_operation_detail(detail):
-    db_handler.save_operation_details([detail])
+def update_operation_detail(account_id, detail):
+    db_handler.save_operation_details(account_id, [detail])
 
 
 def check_list(quote, period):
@@ -513,7 +513,7 @@ def order(account_id, op_type, direct, code, price_trade, price_limited=0, count
         if not auto:
             name = basic.get_stock_name(code)
             msg = '[{}/{}][{}]\n更新 operation detail?'.format(code, name, direct)
-            popup_warning_message_box_mp(msg, update_operation_detail, detail)
+            popup_warning_message_box_mp(msg, update_operation_detail, account_id, detail)
         # update_operation_detail(detail)
         sync_position(account_id)
         sync_money(account_id)

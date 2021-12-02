@@ -13,7 +13,7 @@ from indicator.decorator import computed
 
 
 @computed(column_name='macd_histogram')
-def compute_macd(quote):
+def compute_macd(quote, always=False):
     quote = ema.compute_ema(quote)
     exp12 = quote['ema12']
     exp26 = quote['ema26']

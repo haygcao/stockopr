@@ -8,7 +8,8 @@ def computed(column_name=None):
     def decorate(func):
         def inner(*args, **kwargs):
             if column_name in (args[0]).columns:
-                return args[0]
+                if 'always' not in kwargs or not kwargs.get('always'):
+                    return args[0]
             if column_name.endswith('signal_enter') or column_name.endswith('signal_exit'):
                 period = kwargs.get('period') if 'period' in kwargs else args[1]
 

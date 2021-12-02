@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+Directional Movement Index
+ADX(Average Directional Index) shows the strength of the trend.
+So, while the -DI and +DI help highlight direction, investors use ADX to gauge how strong that uptrend or downtrend is.
+An ADX reading above 25 signals that a strong trend is in place.
+When the ADX dips below 20, there isn't a trend, and the price is likely moving sideways.
+"""
+
 import numpy
 import pandas
 
@@ -6,7 +14,7 @@ from indicator.decorator import computed
 
 
 @computed(column_name='adx')
-def compute_dmi(quote, period):
+def compute_dmi(quote, period, always=False):
     """
     通达信公式
     MTR:=SUM(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
