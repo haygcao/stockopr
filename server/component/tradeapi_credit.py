@@ -166,13 +166,16 @@ def get_asset_old():
         if i == 0:
             continue
         row = row_str.split('\t')
+        item_total_money = '信用资产账户总资产'
+        item_avail_money = '可用金额'
+        item_market_value = '参考市值'
         return {
-            'total_money': float(row[columns.index('总资产')]),
-            'avail_money': float(row[columns.index('可用资金')]),
+            'total_money': float(row[columns.index(item_total_money)]),
+            'avail_money': float(row[columns.index(item_avail_money)]),
             # TODO
             'net_money': 0,
             'deposit': 0,
-            'market_value': float(row[columns.index('证券市值')])
+            'market_value': float(row[columns.index(item_market_value)])
         }
 
 

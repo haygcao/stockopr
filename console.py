@@ -103,10 +103,10 @@ def send_key(key):
 def compute_stock_info(code):
     quote = quote_db.get_price_info_df_db(code, 300)
     rs_rating = quote['rs_rating'][-1]
-    # rs_rating = int(rs_rating) if rs_rating > 0 else rs_rating
+    rs_rating = int(rs_rating) if rs_rating > 0 else rs_rating
     fmvp = fund.query_fmvp(code)
-    # fmvp = round(fmvp, 2) if fmvp > 0 else fmvp
-    percent = round(100 * (quote.close[-1] / quote.close[-250] - 1), 3)
+    fmvp = round(fmvp, 2) if fmvp > 0 else fmvp
+    percent = round(100 * (quote.close[-1] / quote.close[-250] - 1), 2)
 
     quote = trend_strength.compute_trend_strength(quote, 'day')
     quote_week = quote_db.resample_quote(quote, 'W')
