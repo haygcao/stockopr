@@ -12,6 +12,8 @@ class BarManager:
     def __init__(self):
         """"""
         self._bars: Dict[datetime, BarData] = {}
+        self._ix_list = []
+        self._dt_list = []
         self._datetime_index_map: Dict[datetime, int] = {}
         self._index_datetime_map: Dict[int, datetime] = {}
 
@@ -30,11 +32,11 @@ class BarManager:
         self._bars = dict(sorted(self._bars.items(), key=lambda tp: tp[0]))
 
         # Update map relationiship
-        ix_list = range(len(self._bars))
-        dt_list = self._bars.keys()
+        self._ix_list = list(range(len(self._bars)))
+        self._dt_list = list(self._bars.keys())
 
-        self._datetime_index_map = dict(zip(dt_list, ix_list))
-        self._index_datetime_map = dict(zip(ix_list, dt_list))
+        self._datetime_index_map = dict(zip(self._dt_list, self._ix_list))
+        self._index_datetime_map = dict(zip(self._ix_list, self._dt_list))
 
         # Clear data range cache
         self._clear_cache()
@@ -47,6 +49,8 @@ class BarManager:
 
         if dt not in self._datetime_index_map:
             ix = len(self._bars)
+            self._ix_list.append(ix)
+            self._dt_list.append(dt)
             self._datetime_index_map[dt] = ix
             self._index_datetime_map[ix] = dt
 
@@ -66,6 +70,15 @@ class BarManager:
         """
         return self._datetime_index_map.get(dt, None)
 
+    def get_prev_index(self, ix: float):
+        ix = to_int(ix)
+        index = self._ix_list.index(ix)
+        if index == 0:
+            ix_prev = ix
+        else:
+            ix_prev = self._ix_list[index - 1]
+        return ix_prev
+
     def get_datetime(self, ix: float) -> datetime:
         """
         Get datetime with index.
@@ -79,6 +92,22 @@ class BarManager:
         """
         ix = to_int(ix)
         dt = self._index_datetime_map.get(ix, None)
+        if not dt:
+            return None
+
+        return self._bars[dt]
+
+    def get_prev_bar(self, ix: float) -> BarData:
+        """
+        Get bar data with index.
+        """
+        ix = to_int(ix)
+        index = self._ix_list.index(ix)
+        if index == 0:
+            ix_prev = ix
+        else:
+            ix_prev = self._ix_list[index - 1]
+        dt = self._index_datetime_map.get(ix_prev, None)
         if not dt:
             return None
 
@@ -164,6 +193,8 @@ class BarManager:
         Clear all data in manager.
         """
         self._bars.clear()
+        self._ix_list.clear()
+        self._dt_list.clear()
         self._datetime_index_map.clear()
         self._index_datetime_map.clear()
 

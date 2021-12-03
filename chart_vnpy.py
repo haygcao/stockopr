@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from vnpy.chart.item import CurveItem
 from vnpy.trader.ui import create_qapp, QtCore
 from vnpy.trader.constant import Exchange, Interval
 from vnpy.trader import database
@@ -21,7 +22,8 @@ if __name__ == "__main__":
     widget.add_plot("candle", hide_x_axis=True)
     widget.add_plot("volume", maximum_height=200)
     widget.add_item(CandleItem, "candle", "candle")
-    widget.add_item(VolumeItem, "volume", "volume")
+    # widget.add_item(VolumeItem, "volume", "volume")
+    widget.add_item(CurveItem, "volume", "volume")
     widget.add_cursor()
 
     n = 100
