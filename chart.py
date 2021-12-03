@@ -226,6 +226,11 @@ class DataFinanceDraw(object):
         # mpl.rcParams['axes.xmargin'] = 0
         # mpl.rcParams['axes.ymargin'] = 0
 
+        # 显示中文
+        # plt.rcParams['font.sans-serif'] = ['SimHei']
+        # 显示负数
+        plt.rcParams['axes.unicode_minus'] = False
+
         # TODO 中文显示方框
         # mpl.matplotlib_fname()
         # ~/workspace/stockopr/venv/lib/python3.7/site-packages/matplotlib/mpl-data/matplotlibrc
@@ -692,7 +697,14 @@ class DataFinanceDraw(object):
 
         from indicator import trend_strength
         data = trend_strength.compute_trend_strength(self.data_origin, self.period)
-        self.add_plot.append(mpf.make_addplot(self.get_window(data['trend_strength']), panel=1, width=1, color=green))
+        strength = self.get_window(data['trend_strength'])
+        color = pandas.Series(lightgrey, index=strength.index)
+        color = color.mask(data['trend_strength'] > 50, dark_sea_green)
+        color = color.mask(data['trend_strength'] < -50, light_coral)
+        color = color.mask(data['trend_strength'] > 80, dark_green)
+        color = color.mask(data['trend_strength'] < -80, purple)
+        self.add_plot.append(mpf.make_addplot(
+            strength, panel=1, type='bar', width=0.7, color=color.to_list()))  # marker='.',
         # data = data.iloc[-100:]
 
         self.compute_timestamp = datetime.datetime.now().timestamp()

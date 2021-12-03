@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from acquisition import quote_db
+from acquisition import quote_db, tx
 from indicator import ad, relative_strength_rating, quantity_relative_ratio, trend_strength
 from indicator import boll
 from indicator import cci
@@ -18,12 +18,12 @@ from indicator import vcp
 class IndicatorTestCase(unittest.TestCase):
     def setUp(self):
         self.code = '002739'
-        # self.code = '601633'
-        self.code = '300598'
+        self.code = '601633'
+        # self.code = '300598'
         self.period = 'm30'
-        # period = 'day'
+        self.period = 'day'
         count = 250
-        # quote = tx.get_kline_data_sina(code, period, count)
+        # self.quote = tx.get_kline_data_sina(self.code, self.period, count)
         self.quote = quote_db.get_price_info_df_db_day(self.code, days=1000)  # days=250)
 
     def tearDown(self):
