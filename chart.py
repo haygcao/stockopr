@@ -33,9 +33,11 @@ import logging
 
 from util import dt, util
 
+# plt.rcParams['axes.unicode_minus'] = False  # 未解决 '负号(-)' 显示为小方框的问题
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 panel_ratios = {
+    2: (7, 3),
     3: (8, 0.2, 1.8),
     4: [7.1, 0.1, 1.4, 1.4],
     # 5: [7.05, 0.075, 0.075, 1.4, 1.4]
@@ -48,6 +50,9 @@ oscillatior_list = ['macd', 'asi', 'force_index', 'volume_ad', 'skdj', 'rsi']
 # oscillatior_list = ['force_index']
 show_long_period_dynamical_system = False
 show_signal_detail = False
+
+g_dyn_sys_enabled = False
+g_signal_enabled = False
 
 alpha = 0.1
 
@@ -145,6 +150,9 @@ class DataFinanceDraw(object):
             self.panel_dyn_sys = self.panel_dyn_sys_long_period + 1
         else:
             self.panel_dyn_sys = self.panel_volume + 1
+        if not g_dyn_sys_enabled:
+            self.panel_dyn_sys -= 1
+            self.n_panels -= 1
         self.panel_oscillation = self.panel_dyn_sys + 1
         self.panel_macd = self.panel_oscillation + osc_len
 
@@ -644,21 +652,28 @@ class DataFinanceDraw(object):
         #
         self.data = data
 
-        self.add_dynamical_system(data)
+        if g_dyn_sys_enabled:
+            self.add_dynamical_system(data)
 
         width = 0.5
         color = dimgrey
         self.add_plot.extend([
             mpf.make_addplot(self.get_window(exp13), type='line', width=width + 0.2, color=dimgrey),
             mpf.make_addplot(self.get_window(exp26), type='line', width=width + 0.1, color=black),
-            mpf.make_addplot(self.get_window(data.min_period), type='scatter', marker='_', width=1, color=green),
-            mpf.make_addplot(self.get_window(data.max_period), type='scatter', marker='_', width=1, color=red),
         ])
 
-        if is_market_index(self.code):
-            self.add_market_indicator(data)
-        else:
-            self.add_signal(data)
+        if 'min_period' in data.columns:
+            self.add_plot.extend([
+                mpf.make_addplot(self.get_window(data.min_period), type='scatter', marker='_', width=1, color=green),
+                mpf.make_addplot(self.get_window(data.max_period), type='scatter', marker='_', width=1, color=red)
+            ])
+
+        if g_signal_enabled:
+            if is_market_index(self.code):
+                self.add_market_indicator(data)
+            else:
+                self.add_signal(data)
+
             self.add_resistance_support(data)
             self.add_channel(data)
             self.add_stop_loss(data)
@@ -675,11 +690,16 @@ class DataFinanceDraw(object):
             else:
                 self.add_rps(data, market_index='maq', panel=self.panel_macd)
 
+        from indicator import trend_strength
+        data = trend_strength.compute_trend_strength(self.data_origin, self.period)
+        self.add_plot.append(mpf.make_addplot(self.get_window(data['trend_strength']), panel=1, width=1, color=green))
         # data = data.iloc[-100:]
 
         self.compute_timestamp = datetime.datetime.now().timestamp()
 
     def draw_arrow(self, axlist, yminor_unit):
+        if not g_signal_enabled:
+            return
         if is_market_index(self.code):
             return
 
@@ -780,7 +800,7 @@ class DataFinanceDraw(object):
         for column_name in deviation_list:
             tail = 'signal_enter' if 'bull' in column_name else 'signal_exit'
             signal_name = '{}_{}'.format(column_name, tail)
-            if not config.enabled_signal(signal_name, self.period):
+            if not g_signal_enabled or not config.enabled_signal(signal_name, self.period):
                 continue
             data = self.get_window(self.data[column_name])
 
@@ -945,6 +965,14 @@ def show(candle):
     candle.show()
 
 
+def open_graph_no_signal(code, period):
+    candle = DataFinanceDraw(code, period)
+    candle.data_origin = signal.compute_signal(code, period, candle.data_origin)
+
+    update(candle)
+    show(candle)
+
+
 def open_graph(code, peroid, indicator, path=None):
     global oscillatior
     if indicator:
@@ -962,7 +990,7 @@ def open_graph(code, peroid, indicator, path=None):
             candle.load_data(path)
         else:
             candle.fetch_data(code)
-    candle.data_origin = signal.compute_signal(code, peroid, candle.data_origin)
+    # candle.data_origin = signal.compute_signal(code, peroid, candle.data_origin)
 
     update(candle)
     show(candle)
