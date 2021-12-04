@@ -1,13 +1,13 @@
 from abc import abstractmethod
 from typing import List, Dict, Tuple
 
+import pandas
 import pyqtgraph as pg
 from PyQt5.QtGui import QPainterPath
 
 from vnpy.trader.ui import QtCore, QtGui, QtWidgets
-from vnpy.trader.object import BarData
 
-from .base import BLACK_COLOR, UP_COLOR, DOWN_COLOR, PEN_WIDTH, BAR_WIDTH
+from .base import BLACK_COLOR, UP_COLOR, DOWN_COLOR, PEN_WIDTH, BAR_WIDTH, LIGHT_GREY_COLOR
 from .manager import BarManager
 
 
@@ -23,7 +23,7 @@ class ChartItem(pg.GraphicsObject):
         self._bar_picutures: Dict[int, QtGui.QPicture] = {}
         self._item_picuture: QtGui.QPicture = None
 
-        self._black_brush: QtGui.QBrush = pg.mkBrush(color=BLACK_COLOR)
+        self._black_brush: QtGui.QBrush = pg.mkBrush(color=LIGHT_GREY_COLOR)  # BLACK_COLOR)
 
         self._up_pen: QtGui.QPen = pg.mkPen(
             color=UP_COLOR, width=PEN_WIDTH
@@ -41,7 +41,7 @@ class ChartItem(pg.GraphicsObject):
         self.setFlag(self.ItemUsesExtendedStyleOption)
 
     @abstractmethod
-    def _draw_bar_picture(self, ix: int, bar: BarData) -> QtGui.QPicture:
+    def _draw_bar_picture(self, ix: int, bar: pandas.Series) -> QtGui.QPicture:
         """
         Draw picture for specific bar.
         """
@@ -70,23 +70,23 @@ class ChartItem(pg.GraphicsObject):
         """
         pass
 
-    def update_history(self, history: List[BarData]) -> BarData:
+    def update_history(self, history: pandas.DataFrame) -> pandas.Series:
         """
         Update a list of bar data.
         """
         self._bar_picutures.clear()
 
         bars = self._manager.get_all_bars()
-        for ix, bar in enumerate(bars):
+        for ix in range(len(bars)):
             self._bar_picutures[ix] = None
 
         self.update()
 
-    def update_bar(self, bar: BarData) -> BarData:
+    def update_bar(self, bar: pandas.Series) -> pandas.Series:
         """
         Update single bar data.
         """
-        ix = self._manager.get_index(bar.datetime)
+        ix = self._manager.get_index(bar.name)
 
         self._bar_picutures[ix] = None
 
@@ -158,14 +158,14 @@ class CandleItem(ChartItem):
         """"""
         super().__init__(manager)
 
-    def _draw_bar_picture(self, ix: int, bar: BarData) -> QtGui.QPicture:
+    def _draw_bar_picture(self, ix: int, bar: pandas.Series) -> QtGui.QPicture:
         """"""
         # Create objects
         candle_picture = QtGui.QPicture()
         painter = QtGui.QPainter(candle_picture)
 
         # Set painter color
-        if bar.close_price >= bar.open_price:
+        if bar.close >= bar.open:
             painter.setPen(self._up_pen)
             painter.setBrush(self._black_brush)
         else:
@@ -173,24 +173,24 @@ class CandleItem(ChartItem):
             painter.setBrush(self._down_brush)
 
         # Draw candle shadow
-        if bar.high_price > bar.low_price:
+        if bar.high > bar.low:
             painter.drawLine(
-                QtCore.QPointF(ix, bar.high_price),
-                QtCore.QPointF(ix, bar.low_price)
+                QtCore.QPointF(ix, bar.high),
+                QtCore.QPointF(ix, bar.low)
             )
 
         # Draw candle body
-        if bar.open_price == bar.close_price:
+        if bar.open == bar.close:
             painter.drawLine(
-                QtCore.QPointF(ix - BAR_WIDTH, bar.open_price),
-                QtCore.QPointF(ix + BAR_WIDTH, bar.open_price),
+                QtCore.QPointF(ix - BAR_WIDTH, bar.open),
+                QtCore.QPointF(ix + BAR_WIDTH, bar.open),
             )
         else:
             rect = QtCore.QRectF(
                 ix - BAR_WIDTH,
-                bar.open_price,
+                bar.open,
                 BAR_WIDTH * 2,
-                bar.close_price - bar.open_price
+                bar.close - bar.open
             )
             painter.drawRect(rect)
 
@@ -224,25 +224,25 @@ class CandleItem(ChartItem):
         """
         bar = self._manager.get_bar(ix)
 
-        if bar:
+        if isinstance(bar, pandas.Series) and not bar.empty:
             words = [
                 "Date",
-                bar.datetime.strftime("%Y-%m-%d"),
+                bar.name.strftime("%Y-%m-%d"),
                 "",
                 "Time",
-                bar.datetime.strftime("%H:%M"),
+                bar.name.strftime("%H:%M"),
                 "",
                 "Open",
-                str(bar.open_price),
+                str(bar.open),
                 "",
                 "High",
-                str(bar.high_price),
+                str(bar.high),
                 "",
                 "Low",
-                str(bar.low_price),
+                str(bar.low),
                 "",
                 "Close",
-                str(bar.close_price)
+                str(bar.close)
             ]
             text = "\n".join(words)
         else:
@@ -254,20 +254,22 @@ class CandleItem(ChartItem):
 class VolumeItem(ChartItem):
     """"""
 
-    def __init__(self, manager: BarManager):
+    def __init__(self, manager: BarManager, ind: str, col: str, color: str):
         """"""
         super().__init__(manager)
+        self.ind = ind
+        self.col = col
 
-    def _draw_bar_picture(self, ix: int, bar: BarData) -> QtGui.QPicture:
+    def _draw_bar_picture(self, ix: int, bar: pandas.Series) -> QtGui.QPicture:
         """"""
         # Create objects
         volume_picture = QtGui.QPicture()
         painter = QtGui.QPainter(volume_picture)
 
         # Set painter color
-        if bar.close_price >= bar.open_price:
+        if bar.close >= bar.open:
             painter.setPen(self._up_pen)
-            painter.setBrush(self._up_brush)
+            painter.setBrush(self._black_brush)  # _up_brush)
         else:
             painter.setPen(self._down_pen)
             painter.setBrush(self._down_brush)
@@ -311,7 +313,7 @@ class VolumeItem(ChartItem):
         """
         bar = self._manager.get_bar(ix)
 
-        if bar:
+        if isinstance(bar, pandas.Series) and not bar.empty:
             text = f"Volume {bar.volume}"
         else:
             text = ""
@@ -322,48 +324,51 @@ class VolumeItem(ChartItem):
 class CurveItem(ChartItem):
     """"""
 
-    def __init__(self, manager: BarManager):
+    def __init__(self, manager: BarManager, ind: str, col: str, color: Tuple[int, int, int]):
         """"""
         super().__init__(manager)
+        self.ind = ind
+        self.col = col
+        self.style = 'curve'
+        self.width = 1
+        self.color = color
 
-    def _draw_bar_picture(self, ix: int, bar: BarData) -> QtGui.QPicture:
+    def _draw_bar_picture(self, ix: int, bar: pandas.Series) -> QtGui.QPicture:
         """"""
         # Create objects
-        volume_picture = QtGui.QPicture()
-        painter = QtGui.QPainter(volume_picture)
+        curve_picture = QtGui.QPicture()
+        painter = QtGui.QPainter(curve_picture)
 
         ix_prev = self._manager.get_prev_index(ix)
         bar_prev = self._manager.get_bar(ix_prev)
 
         # Set painter color
-        if bar.close_price >= bar.open_price:
-            painter.setPen(self._up_pen)
-            painter.setBrush(self._up_brush)
-        else:
-            painter.setPen(self._down_pen)
-            painter.setBrush(self._down_brush)
+        pen = QtGui.QPen = pg.mkPen(color=self.color, width=self.width)
+        brush = pg.mkBrush(color=self.color)
+        painter.setPen(pen)
+        painter.setBrush(brush)
 
-        # Draw volume body
+        # Draw curve body
         path = QPainterPath()
-        path.moveTo(ix_prev, bar_prev.volume)
+        path.moveTo(ix_prev, bar_prev[self.col])
         # path.cubicTo(30, 30, 200, 350, 350, 30)
-        path.lineTo(ix, bar.volume)
-        # path.moveTo(ix, bar.close_price)
+        path.lineTo(ix, bar[self.col])
+        # path.moveTo(ix, bar.close)
 
         painter.drawPath(path)
 
         # Finish
         painter.end()
-        return volume_picture
+        return curve_picture
 
     def boundingRect(self) -> QtCore.QRectF:
         """"""
-        min_volume, max_volume = self._manager.get_volume_range()
+        min_curve, max_curve = self._manager.get_ind_range(self.ind)
         rect = QtCore.QRectF(
             0,
-            min_volume,
+            min_curve,
             len(self._bar_picutures),
-            max_volume - min_volume
+            max_curve - min_curve
         )
         return rect
 
@@ -373,8 +378,8 @@ class CurveItem(ChartItem):
 
         If min_ix and max_ix not specified, then return range with whole data set.
         """
-        min_volume, max_volume = self._manager.get_volume_range(min_ix, max_ix)
-        return min_volume, max_volume
+        min_curve, max_curve = self._manager.get_ind_range(self.ind, min_ix, max_ix)
+        return min_curve, max_curve
 
     def get_info_text(self, ix: int) -> str:
         """
@@ -382,8 +387,8 @@ class CurveItem(ChartItem):
         """
         bar = self._manager.get_bar(ix)
 
-        if bar:
-            text = f"Volume {bar.volume}"
+        if isinstance(bar, pandas.Series) and not bar.empty:
+            text = f"{self.col} {round(bar[self.col], 2)}"
         else:
             text = ""
 

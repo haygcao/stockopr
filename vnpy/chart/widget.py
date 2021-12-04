@@ -1,5 +1,6 @@
 from typing import List, Dict, Type
 
+import pandas
 import pyqtgraph as pg
 
 from vnpy.trader.ui import QtGui, QtWidgets, QtCore
@@ -8,7 +9,7 @@ from vnpy.trader.object import BarData
 from .manager import BarManager
 from .base import (
     GREY_COLOR, WHITE_COLOR, CURSOR_COLOR, BLACK_COLOR,
-    to_int, NORMAL_FONT
+    to_int, NORMAL_FONT, LIGHT_GREY_COLOR
 )
 from .axis import DatetimeAxis
 from .item import ChartItem
@@ -29,7 +30,9 @@ class ChartWidget(pg.PlotWidget):
 
         self._plots: Dict[str, pg.PlotItem] = {}
         self._items: Dict[str, ChartItem] = {}
+        self._indicator_items: Dict[str, ChartItem] = {}
         self._item_plot_map: Dict[ChartItem, pg.PlotItem] = {}
+        self._indicator_item_plot_map: Dict[ChartItem, pg.PlotItem] = {}
 
         self._first_plot: pg.PlotItem = None
         self._cursor: ChartCursor = None
@@ -113,14 +116,18 @@ class ChartWidget(pg.PlotWidget):
 
     def add_item(
         self,
-        item_class: Type[ChartItem],
+        plot_name: str,
         item_name: str,
-        plot_name: str
+        item_class: Type[ChartItem],
+        ind: str = None,
+        col: str = None,
+        color: str = None,
+        is_indicator: bool = False
     ):
         """
         Add chart item.
         """
-        item = item_class(self._manager)
+        item = item_class(self._manager) if ind is None else item_class(self._manager, ind, col, color)
         self._items[item_name] = item
 
         plot = self._plots.get(plot_name)
@@ -152,7 +159,7 @@ class ChartWidget(pg.PlotWidget):
         if self._cursor:
             self._cursor.clear_all()
 
-    def update_history(self, history: List[BarData]) -> None:
+    def update_history(self, history: pandas.DataFrame) -> None:
         """
         Update a list of bar data.
         """
@@ -165,7 +172,7 @@ class ChartWidget(pg.PlotWidget):
 
         self.move_to_right()
 
-    def update_bar(self, bar: BarData) -> None:
+    def update_bar(self, bar: pandas.Series) -> None:
         """
         Update single bar data.
         """
@@ -365,7 +372,7 @@ class ChartCursor(QtCore.QObject):
         self._y_labels: Dict[str, pg.TextItem] = {}
         for plot_name, plot in self._plots.items():
             label = pg.TextItem(
-                plot_name, fill=CURSOR_COLOR, color=BLACK_COLOR)
+                plot_name, fill=CURSOR_COLOR, color=LIGHT_GREY_COLOR)
             label.hide()
             label.setZValue(2)
             label.setFont(NORMAL_FONT)
@@ -373,7 +380,7 @@ class ChartCursor(QtCore.QObject):
             self._y_labels[plot_name] = label
 
         self._x_label: pg.TextItem = pg.TextItem(
-            "datetime", fill=CURSOR_COLOR, color=BLACK_COLOR)
+            "datetime", fill=CURSOR_COLOR, color=LIGHT_GREY_COLOR)
         self._x_label.hide()
         self._x_label.setZValue(2)
         self._x_label.setFont(NORMAL_FONT)
@@ -387,8 +394,8 @@ class ChartCursor(QtCore.QObject):
             info = pg.TextItem(
                 "info",
                 color=CURSOR_COLOR,
-                border=CURSOR_COLOR,
-                fill=BLACK_COLOR
+                border=CURSOR_COLOR
+                # fill=LIGHT_GREY_COLOR
             )
             info.hide()
             info.setZValue(2)
@@ -515,7 +522,7 @@ class ChartCursor(QtCore.QObject):
         Update cursor after moved by left/right.
         """
         bar = self._manager.get_bar(self._x)
-        self._y = bar.close_price
+        self._y = bar.close
 
         self._update_line()
         self._update_label()

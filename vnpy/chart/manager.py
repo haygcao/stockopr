@@ -1,9 +1,18 @@
-from typing import Dict, List, Tuple
+from enum import Enum
+from typing import Dict, Tuple
 from datetime import datetime
+
+import pandas
 
 from vnpy.trader.object import BarData
 
 from .base import to_int
+
+
+class Pos(Enum):
+    MAJOR = 0
+    MAJOR_REPLACE = 1
+    MINOR = 2
 
 
 class BarManager:
@@ -11,7 +20,15 @@ class BarManager:
 
     def __init__(self):
         """"""
-        self._bars: Dict[datetime, BarData] = {}
+        self._bars: pandas.DataFrame = pandas.DataFrame()
+        # indicator: column_names, e.g. macd: ['macd_line', 'macd_signal', 'macd_hist']
+        self._indicator_dict = {
+            # 'price': {'main_plot': Pos.MAJOR, 'cols': ['open', 'high', 'low', 'close']},
+            'volume': {'main_plot': Pos.MINOR, 'cols': ['volume']},
+            'ema': {'main_plot': Pos.MAJOR, 'cols': ['ema12', 'ema26']},
+            'trend_strength': {'main_plot': Pos.MINOR, 'cols': ['trend_strength']},
+            'macd': {'main_plot': Pos.MINOR, 'cols': ['macd_line', 'macd_signal', 'macd_hist']}
+        }
         self._ix_list = []
         self._dt_list = []
         self._datetime_index_map: Dict[datetime, int] = {}
@@ -19,21 +36,21 @@ class BarManager:
 
         self._price_ranges: Dict[Tuple[int, int], Tuple[float, float]] = {}
         self._volume_ranges: Dict[Tuple[int, int], Tuple[float, float]] = {}
+        self._ranges: Dict[str, Dict[Tuple[int, int], Tuple[float, float]]] = {}
 
-    def update_history(self, history: List[BarData]) -> None:
+    def update_history(self, history: pandas.DataFrame) -> None:
         """
         Update a list of bar data.
         """
         # Put all new bars into dict
-        for bar in history:
-            self._bars[bar.datetime] = bar
+        self._bars = history
 
         # Sort bars dict according to bar.datetime
-        self._bars = dict(sorted(self._bars.items(), key=lambda tp: tp[0]))
+        # self._bars.sort_index(inplace=True)
 
         # Update map relationiship
         self._ix_list = list(range(len(self._bars)))
-        self._dt_list = list(self._bars.keys())
+        self._dt_list = list(self._bars.index.to_list())
 
         self._datetime_index_map = dict(zip(self._dt_list, self._ix_list))
         self._index_datetime_map = dict(zip(self._ix_list, self._dt_list))
@@ -41,11 +58,11 @@ class BarManager:
         # Clear data range cache
         self._clear_cache()
 
-    def update_bar(self, bar: BarData) -> None:
+    def update_bar(self, bar: pandas.Series) -> None:
         """
         Update one single bar data.
         """
-        dt = bar.datetime
+        dt = bar.name
 
         if dt not in self._datetime_index_map:
             ix = len(self._bars)
@@ -54,7 +71,9 @@ class BarManager:
             self._datetime_index_map[dt] = ix
             self._index_datetime_map[ix] = dt
 
-        self._bars[dt] = bar
+            self._bars = self._bars.append(bar)
+        else:
+            self._bars.at[dt] = bar
 
         self._clear_cache()
 
@@ -86,7 +105,7 @@ class BarManager:
         ix = to_int(ix)
         return self._index_datetime_map.get(ix, None)
 
-    def get_bar(self, ix: float) -> BarData:
+    def get_bar(self, ix: float) -> pandas.Series:
         """
         Get bar data with index.
         """
@@ -95,7 +114,7 @@ class BarManager:
         if not dt:
             return None
 
-        return self._bars[dt]
+        return self._bars.loc[dt]
 
     def get_prev_bar(self, ix: float) -> BarData:
         """
@@ -113,17 +132,17 @@ class BarManager:
 
         return self._bars[dt]
 
-    def get_all_bars(self) -> List[BarData]:
+    def get_all_bars(self) -> pandas.DataFrame:
         """
         Get all bar data.
         """
-        return list(self._bars.values())
+        return self._bars
 
-    def get_price_range(self, min_ix: float = None, max_ix: float = None) -> Tuple[float, float]:
+    def get_price_range(self, min_ix: float = None, max_ix: float = None, ignore_ind: bool = False) -> Tuple[float, float]:
         """
         Get price range to show within given index range.
         """
-        if not self._bars:
+        if self._bars.empty:
             return 0, 1
 
         if not min_ix:
@@ -138,14 +157,24 @@ class BarManager:
         if buf:
             return buf
 
-        bar_list = list(self._bars.values())[min_ix:max_ix + 1]
-        first_bar = bar_list[0]
-        max_price = first_bar.high_price
-        min_price = first_bar.low_price
+        bar_list = self._bars.iloc[min_ix:max_ix + 1]
+        first_bar = bar_list.iloc[0]
+        max_price = first_bar.high
+        min_price = first_bar.low
 
-        for bar in bar_list[1:]:
-            max_price = max(max_price, bar.high_price)
-            min_price = min(min_price, bar.low_price)
+        for dates, bar in bar_list.iloc[1:].iterrows():
+            max_price = max(max_price, bar.high)
+            min_price = min(min_price, bar.low)
+
+        if ignore_ind:
+            self._price_ranges[(min_ix, max_ix)] = (min_price, max_price)
+            return min_price, max_price
+
+        for ind, ind_info in self._indicator_dict.items():
+            if ind_info['main_plot'] == Pos.MAJOR:
+                min_, max_ = self.get_ind_range(ind, min_ix, max_ix, ignore_major=True)
+                min_price = min(min_price, min_)
+                max_price = max(max_price, max_)
 
         self._price_ranges[(min_ix, max_ix)] = (min_price, max_price)
         return min_price, max_price
@@ -154,7 +183,7 @@ class BarManager:
         """
         Get volume range to show within given index range.
         """
-        if not self._bars:
+        if self._bars.empty:
             return 0, 1
 
         if not min_ix:
@@ -169,17 +198,61 @@ class BarManager:
         if buf:
             return buf
 
-        bar_list = list(self._bars.values())[min_ix:max_ix + 1]
+        bar_list = self._bars.iloc[min_ix:max_ix + 1]
 
-        first_bar = bar_list[0]
+        first_bar = bar_list.iloc[0]
         max_volume = first_bar.volume
         min_volume = 0
 
-        for bar in bar_list[1:]:
+        for dates, bar in bar_list.iloc[1:].iterrows():
             max_volume = max(max_volume, bar.volume)
 
         self._volume_ranges[(min_ix, max_ix)] = (min_volume, max_volume)
         return min_volume, max_volume
+
+    def get_ind_range(self, ind: str, min_ix: float = None, max_ix: float = None, ignore_major=False)\
+            -> Tuple[float, float]:
+        """
+        Get volume range to show within given index range.
+        """
+        if self._bars.empty:
+            return 0, 1
+
+        ind_info = self._indicator_dict.get(ind)
+        if not ignore_major and ind_info['main_plot'] == Pos.MAJOR:
+            min_price, max_price = self.get_price_range(min_ix, max_ix)
+            return min_price, max_price
+
+        if not min_ix:
+            min_ix = 0
+            max_ix = len(self._bars) - 1
+        else:
+            min_ix = to_int(min_ix)
+            max_ix = to_int(max_ix)
+            max_ix = min(max_ix, self.get_count())
+
+        ind_dict = self._ranges.get(ind)
+        if ind_dict:
+            buf = ind_dict.get((min_ix, max_ix), None)
+            if buf:
+                return buf
+        else:
+            self._ranges.update({ind: {}})
+
+        bar_list = self._bars.iloc[min_ix:max_ix + 1]
+
+        min_ = None
+        max_ = None
+        cols = ind_info.get('cols')
+        for col in cols:
+            col_max_ = bar_list[col].max()
+            col_min_ = bar_list[col].min()
+
+            min_ = col_min_ if min_ is None else min(min_, col_min_)
+            max_ = col_max_ if max_ is None else max(max_, col_max_)
+
+        self._ranges[ind][(min_ix, max_ix)] = (min_, max_)
+        return min_, max_
 
     def _clear_cache(self) -> None:
         """
@@ -187,6 +260,7 @@ class BarManager:
         """
         self._price_ranges.clear()
         self._volume_ranges.clear()
+        self._ranges.clear()
 
     def clear_all(self) -> None:
         """
