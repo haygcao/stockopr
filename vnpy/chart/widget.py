@@ -1,5 +1,6 @@
 from typing import List, Dict, Type
 
+import pandas
 import pyqtgraph as pg
 
 from vnpy.trader.ui import QtGui, QtWidgets, QtCore
@@ -29,7 +30,9 @@ class ChartWidget(pg.PlotWidget):
 
         self._plots: Dict[str, pg.PlotItem] = {}
         self._items: Dict[str, ChartItem] = {}
+        self._indicator_items: Dict[str, ChartItem] = {}
         self._item_plot_map: Dict[ChartItem, pg.PlotItem] = {}
+        self._indicator_item_plot_map: Dict[ChartItem, pg.PlotItem] = {}
 
         self._first_plot: pg.PlotItem = None
         self._cursor: ChartCursor = None
@@ -115,7 +118,8 @@ class ChartWidget(pg.PlotWidget):
         self,
         item_class: Type[ChartItem],
         item_name: str,
-        plot_name: str
+        plot_name: str,
+        is_indicator: bool = False
     ):
         """
         Add chart item.
@@ -152,7 +156,7 @@ class ChartWidget(pg.PlotWidget):
         if self._cursor:
             self._cursor.clear_all()
 
-    def update_history(self, history: List[BarData]) -> None:
+    def update_history(self, history: pandas.DataFrame) -> None:
         """
         Update a list of bar data.
         """
@@ -165,7 +169,7 @@ class ChartWidget(pg.PlotWidget):
 
         self.move_to_right()
 
-    def update_bar(self, bar: BarData) -> None:
+    def update_bar(self, bar: pandas.Series) -> None:
         """
         Update single bar data.
         """
@@ -515,7 +519,7 @@ class ChartCursor(QtCore.QObject):
         Update cursor after moved by left/right.
         """
         bar = self._manager.get_bar(self._x)
-        self._y = bar.close_price
+        self._y = close
 
         self._update_line()
         self._update_label()

@@ -1,6 +1,8 @@
 from typing import Dict, List, Tuple
 from datetime import datetime
 
+import pandas
+
 from vnpy.trader.object import BarData
 
 from .base import to_int
@@ -11,7 +13,8 @@ class BarManager:
 
     def __init__(self):
         """"""
-        self._bars: Dict[datetime, BarData] = {}
+        self._bars: pandas.DataFrame = pandas.DataFrame()
+        self._indicator_col_map = {}  # indicator: column_names, e.g. macd: ['macd_line', 'macd_signal', 'macd_hist']
         self._ix_list = []
         self._dt_list = []
         self._datetime_index_map: Dict[datetime, int] = {}
@@ -20,20 +23,19 @@ class BarManager:
         self._price_ranges: Dict[Tuple[int, int], Tuple[float, float]] = {}
         self._volume_ranges: Dict[Tuple[int, int], Tuple[float, float]] = {}
 
-    def update_history(self, history: List[BarData]) -> None:
+    def update_history(self, history: pandas.DataFrame) -> None:
         """
         Update a list of bar data.
         """
         # Put all new bars into dict
-        for bar in history:
-            self._bars[bar.datetime] = bar
+        self._bars = history
 
         # Sort bars dict according to bar.datetime
-        self._bars = dict(sorted(self._bars.items(), key=lambda tp: tp[0]))
+        # self._bars.sort_index(inplace=True)
 
         # Update map relationiship
         self._ix_list = list(range(len(self._bars)))
-        self._dt_list = list(self._bars.keys())
+        self._dt_list = list(self._bars.index.to_list())
 
         self._datetime_index_map = dict(zip(self._dt_list, self._ix_list))
         self._index_datetime_map = dict(zip(self._ix_list, self._dt_list))
@@ -41,11 +43,11 @@ class BarManager:
         # Clear data range cache
         self._clear_cache()
 
-    def update_bar(self, bar: BarData) -> None:
+    def update_bar(self, bar: pandas.Series) -> None:
         """
         Update one single bar data.
         """
-        dt = bar.datetime
+        dt = bar.name
 
         if dt not in self._datetime_index_map:
             ix = len(self._bars)
@@ -54,7 +56,7 @@ class BarManager:
             self._datetime_index_map[dt] = ix
             self._index_datetime_map[ix] = dt
 
-        self._bars[dt] = bar
+        self._bars = self._bars.append(bar)
 
         self._clear_cache()
 
@@ -86,7 +88,7 @@ class BarManager:
         ix = to_int(ix)
         return self._index_datetime_map.get(ix, None)
 
-    def get_bar(self, ix: float) -> BarData:
+    def get_bar(self, ix: float) -> pandas.Series:
         """
         Get bar data with index.
         """
@@ -95,7 +97,7 @@ class BarManager:
         if not dt:
             return None
 
-        return self._bars[dt]
+        return self._bars.loc[dt]
 
     def get_prev_bar(self, ix: float) -> BarData:
         """
@@ -113,17 +115,17 @@ class BarManager:
 
         return self._bars[dt]
 
-    def get_all_bars(self) -> List[BarData]:
+    def get_all_bars(self) -> pandas.DataFrame:
         """
         Get all bar data.
         """
-        return list(self._bars.values())
+        return self._bars
 
     def get_price_range(self, min_ix: float = None, max_ix: float = None) -> Tuple[float, float]:
         """
         Get price range to show within given index range.
         """
-        if not self._bars:
+        if self._bars.empty:
             return 0, 1
 
         if not min_ix:
@@ -138,14 +140,14 @@ class BarManager:
         if buf:
             return buf
 
-        bar_list = list(self._bars.values())[min_ix:max_ix + 1]
-        first_bar = bar_list[0]
-        max_price = first_bar.high_price
-        min_price = first_bar.low_price
+        bar_list = self._bars.iloc[min_ix:max_ix + 1]
+        first_bar = bar_list.iloc[0]
+        max_price = first_bar.high
+        min_price = first_bar.low
 
-        for bar in bar_list[1:]:
-            max_price = max(max_price, bar.high_price)
-            min_price = min(min_price, bar.low_price)
+        for dates, bar in bar_list.iloc[1:].iterrows():
+            max_price = max(max_price, bar.high)
+            min_price = min(min_price, bar.low)
 
         self._price_ranges[(min_ix, max_ix)] = (min_price, max_price)
         return min_price, max_price
@@ -154,7 +156,7 @@ class BarManager:
         """
         Get volume range to show within given index range.
         """
-        if not self._bars:
+        if self._bars.empty:
             return 0, 1
 
         if not min_ix:
@@ -169,13 +171,13 @@ class BarManager:
         if buf:
             return buf
 
-        bar_list = list(self._bars.values())[min_ix:max_ix + 1]
+        bar_list = self._bars.iloc[min_ix:max_ix + 1]
 
-        first_bar = bar_list[0]
+        first_bar = bar_list.iloc[0]
         max_volume = first_bar.volume
         min_volume = 0
 
-        for bar in bar_list[1:]:
+        for dates, bar in bar_list.iloc[1:].iterrows():
             max_volume = max(max_volume, bar.volume)
 
         self._volume_ranges[(min_ix, max_ix)] = (min_volume, max_volume)
