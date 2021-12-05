@@ -29,6 +29,7 @@ class BarManager:
             'trend_strength': {'main_plot': Pos.MINOR, 'cols': ['trend_strength']},
             'macd': {'main_plot': Pos.MINOR, 'cols': ['macd_line', 'macd_signal', 'macd_hist']}
         }
+
         self._ix_list = []
         self._dt_list = []
         self._datetime_index_map: Dict[datetime, int] = {}

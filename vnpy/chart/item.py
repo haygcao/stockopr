@@ -386,7 +386,6 @@ class CurveItem(ChartItem):
         Get information text to show by cursor.
         """
         bar = self._manager.get_bar(ix)
-
         if isinstance(bar, pandas.Series) and not bar.empty:
             text = f"{self.col} {round(bar[self.col], 2)}"
         else:
