@@ -15,10 +15,10 @@ if __name__ == "__main__":
     app = create_qapp()
 
     code = '002739'
-    period = 'day'
+    period = 'm5'
 
-    quote = quote_db.get_price_info_df_db_day('002739')
-    # quote = tx.get_kline_data_sina(code, period)
+    # quote = quote_db.get_price_info_df_db_day('002739')
+    quote = tx.get_kline_data_sina(code, period)
     quote = trend_strength.compute_trend_strength(quote, period)
     quote = ema.compute_ema(quote)
 
@@ -45,14 +45,7 @@ if __name__ == "__main__":
     # cu_item = Cu(quote, ['trend_strength'])
     # plt.addItem(cu_item)
 
-    n = len(quote) - 10
-    history = quote.iloc[:n]
-    new_data = quote.iloc[n:]
-
-    widget.update_history(history)
-
     ind_update = 0
-
 
     def update_bar():
         global ind_update
@@ -65,9 +58,13 @@ if __name__ == "__main__":
         widget.update_bar(bar)
 
 
+    n = len(quote) - 10
+    history = quote.iloc[:n]
+    new_data = quote.iloc[n:]
+    # widget.update_history(history)
     timer = QtCore.QTimer()
     timer.timeout.connect(update_bar)
-    timer.start(1 * 1000)
+    # timer.start(1 * 1000)
 
     def update_rt_bar():
         global quote
@@ -87,10 +84,15 @@ if __name__ == "__main__":
             for trade_time, bar in quote_diff.iterrows():
                 widget.update_bar(bar)
             quote = quote_new
-            time.sleep(4 * 60)
+            time.sleep(1 * 60)
 
-    t = threading.Thread(target=update_rt_bar, args=())
+
+    widget.update_history(quote)
+    # t = threading.Thread(target=update_rt_bar, args=(widget, quote, ))
     # t.start()
+    timer2 = QtCore.QTimer()
+    timer2.timeout.connect(update_rt_bar)
+    timer2.start(1 * 60 * 1000)
 
     widget.show()
     app.exec_()
