@@ -5,7 +5,7 @@ import json
 import tornado.web
 
 from .. import config
-from ..component import tradeapi, tradeapi_credit, helper
+from ..component import tradeapi, tradeapi_credit, helper, quotation_rt_tdx
 
 
 def base_filter(func):
@@ -56,6 +56,19 @@ class MainHandler(BaseHandler):
 
     def post(self):
         self.write({})
+
+
+class FetchQuoteHandler(BaseHandler):
+    def get(self):
+        self.write("Hello, world")
+
+    def post(self):
+        param = self.request.body.decode('utf-8')
+        param = json.loads(param)
+        code = param['code']
+
+        quote = quotation_rt_tdx.get_rt_quote_tdx(code)
+        self.write(quote)
 
 
 class OrderHandler(BaseHandler):

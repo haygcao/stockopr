@@ -11,6 +11,11 @@ class TradeApiTestCase(unittest.TestCase):
     # def tearDown(self):
     #     pass
 
+    def test_fetch_quote(self):
+        code = '002739'
+        quote = tradeapi.fetch_quote(code)
+        print(quote)
+
     def test_query_position(self):
         code = '300502'
         code = ''

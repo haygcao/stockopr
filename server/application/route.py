@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..business.main_handler import MainHandler
+from ..business.main_handler import MainHandler, FetchQuoteHandler
 from ..business.main_handler import OrderHandler
 from ..business.main_handler import QueryMoneyHandler
 from ..business.main_handler import QueryPositionHandler
@@ -20,5 +20,6 @@ handlers = [
     (r"/api/query_today_order", QueryTodayOrderHandler),
     (r"/api/query_withdraw_order", QueryWithdrawOrderHandler),
     (r"/api/withdraw", WithdrawHandler),
-    (r"/api/query_trade_signal", QueryTradeSignalHandler)
+    (r"/api/query_trade_signal", QueryTradeSignalHandler),
+    (r"/api/fetch_quote", FetchQuoteHandler)
 ]

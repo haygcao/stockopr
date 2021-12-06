@@ -5,6 +5,7 @@ import json
 import os
 import sys
 
+import pandas
 import requests
 
 from config import config
@@ -20,6 +21,21 @@ def handle_err(data):
     if 'ret_code' in data and data['ret_code'] == -1:
         return True
     return False
+
+
+def fetch_quote(code):
+    now = datetime.datetime.now()
+    url = 'http://{}/fetch_quote'.format(base_url)
+    data = {'code': code}
+    response = requests.post(url, data=json.dumps(data), headers=headers)
+    d = json.loads(response.content)
+    if handle_err(d):
+        logger.error(d['err_msg'], inspect.currentframe().f_code.co_name)
+        return
+
+    d.update({'code': code, 'volume': d['volume'] * 100})
+    s = pandas.Series(d, name=now.strftime('%Y-%m-%d %H:%M:%S'))
+    return s
 
 
 def get_asset(account_id):

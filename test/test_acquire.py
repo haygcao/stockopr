@@ -2,7 +2,7 @@ import datetime
 import os
 import unittest
 
-from acquisition import acquire, quote_db, quote_tdx, finance
+from acquisition import acquire, quote_db, quote_tdx, finance, tdx
 from acquisition import industry_index
 from config import config
 from util import dt, util
@@ -14,6 +14,10 @@ class AcquireTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_get_kline_data(self):
+        quote = tdx.get_kline_data('002739')
+        print(quote)
 
     def test_save_quote(self):
         acquire.save_quote()

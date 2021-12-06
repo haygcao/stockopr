@@ -737,8 +737,8 @@ class Panel(QWidget):
             if code in self.stock_info_map:
                 continue
 
-            stock_info = compute_stock_info(code)
-            self.stock_info_map.update({code: stock_info})
+            # stock_info = compute_stock_info(code)
+            # self.stock_info_map.update({code: stock_info})
 
         qt_util.popup_info_message_box_mp('[{}] loaded'.format(len(code_list)))
 
