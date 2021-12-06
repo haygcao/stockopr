@@ -13,7 +13,7 @@ if __name__ == "__main__":
     os.environ['PYTHONPATH'] = root_dir
 
     if sys.platform == 'win32':
-        py = str(os.path.join(root_dir, 'venv', 'Scripts', 'python.exe'))
+        py = str(os.path.join(root_dir, 'venv2', 'Scripts', 'python.exe'))
         subprocess.Popen([py, script_path], creationflags=subprocess.DETACHED_PROCESS, cwd=root_dir)
     else:
         py = str(os.path.join(root_dir, 'venv', 'bin', 'python'))

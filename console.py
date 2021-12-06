@@ -35,7 +35,7 @@ from PyQt5.QtWidgets import (QWidget, QLabel,
 import system_hotkey
 # import win32api
 
-import chart
+import chart_mpl
 import trade_manager.db_handler
 from acquisition import acquire, basic, quote_db, tx
 from config import config
@@ -109,19 +109,27 @@ def str_stock_info(stock_info):
 
 
 def compute_trend_strength(code):
-    quote = quote_db.get_price_info_df_db(code, 300)
-    quote = trend_strength.compute_trend_strength(quote, 'day')
-    quote_week = quote_db.resample_quote(quote, 'W')
-    # quote_week = quote_week.drop(['trend_strength'], axis=1)
-    quote_week = trend_strength.compute_trend_strength(quote_week, 'week', always=True)
-    quote_m30 = tx.get_kline_data_sina(code, 'm30')
-    quote_m30 = trend_strength.compute_trend_strength(quote_m30, 'm30')
-    quote_m5 = tx.get_kline_data_sina(code, 'm5')
-    quote_m5 = trend_strength.compute_trend_strength(quote_m5, 'm5')
-
-    strength = '{}|{}|{}|{}'.format(quote_week['trend_strength'][-1], quote['trend_strength'][-1],
+    try:
+        time.sleep(1)
+        # quote = quote_db.get_price_info_df_db(code, 300)
+        quote = tx.get_kline_data_tx(code, 'day')
+        quote = trend_strength.compute_trend_strength(quote, 'day')
+        quote_week = quote_db.resample_quote(quote, 'W')
+        # quote_week = quote_week.drop(['trend_strength'], axis=1)
+        quote_week = trend_strength.compute_trend_strength(quote_week, 'week', always=True)
+        time.sleep(1)
+        quote_m30 = tx.get_kline_data_tx(code, 'm30')
+        quote_m30 = trend_strength.compute_trend_strength(quote_m30, 'm30')
+        time.sleep(1)
+        quote_m5 = tx.get_kline_data_tx(code, 'm5')
+        quote_m5 = trend_strength.compute_trend_strength(quote_m5, 'm5')
+    except Exception as e:
+        print(code, e)
+        return ''
+    else:
+        strength = '{}|{}|{}|{}'.format(quote_week['trend_strength'][-1], quote['trend_strength'][-1],
                                     quote_m30['trend_strength'][-1], quote_m5['trend_strength'][-1])
-    return strength
+        return strength
 
 
 def compute_stock_info(code):
@@ -769,7 +777,7 @@ class Panel(QWidget):
         # p = threading.Thread(target=chart.open_graph, args=(self.code, self.period, indicator))
         # p.start()
         # p.join(timeout=1)
-        util.run_subprocess('chart.py', [self.code, self.period, indicator])
+        util.run_subprocess('chart_mpl.py', [self.code, self.period, indicator])
         # open_graph(self.code, self.period)
 
     def show_f10(self):
@@ -780,7 +788,7 @@ class Panel(QWidget):
 
     def show_indicator(self):
         logger.info('{} {}'.format(self.code, self.period))
-        p = multiprocessing.Process(target=chart.show_indicator,
+        p = multiprocessing.Process(target=chart_mpl.show_indicator,
                                     args=(self.code, self.period, relative_price_strength.relative_price_strength))
         p.start()
         p.join(timeout=1)
@@ -788,7 +796,7 @@ class Panel(QWidget):
     def show_market(self):
         logger.info('{} {}'.format(self.code, self.period))
         indicator = self.indicator if self.indicator in g_market_indicators else g_market_indicators[0]
-        p = multiprocessing.Process(target=chart.show_market, args=(self.period, indicator))
+        p = multiprocessing.Process(target=chart_mpl.show_market, args=(self.period, indicator))
         p.start()
         p.join(timeout=1)
 

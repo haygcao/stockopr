@@ -4,8 +4,6 @@ from datetime import datetime
 
 import pandas
 
-from vnpy.trader.object import BarData
-
 from .base import to_int
 
 
@@ -117,7 +115,7 @@ class BarManager:
 
         return self._bars.loc[dt]
 
-    def get_prev_bar(self, ix: float) -> BarData:
+    def get_prev_bar(self, ix: float) -> pandas.Series:
         """
         Get bar data with index.
         """

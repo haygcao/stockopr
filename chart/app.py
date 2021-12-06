@@ -8,8 +8,13 @@ import types
 # import qdarkstyle
 from PyQt5 import QtGui, QtWidgets, QtCore
 
-from ..setting import SETTINGS
-from ..utility import get_icon_path
+from typing import Dict, Any
+
+
+SETTINGS: Dict[str, Any] = {
+    "font.family": "微软雅黑",
+    "font.size": 12,
+}
 
 
 def create_qapp(app_name: str = "VN Trader") -> QtWidgets.QApplication:
@@ -28,8 +33,8 @@ def create_qapp(app_name: str = "VN Trader") -> QtWidgets.QApplication:
     qapp.setFont(font)
 
     # Set up icon
-    icon = QtGui.QIcon(get_icon_path(__file__, "vnpy.ico"))
-    qapp.setWindowIcon(icon)
+    # icon = QtGui.QIcon(get_icon_path(__file__, "vnpy.ico"))
+    # qapp.setWindowIcon(icon)
 
     # Set up windows process ID
     if "Windows" in platform.uname():

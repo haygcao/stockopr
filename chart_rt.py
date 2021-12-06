@@ -2,15 +2,13 @@ import datetime
 import threading
 import time
 
-from acquisition import quote_db, tx
+from acquisition import tx, quote_db
 from indicator import trend_strength, ema
 from util import dt
-from vnpy.chart.base import LIGHT_GREY_COLOR, GREY_COLOR, BLUE_COLOR
-from vnpy.chart.item import CurveItem
-from vnpy.trader.ui import create_qapp, QtCore
-from vnpy.trader.constant import Exchange, Interval
-from vnpy.trader import database
-from vnpy.chart import ChartWidget, VolumeItem, CandleItem
+from chart.base import LIGHT_GREY_COLOR, GREY_COLOR, BLUE_COLOR
+from chart.item import CurveItem
+from chart.app import create_qapp, QtCore
+from chart import ChartWidget, VolumeItem, CandleItem
 
 
 if __name__ == "__main__":
@@ -19,8 +17,8 @@ if __name__ == "__main__":
     code = '002739'
     period = 'day'
 
-    # quote = quote_db.get_price_info_df_db_day('002739')
-    quote = tx.get_kline_data_sina(code, period)
+    quote = quote_db.get_price_info_df_db_day('002739')
+    # quote = tx.get_kline_data_sina(code, period)
     quote = trend_strength.compute_trend_strength(quote, period)
     quote = ema.compute_ema(quote)
 

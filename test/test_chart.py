@@ -1,6 +1,6 @@
 import unittest
 
-import chart
+import chart_mpl
 
 
 class ChartTestCase(unittest.TestCase):
@@ -14,7 +14,7 @@ class ChartTestCase(unittest.TestCase):
         code = '300502'
         period = 'day'
         index = 'rps'
-        chart.open_graph(code, period, index)
+        chart_mpl.open_graph(code, period, index)
 
 
 def suite():

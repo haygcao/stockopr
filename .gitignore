@@ -5,4 +5,5 @@ data
 log
 logs
 venv
+venv2
 trade_gui_cp.py

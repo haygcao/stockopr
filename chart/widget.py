@@ -3,8 +3,7 @@ from typing import List, Dict, Type
 import pandas
 import pyqtgraph as pg
 
-from vnpy.trader.ui import QtGui, QtWidgets, QtCore
-from vnpy.trader.object import BarData
+from chart.app import QtGui, QtWidgets, QtCore
 
 from .manager import BarManager
 from .base import (

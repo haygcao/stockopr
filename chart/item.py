@@ -5,7 +5,7 @@ import pandas
 import pyqtgraph as pg
 from PyQt5.QtGui import QPainterPath
 
-from vnpy.trader.ui import QtCore, QtGui, QtWidgets
+from chart.app import QtCore, QtGui, QtWidgets
 
 from .base import BLACK_COLOR, UP_COLOR, DOWN_COLOR, PEN_WIDTH, BAR_WIDTH, LIGHT_GREY_COLOR
 from .manager import BarManager

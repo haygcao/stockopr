@@ -12,7 +12,7 @@ import numpy
 import pandas
 
 import trade_manager.db_handler
-from chart import open_graph
+from chart_mpl import open_graph
 from config import config, signal_config, signal_pair
 from config.config import Policy
 from data_structure import trade_data
