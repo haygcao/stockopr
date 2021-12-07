@@ -37,7 +37,7 @@ import system_hotkey
 
 import chart_mpl
 import trade_manager.db_handler
-from acquisition import acquire, basic, quote_db, tx
+from acquisition import acquire, basic, quote_db, tx, tdx
 from config import config
 from console_trade import TableOrder
 from indicator import relative_price_strength, trend_strength
@@ -112,23 +112,26 @@ def compute_trend_strength(code):
     try:
         time.sleep(1)
         # quote = quote_db.get_price_info_df_db(code, 300)
-        quote = tx.get_kline_data_tx(code, 'day')
-        quote = trend_strength.compute_trend_strength(quote, 'day')
+        quote = tdx.get_kline_data(code, 'day')
         quote_week = quote_db.resample_quote(quote, 'W')
+        quote_8d = quote_db.resample_quote(quote, '8D')
         # quote_week = quote_week.drop(['trend_strength'], axis=1)
+        quote = trend_strength.compute_trend_strength(quote, 'day')
         quote_week = trend_strength.compute_trend_strength(quote_week, 'week', always=True)
-        time.sleep(1)
-        quote_m30 = tx.get_kline_data_tx(code, 'm30')
-        quote_m30 = trend_strength.compute_trend_strength(quote_m30, 'm30')
-        time.sleep(1)
-        quote_m5 = tx.get_kline_data_tx(code, 'm5')
-        quote_m5 = trend_strength.compute_trend_strength(quote_m5, 'm5')
+        quote_8d = trend_strength.compute_trend_strength(quote_8d, '8d', always=True)
+        # time.sleep(1)
+        # quote_m30 = tx.get_kline_data_tx(code, 'm30')
+        # quote_m30 = trend_strength.compute_trend_strength(quote_m30, 'm30')
+        # time.sleep(1)
+        # quote_m5 = tx.get_kline_data_tx(code, 'm5')
+        # quote_m5 = trend_strength.compute_trend_strength(quote_m5, 'm5')
     except Exception as e:
-        print(code, e)
+        logger.error(code, e)
         return ''
     else:
-        strength = '{}|{}|{}|{}'.format(quote_week['trend_strength'][-1], quote['trend_strength'][-1],
-                                    quote_m30['trend_strength'][-1], quote_m5['trend_strength'][-1])
+        strength = '{}|{}|{}'.format(
+            quote_8d['trend_strength'][-1], quote_week['trend_strength'][-1], quote['trend_strength'][-1])
+
         return strength
 
 
@@ -658,17 +661,6 @@ class Panel(QWidget):
         if forward != 0:
             self.switch_code(forward)
 
-        # pid = util.get_pid_by_exec('C:\\new_tdx\\TdxW.exe')
-        # if pid < 0:
-        #     app = pywinauto.Application(backend="uia").start('C:\\new_tdx\\TdxW.exe')
-        # else:
-        #     app = pywinauto.Application(backend="uia").connect(process=pid)
-
-        # pos = win32api.GetCursorPos()
-        # main_window = app.window(class_name='TdxW_MainFrame_Class')
-        # max_window(main_window)
-        # win32api.SetCursorPos(pos)
-
         # import win32con
         # width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
         # height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
@@ -688,12 +680,6 @@ class Panel(QWidget):
         # pylinuxauto.send_key(code)
         time.sleep(0.5)
         send_key(code)
-        # pyautogui.typewrite(message=code, interval=0.1)
-        # pywinauto.keyboard.send_keys(code)
-        # if self.code == '0000688':
-        #     time.sleep(0.5)
-        # pyautogui.press('enter')
-        # pywinauto.keyboard.send_keys('{ENTER}')
 
     def load(self):
         self.combo_code.clear()
@@ -737,8 +723,8 @@ class Panel(QWidget):
             if code in self.stock_info_map:
                 continue
 
-            # stock_info = compute_stock_info(code)
-            # self.stock_info_map.update({code: stock_info})
+            stock_info = compute_stock_info(code)
+            self.stock_info_map.update({code: stock_info})
 
         qt_util.popup_info_message_box_mp('[{}] loaded'.format(len(code_list)))
 

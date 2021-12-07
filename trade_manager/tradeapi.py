@@ -33,7 +33,7 @@ def fetch_quote(code):
         logger.error(d['err_msg'], inspect.currentframe().f_code.co_name)
         return
 
-    d.update({'code': code, 'volume': d['volume'] * 100})
+    d.update({'code': code, 'volume': d['volume'] * 100 if d['volume'] else d['volume']})
     s = pandas.Series(d, name=now.strftime('%Y-%m-%d %H:%M:%S'))
     return s
 

@@ -96,8 +96,9 @@ def get_rt_quote_tdx(code):
     main_window = app.window(class_name='TdxW_MainFrame_Class')
     helper.max_window(main_window)
 
-    main_window.TypeKeys(code)
+    main_window.type_keys(code)
     # main_window.TypeKeys('{ENTER}')
+    pywinauto.keyboard.send_keys('{ENTER}')
     pywinauto.keyboard.send_keys('{ENTER}')
 
     img = snapshot2('')
