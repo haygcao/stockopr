@@ -278,7 +278,7 @@ def get_kline_data_tx(code, period='day', count=250, start_date=None, end_date=N
 def get_kline_data(code, period='day', count=250):
     func_list = [get_kline_data_tx, get_kline_data_sina]
     # func_list = [get_kline_data_tx]
-    func_list = [get_kline_data_sina]
+    # func_list = [get_kline_data_sina]
     index = random.randint(0, len(func_list) - 1)
     quote = func_list[index](code, period, count)
     if quote is None:

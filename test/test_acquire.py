@@ -2,7 +2,7 @@ import datetime
 import os
 import unittest
 
-from acquisition import acquire, quote_db, quote_tdx, finance, tdx
+from acquisition import acquire, quote_db, quote_tdx, finance, tdx, eastmoney
 from acquisition import industry_index
 from config import config
 from util import dt, util
@@ -21,6 +21,10 @@ class AcquireTestCase(unittest.TestCase):
 
     def test_save_quote(self):
         acquire.save_quote()
+
+    def test_eastmoney(self):
+        quote = eastmoney.get_quote_history('002739', beg='20210101')
+        print(quote)
 
     def test_finance(self):
         df = finance.fetch_finance_stock('002739', datetime.date(2021, 9, 30))

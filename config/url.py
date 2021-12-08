@@ -15,10 +15,27 @@ http://img1.money.126.net/data/hs/kline/day/history/2021/1300598.json
 http://img1.money.126.net/data/hs/kline/day/times/1300598.json
 
 """
+# https://ifzq.gtimg.cn/appstock/app/minute/query?code=sz002739   # 当天的m1数据
+# https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=sz002739c  # 当天的m1数据
+
+# https://data.gtimg.cn/flashdata/hushen/minute/sz002739.js  # 只更新到21/10/08
+# https://data.gtimg.cn/flashdata/hushen/4day/sz/sz002739.js?maxage=43200&visitDstTime=1  # 只更新到21/05/27
+# https://data.gtimg.cn/flashdata/hushen/daily/21/sz002739.js
+# http://data.gtimg.cn/flashdata/hushen/latest/daily/sz000002.js?maxage=43201&visitDstTime=1
+# https://data.gtimg.cn/flashdata/hushen/weekly/21/sz002739.js
+
+# 06-03 16:09:00 后不再更新数据
 tx_latest_day_quote_url = 'http://stock.gtimg.cn/data/get_hs_xls.php?id=ranka&type=1&metric=chr'
-tx_min_url = 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
+# https://ifzq.gtimg.cn/appstock/app/kline/mkline?param=sh000001,m60,,320&_var=m60_today&r=0.21206432970477884
+# https://ifzq.gtimg.cn/appstock/app/kline/mkline?param=sz002739,m30,,250
+# https://web.ifzq.gtimg.cn/appstock/app/kline/mkline?param=sz002739,m30,,250  # 无法访问
+# http://ifzq.gtimg.cn/appstock/app/kline/mkline?param=sz002739,m30,,250  # OK
+tx_min_url = 'http://ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},{period},,{count}'
+
+# http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param=sz002739,day,,,350,qfq&r=0.7773272375526847
 # tx_day_url = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param={code},{period},{start_date},,{count},qfq'  # 2020-7-16,2021-5-7,
 tx_day_url = 'http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param={code},{period},{start_date},{end_date},{count},qfq'
+
 xl_min_quote_url = 'https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData?symbol={code}&scale={period}&ma=no&datalen={count}'
 
 """
@@ -81,7 +98,7 @@ tx_last_url = 'https://qt.gtimg.cn/q=sh688131,sh688319,sz300502&r=449365993'
 http://quotes.money.163.com/service/chddata.html?code=1300502&fields=TCLOSE;HIGH;LOW;TOPEN;LCLOSE;CHG;PCHG;TURNOVER;VOTURNOVER;VATURNOVER;TCAP;MCAP   # 下载 csv
 http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?num=80&sort=code&asc=0&node=hs_a&symbol=&_s_r_a=page&page=1   # 昨收 settlement - pricechange
 http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param=sz300502,day,2021-06-01,2021-06-07,3,qfq   # 没有昨收
-http://app.finance.ifeng.com/list/stock.php?t=hs&f=chg_pct&o=desc&p=1   # 昨收盘
+http://app.finance.ifeng.com/list/stock.php?t=hs&f=chg_pct&o=desc&p=1   # 昨收盘  html
 http://quotes.money.163.com/hs/service/diyrank.php?host=http%3A%2F%2Fquotes.money.163.com%2Fhs%2Fservice%2Fdiyrank.php&page={0}&query=STYPE%3AEQA&fields=NO%2CSYMBOL%2CNAME%2CPRICE%2CPERCENT%2CUPDOWN%2CFIVE_MINUTE%2COPEN%2CYESTCLOSE%2CHIGH%2CLOW%2CVOLUME%2CTURNOVER%2CHS%2CLB%2CWB%2CZF%2CPE%2CMCAP%2CTCAP%2CMFSUM%2CMFRATIO.MFRATIO2%2CMFRATIO.MFRATIO10%2CSNAME%2CCODE%2CANNOUNMT%2CUVSNEWS&sort=PERCENT&order=desc&count={1}&type=query
 
 https://hq.sinajs.cn/list=s_sh000001,s_sz399001,s_sz399006,s_sh000688

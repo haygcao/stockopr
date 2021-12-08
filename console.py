@@ -160,18 +160,14 @@ def compute_stock_info(code):
 
     stock_info = {
         'code': code,
-        'time': datetime.datetime.now(),
         'rs_rating': rs_rating,
         'fmvp': fmvp,
         'percent': percent,
         'price': quote['close'][-1],
         'order_price': order_price,
         'stop_loss': stop_loss,
-        'risk_rate': risk_rate
+        'risk_rate': risk_rate,
     }
-
-    strength = compute_trend_strength(code)
-    stock_info.update({'strength': strength})
 
     return stock_info
 
@@ -547,11 +543,10 @@ class Panel(QWidget):
 
         stock_info = self.stock_info_map[self.code]
 
-        if dt.istradetime():
-            now = datetime.datetime.now()
-            if (now - stock_info['time']).seconds > 3 * 60:
-                strength = compute_trend_strength(self.code)
-                stock_info.update({'strength': strength, 'time': now})
+        now = datetime.datetime.now()
+        if 'strength' not in stock_info or (dt.istradetime() and (now - stock_info['time']).seconds > 3 * 60):
+            strength = compute_trend_strength(self.code)
+            stock_info.update({'strength': strength, 'time': now})
 
         self.lbl_stock_info.setText(str_stock_info(stock_info))
 
@@ -918,7 +913,8 @@ class Panel(QWidget):
         latest_sync_date = trade_manager.db_handler.query_money(self.account_id).date
         logger.info('account: {}'.format(latest_sync_date))
 
-        trade_date = dt.get_trade_date()
+        # trade_date = dt.get_trade_date()
+        trade_date = quote_db.get_latest_trade_date()
         count = quote_db.get_quote_count(trade_date)
         logger.info('quote: {}   {}'.format(trade_date, count))
 
@@ -959,7 +955,7 @@ class Panel(QWidget):
                 update_time = now
 
             if network_error or timeout:
-                ip = '192.168.1.1'
+                ip = 'www.baidu.com'  # '114.114.114.114'  # '192.168.1.1'
                 network_error = not util.ping(ip)
                 if network_error:
                     root_dir = util.get_root_dir()

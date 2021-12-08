@@ -38,9 +38,12 @@ class IndicatorTestCase(unittest.TestCase):
         quantity_relative_ratio.quantity_relative_ratio(self.quote, self.period)
 
     def test_rs_rating(self):
-        trade_date = datetime.date(2021, 11, 15)
+        trade_date = datetime.date(2021, 12, 8)
         # trade_date = None
+        import time
+        t1 = time.time()
         relative_strength_rating.update_rs_rating(trade_date=trade_date)
+        print(time.time() - t1)
 
     def test_momentum(self):
         momentum.momentum_month(self.quote, self.period)
